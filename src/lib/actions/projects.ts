@@ -1,7 +1,7 @@
 "use server";
 
 import { createSupabaseServer } from "@/lib/supabase-server";
-import type { Project, ProjectStatus } from "@/types";
+import type { Project, ProjectStatus, FulfillmentType } from "@/types";
 
 export async function getProjects(filters?: {
   clientId?: string;
@@ -68,6 +68,7 @@ export async function updateProject(
     invoice_link?: string;
     invoice_link_2?: string;
     date_required?: string | null;
+    fulfillment_type?: FulfillmentType;
   }
 ): Promise<{ error: string | null }> {
   const supabase = await createSupabaseServer();

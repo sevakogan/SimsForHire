@@ -70,6 +70,7 @@ CREATE TABLE projects (
   invoice_link TEXT,
   invoice_link_2 TEXT,
   date_required DATE,
+  fulfillment_type TEXT NOT NULL DEFAULT 'delivery' CHECK (fulfillment_type IN ('pickup', 'delivery')),
   created_by UUID REFERENCES profiles(id),
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()

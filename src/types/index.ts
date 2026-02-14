@@ -1,6 +1,7 @@
 export type UserRole = "admin" | "collaborator" | "client";
 export type UserStatus = "pending" | "approved" | "denied";
 export type ProjectStatus = "draft" | "quote" | "accepted" | "completed";
+export type FulfillmentType = "pickup" | "delivery";
 
 export interface Profile {
   id: string;
@@ -33,6 +34,7 @@ export interface Project {
   invoice_link: string | null;
   invoice_link_2: string | null;
   date_required: string | null;
+  fulfillment_type: FulfillmentType;
   created_by: string | null;
   created_at: string;
   updated_at: string;
