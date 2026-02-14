@@ -61,6 +61,7 @@ export interface Item {
   notes: string;
   model_number: string;
   product_id: string | null;
+  quantity: number;
   seller_merchant: string;
   acceptance_status: AcceptanceStatus;
   client_note: string | null;

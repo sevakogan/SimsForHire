@@ -54,11 +54,11 @@ export default async function ProjectDetailPage({ params }: Props) {
   ]);
 
   const totalRetail = items.reduce(
-    (sum, i) => sum + Number(i.retail_price),
+    (sum, i) => sum + Number(i.retail_price) * (i.quantity ?? 1),
     0
   );
   const totalRetailShipping = items.reduce(
-    (sum, i) => sum + Number(i.retail_shipping),
+    (sum, i) => sum + Number(i.retail_shipping) * (i.quantity ?? 1),
     0
   );
 
@@ -66,11 +66,11 @@ export default async function ProjectDetailPage({ params }: Props) {
   let totalMyShipping = 0;
   if (admin) {
     totalMyCost = (items as Item[]).reduce(
-      (sum, i) => sum + Number(i.my_cost),
+      (sum, i) => sum + Number(i.my_cost) * (i.quantity ?? 1),
       0
     );
     totalMyShipping = (items as Item[]).reduce(
-      (sum, i) => sum + Number(i.my_shipping),
+      (sum, i) => sum + Number(i.my_shipping) * (i.quantity ?? 1),
       0
     );
   }

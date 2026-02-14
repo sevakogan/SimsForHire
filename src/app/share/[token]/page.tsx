@@ -41,14 +41,17 @@ export default async function SharedInvoicePage({ params }: Props) {
 
   const items = await getClientSafeItemsByProjectId(project.id);
 
-  const totalSelling = items.reduce(
-    (sum, i) => sum + Number(i.price_sold_for ?? i.retail_price),
-    0
-  );
-  const totalShipping = items.reduce(
-    (sum, i) => sum + Number(i.retail_shipping),
-    0
-  );
+  const totalSelling = items.reduce((sum, i) => {
+    const qty = i.quantity ?? 1;
+    const price = Number(i.price_sold_for ?? i.retail_price);
+    return sum + price * qty;
+  }, 0);
+
+  const totalShipping = items.reduce((sum, i) => {
+    const qty = i.quantity ?? 1;
+    return sum + Number(i.retail_shipping) * qty;
+  }, 0);
+
   const grandTotal = totalSelling + totalShipping;
 
   return (
@@ -104,6 +107,9 @@ export default async function SharedInvoicePage({ params }: Props) {
                     <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
                       Item
                     </th>
+                    <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-gray-500 w-16">
+                      Qty
+                    </th>
                     <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-500 w-28">
                       Price
                     </th>
@@ -117,11 +123,12 @@ export default async function SharedInvoicePage({ params }: Props) {
                 </thead>
                 <tbody className="divide-y divide-gray-100">
                   {items.map((item, index) => {
+                    const qty = item.quantity ?? 1;
                     const price = Number(
                       item.price_sold_for ?? item.retail_price
                     );
                     const shipping = Number(item.retail_shipping);
-                    const total = price + shipping;
+                    const total = (price + shipping) * qty;
                     const thumb = firstImage(item.image_url);
 
                     return (
@@ -175,6 +182,9 @@ export default async function SharedInvoicePage({ params }: Props) {
                             </div>
                           </div>
                         </td>
+                        <td className="px-4 py-3 text-center tabular-nums text-gray-900">
+                          {qty}
+                        </td>
                         <td className="px-4 py-3 text-right tabular-nums text-gray-900">
                           {formatCurrency(price)}
                         </td>
@@ -194,9 +204,10 @@ export default async function SharedInvoicePage({ params }: Props) {
             {/* Mobile card layout */}
             <div className="space-y-3 sm:hidden">
               {items.map((item, index) => {
+                const qty = item.quantity ?? 1;
                 const price = Number(item.price_sold_for ?? item.retail_price);
                 const shipping = Number(item.retail_shipping);
-                const total = price + shipping;
+                const total = (price + shipping) * qty;
                 const thumb = firstImage(item.image_url);
 
                 return (

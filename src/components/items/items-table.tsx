@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef, useCallback } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { deleteItem } from "@/lib/actions/items";
+import { deleteItem, updateItem } from "@/lib/actions/items";
 import { useRouter } from "next/navigation";
 import { firstImage } from "@/lib/parse-images";
 import { TypeFilterPills } from "@/components/products/type-filter-pills";
@@ -62,30 +62,124 @@ function formatCurrency(value: number): string {
   }).format(value);
 }
 
+/* ─── Inline editable number input ─── */
+
+interface InlineNumberInputProps {
+  value: number;
+  onSave: (value: number) => void;
+  step?: string;
+  min?: number;
+  className?: string;
+  prefix?: string;
+  isInteger?: boolean;
+}
+
+function InlineNumberInput({
+  value,
+  onSave,
+  step = "0.01",
+  min = 0,
+  className = "",
+  prefix = "",
+  isInteger = false,
+}: InlineNumberInputProps) {
+  const [localValue, setLocalValue] = useState(String(value));
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const raw = e.target.value;
+      setLocalValue(raw);
+
+      if (timerRef.current) clearTimeout(timerRef.current);
+      timerRef.current = setTimeout(() => {
+        const parsed = isInteger ? parseInt(raw, 10) : parseFloat(raw);
+        if (!isNaN(parsed) && parsed >= min) {
+          onSave(parsed);
+        }
+      }, 600);
+    },
+    [onSave, min, isInteger]
+  );
+
+  const handleBlur = useCallback(() => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+    const parsed = isInteger ? parseInt(localValue, 10) : parseFloat(localValue);
+    if (!isNaN(parsed) && parsed >= min) {
+      onSave(parsed);
+    } else {
+      setLocalValue(String(value));
+    }
+  }, [localValue, value, onSave, min, isInteger]);
+
+  return (
+    <div className={`relative ${className}`}>
+      {prefix && (
+        <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-muted-foreground pointer-events-none">
+          {prefix}
+        </span>
+      )}
+      <input
+        type="number"
+        step={step}
+        min={min}
+        value={localValue}
+        onChange={handleChange}
+        onBlur={handleBlur}
+        className={`w-full rounded-md border border-border/60 bg-white py-1 text-sm text-foreground text-right focus:outline-none focus:ring-1 focus:ring-primary/40 focus:border-primary/40 ${
+          prefix ? "pl-5 pr-2" : "px-2"
+        }`}
+      />
+    </div>
+  );
+}
+
+/* ─── Main Component ─── */
+
 export function ItemsTable({ items, projectId, isAdmin, clientNoteCount = 0 }: ItemsTableProps) {
   const router = useRouter();
   const [typeFilter, setTypeFilter] = useState("");
   const [view, setView] = useState<ViewMode>("list");
+  const [localItems, setLocalItems] = useState(items);
+
+  // Sync localItems when server data changes
+  const itemsKey = items.map((i) => `${i.id}-${i.updated_at}`).join(",");
+  const prevKeyRef = useRef(itemsKey);
+  if (prevKeyRef.current !== itemsKey) {
+    prevKeyRef.current = itemsKey;
+    setLocalItems(items);
+  }
 
   const extraTypes = useMemo(() => {
     const types = new Set(
-      items.map((i) => i.item_type).filter((t) => t.length > 0)
+      localItems.map((i) => i.item_type).filter((t) => t.length > 0)
     );
     return [...types];
-  }, [items]);
+  }, [localItems]);
 
   const filtered = useMemo(
     () =>
       typeFilter === ""
-        ? items
-        : items.filter((i) => i.item_type === typeFilter),
-    [items, typeFilter]
+        ? localItems
+        : localItems.filter((i) => i.item_type === typeFilter),
+    [localItems, typeFilter]
   );
 
   async function handleDelete(id: string) {
     if (!confirm("Delete this item?")) return;
     await deleteItem(id);
     router.refresh();
+  }
+
+  function handleInlineUpdate(itemId: string, field: string, value: number) {
+    // Optimistic local update
+    setLocalItems((prev) =>
+      prev.map((item) =>
+        item.id === itemId ? { ...item, [field]: value } : item
+      )
+    );
+    // Fire server update (no await needed for optimistic)
+    updateItem(itemId, { [field]: value });
   }
 
   if (items.length === 0) {
@@ -176,8 +270,9 @@ export function ItemsTable({ items, projectId, isAdmin, clientNoteCount = 0 }: I
             </div>
 
             {filtered.map((item, index) => {
+              const qty = item.quantity ?? 1;
               const sellingPrice = item.price_sold_for ?? item.retail_price;
-              const total = sellingPrice + item.retail_shipping;
+              const total = (sellingPrice + item.retail_shipping) * qty;
               const thumb = firstImage(item.image_url);
               const isEven = index % 2 === 0;
 
@@ -239,10 +334,15 @@ export function ItemsTable({ items, projectId, isAdmin, clientNoteCount = 0 }: I
                     )}
                   </div>
 
-                  <div className="w-14 shrink-0 text-center">
-                    <span className="inline-block w-full rounded-md border border-border/60 bg-white px-2 py-1 text-sm text-foreground text-center">
-                      1
-                    </span>
+                  {/* Editable Qty */}
+                  <div className="w-14 shrink-0">
+                    <InlineNumberInput
+                      value={qty}
+                      onSave={(val) => handleInlineUpdate(item.id, "quantity", val)}
+                      step="1"
+                      min={1}
+                      isInteger
+                    />
                   </div>
 
                   <div className="w-24 shrink-0 text-right">
@@ -251,16 +351,22 @@ export function ItemsTable({ items, projectId, isAdmin, clientNoteCount = 0 }: I
                     </span>
                   </div>
 
-                  <div className="w-24 shrink-0 text-right">
-                    <span className="inline-block w-full rounded-md border border-border/60 bg-white px-2 py-1 text-sm font-medium text-foreground text-right">
-                      {formatCurrency(sellingPrice)}
-                    </span>
+                  {/* Editable Selling Price */}
+                  <div className="w-24 shrink-0">
+                    <InlineNumberInput
+                      value={sellingPrice}
+                      onSave={(val) => handleInlineUpdate(item.id, "price_sold_for", val)}
+                      prefix="$"
+                    />
                   </div>
 
-                  <div className="w-20 shrink-0 text-right">
-                    <span className="inline-block w-full rounded-md border border-border/60 bg-white px-2 py-1 text-sm text-foreground text-right">
-                      {formatCurrency(item.retail_shipping)}
-                    </span>
+                  {/* Editable S/H */}
+                  <div className="w-20 shrink-0">
+                    <InlineNumberInput
+                      value={item.retail_shipping}
+                      onSave={(val) => handleInlineUpdate(item.id, "retail_shipping", val)}
+                      prefix="$"
+                    />
                   </div>
 
                   <div className="w-24 shrink-0 text-right">
@@ -296,8 +402,9 @@ export function ItemsTable({ items, projectId, isAdmin, clientNoteCount = 0 }: I
           {/* Mobile card layout (list mode on mobile) */}
           <div className="space-y-2 sm:hidden">
             {filtered.map((item, index) => {
+              const qty = item.quantity ?? 1;
               const sellingPrice = item.price_sold_for ?? item.retail_price;
-              const total = sellingPrice + item.retail_shipping;
+              const total = (sellingPrice + item.retail_shipping) * qty;
               const thumb = firstImage(item.image_url);
               const isEven = index % 2 === 0;
 
@@ -361,19 +468,37 @@ export function ItemsTable({ items, projectId, isAdmin, clientNoteCount = 0 }: I
                     )}
                   </div>
 
-                  {/* Price grid */}
-                  <div className="mt-2.5 grid grid-cols-3 gap-2 text-center">
+                  {/* Editable price grid */}
+                  <div className="mt-2.5 grid grid-cols-4 gap-2">
                     <div>
-                      <p className="text-[9px] font-medium uppercase tracking-wider text-muted-foreground/60">Retail</p>
-                      <p className="text-xs text-muted-foreground">{formatCurrency(item.retail_price)}</p>
+                      <p className="text-[9px] font-medium uppercase tracking-wider text-muted-foreground/60 mb-0.5">Qty</p>
+                      <InlineNumberInput
+                        value={qty}
+                        onSave={(val) => handleInlineUpdate(item.id, "quantity", val)}
+                        step="1"
+                        min={1}
+                        isInteger
+                      />
                     </div>
                     <div>
-                      <p className="text-[9px] font-medium uppercase tracking-wider text-muted-foreground/60">Selling</p>
-                      <p className="text-xs font-medium text-foreground">{formatCurrency(sellingPrice)}</p>
+                      <p className="text-[9px] font-medium uppercase tracking-wider text-muted-foreground/60 mb-0.5">Retail</p>
+                      <p className="text-xs text-muted-foreground text-right py-1">{formatCurrency(item.retail_price)}</p>
                     </div>
                     <div>
-                      <p className="text-[9px] font-medium uppercase tracking-wider text-muted-foreground/60">S/H</p>
-                      <p className="text-xs text-foreground">{formatCurrency(item.retail_shipping)}</p>
+                      <p className="text-[9px] font-medium uppercase tracking-wider text-muted-foreground/60 mb-0.5">Selling</p>
+                      <InlineNumberInput
+                        value={sellingPrice}
+                        onSave={(val) => handleInlineUpdate(item.id, "price_sold_for", val)}
+                        prefix="$"
+                      />
+                    </div>
+                    <div>
+                      <p className="text-[9px] font-medium uppercase tracking-wider text-muted-foreground/60 mb-0.5">S/H</p>
+                      <InlineNumberInput
+                        value={item.retail_shipping}
+                        onSave={(val) => handleInlineUpdate(item.id, "retail_shipping", val)}
+                        prefix="$"
+                      />
                     </div>
                   </div>
 
@@ -420,8 +545,9 @@ function ItemsCardGrid({ items, projectId, isAdmin, onDelete }: ItemsCardGridPro
     <div className="grid gap-3 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
       {items.map((item) => {
         const thumb = firstImage(item.image_url);
+        const qty = item.quantity ?? 1;
         const sellingPrice = item.price_sold_for ?? item.retail_price;
-        const total = sellingPrice + item.retail_shipping;
+        const total = (sellingPrice + item.retail_shipping) * qty;
 
         return (
           <Link
@@ -443,6 +569,14 @@ function ItemsCardGrid({ items, projectId, isAdmin, onDelete }: ItemsCardGridPro
                   <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" strokeWidth={1} stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0 0 22.5 18.75V5.25A2.25 2.25 0 0 0 20.25 3H3.75A2.25 2.25 0 0 0 1.5 5.25v13.5A2.25 2.25 0 0 0 3.75 21Z" />
                   </svg>
+                </div>
+              )}
+              {/* Qty badge */}
+              {qty > 1 && (
+                <div className="absolute bottom-1.5 right-1.5">
+                  <span className="inline-flex items-center justify-center rounded-md bg-black/60 px-1.5 py-0.5 text-[10px] font-bold text-white">
+                    x{qty}
+                  </span>
                 </div>
               )}
               {/* Acceptance badge overlay */}
