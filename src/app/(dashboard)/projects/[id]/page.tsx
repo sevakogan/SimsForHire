@@ -7,6 +7,7 @@ import { createSupabaseServer } from "@/lib/supabase-server";
 import { Badge } from "@/components/ui/badge";
 import { buttonStyles, cardStyles } from "@/components/ui/form-styles";
 import { ItemsTable } from "@/components/items/items-table";
+import { InlineAddItem } from "@/components/items/inline-add-item";
 import { ProjectActions } from "./project-actions";
 import type { Profile, Item } from "@/types";
 import { isAdminRole } from "@/types";
@@ -152,19 +153,12 @@ export default async function ProjectDetailPage({ params }: Props) {
       {admin && <ProjectActions project={project} />}
 
       {/* Items section */}
-      <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold text-foreground">Items</h2>
-        {admin && (
-          <Link
-            href={`/projects/${id}/items/new`}
-            className={buttonStyles.primary}
-          >
-            Add Item
-          </Link>
-        )}
-      </div>
+      <h2 className="text-lg font-semibold text-foreground">Items</h2>
 
       <ItemsTable items={items} projectId={id} isAdmin={admin} />
+
+      {/* Inline add item bar */}
+      {admin && <InlineAddItem projectId={id} isAdmin={admin} />}
 
       {/* Summary */}
       {items.length > 0 && (
