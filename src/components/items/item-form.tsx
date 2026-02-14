@@ -170,17 +170,8 @@ export function ItemForm({ projectId, itemNumber, item, isAdmin }: ItemFormProps
         />
       )}
 
-      {/* Row 1: Type tag picker */}
-      <div>
-        <p className={`${pillLabel} mb-1.5`}>Type</p>
-        <TypeTagPicker
-          value={fields.item_type}
-          onChange={(val) => updateField("item_type", val)}
-        />
-      </div>
-
-      {/* Row 2: Seller/Merchant | # | Model # | Description | Link */}
-      <div className="flex flex-wrap gap-2">
+      {/* Row 1: Seller/Merchant | Type tag picker */}
+      <div className="flex flex-wrap items-end gap-2">
         <div className={`${pillWrapper} w-32 shrink-0`}>
           <label htmlFor="seller_merchant" className={pillLabel}>Seller/Merchant</label>
           <input
@@ -193,7 +184,17 @@ export function ItemForm({ projectId, itemNumber, item, isAdmin }: ItemFormProps
             className={pillInput}
           />
         </div>
+        <div className="flex-1">
+          <p className={`${pillLabel} mb-1.5`}>Type</p>
+          <TypeTagPicker
+            value={fields.item_type}
+            onChange={(val) => updateField("item_type", val)}
+          />
+        </div>
+      </div>
 
+      {/* Row 2: # | Model # | Description | Link */}
+      <div className="flex flex-wrap gap-2">
         <div className={`${pillWrapperReadonly} w-16 shrink-0`}>
           <span className={pillLabel}>#</span>
           <input

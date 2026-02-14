@@ -83,14 +83,8 @@ export function ProductForm({ product, isAdmin }: ProductFormProps) {
         </div>
       )}
 
-      {/* Row 1: Type tag picker */}
-      <div>
-        <p className={`${pillLabel} mb-1.5`}>Type</p>
-        <TypeTagPicker value={type} onChange={setType} />
-      </div>
-
-      {/* Row 2: Seller/Merchant | Name | Model # | Description */}
-      <div className="flex flex-wrap gap-2">
+      {/* Row 1: Seller/Merchant | Type tag picker */}
+      <div className="flex flex-wrap items-end gap-2">
         <div className={`${pillWrapper} w-32 shrink-0`}>
           <label htmlFor="seller_merchant" className={pillLabel}>
             Seller/Merchant
@@ -104,7 +98,14 @@ export function ProductForm({ product, isAdmin }: ProductFormProps) {
             className={pillInput}
           />
         </div>
+        <div className="flex-1">
+          <p className={`${pillLabel} mb-1.5`}>Type</p>
+          <TypeTagPicker value={type} onChange={setType} />
+        </div>
+      </div>
 
+      {/* Row 2: Name | Model # | Description */}
+      <div className="flex flex-wrap gap-2">
         <div className={`${pillWrapper} min-w-[120px] flex-1`}>
           <label htmlFor="name" className={pillLabel}>
             Name *
