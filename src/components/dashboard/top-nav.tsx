@@ -8,7 +8,7 @@ import { useAuth } from "@/components/auth/auth-provider";
 const adminTabs = [
   { label: "Dashboard", href: "/dashboard" },
   { label: "Clients", href: "/clients" },
-  { label: "Catalog", href: "/catalog" },
+  { label: "Products", href: "/catalog" },
   { label: "Users", href: "/dashboard/users" },
 ];
 
