@@ -44,9 +44,10 @@ export function ProductsGrid({ products, isAdmin }: ProductsGridProps) {
       {products.map((product) => {
         const thumb = firstImage(product.image_url);
         return (
-        <div
+        <Link
           key={product.id}
-          className="group rounded-xl border border-border bg-white shadow-sm transition-all hover:shadow-md hover:border-primary/20 overflow-hidden"
+          href={`/catalog/${product.id}`}
+          className="group block rounded-xl border border-border bg-white shadow-sm transition-all hover:shadow-md hover:border-primary/20 overflow-hidden"
         >
           {/* Image */}
           <div className="relative aspect-square bg-muted/30">
@@ -107,14 +108,12 @@ export function ProductsGrid({ products, isAdmin }: ProductsGridProps) {
             {/* Admin actions */}
             {isAdmin && (
               <div className="mt-1 flex gap-1">
-                <Link
-                  href={`/catalog/${product.id}`}
-                  className={`${buttonStyles.small} !text-[10px] !px-1.5 !py-0.5 text-primary hover:bg-primary/10`}
-                >
-                  Edit
-                </Link>
                 <button
-                  onClick={() => handleDelete(product.id)}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleDelete(product.id);
+                  }}
                   className={`${buttonStyles.small} !text-[10px] !px-1.5 !py-0.5 text-destructive hover:bg-destructive/10`}
                 >
                   Delete
@@ -122,7 +121,7 @@ export function ProductsGrid({ products, isAdmin }: ProductsGridProps) {
               </div>
             )}
           </div>
-        </div>
+        </Link>
         );
       })}
     </div>
