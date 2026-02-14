@@ -91,7 +91,6 @@ function EditProjectModal({
 }) {
   const router = useRouter();
   const [name, setName] = useState(project.name);
-  const [dateRequired, setDateRequired] = useState(project.date_required ?? "");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -106,29 +105,11 @@ function EditProjectModal({
     setError(null);
 
     try {
-      // Update name first (always works)
-      const payload: Record<string, unknown> = { name: trimmedName };
-
-      // Include date_required if column exists (added via migration)
-      const newDateRequired = dateRequired || null;
-      if (newDateRequired !== (project.date_required ?? null)) {
-        payload.date_required = newDateRequired;
-      }
-
-      const result = await updateProject(project.id, payload as { name: string; date_required?: string | null });
+      const result = await updateProject(project.id, { name: trimmedName });
 
       if (result.error) {
-        // If date_required column doesn't exist yet, retry without it
-        if (result.error.includes("date_required")) {
-          const retry = await updateProject(project.id, { name: trimmedName });
-          if (retry.error) {
-            setError(retry.error);
-            return;
-          }
-        } else {
-          setError(result.error);
-          return;
-        }
+        setError(result.error);
+        return;
       }
 
       router.refresh();
@@ -191,18 +172,6 @@ function EditProjectModal({
             />
           </div>
 
-          <div className={formStyles.group}>
-            <label htmlFor="edit-date-required" className={formStyles.label}>
-              Date Required
-            </label>
-            <input
-              id="edit-date-required"
-              type="date"
-              value={dateRequired}
-              onChange={(e) => setDateRequired(e.target.value)}
-              className={formStyles.input}
-            />
-          </div>
         </div>
 
         <div className="mt-6 flex justify-end gap-3">
