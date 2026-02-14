@@ -5,7 +5,7 @@ import {
   getClientSafeItemsByProjectId,
 } from "@/lib/actions/projects";
 import { firstImage } from "@/lib/parse-images";
-import { ShareActions } from "./share-actions";
+import { ShareActions, StatusBadge } from "./share-actions";
 import type { Metadata } from "next";
 
 export const dynamic = "force-dynamic";
@@ -68,9 +68,7 @@ export default async function SharedInvoicePage({ params }: Props) {
               )}
             </div>
             <div className="text-right">
-              <span className="inline-flex items-center rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary capitalize">
-                {project.status}
-              </span>
+              <StatusBadge status={project.status} />
               {project.date_required && (
                 <p className="mt-1 text-xs text-gray-500">
                   Required by{" "}

@@ -23,6 +23,9 @@ export default async function ProfilePage() {
 
   const typedProfile = profile as Profile;
 
+  // Detect if user signed up with email/password (has an email identity)
+  const hasPassword = user.app_metadata?.providers?.includes("email") ?? false;
+
   return (
     <div className="mx-auto max-w-lg space-y-5">
       <h1 className="text-lg font-bold text-foreground sm:text-xl">
@@ -30,7 +33,7 @@ export default async function ProfilePage() {
       </h1>
 
       <div className={cardStyles.base}>
-        <ProfileForm profile={typedProfile} />
+        <ProfileForm profile={typedProfile} hasPassword={hasPassword} />
       </div>
 
       {/* Read-only account info */}
@@ -45,7 +48,10 @@ export default async function ProfilePage() {
             label="Member Since"
             value={new Date(typedProfile.created_at).toLocaleDateString()}
           />
-          <InfoField label="Email" value={typedProfile.email} />
+          <InfoField
+            label="Auth Method"
+            value={hasPassword ? "Email & Password" : "Google"}
+          />
         </div>
       </div>
     </div>

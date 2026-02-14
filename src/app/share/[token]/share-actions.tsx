@@ -13,11 +13,33 @@ interface ShareActionsProps {
   projectStatus: string;
 }
 
+const STATUS_STYLES: Record<string, string> = {
+  draft: "bg-gray-100 text-gray-600",
+  quote: "bg-blue-100 text-blue-700",
+  accepted: "bg-green-100 text-green-700",
+  completed: "bg-purple-100 text-purple-700",
+};
+
+function StatusBadge({ status }: { status: string }) {
+  const style = STATUS_STYLES[status] ?? "bg-gray-100 text-gray-600";
+  return (
+    <span
+      id="share-status-badge"
+      className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium capitalize ${style}`}
+    >
+      {status}
+    </span>
+  );
+}
+
+export { StatusBadge };
+
 export function ShareActions({
   items,
   shareToken,
   projectStatus,
 }: ShareActionsProps) {
+  const [currentStatus, setCurrentStatus] = useState(projectStatus);
   const [decisions, setDecisions] = useState<
     Record<string, AcceptanceStatus>
   >(() => {
@@ -36,8 +58,8 @@ export function ShareActions({
     (i) => i.acceptance_status === "accepted"
   );
   const alreadyAccepted =
-    projectStatus === "accepted" ||
-    projectStatus === "completed" ||
+    currentStatus === "accepted" ||
+    currentStatus === "completed" ||
     allItemsAlreadyAccepted;
   const allItemsDecided = Object.values(decisions).every(
     (d) => d === "accepted" || d === "rejected"
@@ -61,6 +83,7 @@ export function ShareActions({
         setError(result.error);
       } else {
         setSubmitted(true);
+        setCurrentStatus("accepted");
         const allAccepted: Record<string, AcceptanceStatus> = {};
         for (const item of items) {
           allAccepted[item.id] = "accepted";
@@ -95,38 +118,46 @@ export function ShareActions({
     }
   }
 
+  // Compute the displayed status: if user just accepted all, show "accepted"
+  const displayStatus = submitted && allAccepted ? "accepted" : currentStatus;
+
   // Already submitted or project already accepted
   if (submitted || alreadyAccepted) {
     const isAllAccepted = alreadyAccepted || allAccepted;
 
     return (
-      <div className="mt-6 rounded-xl border border-gray-200 bg-white p-6 shadow-sm text-center">
-        <div
-          className={`mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full ${
-            isAllAccepted ? "bg-green-100" : "bg-amber-100"
-          }`}
-        >
-          {isAllAccepted ? (
-            <svg className="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
-            </svg>
-          ) : (
-            <svg className="h-6 w-6 text-amber-600" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" />
-            </svg>
-          )}
+      <>
+        {/* Reactive status badge */}
+        <StatusBadgeUpdater status={displayStatus} />
+
+        <div className="mt-6 rounded-xl border border-gray-200 bg-white p-6 shadow-sm text-center">
+          <div
+            className={`mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full ${
+              isAllAccepted ? "bg-green-100" : "bg-amber-100"
+            }`}
+          >
+            {isAllAccepted ? (
+              <svg className="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+              </svg>
+            ) : (
+              <svg className="h-6 w-6 text-amber-600" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" />
+              </svg>
+            )}
+          </div>
+          <h3 className="text-base font-semibold text-gray-900">
+            {isAllAccepted
+              ? "Invoice Accepted"
+              : "Response Submitted"}
+          </h3>
+          <p className="mt-1 text-sm text-gray-500">
+            {isAllAccepted
+              ? "Thank you! All items have been accepted."
+              : "Thank you! Your selections have been submitted. The team will review rejected items."}
+          </p>
         </div>
-        <h3 className="text-base font-semibold text-gray-900">
-          {isAllAccepted
-            ? "Invoice Accepted"
-            : "Response Submitted"}
-        </h3>
-        <p className="mt-1 text-sm text-gray-500">
-          {isAllAccepted
-            ? "Thank you! All items have been accepted."
-            : "Thank you! Your selections have been submitted. The team will review rejected items."}
-        </p>
-      </div>
+      </>
     );
   }
 
@@ -257,4 +288,22 @@ export function ShareActions({
       </div>
     </div>
   );
+}
+
+/**
+ * Hidden component that updates the header status badge via DOM.
+ * This bridges the client-side state change to the server-rendered header badge.
+ */
+function StatusBadgeUpdater({ status }: { status: string }) {
+  if (typeof window === "undefined") return null;
+
+  // Update the server-rendered badge in the header
+  const badge = document.getElementById("share-status-badge");
+  if (badge) {
+    const style = STATUS_STYLES[status] ?? "bg-gray-100 text-gray-600";
+    badge.className = `inline-flex items-center rounded-full px-3 py-1 text-xs font-medium capitalize ${style}`;
+    badge.textContent = status;
+  }
+
+  return null;
 }
