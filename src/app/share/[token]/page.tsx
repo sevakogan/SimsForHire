@@ -66,6 +66,11 @@ export default async function SharedInvoicePage({ params }: Props) {
                   Prepared for {client.name}
                 </p>
               )}
+              {project.invoice_number && (
+                <p className="mt-1 text-xs font-medium text-gray-400">
+                  Invoice #{project.invoice_number}
+                </p>
+              )}
             </div>
             <div className="text-right">
               <StatusBadge status={project.status} />

@@ -33,6 +33,7 @@ export interface Project {
   client_id: string;
   name: string;
   status: ProjectStatus;
+  invoice_number: string | null;
   invoice_link: string | null;
   invoice_link_2: string | null;
   date_required: string | null;

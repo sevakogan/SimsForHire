@@ -66,6 +66,7 @@ export async function updateProject(
   input: {
     name?: string;
     status?: ProjectStatus;
+    invoice_number?: string | null;
     invoice_link?: string;
     invoice_link_2?: string;
     date_required?: string | null;

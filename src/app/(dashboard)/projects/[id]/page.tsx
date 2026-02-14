@@ -94,6 +94,11 @@ export default async function ProjectDetailPage({ params }: Props) {
           <h1 className="text-lg sm:text-2xl font-bold text-foreground truncate">{project.name}</h1>
           <Badge variant={project.status}>{project.status}</Badge>
         </div>
+        {project.invoice_number && (
+          <p className="text-xs text-muted-foreground mt-0.5">
+            Invoice #{project.invoice_number}
+          </p>
+        )}
       </div>
 
       {/* Customer info header for admin */}

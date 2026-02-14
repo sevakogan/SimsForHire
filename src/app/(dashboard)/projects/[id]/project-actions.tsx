@@ -29,7 +29,9 @@ export function ProjectActions({ project }: Props) {
     e.preventDefault();
     setLoading(true);
     const form = new FormData(e.currentTarget);
+    const invoiceNumber = (form.get("invoice_number") as string).trim() || null;
     await updateProject(project.id, {
+      invoice_number: invoiceNumber,
       invoice_link: (form.get("invoice_link") as string) || undefined,
       invoice_link_2: (form.get("invoice_link_2") as string) || undefined,
     });
@@ -95,7 +97,7 @@ export function ProjectActions({ project }: Props) {
           onClick={() => setShowInvoice(!showInvoice)}
           className={`${buttonStyles.secondary} text-xs`}
         >
-          Invoice Links
+          Invoice Settings
         </button>
 
         <button
@@ -131,41 +133,56 @@ export function ProjectActions({ project }: Props) {
       {showInvoice && (
         <form
           onSubmit={handleInvoiceSave}
-          className="flex flex-col gap-3 sm:flex-row sm:items-end"
+          className="space-y-3"
         >
-          <div className={`${formStyles.group} flex-1`}>
-            <label htmlFor="invoice_link" className={formStyles.label}>
-              Invoice Link 1
-            </label>
-            <input
-              id="invoice_link"
-              name="invoice_link"
-              type="url"
-              defaultValue={project.invoice_link ?? ""}
-              placeholder="https://..."
-              className={formStyles.input}
-            />
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+            <div className={`${formStyles.group} sm:w-48`}>
+              <label htmlFor="invoice_number" className={formStyles.label}>
+                Invoice #
+              </label>
+              <input
+                id="invoice_number"
+                name="invoice_number"
+                type="text"
+                defaultValue={project.invoice_number ?? ""}
+                placeholder="e.g. INV-001"
+                className={formStyles.input}
+              />
+            </div>
+            <div className={`${formStyles.group} flex-1`}>
+              <label htmlFor="invoice_link" className={formStyles.label}>
+                Invoice Link 1
+              </label>
+              <input
+                id="invoice_link"
+                name="invoice_link"
+                type="url"
+                defaultValue={project.invoice_link ?? ""}
+                placeholder="https://..."
+                className={formStyles.input}
+              />
+            </div>
+            <div className={`${formStyles.group} flex-1`}>
+              <label htmlFor="invoice_link_2" className={formStyles.label}>
+                Invoice Link 2
+              </label>
+              <input
+                id="invoice_link_2"
+                name="invoice_link_2"
+                type="url"
+                defaultValue={project.invoice_link_2 ?? ""}
+                placeholder="https://..."
+                className={formStyles.input}
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={loading}
+              className={buttonStyles.primary}
+            >
+              Save
+            </button>
           </div>
-          <div className={`${formStyles.group} flex-1`}>
-            <label htmlFor="invoice_link_2" className={formStyles.label}>
-              Invoice Link 2
-            </label>
-            <input
-              id="invoice_link_2"
-              name="invoice_link_2"
-              type="url"
-              defaultValue={project.invoice_link_2 ?? ""}
-              placeholder="https://..."
-              className={formStyles.input}
-            />
-          </div>
-          <button
-            type="submit"
-            disabled={loading}
-            className={buttonStyles.primary}
-          >
-            Save
-          </button>
         </form>
       )}
     </div>
