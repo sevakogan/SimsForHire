@@ -75,6 +75,23 @@ export async function updateProject(
 ): Promise<{ error: string | null }> {
   const supabase = await createSupabaseServer();
 
+  // If status is being downgraded from accepted/completed, reset all item
+  // acceptance statuses so the customer sees a fresh review screen.
+  if (input.status && input.status !== "accepted" && input.status !== "completed") {
+    const { data: current } = await supabase
+      .from("projects")
+      .select("status")
+      .eq("id", id)
+      .single();
+
+    if (current && (current.status === "accepted" || current.status === "completed")) {
+      await supabase
+        .from("items")
+        .update({ acceptance_status: "pending" })
+        .eq("project_id", id);
+    }
+  }
+
   const { error } = await supabase
     .from("projects")
     .update(input)

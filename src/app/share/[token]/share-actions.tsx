@@ -75,14 +75,12 @@ export function ShareActions({
   const isEditable =
     currentStatus !== "accepted" && currentStatus !== "completed";
 
-  // Already fully accepted
-  const allItemsAlreadyAccepted = initialItems.every(
-    (i) => i.acceptance_status === "accepted"
-  );
+  // Project-level acceptance — only project status matters.
+  // Item-level statuses are reset when admin downgrades, but even if
+  // they weren't, the customer should still see the review screen
+  // when the project is in draft/quote.
   const alreadyAccepted =
-    currentStatus === "accepted" ||
-    currentStatus === "completed" ||
-    allItemsAlreadyAccepted;
+    currentStatus === "accepted" || currentStatus === "completed";
 
   const activeDecisions = Object.fromEntries(
     Object.entries(decisions).filter(([id]) =>
