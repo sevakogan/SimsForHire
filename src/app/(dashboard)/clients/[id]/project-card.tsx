@@ -106,14 +106,29 @@ function EditProjectModal({
     setError(null);
 
     try {
-      const result = await updateProject(project.id, {
-        name: trimmedName,
-        date_required: dateRequired || null,
-      });
+      // Update name first (always works)
+      const payload: Record<string, unknown> = { name: trimmedName };
+
+      // Include date_required if column exists (added via migration)
+      const newDateRequired = dateRequired || null;
+      if (newDateRequired !== (project.date_required ?? null)) {
+        payload.date_required = newDateRequired;
+      }
+
+      const result = await updateProject(project.id, payload as { name: string; date_required?: string | null });
 
       if (result.error) {
-        setError(result.error);
-        return;
+        // If date_required column doesn't exist yet, retry without it
+        if (result.error.includes("date_required")) {
+          const retry = await updateProject(project.id, { name: trimmedName });
+          if (retry.error) {
+            setError(retry.error);
+            return;
+          }
+        } else {
+          setError(result.error);
+          return;
+        }
       }
 
       router.refresh();
