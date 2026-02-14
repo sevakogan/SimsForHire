@@ -26,17 +26,17 @@ export default async function NewProductPage() {
   const admin = isAdminRole(typedProfile.role);
 
   return (
-    <div className="space-y-6">
+    <div className="mx-auto max-w-2xl space-y-4">
       <div>
         <Link
           href="/catalog"
-          className="text-sm text-muted-foreground hover:text-foreground"
+          className="text-xs text-muted-foreground hover:text-foreground"
         >
           ← Catalog
         </Link>
-        <h1 className="text-2xl font-bold text-foreground">Add Product</h1>
+        <h1 className="text-lg font-semibold text-foreground">Add Product</h1>
       </div>
-      <div className={cardStyles.base}>
+      <div className={cardStyles.compact}>
         <ProductForm isAdmin={admin} />
       </div>
     </div>

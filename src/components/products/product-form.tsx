@@ -76,7 +76,7 @@ export function ProductForm({ product, isAdmin }: ProductFormProps) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-3">
       {error && (
         <div className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">
           {error}

@@ -25,6 +25,7 @@ export const formStyles = {
 
 export const cardStyles = {
   base: "rounded-xl border border-border bg-white p-6 shadow-sm",
+  compact: "rounded-xl border border-border bg-white px-5 py-4 shadow-sm",
   hover:
     "rounded-xl border border-border bg-white p-6 shadow-sm transition-all hover:shadow-md hover:border-primary/20",
 } as const;
