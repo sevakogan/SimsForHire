@@ -1,9 +1,11 @@
 import { createSupabaseServer } from "@/lib/supabase-server";
 import { StatCard } from "@/components/dashboard/stat-card";
+import { DashboardClients } from "@/components/dashboard/dashboard-clients";
+import type { DashboardClient } from "@/components/dashboard/dashboard-clients";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import { buttonStyles } from "@/components/ui/form-styles";
-import type { Profile, Project, Client } from "@/types";
+import type { Profile, Project, Client, Item } from "@/types";
 import { isAdminRole } from "@/types";
 
 export default async function DashboardPage() {
@@ -45,58 +47,76 @@ async function AdminDashboard() {
       .eq("status", "pending"),
   ]);
 
-  const { data: recentProjects } = await supabase
+  // Fetch all clients with their projects → items for financial rollup
+  const { data: allClients } = await supabase
+    .from("clients")
+    .select("id, name, phone, email")
+    .order("created_at", { ascending: false });
+
+  const { data: allItems } = await supabase
+    .from("items")
+    .select("project_id, retail_price, retail_shipping, price_sold_for, my_cost, my_shipping, projects!inner(client_id)");
+
+  const { data: allProjects } = await supabase
     .from("projects")
-    .select("*, clients(name)")
-    .order("created_at", { ascending: false })
-    .limit(5);
+    .select("id, client_id");
+
+  // Build per-client financials
+  const clientFinancials = new Map<string, { totalCharge: number; totalCost: number }>();
+
+  if (allItems && allProjects) {
+    // Map project_id → client_id
+    const projectClientMap = new Map<string, string>();
+    for (const proj of allProjects) {
+      projectClientMap.set(proj.id, proj.client_id);
+    }
+
+    for (const item of allItems) {
+      const clientId = projectClientMap.get(item.project_id);
+      if (!clientId) continue;
+
+      const sellingPrice = item.price_sold_for ?? item.retail_price;
+      const charge = sellingPrice + Number(item.retail_shipping);
+      const cost = Number(item.my_cost) + Number(item.my_shipping);
+
+      const existing = clientFinancials.get(clientId) ?? { totalCharge: 0, totalCost: 0 };
+      clientFinancials.set(clientId, {
+        totalCharge: existing.totalCharge + charge,
+        totalCost: existing.totalCost + cost,
+      });
+    }
+  }
+
+  const dashboardClients: DashboardClient[] = (allClients ?? []).map((c) => {
+    const financials = clientFinancials.get(c.id) ?? { totalCharge: 0, totalCost: 0 };
+    return {
+      id: c.id,
+      name: c.name,
+      phone: c.phone,
+      email: c.email,
+      totalCharge: financials.totalCharge,
+      totalCost: financials.totalCost,
+    };
+  });
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
-        <div className="flex gap-3">
-          <Link href="/clients/new" className={buttonStyles.primary}>
+        <h1 className="text-lg sm:text-2xl font-bold text-foreground">Dashboard</h1>
+        <div className="flex gap-2 sm:gap-3">
+          <Link href="/clients/new" className={`${buttonStyles.primary} text-xs sm:text-sm`}>
             Add Client
           </Link>
         </div>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid grid-cols-3 gap-2 sm:gap-4">
         <StatCard label="Total Clients" value={clientsRes.count ?? 0} />
         <StatCard label="Total Projects" value={projectsRes.count ?? 0} />
         <StatCard label="Pending Users" value={pendingRes.count ?? 0} />
       </div>
 
-      <div className="rounded-xl border border-border bg-white p-6 shadow-sm">
-        <h2 className="mb-4 text-lg font-semibold text-foreground">
-          Recent Projects
-        </h2>
-        {recentProjects && recentProjects.length > 0 ? (
-          <div className="space-y-3">
-            {recentProjects.map((p) => {
-              const project = p as Project & { clients: { name: string } | null };
-              return (
-                <Link
-                  key={project.id}
-                  href={`/projects/${project.id}`}
-                  className="flex items-center justify-between rounded-lg border border-border p-4 transition-all hover:border-primary/20 hover:shadow-sm"
-                >
-                  <div>
-                    <p className="font-medium text-foreground">{project.name}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {project.clients?.name ?? "Unknown client"}
-                    </p>
-                  </div>
-                  <Badge variant={project.status}>{project.status}</Badge>
-                </Link>
-              );
-            })}
-          </div>
-        ) : (
-          <p className="text-sm text-muted-foreground">No projects yet.</p>
-        )}
-      </div>
+      <DashboardClients clients={dashboardClients} />
     </div>
   );
 }
@@ -131,29 +151,29 @@ async function ClientDashboard({ clientId }: { clientId: string | null }) {
   const projects = (projectsRes.data ?? []) as Project[];
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-foreground">
+    <div className="space-y-4 sm:space-y-6">
+      <h1 className="text-lg sm:text-2xl font-bold text-foreground">
         {client?.name ?? "Dashboard"}
       </h1>
 
       {projects.length > 0 ? (
-        <div className="space-y-3">
+        <div className="space-y-2 sm:space-y-3">
           {projects.map((project) => (
             <Link
               key={project.id}
               href={`/projects/${project.id}`}
-              className="flex items-center justify-between rounded-xl border border-border bg-white p-5 shadow-sm transition-all hover:border-primary/20 hover:shadow-md"
+              className="flex items-center justify-between rounded-xl border border-border bg-white p-3.5 shadow-sm transition-all hover:border-primary/20 hover:shadow-md sm:p-5"
             >
-              <div>
-                <p className="font-medium text-foreground">{project.name}</p>
-                <p className="text-sm text-muted-foreground">
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-medium text-foreground truncate sm:text-base">{project.name}</p>
+                <p className="text-xs text-muted-foreground sm:text-sm">
                   {new Date(project.created_at).toLocaleDateString()}
                 </p>
               </div>
-              <div className="flex items-center gap-3">
+              <div className="flex shrink-0 items-center gap-2 sm:gap-3">
                 <Badge variant={project.status}>{project.status}</Badge>
                 {project.invoice_link && (
-                  <span className="text-xs text-primary">Invoice</span>
+                  <span className="hidden text-xs text-primary sm:block">Invoice</span>
                 )}
               </div>
             </Link>

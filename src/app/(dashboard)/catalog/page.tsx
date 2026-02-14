@@ -29,8 +29,8 @@ export default async function CatalogPage() {
     : await getProductsForClient();
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-foreground">Products</h1>
+    <div className="space-y-4 sm:space-y-6">
+      <h1 className="text-lg sm:text-2xl font-bold text-foreground">Products</h1>
       <ProductsView products={products} isAdmin={admin} />
     </div>
   );

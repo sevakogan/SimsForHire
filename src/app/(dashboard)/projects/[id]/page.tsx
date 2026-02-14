@@ -75,49 +75,49 @@ export default async function ProjectDetailPage({ params }: Props) {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <div>
         {admin && client && (
           <Link
             href={`/clients/${client.id}`}
-            className="text-sm text-muted-foreground hover:text-foreground"
+            className="text-xs sm:text-sm text-muted-foreground hover:text-foreground"
           >
             {client.name}
           </Link>
         )}
-        <div className="flex items-center gap-3">
-          <h1 className="text-2xl font-bold text-foreground">{project.name}</h1>
+        <div className="flex items-center gap-2 sm:gap-3">
+          <h1 className="text-lg sm:text-2xl font-bold text-foreground truncate">{project.name}</h1>
           <Badge variant={project.status}>{project.status}</Badge>
         </div>
       </div>
 
       {/* Customer info header for admin */}
       {admin && client && (
-        <div className={cardStyles.base}>
-          <div className="grid gap-4 sm:grid-cols-4">
+        <div className={`${cardStyles.base} !p-4 sm:!p-6`}>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
             <div>
-              <p className="text-xs font-medium uppercase text-muted-foreground">
+              <p className="text-[10px] sm:text-xs font-medium uppercase text-muted-foreground">
                 Customer
               </p>
-              <p className="text-sm font-medium text-foreground">{client.name}</p>
+              <p className="text-sm font-medium text-foreground truncate">{client.name}</p>
             </div>
             <div>
-              <p className="text-xs font-medium uppercase text-muted-foreground">
+              <p className="text-[10px] sm:text-xs font-medium uppercase text-muted-foreground">
                 Email
               </p>
-              <p className="text-sm text-foreground">{client.email ?? "--"}</p>
+              <p className="text-sm text-foreground truncate">{client.email ?? "--"}</p>
             </div>
             <div>
-              <p className="text-xs font-medium uppercase text-muted-foreground">
+              <p className="text-[10px] sm:text-xs font-medium uppercase text-muted-foreground">
                 Phone
               </p>
               <p className="text-sm text-foreground">{client.phone ?? "--"}</p>
             </div>
             <div>
-              <p className="text-xs font-medium uppercase text-muted-foreground">
+              <p className="text-[10px] sm:text-xs font-medium uppercase text-muted-foreground">
                 Address
               </p>
-              <p className="text-sm text-foreground">{client.address ?? "--"}</p>
+              <p className="text-sm text-foreground truncate">{client.address ?? "--"}</p>
             </div>
           </div>
         </div>
@@ -125,7 +125,7 @@ export default async function ProjectDetailPage({ params }: Props) {
 
       {/* Invoice links */}
       {(project.invoice_link || project.invoice_link_2) && (
-        <div className="flex gap-3">
+        <div className="flex flex-wrap gap-2 sm:gap-3">
           {project.invoice_link && (
             <a
               href={project.invoice_link}
@@ -153,7 +153,7 @@ export default async function ProjectDetailPage({ params }: Props) {
       {admin && <ProjectActions project={project} />}
 
       {/* Invoice items */}
-      <h2 className="text-lg font-semibold text-foreground">Invoice</h2>
+      <h2 className="text-base sm:text-lg font-semibold text-foreground">Invoice</h2>
 
       <ItemsTable items={items} projectId={id} isAdmin={admin} />
 
@@ -162,34 +162,34 @@ export default async function ProjectDetailPage({ params }: Props) {
 
       {/* Summary */}
       {items.length > 0 && (
-        <div className={cardStyles.base}>
-          <h3 className="mb-3 text-sm font-semibold uppercase text-muted-foreground">
+        <div className={`${cardStyles.base} !p-4 sm:!p-6`}>
+          <h3 className="mb-3 text-xs sm:text-sm font-semibold uppercase text-muted-foreground">
             Summary
           </h3>
-          <div className="grid gap-4 sm:grid-cols-4">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
             <div>
-              <p className="text-xs text-muted-foreground">Total Retail</p>
-              <p className="text-lg font-bold text-foreground">
+              <p className="text-[10px] sm:text-xs text-muted-foreground">Total Retail</p>
+              <p className="text-base sm:text-lg font-bold text-foreground">
                 {formatCurrency(totalRetail)}
               </p>
             </div>
             <div>
-              <p className="text-xs text-muted-foreground">Total Shipping</p>
-              <p className="text-lg font-bold text-foreground">
+              <p className="text-[10px] sm:text-xs text-muted-foreground">Total Shipping</p>
+              <p className="text-base sm:text-lg font-bold text-foreground">
                 {formatCurrency(totalRetailShipping)}
               </p>
             </div>
             {admin && (
               <>
                 <div>
-                  <p className="text-xs text-muted-foreground">Total My Cost</p>
-                  <p className="text-lg font-bold text-foreground">
+                  <p className="text-[10px] sm:text-xs text-muted-foreground">Total My Cost</p>
+                  <p className="text-base sm:text-lg font-bold text-foreground">
                     {formatCurrency(totalMyCost + totalMyShipping)}
                   </p>
                 </div>
                 <div>
-                  <p className="text-xs text-muted-foreground">Est. Profit</p>
-                  <p className="text-lg font-bold text-success">
+                  <p className="text-[10px] sm:text-xs text-muted-foreground">Est. Profit</p>
+                  <p className="text-base sm:text-lg font-bold text-success">
                     {formatCurrency(
                       totalRetail + totalRetailShipping - totalMyCost - totalMyShipping
                     )}

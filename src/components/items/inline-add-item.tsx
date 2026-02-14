@@ -415,7 +415,7 @@ export function InlineAddItem({ projectId, isAdmin }: InlineAddItemProps) {
       />
 
       {/* Modal */}
-      <div className="fixed inset-x-0 top-[10%] z-50 mx-auto w-full max-w-2xl px-4 animate-slide-up">
+      <div className="fixed inset-x-0 top-[5%] z-50 mx-auto w-full max-w-2xl px-3 sm:top-[10%] sm:px-4 animate-slide-up max-h-[90vh] overflow-y-auto">
         <div className="rounded-2xl border border-border bg-white p-5 shadow-2xl shadow-black/10">
           {/* Header */}
           <div className="mb-4 flex items-center justify-between">
@@ -453,8 +453,8 @@ export function InlineAddItem({ projectId, isAdmin }: InlineAddItemProps) {
             </div>
 
             {/* Row 2: Name | Model # | Description */}
-            <div className="flex flex-wrap gap-2">
-              <div className={`${pillWrapper} min-w-[120px] flex-1`}>
+            <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
+              <div className={`${pillWrapper} col-span-2 sm:min-w-[120px] sm:flex-1`}>
                 <label htmlFor="new_name" className={pillLabel}>Name *</label>
                 <input
                   id="new_name"
@@ -467,7 +467,7 @@ export function InlineAddItem({ projectId, isAdmin }: InlineAddItemProps) {
                   className={pillInput}
                 />
               </div>
-              <div className={`${pillWrapper} w-24 shrink-0`}>
+              <div className={`${pillWrapper} sm:w-24 sm:shrink-0`}>
                 <label htmlFor="new_model" className={pillLabel}>Model #</label>
                 <input
                   id="new_model"
@@ -478,7 +478,7 @@ export function InlineAddItem({ projectId, isAdmin }: InlineAddItemProps) {
                   className={pillInput}
                 />
               </div>
-              <div className={`${pillWrapper} min-w-[120px] flex-1`}>
+              <div className={`${pillWrapper} sm:min-w-[120px] sm:flex-1`}>
                 <label htmlFor="new_desc" className={pillLabel}>Description</label>
                 <input
                   id="new_desc"
@@ -492,8 +492,8 @@ export function InlineAddItem({ projectId, isAdmin }: InlineAddItemProps) {
             </div>
 
             {/* Row 3: Retail | Wholesale | Sale Price | S/H | URL */}
-            <div className="flex flex-wrap gap-2">
-              <div className={`${pillWrapper} w-24 shrink-0`}>
+            <div className="grid grid-cols-3 gap-2 sm:flex sm:flex-wrap">
+              <div className={`${pillWrapper} sm:w-24 sm:shrink-0`}>
                 <label htmlFor="new_retail" className={pillLabel}>Retail</label>
                 <input
                   id="new_retail"
@@ -505,7 +505,7 @@ export function InlineAddItem({ projectId, isAdmin }: InlineAddItemProps) {
                 />
               </div>
               {isAdmin && (
-                <div className={`${pillWrapperAdmin} w-24 shrink-0`}>
+                <div className={`${pillWrapperAdmin} sm:w-24 sm:shrink-0`}>
                   <label htmlFor="new_cost" className={pillLabelAdmin}>Wholesale</label>
                   <input
                     id="new_cost"
@@ -517,7 +517,7 @@ export function InlineAddItem({ projectId, isAdmin }: InlineAddItemProps) {
                   />
                 </div>
               )}
-              <div className={`${pillWrapper} w-24 shrink-0`}>
+              <div className={`${pillWrapper} sm:w-24 sm:shrink-0`}>
                 <label htmlFor="new_sales" className={pillLabel}>Sale Price</label>
                 <input
                   id="new_sales"
@@ -528,7 +528,7 @@ export function InlineAddItem({ projectId, isAdmin }: InlineAddItemProps) {
                   className={pillInput}
                 />
               </div>
-              <div className={`${pillWrapper} w-20 shrink-0`}>
+              <div className={`${pillWrapper} sm:w-20 sm:shrink-0`}>
                 <label htmlFor="new_shipping" className={pillLabel}>S/H</label>
                 <input
                   id="new_shipping"
@@ -539,7 +539,7 @@ export function InlineAddItem({ projectId, isAdmin }: InlineAddItemProps) {
                   className={pillInput}
                 />
               </div>
-              <div className={`${pillWrapper} w-32 shrink-0`}>
+              <div className={`${pillWrapper} col-span-3 sm:w-32 sm:shrink-0`}>
                 <label htmlFor="new_website" className={pillLabel}>URL</label>
                 <input
                   id="new_website"

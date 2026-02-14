@@ -15,15 +15,15 @@ export default async function NewProjectPage({ params }: Props) {
   if (!client) notFound();
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <div>
         <Link
           href={`/clients/${id}`}
-          className="text-sm text-muted-foreground hover:text-foreground"
+          className="text-xs sm:text-sm text-muted-foreground hover:text-foreground"
         >
           {client.name}
         </Link>
-        <h1 className="text-2xl font-bold text-foreground">New Project</h1>
+        <h1 className="text-lg sm:text-2xl font-bold text-foreground">New Project</h1>
       </div>
       <div className={cardStyles.base}>
         <ProjectForm clientId={id} />

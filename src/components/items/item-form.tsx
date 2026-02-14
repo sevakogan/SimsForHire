@@ -170,32 +170,18 @@ export function ItemForm({ projectId, itemNumber, item, isAdmin }: ItemFormProps
         />
       )}
 
-      {/* Row 1: Seller/Merchant | Type tag picker */}
-      <div className="flex flex-wrap items-end gap-2">
-        <div className={`${pillWrapper} w-32 shrink-0`}>
-          <label htmlFor="seller_merchant" className={pillLabel}>Seller/Merchant</label>
-          <input
-            id="seller_merchant"
-            name="seller_merchant"
-            type="text"
-            value={fields.seller_merchant}
-            onChange={(e) => updateField("seller_merchant", e.target.value)}
-            placeholder="Seller…"
-            className={pillInput}
-          />
-        </div>
-        <div className="flex-1">
-          <p className={`${pillLabel} mb-1.5`}>Type</p>
-          <TypeTagPicker
-            value={fields.item_type}
-            onChange={(val) => updateField("item_type", val)}
-          />
-        </div>
+      {/* Row 1: Type tag picker */}
+      <div>
+        <p className={`${pillLabel} mb-1.5`}>Type</p>
+        <TypeTagPicker
+          value={fields.item_type}
+          onChange={(val) => updateField("item_type", val)}
+        />
       </div>
 
       {/* Row 2: # | Model # | Description | Link */}
-      <div className="flex flex-wrap gap-2">
-        <div className={`${pillWrapperReadonly} w-16 shrink-0`}>
+      <div className="grid grid-cols-4 gap-2 sm:flex sm:flex-wrap">
+        <div className={`${pillWrapperReadonly} sm:w-16 sm:shrink-0`}>
           <span className={pillLabel}>#</span>
           <input
             type="number"
@@ -205,7 +191,7 @@ export function ItemForm({ projectId, itemNumber, item, isAdmin }: ItemFormProps
           />
         </div>
 
-        <div className={`${pillWrapper} w-28 shrink-0`}>
+        <div className={`${pillWrapper} col-span-3 sm:w-28 sm:shrink-0`}>
           <label htmlFor="model_number" className={pillLabel}>Model #</label>
           <input
             id="model_number"
@@ -218,7 +204,7 @@ export function ItemForm({ projectId, itemNumber, item, isAdmin }: ItemFormProps
           />
         </div>
 
-        <div className={`${pillWrapper} min-w-[160px] flex-1`}>
+        <div className={`${pillWrapper} col-span-4 sm:min-w-[160px] sm:flex-1`}>
           <label htmlFor="description" className={pillLabel}>Description *</label>
           <input
             id="description"
@@ -232,7 +218,7 @@ export function ItemForm({ projectId, itemNumber, item, isAdmin }: ItemFormProps
           />
         </div>
 
-        <div className={`${pillWrapper} w-32 shrink-0`}>
+        <div className={`${pillWrapper} col-span-4 sm:w-32 sm:shrink-0`}>
           <label htmlFor="item_link" className={pillLabel}>Link</label>
           <input
             id="item_link"
@@ -246,9 +232,22 @@ export function ItemForm({ projectId, itemNumber, item, isAdmin }: ItemFormProps
         </div>
       </div>
 
-      {/* Row 3: Retail Cost | Wholesale % | Wholesale Cost (admin) | Sale Price | S/H */}
-      <div className="flex flex-wrap gap-2">
-        <div className={`${pillWrapper} w-24 shrink-0`}>
+      {/* Row 3: Seller/Merchant | Retail Cost | Wholesale % | Wholesale Cost (admin) | Sale Price | S/H */}
+      <div className="grid grid-cols-3 gap-2 sm:flex sm:flex-wrap">
+        <div className={`${pillWrapper} col-span-3 sm:w-32 sm:shrink-0`}>
+          <label htmlFor="seller_merchant" className={pillLabel}>Seller/Merchant</label>
+          <input
+            id="seller_merchant"
+            name="seller_merchant"
+            type="text"
+            value={fields.seller_merchant}
+            onChange={(e) => updateField("seller_merchant", e.target.value)}
+            placeholder="Seller…"
+            className={pillInput}
+          />
+        </div>
+
+        <div className={`${pillWrapper} sm:w-24 sm:shrink-0`}>
           <label htmlFor="retail_price" className={pillLabel}>Retail Cost</label>
           <input
             id="retail_price"
@@ -261,7 +260,7 @@ export function ItemForm({ projectId, itemNumber, item, isAdmin }: ItemFormProps
           />
         </div>
 
-        <div className={`${pillWrapper} w-24 shrink-0`}>
+        <div className={`${pillWrapper} sm:w-24 sm:shrink-0`}>
           <label htmlFor="discount_percent" className={pillLabel}>Wholesale %</label>
           <input
             id="discount_percent"
@@ -275,7 +274,7 @@ export function ItemForm({ projectId, itemNumber, item, isAdmin }: ItemFormProps
         </div>
 
         {isAdmin && (
-          <div className={`${pillWrapperAdmin} w-28 shrink-0`}>
+          <div className={`${pillWrapperAdmin} sm:w-28 sm:shrink-0`}>
             <label htmlFor="my_cost" className={pillLabelAdmin}>Wholesale Cost</label>
             <input
               id="my_cost"
@@ -289,7 +288,7 @@ export function ItemForm({ projectId, itemNumber, item, isAdmin }: ItemFormProps
           </div>
         )}
 
-        <div className={`${pillWrapper} w-24 shrink-0`}>
+        <div className={`${pillWrapper} sm:w-24 sm:shrink-0`}>
           <label htmlFor="price_sold_for" className={pillLabel}>Sale Price</label>
           <input
             id="price_sold_for"
@@ -303,7 +302,7 @@ export function ItemForm({ projectId, itemNumber, item, isAdmin }: ItemFormProps
           />
         </div>
 
-        <div className={`${pillWrapper} w-20 shrink-0`}>
+        <div className={`${pillWrapper} sm:w-20 sm:shrink-0`}>
           <label htmlFor="retail_shipping" className={pillLabel}>S/H</label>
           <input
             id="retail_shipping"

@@ -1,55 +1,22 @@
 import Link from "next/link";
 import { getClients } from "@/lib/actions/clients";
-import { buttonStyles, tableStyles } from "@/components/ui/form-styles";
+import { buttonStyles } from "@/components/ui/form-styles";
+import { ClientsView } from "@/components/clients/clients-view";
 
 export default async function ClientsPage() {
   const clients = await getClients();
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-foreground">Clients</h1>
-        <Link href="/clients/new" className={buttonStyles.primary}>
+        <h1 className="text-lg sm:text-2xl font-bold text-foreground">Clients</h1>
+        <Link href="/clients/new" className={`${buttonStyles.primary} text-xs sm:text-sm`}>
           Add Client
         </Link>
       </div>
 
       {clients.length > 0 ? (
-        <div className={tableStyles.wrapper}>
-          <table className={tableStyles.table}>
-            <thead className={tableStyles.thead}>
-              <tr>
-                <th className={tableStyles.th}>Name</th>
-                <th className={tableStyles.th}>Email</th>
-                <th className={tableStyles.th}>Phone</th>
-                <th className={tableStyles.th}>Created</th>
-              </tr>
-            </thead>
-            <tbody className={tableStyles.tbody}>
-              {clients.map((client) => (
-                <tr key={client.id} className={tableStyles.row}>
-                  <td className={tableStyles.td}>
-                    <Link
-                      href={`/clients/${client.id}`}
-                      className="font-medium text-primary hover:underline"
-                    >
-                      {client.name}
-                    </Link>
-                  </td>
-                  <td className={tableStyles.tdMuted}>
-                    {client.email ?? "--"}
-                  </td>
-                  <td className={tableStyles.tdMuted}>
-                    {client.phone ?? "--"}
-                  </td>
-                  <td className={tableStyles.tdMuted}>
-                    {new Date(client.created_at).toLocaleDateString()}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <ClientsView clients={clients} />
       ) : (
         <div className="rounded-xl border border-dashed border-border p-8 text-center">
           <p className="text-sm text-muted-foreground">No clients yet.</p>

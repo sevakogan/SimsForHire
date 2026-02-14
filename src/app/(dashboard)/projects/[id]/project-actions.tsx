@@ -38,36 +38,38 @@ export function ProjectActions({ project }: Props) {
   }
 
   return (
-    <div className="flex flex-wrap items-center gap-3">
-      <div className="flex items-center gap-2">
-        <span className="text-sm text-muted-foreground">Status:</span>
-        {statusOptions.map((status) => (
-          <button
-            key={status}
-            onClick={() => handleStatusChange(status)}
-            disabled={loading || project.status === status}
-            className={`${buttonStyles.small} ${
-              project.status === status
-                ? "bg-primary text-white"
-                : "border border-border text-muted-foreground hover:bg-muted"
-            } rounded-full`}
-          >
-            {status}
-          </button>
-        ))}
-      </div>
+    <div className="space-y-3">
+      <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+        <span className="text-xs sm:text-sm text-muted-foreground">Status:</span>
+        <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+          {statusOptions.map((status) => (
+            <button
+              key={status}
+              onClick={() => handleStatusChange(status)}
+              disabled={loading || project.status === status}
+              className={`${buttonStyles.small} ${
+                project.status === status
+                  ? "bg-primary text-white"
+                  : "border border-border text-muted-foreground hover:bg-muted"
+              } rounded-full text-[11px] sm:text-xs`}
+            >
+              {status}
+            </button>
+          ))}
+        </div>
 
-      <button
-        onClick={() => setShowInvoice(!showInvoice)}
-        className={buttonStyles.secondary}
-      >
-        Invoice Links
-      </button>
+        <button
+          onClick={() => setShowInvoice(!showInvoice)}
+          className={`${buttonStyles.secondary} text-xs`}
+        >
+          Invoice Links
+        </button>
+      </div>
 
       {showInvoice && (
         <form
           onSubmit={handleInvoiceSave}
-          className="flex w-full items-end gap-3"
+          className="flex flex-col gap-3 sm:flex-row sm:items-end"
         >
           <div className={`${formStyles.group} flex-1`}>
             <label htmlFor="invoice_link" className={formStyles.label}>

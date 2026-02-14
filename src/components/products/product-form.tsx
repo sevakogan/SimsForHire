@@ -83,30 +83,15 @@ export function ProductForm({ product, isAdmin }: ProductFormProps) {
         </div>
       )}
 
-      {/* Row 1: Seller/Merchant | Type tag picker */}
-      <div className="flex flex-wrap items-end gap-2">
-        <div className={`${pillWrapper} w-32 shrink-0`}>
-          <label htmlFor="seller_merchant" className={pillLabel}>
-            Seller/Merchant
-          </label>
-          <input
-            id="seller_merchant"
-            name="seller_merchant"
-            type="text"
-            defaultValue={product?.seller_merchant ?? ""}
-            placeholder="Seller…"
-            className={pillInput}
-          />
-        </div>
-        <div className="flex-1">
-          <p className={`${pillLabel} mb-1.5`}>Type</p>
-          <TypeTagPicker value={type} onChange={setType} />
-        </div>
+      {/* Row 1: Type tag picker */}
+      <div>
+        <p className={`${pillLabel} mb-1.5`}>Type</p>
+        <TypeTagPicker value={type} onChange={setType} />
       </div>
 
       {/* Row 2: Name | Model # | Description */}
-      <div className="flex flex-wrap gap-2">
-        <div className={`${pillWrapper} min-w-[120px] flex-1`}>
+      <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
+        <div className={`${pillWrapper} col-span-2 sm:min-w-[120px] sm:flex-1`}>
           <label htmlFor="name" className={pillLabel}>
             Name *
           </label>
@@ -121,7 +106,7 @@ export function ProductForm({ product, isAdmin }: ProductFormProps) {
           />
         </div>
 
-        <div className={`${pillWrapper} w-24 shrink-0`}>
+        <div className={`${pillWrapper} sm:w-24 sm:shrink-0`}>
           <label htmlFor="model_number" className={pillLabel}>
             Model #
           </label>
@@ -135,7 +120,7 @@ export function ProductForm({ product, isAdmin }: ProductFormProps) {
           />
         </div>
 
-        <div className={`${pillWrapper} min-w-[120px] flex-1`}>
+        <div className={`${pillWrapper} col-span-2 sm:min-w-[120px] sm:flex-1`}>
           <label htmlFor="description" className={pillLabel}>
             Description
           </label>
@@ -150,9 +135,23 @@ export function ProductForm({ product, isAdmin }: ProductFormProps) {
         </div>
       </div>
 
-      {/* Row 3: Retail | Wholesale | Sale Price | S/H | URL */}
-      <div className="flex flex-wrap gap-2">
-        <div className={`${pillWrapper} w-24 shrink-0`}>
+      {/* Row 3: Seller/Merchant | Retail | Wholesale | Sale Price | S/H | URL */}
+      <div className="grid grid-cols-3 gap-2 sm:flex sm:flex-wrap">
+        <div className={`${pillWrapper} col-span-3 sm:w-32 sm:shrink-0`}>
+          <label htmlFor="seller_merchant" className={pillLabel}>
+            Seller/Merchant
+          </label>
+          <input
+            id="seller_merchant"
+            name="seller_merchant"
+            type="text"
+            defaultValue={product?.seller_merchant ?? ""}
+            placeholder="Seller…"
+            className={pillInput}
+          />
+        </div>
+
+        <div className={`${pillWrapper} sm:w-24 sm:shrink-0`}>
           <label htmlFor="retail_price" className={pillLabel}>
             Retail
           </label>
@@ -167,7 +166,7 @@ export function ProductForm({ product, isAdmin }: ProductFormProps) {
         </div>
 
         {isAdmin && (
-          <div className={`${pillWrapperAdmin} w-24 shrink-0`}>
+          <div className={`${pillWrapperAdmin} sm:w-24 sm:shrink-0`}>
             <label htmlFor="cost" className={pillLabelAdmin}>
               Wholesale
             </label>
@@ -182,7 +181,7 @@ export function ProductForm({ product, isAdmin }: ProductFormProps) {
           </div>
         )}
 
-        <div className={`${pillWrapper} w-24 shrink-0`}>
+        <div className={`${pillWrapper} sm:w-24 sm:shrink-0`}>
           <label htmlFor="sales_price" className={pillLabel}>
             Sale Price
           </label>
@@ -196,7 +195,7 @@ export function ProductForm({ product, isAdmin }: ProductFormProps) {
           />
         </div>
 
-        <div className={`${pillWrapper} w-20 shrink-0`}>
+        <div className={`${pillWrapper} sm:w-20 sm:shrink-0`}>
           <label htmlFor="shipping" className={pillLabel}>
             S/H
           </label>
@@ -210,7 +209,7 @@ export function ProductForm({ product, isAdmin }: ProductFormProps) {
           />
         </div>
 
-        <div className={`${pillWrapper} w-32 shrink-0`}>
+        <div className={`${pillWrapper} col-span-2 sm:w-32 sm:shrink-0`}>
           <label htmlFor="manufacturer_website" className={pillLabel}>
             URL
           </label>
