@@ -164,7 +164,7 @@ export async function getClientSafeItemsByProjectId(
   const supabase = getAdminSupabase();
 
   const CLIENT_SAFE_COLUMNS =
-    "id, project_id, item_number, item_type, description, item_link, retail_price, retail_shipping, discount_percent, price_sold_for, image_url, notes, model_number, seller_merchant, acceptance_status, created_at, updated_at";
+    "id, project_id, item_number, item_type, description, item_link, retail_price, retail_shipping, discount_percent, price_sold_for, image_url, notes, model_number, seller_merchant, acceptance_status, client_note, created_at, updated_at";
 
   const { data, error } = await supabase
     .from("items")
@@ -243,5 +243,71 @@ export async function submitItemDecisions(
     if (error) return { error: error.message };
   }
 
+  return { error: null };
+}
+
+/**
+ * Save a client note on an item via share token.
+ */
+export async function saveClientNote(
+  shareToken: string,
+  itemId: string,
+  note: string | null
+): Promise<{ error: string | null }> {
+  if (!shareToken) return { error: "Invalid token" };
+
+  const supabase = getAdminSupabase();
+
+  const { data: project } = await supabase
+    .from("projects")
+    .select("id, status")
+    .eq("share_token", shareToken)
+    .single();
+
+  if (!project) return { error: "Invalid share link" };
+  if (project.status === "accepted" || project.status === "completed") {
+    return { error: "This invoice is no longer editable" };
+  }
+
+  const { error } = await supabase
+    .from("items")
+    .update({ client_note: note || null })
+    .eq("id", itemId)
+    .eq("project_id", project.id);
+
+  if (error) return { error: error.message };
+  return { error: null };
+}
+
+/**
+ * Delete an item from a project via share token.
+ * Only allowed when the project is not yet accepted/completed.
+ */
+export async function deleteItemByShareToken(
+  shareToken: string,
+  itemId: string
+): Promise<{ error: string | null }> {
+  if (!shareToken) return { error: "Invalid token" };
+
+  const supabase = getAdminSupabase();
+
+  const { data: project } = await supabase
+    .from("projects")
+    .select("id, status")
+    .eq("share_token", shareToken)
+    .single();
+
+  if (!project) return { error: "Invalid share link" };
+  if (project.status === "accepted" || project.status === "completed") {
+    return { error: "This invoice is no longer editable" };
+  }
+
+  const { error } = await supabase
+    .from("items")
+    .delete()
+    .eq("id", itemId)
+    .eq("project_id", project.id);
+
+  if (error) return { error: error.message };
   return { error: null };
 }

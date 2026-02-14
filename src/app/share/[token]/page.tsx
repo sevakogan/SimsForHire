@@ -127,7 +127,11 @@ export default async function SharedInvoicePage({ params }: Props) {
                     return (
                       <tr
                         key={item.id}
-                        className="transition-colors hover:bg-gray-50/50"
+                        className={`transition-colors ${
+                          index % 2 === 0
+                            ? "bg-white hover:bg-gray-50/50"
+                            : "bg-gray-50/60 hover:bg-gray-100/60"
+                        }`}
                       >
                         <td className="px-4 py-3 text-gray-400 tabular-nums">
                           {index + 1}
@@ -198,7 +202,9 @@ export default async function SharedInvoicePage({ params }: Props) {
                 return (
                   <div
                     key={item.id}
-                    className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm"
+                    className={`rounded-xl border border-gray-200 p-4 shadow-sm ${
+                      index % 2 === 0 ? "bg-white" : "bg-gray-50/60"
+                    }`}
                   >
                     <div className="flex items-start gap-3">
                       <span className="mt-0.5 text-xs font-medium text-gray-400">

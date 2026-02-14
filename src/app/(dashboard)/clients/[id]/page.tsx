@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getClientById } from "@/lib/actions/clients";
 import { getProjects } from "@/lib/actions/projects";
+import { getClientNoteCountsByProjects } from "@/lib/actions/items";
 import { ClientDetailClient } from "./client-detail-client";
 import { ProjectCard } from "./project-card";
 import { buttonStyles, cardStyles } from "@/components/ui/form-styles";
@@ -17,6 +18,8 @@ export default async function ClientDetailPage({ params }: Props) {
   if (!client) notFound();
 
   const projects = await getProjects({ clientId: id });
+  const projectIds = projects.map((p) => p.id);
+  const noteCountsMap = await getClientNoteCountsByProjects(projectIds);
 
   return (
     <div className="space-y-4 sm:space-y-6">
@@ -62,7 +65,11 @@ export default async function ClientDetailPage({ params }: Props) {
       {projects.length > 0 ? (
         <div className="space-y-2 sm:space-y-3">
           {projects.map((project) => (
-            <ProjectCard key={project.id} project={project} />
+            <ProjectCard
+              key={project.id}
+              project={project}
+              clientNoteCount={noteCountsMap.get(project.id) ?? 0}
+            />
           ))}
         </div>
       ) : (

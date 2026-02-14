@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getProjectById } from "@/lib/actions/projects";
-import { getItems, getItemsForClient } from "@/lib/actions/items";
+import { getItems, getItemsForClient, getClientNoteCount } from "@/lib/actions/items";
 import { getClientById } from "@/lib/actions/clients";
 import { createSupabaseServer } from "@/lib/supabase-server";
 import { Badge } from "@/components/ui/badge";
@@ -48,9 +48,10 @@ export default async function ProjectDetailPage({ params }: Props) {
   if (!project) notFound();
 
   const client = await getClientById(project.client_id);
-  const items = admin
-    ? await getItems(id)
-    : await getItemsForClient(id);
+  const [items, noteCount] = await Promise.all([
+    admin ? getItems(id) : getItemsForClient(id),
+    admin ? getClientNoteCount(id) : Promise.resolve(0),
+  ]);
 
   const totalRetail = items.reduce(
     (sum, i) => sum + Number(i.retail_price),
@@ -163,9 +164,16 @@ export default async function ProjectDetailPage({ params }: Props) {
       {admin && <ProjectActions project={project} />}
 
       {/* Invoice items */}
-      <h2 className="text-base sm:text-lg font-semibold text-foreground">Invoice</h2>
+      <div className="flex items-center gap-2">
+        <h2 className="text-base sm:text-lg font-semibold text-foreground">Invoice</h2>
+        {admin && noteCount > 0 && (
+          <span className="inline-flex items-center justify-center rounded-full bg-red-500 px-1.5 py-0.5 text-[10px] font-bold text-white min-w-[18px] leading-none">
+            {noteCount}
+          </span>
+        )}
+      </div>
 
-      <ItemsTable items={items} projectId={id} isAdmin={admin} />
+      <ItemsTable items={items} projectId={id} isAdmin={admin} clientNoteCount={noteCount} />
 
       {/* Inline add item bar */}
       {admin && <InlineAddItem projectId={id} isAdmin={admin} />}

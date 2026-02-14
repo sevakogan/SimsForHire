@@ -4,7 +4,7 @@ import { createSupabaseServer } from "@/lib/supabase-server";
 import type { Item, ClientItem } from "@/types";
 
 const CLIENT_SAFE_COLUMNS =
-  "id, project_id, item_number, item_type, description, item_link, retail_price, retail_shipping, discount_percent, price_sold_for, image_url, notes, model_number, seller_merchant, acceptance_status, created_at, updated_at";
+  "id, project_id, item_number, item_type, description, item_link, retail_price, retail_shipping, discount_percent, price_sold_for, image_url, notes, model_number, seller_merchant, acceptance_status, client_note, created_at, updated_at";
 
 export async function getItems(projectId: string): Promise<Item[]> {
   const supabase = await createSupabaseServer();
@@ -122,4 +122,50 @@ export async function deleteItem(
   const { error } = await supabase.from("items").delete().eq("id", id);
   if (error) return { error: error.message };
   return { error: null };
+}
+
+/**
+ * Count items with non-null client notes for a project.
+ * Used to show notification badges in admin views.
+ */
+export async function getClientNoteCount(
+  projectId: string
+): Promise<number> {
+  const supabase = await createSupabaseServer();
+  const { count, error } = await supabase
+    .from("items")
+    .select("id", { count: "exact", head: true })
+    .eq("project_id", projectId)
+    .not("client_note", "is", null)
+    .neq("client_note", "");
+
+  if (error) return 0;
+  return count ?? 0;
+}
+
+/**
+ * Get client note counts for multiple projects at once.
+ * Returns a map of projectId → count of items with client notes.
+ */
+export async function getClientNoteCountsByProjects(
+  projectIds: string[]
+): Promise<Map<string, number>> {
+  if (projectIds.length === 0) return new Map();
+
+  const supabase = await createSupabaseServer();
+  const { data, error } = await supabase
+    .from("items")
+    .select("project_id, client_note")
+    .in("project_id", projectIds)
+    .not("client_note", "is", null)
+    .neq("client_note", "");
+
+  if (error || !data) return new Map();
+
+  const counts = new Map<string, number>();
+  for (const item of data) {
+    const current = counts.get(item.project_id) ?? 0;
+    counts.set(item.project_id, current + 1);
+  }
+  return counts;
 }

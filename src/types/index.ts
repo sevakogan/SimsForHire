@@ -63,6 +63,7 @@ export interface Item {
   product_id: string | null;
   seller_merchant: string;
   acceptance_status: AcceptanceStatus;
+  client_note: string | null;
   created_at: string;
   updated_at: string;
 }
