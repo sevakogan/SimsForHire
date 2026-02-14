@@ -8,6 +8,8 @@ import { firstImage } from "@/lib/parse-images";
 import { ShareActions } from "./share-actions";
 import type { Metadata } from "next";
 
+export const dynamic = "force-dynamic";
+
 interface Props {
   params: Promise<{ token: string }>;
 }
