@@ -12,7 +12,8 @@ import {
   pillWrapperAdmin,
   pillLabelAdmin,
 } from "@/components/ui/pill-styles";
-import { ImageUpload } from "@/components/items/image-upload";
+import { MultiImageUpload } from "@/components/items/multi-image-upload";
+import { TypeTagPicker } from "@/components/products/type-tag-picker";
 import type { ProductSearchResult } from "@/types";
 
 interface InlineAddItemProps {
@@ -26,12 +27,11 @@ interface NewProductFields {
   name: string;
   model_number: string;
   type: string;
-  description: string;
   retail_price: string;
   cost: string;
   sales_price: string;
   shipping: string;
-  image_url: string | null;
+  images: string[];
   notes: string;
   manufacturer_website: string;
 }
@@ -41,12 +41,11 @@ function emptyProductFields(name: string = ""): NewProductFields {
     name,
     model_number: "",
     type: "",
-    description: "",
     retail_price: "0",
     cost: "0",
     sales_price: "0",
     shipping: "0",
-    image_url: null,
+    images: [],
     notes: "",
     manufacturer_website: "",
   };
@@ -204,16 +203,23 @@ export function InlineAddItem({ projectId, isAdmin }: InlineAddItemProps) {
     setSaving(true);
     setError(null);
     try {
+      const imageUrl =
+        productFields.images.length === 0
+          ? undefined
+          : productFields.images.length === 1
+            ? productFields.images[0]
+            : JSON.stringify(productFields.images);
+
       const productResult = await createProduct({
         name: productFields.name,
         model_number: productFields.model_number,
         type: productFields.type,
-        description: productFields.description,
+        description: productFields.name,
         retail_price: parseFloat(productFields.retail_price) || 0,
         cost: parseFloat(productFields.cost) || 0,
         sales_price: parseFloat(productFields.sales_price) || 0,
         shipping: parseFloat(productFields.shipping) || 0,
-        image_url: productFields.image_url ?? undefined,
+        image_url: imageUrl,
         notes: productFields.notes || undefined,
         manufacturer_website: productFields.manufacturer_website || undefined,
       });
@@ -227,14 +233,14 @@ export function InlineAddItem({ projectId, isAdmin }: InlineAddItemProps) {
         project_id: projectId,
         item_number: nextNumber,
         item_type: productFields.type,
-        description: productFields.description || productFields.name,
+        description: productFields.name,
         retail_price: parseFloat(productFields.retail_price) || 0,
         retail_shipping: parseFloat(productFields.shipping) || 0,
         discount_percent: 0,
         my_cost: parseFloat(productFields.cost) || 0,
         my_shipping: 0,
         price_sold_for: parseFloat(productFields.sales_price) || 0,
-        image_url: productFields.image_url ?? undefined,
+        image_url: productFields.images[0] ?? undefined,
         product_id: productResult.id ?? undefined,
       });
       if (itemResult.error) {
@@ -431,9 +437,29 @@ export function InlineAddItem({ projectId, isAdmin }: InlineAddItemProps) {
           )}
 
           <form onSubmit={handleCreateProductAndItem} className="space-y-3">
-            {/* Row 1: Name | Model # | Type */}
+            {/* Row 1: Type tag picker */}
+            <div>
+              <p className={`${pillLabel} mb-1.5`}>Type</p>
+              <TypeTagPicker
+                value={productFields.type}
+                onChange={(val) => updateProductField("type", val)}
+              />
+            </div>
+
+            {/* Row 2: Model# (small) | Name | Retail | Wholesale | Sale | S/H */}
             <div className="flex flex-wrap gap-2">
-              <div className={`${pillWrapper} min-w-[120px] flex-1`}>
+              <div className={`${pillWrapper} w-24 shrink-0`}>
+                <label htmlFor="new_model" className={pillLabel}>Model #</label>
+                <input
+                  id="new_model"
+                  type="text"
+                  value={productFields.model_number}
+                  onChange={(e) => updateProductField("model_number", e.target.value)}
+                  placeholder="Model…"
+                  className={pillInput}
+                />
+              </div>
+              <div className={`${pillWrapper} min-w-[140px] flex-1`}>
                 <label htmlFor="new_name" className={pillLabel}>Name *</label>
                 <input
                   id="new_name"
@@ -446,50 +472,8 @@ export function InlineAddItem({ projectId, isAdmin }: InlineAddItemProps) {
                   className={pillInput}
                 />
               </div>
-              <div className={`${pillWrapper} min-w-[120px] flex-1`}>
-                <label htmlFor="new_model" className={pillLabel}>Model #</label>
-                <input
-                  id="new_model"
-                  type="text"
-                  value={productFields.model_number}
-                  onChange={(e) => updateProductField("model_number", e.target.value)}
-                  placeholder="Model…"
-                  className={pillInput}
-                />
-              </div>
-              <div className={`${pillWrapper} min-w-[120px] flex-1`}>
-                <label htmlFor="new_type" className={pillLabel}>Type</label>
-                <input
-                  id="new_type"
-                  type="text"
-                  value={productFields.type}
-                  onChange={(e) => updateProductField("type", e.target.value)}
-                  placeholder="Furniture…"
-                  className={pillInput}
-                />
-              </div>
-            </div>
-
-            {/* Row 2: Description (2x width) */}
-            <div className="flex gap-2">
-              <div className={`${pillWrapper} flex-[2] min-w-[240px]`}>
-                <label htmlFor="new_description" className={pillLabel}>Description</label>
-                <input
-                  id="new_description"
-                  type="text"
-                  value={productFields.description}
-                  onChange={(e) => updateProductField("description", e.target.value)}
-                  placeholder="Brief description…"
-                  className={pillInput}
-                />
-              </div>
-              <div className="flex-1" />
-            </div>
-
-            {/* Row 3: Prices */}
-            <div className="flex flex-wrap gap-2">
-              <div className={`${pillWrapper} w-28 shrink-0`}>
-                <label htmlFor="new_retail" className={pillLabel}>Retail $</label>
+              <div className={`${pillWrapper} w-24 shrink-0`}>
+                <label htmlFor="new_retail" className={pillLabel}>Retail</label>
                 <input
                   id="new_retail"
                   type="number"
@@ -499,20 +483,9 @@ export function InlineAddItem({ projectId, isAdmin }: InlineAddItemProps) {
                   className={pillInput}
                 />
               </div>
-              <div className={`${pillWrapper} w-28 shrink-0`}>
-                <label htmlFor="new_sales" className={pillLabel}>Sales $</label>
-                <input
-                  id="new_sales"
-                  type="number"
-                  step="0.01"
-                  value={productFields.sales_price}
-                  onChange={(e) => updateProductField("sales_price", e.target.value)}
-                  className={pillInput}
-                />
-              </div>
               {isAdmin && (
-                <div className={`${pillWrapperAdmin} w-28 shrink-0`}>
-                  <label htmlFor="new_cost" className={pillLabelAdmin}>Dealer $</label>
+                <div className={`${pillWrapperAdmin} w-24 shrink-0`}>
+                  <label htmlFor="new_cost" className={pillLabelAdmin}>Wholesale</label>
                   <input
                     id="new_cost"
                     type="number"
@@ -523,7 +496,18 @@ export function InlineAddItem({ projectId, isAdmin }: InlineAddItemProps) {
                   />
                 </div>
               )}
-              <div className={`${pillWrapper} w-28 shrink-0`}>
+              <div className={`${pillWrapper} w-24 shrink-0`}>
+                <label htmlFor="new_sales" className={pillLabel}>Sale Price</label>
+                <input
+                  id="new_sales"
+                  type="number"
+                  step="0.01"
+                  value={productFields.sales_price}
+                  onChange={(e) => updateProductField("sales_price", e.target.value)}
+                  className={pillInput}
+                />
+              </div>
+              <div className={`${pillWrapper} w-20 shrink-0`}>
                 <label htmlFor="new_shipping" className={pillLabel}>S/H</label>
                 <input
                   id="new_shipping"
@@ -536,10 +520,10 @@ export function InlineAddItem({ projectId, isAdmin }: InlineAddItemProps) {
               </div>
             </div>
 
-            {/* Row 4: Website | Image | Notes */}
+            {/* Row 3: URL | Notes */}
             <div className="flex flex-wrap gap-2">
-              <div className={`${pillWrapper} min-w-[160px] flex-1`}>
-                <label htmlFor="new_website" className={pillLabel}>Manufacturer Website</label>
+              <div className={`${pillWrapper} min-w-[180px] flex-1`}>
+                <label htmlFor="new_website" className={pillLabel}>URL</label>
                 <input
                   id="new_website"
                   type="url"
@@ -549,19 +533,7 @@ export function InlineAddItem({ projectId, isAdmin }: InlineAddItemProps) {
                   className={`${pillInput} text-xs`}
                 />
               </div>
-              <div className={`${pillWrapper} min-w-[120px]`}>
-                <label className={pillLabel}>Image</label>
-                <ImageUpload
-                  currentUrl={null}
-                  onUpload={(url) =>
-                    setProductFields((prev) => ({ ...prev, image_url: url }))
-                  }
-                  onRemove={() =>
-                    setProductFields((prev) => ({ ...prev, image_url: null }))
-                  }
-                />
-              </div>
-              <div className={`${pillWrapper} min-w-[160px] flex-1`}>
+              <div className={`${pillWrapper} min-w-[200px] flex-[2]`}>
                 <label htmlFor="new_notes" className={pillLabel}>Notes</label>
                 <input
                   id="new_notes"
@@ -572,6 +544,18 @@ export function InlineAddItem({ projectId, isAdmin }: InlineAddItemProps) {
                   className={pillInput}
                 />
               </div>
+            </div>
+
+            {/* Row 4: Image upload (up to 8) */}
+            <div>
+              <p className={`${pillLabel} mb-1.5`}>Images (up to 8)</p>
+              <MultiImageUpload
+                images={productFields.images}
+                onChange={(imgs) =>
+                  setProductFields((prev) => ({ ...prev, images: imgs }))
+                }
+                max={8}
+              />
             </div>
 
             {/* Actions */}

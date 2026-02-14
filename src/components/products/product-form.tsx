@@ -11,7 +11,8 @@ import {
   pillWrapperAdmin,
   pillLabelAdmin,
 } from "@/components/ui/pill-styles";
-import { ImageUpload } from "@/components/items/image-upload";
+import { MultiImageUpload } from "@/components/items/multi-image-upload";
+import { TypeTagPicker } from "@/components/products/type-tag-picker";
 import type { Product } from "@/types";
 
 interface ProductFormProps {
@@ -19,13 +20,25 @@ interface ProductFormProps {
   isAdmin: boolean;
 }
 
+function parseImages(imageUrl: string | null | undefined): string[] {
+  if (!imageUrl) return [];
+  try {
+    const parsed = JSON.parse(imageUrl);
+    if (Array.isArray(parsed)) return parsed;
+  } catch {
+    // Not JSON — treat as single URL
+  }
+  return imageUrl ? [imageUrl] : [];
+}
+
 export function ProductForm({ product, isAdmin }: ProductFormProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [imageUrl, setImageUrl] = useState<string | null>(
-    product?.image_url ?? null
+  const [images, setImages] = useState<string[]>(
+    parseImages(product?.image_url)
   );
+  const [type, setType] = useState(product?.type ?? "");
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -34,16 +47,23 @@ export function ProductForm({ product, isAdmin }: ProductFormProps) {
 
     const form = new FormData(e.currentTarget);
 
+    const imageUrl =
+      images.length === 0
+        ? undefined
+        : images.length === 1
+          ? images[0]
+          : JSON.stringify(images);
+
     const input = {
       model_number: (form.get("model_number") as string) || "",
       name: (form.get("name") as string) || "",
-      type: (form.get("type") as string) || "",
-      description: (form.get("description") as string) || "",
+      type,
+      description: (form.get("name") as string) || "",
       retail_price: parseFloat(form.get("retail_price") as string) || 0,
       cost: parseFloat(form.get("cost") as string) || 0,
       sales_price: parseFloat(form.get("sales_price") as string) || 0,
       shipping: parseFloat(form.get("shipping") as string) || 0,
-      image_url: imageUrl ?? undefined,
+      image_url: imageUrl,
       notes: (form.get("notes") as string) || undefined,
       manufacturer_website:
         (form.get("manufacturer_website") as string) || undefined,
@@ -71,9 +91,29 @@ export function ProductForm({ product, isAdmin }: ProductFormProps) {
         </div>
       )}
 
-      {/* Row 1: Name | Model # | Type — all equal short */}
+      {/* Row 1: Type tag picker */}
+      <div>
+        <p className={`${pillLabel} mb-1.5`}>Type</p>
+        <TypeTagPicker value={type} onChange={setType} />
+      </div>
+
+      {/* Row 2: Model# (small) | Name | Retail | Wholesale | Sale | S/H — one line */}
       <div className="flex flex-wrap gap-2">
-        <div className={`${pillWrapper} min-w-[120px] flex-1`}>
+        <div className={`${pillWrapper} w-24 shrink-0`}>
+          <label htmlFor="model_number" className={pillLabel}>
+            Model #
+          </label>
+          <input
+            id="model_number"
+            name="model_number"
+            type="text"
+            defaultValue={product?.model_number ?? ""}
+            placeholder="Model…"
+            className={pillInput}
+          />
+        </div>
+
+        <div className={`${pillWrapper} min-w-[140px] flex-1`}>
           <label htmlFor="name" className={pillLabel}>
             Name *
           </label>
@@ -88,58 +128,9 @@ export function ProductForm({ product, isAdmin }: ProductFormProps) {
           />
         </div>
 
-        <div className={`${pillWrapper} min-w-[120px] flex-1`}>
-          <label htmlFor="model_number" className={pillLabel}>
-            Model #
-          </label>
-          <input
-            id="model_number"
-            name="model_number"
-            type="text"
-            defaultValue={product?.model_number ?? ""}
-            placeholder="Model number…"
-            className={pillInput}
-          />
-        </div>
-
-        <div className={`${pillWrapper} min-w-[120px] flex-1`}>
-          <label htmlFor="type" className={pillLabel}>
-            Type
-          </label>
-          <input
-            id="type"
-            name="type"
-            type="text"
-            defaultValue={product?.type ?? ""}
-            placeholder="Furniture, Appliance…"
-            className={pillInput}
-          />
-        </div>
-      </div>
-
-      {/* Row 2: Description — 2x width of a short field */}
-      <div className="flex gap-2">
-        <div className={`${pillWrapper} flex-[2] min-w-[240px]`}>
-          <label htmlFor="description" className={pillLabel}>
-            Description
-          </label>
-          <textarea
-            id="description"
-            name="description"
-            rows={2}
-            defaultValue={product?.description ?? ""}
-            placeholder="Product description…"
-            className={`${pillInput} resize-none`}
-          />
-        </div>
-        <div className="flex-1" />
-      </div>
-
-      {/* Row 3: Prices — Retail | Sales | Dealer (admin) | S/H */}
-      <div className="flex flex-wrap gap-2">
-        <div className={`${pillWrapper} w-32 shrink-0`}>
+        <div className={`${pillWrapper} w-24 shrink-0`}>
           <label htmlFor="retail_price" className={pillLabel}>
-            Retail Price
+            Retail
           </label>
           <input
             id="retail_price"
@@ -151,24 +142,10 @@ export function ProductForm({ product, isAdmin }: ProductFormProps) {
           />
         </div>
 
-        <div className={`${pillWrapper} w-32 shrink-0`}>
-          <label htmlFor="sales_price" className={pillLabel}>
-            Sales Price
-          </label>
-          <input
-            id="sales_price"
-            name="sales_price"
-            type="number"
-            step="0.01"
-            defaultValue={product?.sales_price ?? 0}
-            className={pillInput}
-          />
-        </div>
-
         {isAdmin && (
-          <div className={`${pillWrapperAdmin} w-32 shrink-0`}>
+          <div className={`${pillWrapperAdmin} w-24 shrink-0`}>
             <label htmlFor="cost" className={pillLabelAdmin}>
-              Dealer Price
+              Wholesale
             </label>
             <input
               id="cost"
@@ -181,7 +158,21 @@ export function ProductForm({ product, isAdmin }: ProductFormProps) {
           </div>
         )}
 
-        <div className={`${pillWrapper} w-32 shrink-0`}>
+        <div className={`${pillWrapper} w-24 shrink-0`}>
+          <label htmlFor="sales_price" className={pillLabel}>
+            Sale Price
+          </label>
+          <input
+            id="sales_price"
+            name="sales_price"
+            type="number"
+            step="0.01"
+            defaultValue={product?.sales_price ?? 0}
+            className={pillInput}
+          />
+        </div>
+
+        <div className={`${pillWrapper} w-20 shrink-0`}>
           <label htmlFor="shipping" className={pillLabel}>
             S/H
           </label>
@@ -198,39 +189,19 @@ export function ProductForm({ product, isAdmin }: ProductFormProps) {
 
       {!isAdmin && <input type="hidden" name="cost" value="0" />}
 
-      {/* Row 6: Manufacturer Website */}
-      <div className={`${pillWrapper}`}>
-        <label htmlFor="manufacturer_website" className={pillLabel}>
-          Manufacturer Website
-        </label>
-        <input
-          id="manufacturer_website"
-          name="manufacturer_website"
-          type="url"
-          defaultValue={product?.manufacturer_website ?? ""}
-          placeholder="https://…"
-          className={`${pillInput} text-xs`}
-        />
-        {product?.manufacturer_website && (
-          <a
-            href={product.manufacturer_website}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-xs text-primary hover:underline"
-          >
-            {product.manufacturer_website}
-          </a>
-        )}
-      </div>
-
-      {/* Row 7: Image + Notes */}
+      {/* Row 3: URL | Notes */}
       <div className="flex flex-wrap gap-2">
-        <div className={`${pillWrapper} min-w-[160px] flex-1`}>
-          <label className={pillLabel}>Image</label>
-          <ImageUpload
-            currentUrl={product?.image_url}
-            onUpload={(url) => setImageUrl(url)}
-            onRemove={() => setImageUrl(null)}
+        <div className={`${pillWrapper} min-w-[180px] flex-1`}>
+          <label htmlFor="manufacturer_website" className={pillLabel}>
+            URL
+          </label>
+          <input
+            id="manufacturer_website"
+            name="manufacturer_website"
+            type="url"
+            defaultValue={product?.manufacturer_website ?? ""}
+            placeholder="https://…"
+            className={`${pillInput} text-xs`}
           />
         </div>
 
@@ -238,15 +209,21 @@ export function ProductForm({ product, isAdmin }: ProductFormProps) {
           <label htmlFor="notes" className={pillLabel}>
             Notes
           </label>
-          <textarea
+          <input
             id="notes"
             name="notes"
-            rows={2}
+            type="text"
             defaultValue={product?.notes ?? ""}
             placeholder="Additional notes…"
-            className={`${pillInput} resize-none`}
+            className={pillInput}
           />
         </div>
+      </div>
+
+      {/* Row 4: Image upload (up to 8) */}
+      <div>
+        <p className={`${pillLabel} mb-1.5`}>Images (up to 8)</p>
+        <MultiImageUpload images={images} onChange={setImages} max={8} />
       </div>
 
       {/* Actions */}
