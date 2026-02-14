@@ -1,10 +1,12 @@
 "use client";
 
+import { useState, useMemo } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { deleteItem } from "@/lib/actions/items";
 import { useRouter } from "next/navigation";
 import { firstImage } from "@/lib/parse-images";
+import { TypeFilterPills } from "@/components/products/type-filter-pills";
 import type { Item, ClientItem } from "@/types";
 
 interface ItemsTableProps {
@@ -22,6 +24,22 @@ function formatCurrency(value: number): string {
 
 export function ItemsTable({ items, projectId, isAdmin }: ItemsTableProps) {
   const router = useRouter();
+  const [typeFilter, setTypeFilter] = useState("");
+
+  const extraTypes = useMemo(() => {
+    const types = new Set(
+      items.map((i) => i.item_type).filter((t) => t.length > 0)
+    );
+    return [...types];
+  }, [items]);
+
+  const filtered = useMemo(
+    () =>
+      typeFilter === ""
+        ? items
+        : items.filter((i) => i.item_type === typeFilter),
+    [items, typeFilter]
+  );
 
   async function handleDelete(id: string) {
     if (!confirm("Delete this item?")) return;
@@ -46,8 +64,16 @@ export function ItemsTable({ items, projectId, isAdmin }: ItemsTableProps) {
   }
 
   return (
-    <div className="space-y-0">
-      {items.map((item) => {
+    <div className="space-y-3">
+      {/* Type filter pills */}
+      <TypeFilterPills
+        value={typeFilter}
+        onChange={setTypeFilter}
+        extraTypes={extraTypes}
+      />
+
+      <div className="space-y-0">
+      {filtered.map((item) => {
         const total = (item.price_sold_for ?? item.retail_price) + item.retail_shipping;
 
         const thumb = firstImage(item.image_url);
@@ -148,6 +174,7 @@ export function ItemsTable({ items, projectId, isAdmin }: ItemsTableProps) {
           </div>
         );
       })}
+      </div>
     </div>
   );
 }

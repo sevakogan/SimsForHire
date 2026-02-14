@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import Link from "next/link";
 import { ProductsTable } from "@/components/products/products-table";
 import { ProductsGrid } from "@/components/products/products-grid";
+import { TypeFilterPills } from "@/components/products/type-filter-pills";
 import type { Product, ClientProduct } from "@/types";
 
 type ViewMode = "grid" | "list";
@@ -15,9 +16,32 @@ interface ProductsViewProps {
 
 export function ProductsView({ products, isAdmin }: ProductsViewProps) {
   const [view, setView] = useState<ViewMode>("grid");
+  const [typeFilter, setTypeFilter] = useState("");
+
+  const extraTypes = useMemo(() => {
+    const types = new Set(
+      products.map((p) => p.type).filter((t) => t.length > 0)
+    );
+    return [...types];
+  }, [products]);
+
+  const filtered = useMemo(
+    () =>
+      typeFilter === ""
+        ? products
+        : products.filter((p) => p.type === typeFilter),
+    [products, typeFilter]
+  );
 
   return (
     <div className="space-y-4">
+      {/* Type filter pills */}
+      <TypeFilterPills
+        value={typeFilter}
+        onChange={setTypeFilter}
+        extraTypes={extraTypes}
+      />
+
       {/* Header row: view toggle + add button */}
       <div className="flex items-center justify-between">
         {/* View toggle */}
@@ -66,9 +90,9 @@ export function ProductsView({ products, isAdmin }: ProductsViewProps) {
 
       {/* Products display */}
       {view === "grid" ? (
-        <ProductsGrid products={products} isAdmin={isAdmin} />
+        <ProductsGrid products={filtered} isAdmin={isAdmin} />
       ) : (
-        <ProductsTable products={products} isAdmin={isAdmin} />
+        <ProductsTable products={filtered} isAdmin={isAdmin} />
       )}
     </div>
   );
