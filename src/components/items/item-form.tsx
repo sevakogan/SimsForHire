@@ -98,42 +98,47 @@ export function ItemForm({ projectId, itemNumber, item, isAdmin }: ItemFormProps
     setLoading(true);
     setError(null);
 
-    const shared = {
-      model_number: fields.model_number || "",
-      item_type: fields.item_type,
-      description: fields.description,
-      item_link: fields.item_link || null,
-      retail_price: parseFloat(fields.retail_price) || 0,
-      retail_shipping: parseFloat(fields.retail_shipping) || 0,
-      discount_percent: parseFloat(fields.discount_percent) || 0,
-      my_cost: parseFloat(fields.my_cost) || 0,
-      my_shipping: parseFloat(fields.my_shipping) || 0,
-      price_sold_for: fields.price_sold_for
-        ? parseFloat(fields.price_sold_for)
-        : null,
-      image_url: imageUrl ?? null,
-      notes: fields.notes || "",
-      product_id: productId ?? null,
-    };
+    try {
+      const shared = {
+        model_number: fields.model_number || "",
+        item_type: fields.item_type,
+        description: fields.description,
+        item_link: fields.item_link || null,
+        retail_price: parseFloat(fields.retail_price) || 0,
+        retail_shipping: parseFloat(fields.retail_shipping) || 0,
+        discount_percent: parseFloat(fields.discount_percent) || 0,
+        my_cost: parseFloat(fields.my_cost) || 0,
+        my_shipping: parseFloat(fields.my_shipping) || 0,
+        price_sold_for: fields.price_sold_for
+          ? parseFloat(fields.price_sold_for)
+          : null,
+        image_url: imageUrl ?? null,
+        notes: fields.notes || "",
+      };
 
-    const currentItemNumber = item?.item_number ?? itemNumber;
+      const currentItemNumber = item?.item_number ?? itemNumber;
 
-    const result = item
-      ? await updateItem(item.id, shared)
-      : await createItem({
-          ...shared,
-          project_id: projectId,
-          item_number: currentItemNumber,
-        });
+      const result = item
+        ? await updateItem(item.id, shared)
+        : await createItem({
+            ...shared,
+            project_id: projectId,
+            item_number: currentItemNumber,
+            product_id: productId ?? null,
+          });
 
-    if (result.error) {
-      setError(result.error);
+      if (result.error) {
+        setError(result.error);
+        setLoading(false);
+        return;
+      }
+
+      router.push(`/projects/${projectId}`);
+      router.refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to save");
       setLoading(false);
-      return;
     }
-
-    router.push(`/projects/${projectId}`);
-    router.refresh();
   }
 
   return (
