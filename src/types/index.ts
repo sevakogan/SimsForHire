@@ -35,6 +35,7 @@ export interface Project {
   invoice_link_2: string | null;
   date_required: string | null;
   fulfillment_type: FulfillmentType;
+  share_token: string | null;
   created_by: string | null;
   created_at: string;
   updated_at: string;
