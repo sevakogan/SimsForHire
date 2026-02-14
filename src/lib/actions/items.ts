@@ -64,17 +64,17 @@ export async function createItem(input: {
   item_number: number;
   item_type: string;
   description: string;
-  item_link?: string;
+  item_link?: string | null;
   retail_price: number;
   retail_shipping: number;
   discount_percent: number;
   my_cost: number;
   my_shipping: number;
-  price_sold_for?: number;
-  image_url?: string;
+  price_sold_for?: number | null;
+  image_url?: string | null;
   notes?: string;
   model_number?: string;
-  product_id?: string;
+  product_id?: string | null;
 }): Promise<{ id: string | null; error: string | null }> {
   const supabase = await createSupabaseServer();
 
@@ -109,17 +109,17 @@ export async function updateItem(
   input: Partial<{
     item_type: string;
     description: string;
-    item_link: string;
+    item_link: string | null;
     retail_price: number;
     retail_shipping: number;
     discount_percent: number;
     my_cost: number;
     my_shipping: number;
-    price_sold_for: number;
-    image_url: string;
+    price_sold_for: number | null;
+    image_url: string | null;
     notes: string;
     model_number: string;
-    product_id: string;
+    product_id: string | null;
   }>
 ): Promise<{ error: string | null }> {
   const supabase = await createSupabaseServer();
