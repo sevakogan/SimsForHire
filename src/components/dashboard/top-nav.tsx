@@ -25,7 +25,8 @@ export function TopNav() {
     setDropdownOpen(false);
   }, [pathname]);
 
-  // Close dropdown on outside click
+  // Close dropdown on outside click — use "click" (not "mousedown")
+  // so that button clicks inside the dropdown fire before it closes
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
@@ -33,8 +34,8 @@ export function TopNav() {
       }
     }
     if (dropdownOpen) {
-      document.addEventListener("mousedown", handleClickOutside);
-      return () => document.removeEventListener("mousedown", handleClickOutside);
+      document.addEventListener("click", handleClickOutside);
+      return () => document.removeEventListener("click", handleClickOutside);
     }
   }, [dropdownOpen]);
 

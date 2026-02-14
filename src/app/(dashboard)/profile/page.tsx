@@ -24,52 +24,41 @@ export default async function ProfilePage() {
   const typedProfile = profile as Profile;
 
   return (
-    <div className="space-y-4 sm:space-y-6">
-      <h1 className="text-lg sm:text-2xl font-bold text-foreground">
+    <div className="mx-auto max-w-lg space-y-5">
+      <h1 className="text-lg font-bold text-foreground sm:text-xl">
         My Profile
       </h1>
 
-      <div className={`${cardStyles.base} !p-4 sm:!p-6`}>
-        <div className="grid grid-cols-2 gap-3 sm:gap-4">
-          <div>
-            <p className="text-[10px] sm:text-xs font-medium uppercase text-muted-foreground">
-              Email
-            </p>
-            <p className="text-sm text-foreground">{typedProfile.email}</p>
-          </div>
-          <div>
-            <p className="text-[10px] sm:text-xs font-medium uppercase text-muted-foreground">
-              Role
-            </p>
-            <p className="text-sm font-medium capitalize text-foreground">
-              {typedProfile.role}
-            </p>
-          </div>
-          <div>
-            <p className="text-[10px] sm:text-xs font-medium uppercase text-muted-foreground">
-              Status
-            </p>
-            <p className="text-sm capitalize text-foreground">
-              {typedProfile.status}
-            </p>
-          </div>
-          <div>
-            <p className="text-[10px] sm:text-xs font-medium uppercase text-muted-foreground">
-              Member Since
-            </p>
-            <p className="text-sm text-foreground">
-              {new Date(typedProfile.created_at).toLocaleDateString()}
-            </p>
-          </div>
-        </div>
-      </div>
-
       <div className={cardStyles.base}>
-        <h2 className="mb-4 text-sm font-semibold text-foreground">
-          Edit Profile
-        </h2>
         <ProfileForm profile={typedProfile} />
       </div>
+
+      {/* Read-only account info */}
+      <div className={`${cardStyles.base} !p-4`}>
+        <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          Account
+        </h2>
+        <div className="grid grid-cols-2 gap-3">
+          <InfoField label="Role" value={typedProfile.role} />
+          <InfoField label="Status" value={typedProfile.status} />
+          <InfoField
+            label="Member Since"
+            value={new Date(typedProfile.created_at).toLocaleDateString()}
+          />
+          <InfoField label="Email" value={typedProfile.email} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function InfoField({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+        {label}
+      </p>
+      <p className="text-sm capitalize text-foreground">{value}</p>
     </div>
   );
 }
