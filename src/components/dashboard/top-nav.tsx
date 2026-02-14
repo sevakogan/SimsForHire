@@ -210,7 +210,10 @@ export function TopNav() {
               {/* Sign out */}
               <div className="border-t border-border py-1">
                 <button
-                  onClick={signOut}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    signOut();
+                  }}
                   className="flex w-full items-center gap-3 px-4 py-2.5 text-sm text-red-600 transition-colors hover:bg-red-50"
                 >
                   <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
@@ -252,7 +255,10 @@ export function TopNav() {
               {fullName ?? email}
             </p>
             <button
-              onClick={signOut}
+              onClick={(e) => {
+                e.stopPropagation();
+                signOut();
+              }}
               className="w-full rounded-lg px-3 py-2.5 text-left text-sm font-medium text-red-600 transition-colors hover:bg-red-50"
             >
               Sign Out

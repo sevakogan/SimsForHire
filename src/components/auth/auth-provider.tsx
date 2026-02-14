@@ -69,7 +69,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [fetchProfile]);
 
   async function signOut() {
-    await supabase.auth.signOut();
+    try {
+      await supabase.auth.signOut();
+    } catch {
+      // Sign out from Supabase failed — redirect to login anyway
+    }
     setUser(null);
     setProfile(null);
     setSession(null);
