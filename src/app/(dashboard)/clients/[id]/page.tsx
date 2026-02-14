@@ -4,8 +4,8 @@ import { getClientById } from "@/lib/actions/clients";
 import { getProjects } from "@/lib/actions/projects";
 import { getUnreadNoteCountsByProjects } from "@/lib/actions/items";
 import { ClientDetailClient } from "./client-detail-client";
-import { ProjectCard } from "./project-card";
-import { buttonStyles, cardStyles } from "@/components/ui/form-styles";
+import { ProjectsSection } from "./projects-section";
+import { cardStyles } from "@/components/ui/form-styles";
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -20,6 +20,12 @@ export default async function ClientDetailPage({ params }: Props) {
   const projects = await getProjects({ clientId: id });
   const projectIds = projects.map((p) => p.id);
   const noteCountsMap = await getUnreadNoteCountsByProjects(projectIds);
+
+  // Convert Map to plain object for serialization across server/client boundary
+  const noteCounts: Record<string, number> = {};
+  noteCountsMap.forEach((count, projectId) => {
+    noteCounts[projectId] = count;
+  });
 
   return (
     <div className="space-y-4 sm:space-y-6">
@@ -57,35 +63,11 @@ export default async function ClientDetailPage({ params }: Props) {
         <ClientDetailClient client={client} />
       </div>
 
-      <div className="flex items-center justify-between">
-        <h2 className="text-base sm:text-lg font-semibold text-foreground">Projects</h2>
-        <ClientNewProject clientId={id} />
-      </div>
-
-      {projects.length > 0 ? (
-        <div className="space-y-2 sm:space-y-3">
-          {projects.map((project) => (
-            <ProjectCard
-              key={project.id}
-              project={project}
-              clientNoteCount={noteCountsMap.get(project.id) ?? 0}
-            />
-          ))}
-        </div>
-      ) : (
-        <p className="text-sm text-muted-foreground">No projects yet.</p>
-      )}
+      <ProjectsSection
+        projects={projects}
+        clientId={id}
+        noteCounts={noteCounts}
+      />
     </div>
-  );
-}
-
-function ClientNewProject({ clientId }: { clientId: string }) {
-  return (
-    <Link
-      href={`/clients/${clientId}/new-project`}
-      className={buttonStyles.primary}
-    >
-      New Project
-    </Link>
   );
 }

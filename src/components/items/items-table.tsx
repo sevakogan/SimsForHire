@@ -61,7 +61,7 @@ function ClientNoteInline({
       <span className="text-xs text-blue-600 italic leading-tight flex-1">
         &ldquo;{note}&rdquo;
       </span>
-      {isUnread && (
+      {isUnread ? (
         <button
           type="button"
           onClick={(e) => {
@@ -69,13 +69,17 @@ function ClientNoteInline({
             e.stopPropagation();
             onDismiss(itemId);
           }}
-          className="shrink-0 rounded p-0.5 text-gray-400 opacity-0 transition-opacity group-hover/note:opacity-100 hover:text-gray-600 hover:bg-gray-100"
+          className="shrink-0 rounded-full p-0.5 text-green-500 hover:bg-green-50 hover:text-green-700 transition-colors"
           title="Mark as read"
         >
-          <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+          <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
           </svg>
         </button>
+      ) : (
+        <svg className="h-3.5 w-3.5 shrink-0 text-green-400 mt-0.5" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+        </svg>
       )}
     </div>
   );
