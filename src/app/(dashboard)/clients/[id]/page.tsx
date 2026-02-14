@@ -3,7 +3,7 @@ import Link from "next/link";
 import { getClientById } from "@/lib/actions/clients";
 import { getProjects } from "@/lib/actions/projects";
 import { ClientDetailClient } from "./client-detail-client";
-import { Badge } from "@/components/ui/badge";
+import { ProjectCard } from "./project-card";
 import { buttonStyles, cardStyles } from "@/components/ui/form-styles";
 
 interface Props {
@@ -62,19 +62,7 @@ export default async function ClientDetailPage({ params }: Props) {
       {projects.length > 0 ? (
         <div className="space-y-2 sm:space-y-3">
           {projects.map((project) => (
-            <Link
-              key={project.id}
-              href={`/projects/${project.id}`}
-              className="flex items-center justify-between rounded-xl border border-border bg-white p-3.5 shadow-sm transition-all hover:border-primary/20 hover:shadow-md sm:p-5"
-            >
-              <div className="min-w-0 flex-1">
-                <p className="text-sm sm:text-base font-medium text-foreground truncate">{project.name}</p>
-                <p className="text-xs sm:text-sm text-muted-foreground">
-                  {new Date(project.created_at).toLocaleDateString()}
-                </p>
-              </div>
-              <Badge variant={project.status}>{project.status}</Badge>
-            </Link>
+            <ProjectCard key={project.id} project={project} />
           ))}
         </div>
       ) : (
