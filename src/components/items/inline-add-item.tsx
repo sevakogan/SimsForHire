@@ -385,7 +385,7 @@ export function InlineAddItem({ projectId, isAdmin }: InlineAddItemProps) {
                   </svg>
                 </div>
                 <span className="text-sm font-medium text-foreground">
-                  Create new item: &ldquo;<span className="text-primary">{query}</span>&rdquo;
+                  Create new product: &ldquo;<span className="text-primary">{query}</span>&rdquo;
                 </span>
                 <span className="ml-auto text-xs text-muted-foreground/50">
                   Enter ↵
@@ -416,7 +416,7 @@ export function InlineAddItem({ projectId, isAdmin }: InlineAddItemProps) {
           {/* Header */}
           <div className="mb-4 flex items-center justify-between">
             <h3 className="text-base font-semibold text-foreground">
-              Create New Item
+              Create Product
             </h3>
             <button
               type="button"
