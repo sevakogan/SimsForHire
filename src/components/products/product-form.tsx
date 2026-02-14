@@ -87,22 +87,8 @@ export function ProductForm({ product, isAdmin }: ProductFormProps) {
         <TypeTagPicker value={type} onChange={setType} />
       </div>
 
-      {/* Row 2: Model# | Name | Description */}
+      {/* Row 2: Name | Model # | Description */}
       <div className="flex flex-wrap gap-2">
-        <div className={`${pillWrapper} w-24 shrink-0`}>
-          <label htmlFor="model_number" className={pillLabel}>
-            Model #
-          </label>
-          <input
-            id="model_number"
-            name="model_number"
-            type="text"
-            defaultValue={product?.model_number ?? ""}
-            placeholder="Model…"
-            className={pillInput}
-          />
-        </div>
-
         <div className={`${pillWrapper} min-w-[120px] flex-1`}>
           <label htmlFor="name" className={pillLabel}>
             Name *
@@ -118,7 +104,21 @@ export function ProductForm({ product, isAdmin }: ProductFormProps) {
           />
         </div>
 
-        <div className={`${pillWrapper} min-w-[160px] flex-[2]`}>
+        <div className={`${pillWrapper} w-24 shrink-0`}>
+          <label htmlFor="model_number" className={pillLabel}>
+            Model #
+          </label>
+          <input
+            id="model_number"
+            name="model_number"
+            type="text"
+            defaultValue={product?.model_number ?? ""}
+            placeholder="Model…"
+            className={pillInput}
+          />
+        </div>
+
+        <div className={`${pillWrapper} min-w-[120px] flex-1`}>
           <label htmlFor="description" className={pillLabel}>
             Description
           </label>
@@ -193,7 +193,7 @@ export function ProductForm({ product, isAdmin }: ProductFormProps) {
           />
         </div>
 
-        <div className={`${pillWrapper} min-w-[140px] flex-1`}>
+        <div className={`${pillWrapper} w-32 shrink-0`}>
           <label htmlFor="manufacturer_website" className={pillLabel}>
             URL
           </label>

@@ -3,18 +3,15 @@
 import { useState, useRef } from "react";
 import Image from "next/image";
 import imageCompression from "browser-image-compression";
-import { supabase } from "@/lib/supabase";
-import { useAuth } from "@/components/auth/auth-provider";
+import { uploadImage } from "@/lib/actions/upload";
 
 interface ImageUploadProps {
   currentUrl?: string | null;
   onUpload: (url: string) => void;
   onRemove: () => void;
-  bucket?: string;
 }
 
-export function ImageUpload({ currentUrl, onUpload, onRemove, bucket = "item-images" }: ImageUploadProps) {
-  const { user } = useAuth();
+export function ImageUpload({ currentUrl, onUpload, onRemove }: ImageUploadProps) {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [preview, setPreview] = useState<string | null>(currentUrl ?? null);
@@ -23,10 +20,6 @@ export function ImageUpload({ currentUrl, onUpload, onRemove, bucket = "item-ima
   async function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (!user) {
-      setError("You must be logged in to upload images");
-      return;
-    }
 
     if (!file.type.startsWith("image/")) {
       setError("Please select an image file");
@@ -43,27 +36,20 @@ export function ImageUpload({ currentUrl, onUpload, onRemove, bucket = "item-ima
         useWebWorker: true,
       });
 
-      const ext = file.name.split(".").pop() ?? "jpg";
-      const fileName = `${user.id}/${Date.now()}-${Math.random().toString(36).substring(7)}.${ext}`;
+      const formData = new FormData();
+      formData.append("file", compressed, file.name);
 
-      const { error: uploadError } = await supabase.storage
-        .from(bucket)
-        .upload(fileName, compressed, {
-          contentType: compressed.type,
-          upsert: false,
-        });
+      const result = await uploadImage(formData);
 
-      if (uploadError) {
-        setError(`Upload failed: ${uploadError.message}`);
+      if (result.error) {
+        setError(`Upload failed: ${result.error}`);
         return;
       }
 
-      const {
-        data: { publicUrl },
-      } = supabase.storage.from(bucket).getPublicUrl(fileName);
-
-      setPreview(publicUrl);
-      onUpload(publicUrl);
+      if (result.url) {
+        setPreview(result.url);
+        onUpload(result.url);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Upload failed");
     } finally {

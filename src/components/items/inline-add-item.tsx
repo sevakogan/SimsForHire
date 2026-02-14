@@ -452,19 +452,8 @@ export function InlineAddItem({ projectId, isAdmin }: InlineAddItemProps) {
               />
             </div>
 
-            {/* Row 2: Model# | Name | Description */}
+            {/* Row 2: Name | Model # | Description */}
             <div className="flex flex-wrap gap-2">
-              <div className={`${pillWrapper} w-24 shrink-0`}>
-                <label htmlFor="new_model" className={pillLabel}>Model #</label>
-                <input
-                  id="new_model"
-                  type="text"
-                  value={productFields.model_number}
-                  onChange={(e) => updateProductField("model_number", e.target.value)}
-                  placeholder="Model…"
-                  className={pillInput}
-                />
-              </div>
               <div className={`${pillWrapper} min-w-[120px] flex-1`}>
                 <label htmlFor="new_name" className={pillLabel}>Name *</label>
                 <input
@@ -478,7 +467,18 @@ export function InlineAddItem({ projectId, isAdmin }: InlineAddItemProps) {
                   className={pillInput}
                 />
               </div>
-              <div className={`${pillWrapper} min-w-[160px] flex-[2]`}>
+              <div className={`${pillWrapper} w-24 shrink-0`}>
+                <label htmlFor="new_model" className={pillLabel}>Model #</label>
+                <input
+                  id="new_model"
+                  type="text"
+                  value={productFields.model_number}
+                  onChange={(e) => updateProductField("model_number", e.target.value)}
+                  placeholder="Model…"
+                  className={pillInput}
+                />
+              </div>
+              <div className={`${pillWrapper} min-w-[120px] flex-1`}>
                 <label htmlFor="new_desc" className={pillLabel}>Description</label>
                 <input
                   id="new_desc"
@@ -539,7 +539,7 @@ export function InlineAddItem({ projectId, isAdmin }: InlineAddItemProps) {
                   className={pillInput}
                 />
               </div>
-              <div className={`${pillWrapper} min-w-[140px] flex-1`}>
+              <div className={`${pillWrapper} w-32 shrink-0`}>
                 <label htmlFor="new_website" className={pillLabel}>URL</label>
                 <input
                   id="new_website"

@@ -3,23 +3,19 @@
 import { useState, useRef } from "react";
 import Image from "next/image";
 import imageCompression from "browser-image-compression";
-import { supabase } from "@/lib/supabase";
-import { useAuth } from "@/components/auth/auth-provider";
+import { uploadImage } from "@/lib/actions/upload";
 
 interface MultiImageUploadProps {
   images: string[];
   onChange: (images: string[]) => void;
   max?: number;
-  bucket?: string;
 }
 
 export function MultiImageUpload({
   images,
   onChange,
   max = 8,
-  bucket = "item-images",
 }: MultiImageUploadProps) {
-  const { user } = useAuth();
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -27,10 +23,6 @@ export function MultiImageUpload({
   async function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
     const files = e.target.files;
     if (!files) return;
-    if (!user) {
-      setError("You must be logged in to upload images");
-      return;
-    }
 
     const remaining = max - images.length;
     if (remaining <= 0) return;
@@ -51,26 +43,19 @@ export function MultiImageUpload({
           useWebWorker: true,
         });
 
-        const ext = file.name.split(".").pop() ?? "jpg";
-        const fileName = `${user.id}/${Date.now()}-${Math.random().toString(36).substring(7)}.${ext}`;
+        const formData = new FormData();
+        formData.append("file", compressed, file.name);
 
-        const { error: uploadError } = await supabase.storage
-          .from(bucket)
-          .upload(fileName, compressed, {
-            contentType: compressed.type,
-            upsert: false,
-          });
+        const result = await uploadImage(formData);
 
-        if (uploadError) {
-          setError(`Upload failed: ${uploadError.message}`);
+        if (result.error) {
+          setError(`Upload failed: ${result.error}`);
           continue;
         }
 
-        const {
-          data: { publicUrl },
-        } = supabase.storage.from(bucket).getPublicUrl(fileName);
-
-        uploadedUrls.push(publicUrl);
+        if (result.url) {
+          uploadedUrls.push(result.url);
+        }
       }
 
       if (uploadedUrls.length > 0) {
