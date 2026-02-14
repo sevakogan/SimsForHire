@@ -99,19 +99,26 @@ export function ItemForm({ projectId, itemNumber, item, isAdmin }: ItemFormProps
     setError(null);
 
     try {
-      const shared = {
+      const parsedRetail = parseFloat(fields.retail_price);
+      const parsedShipping = parseFloat(fields.retail_shipping);
+      const parsedDiscount = parseFloat(fields.discount_percent);
+      const parsedMyCost = parseFloat(fields.my_cost);
+      const parsedMyShipping = parseFloat(fields.my_shipping);
+      const parsedSoldFor = fields.price_sold_for
+        ? parseFloat(fields.price_sold_for)
+        : null;
+
+      const updatePayload: Record<string, unknown> = {
         model_number: fields.model_number || "",
         item_type: fields.item_type,
         description: fields.description,
         item_link: fields.item_link || null,
-        retail_price: parseFloat(fields.retail_price) || 0,
-        retail_shipping: parseFloat(fields.retail_shipping) || 0,
-        discount_percent: parseFloat(fields.discount_percent) || 0,
-        my_cost: parseFloat(fields.my_cost) || 0,
-        my_shipping: parseFloat(fields.my_shipping) || 0,
-        price_sold_for: fields.price_sold_for
-          ? parseFloat(fields.price_sold_for)
-          : null,
+        retail_price: isNaN(parsedRetail) ? 0 : parsedRetail,
+        retail_shipping: isNaN(parsedShipping) ? 0 : parsedShipping,
+        discount_percent: isNaN(parsedDiscount) ? 0 : parsedDiscount,
+        my_cost: isNaN(parsedMyCost) ? 0 : parsedMyCost,
+        my_shipping: isNaN(parsedMyShipping) ? 0 : parsedMyShipping,
+        price_sold_for: parsedSoldFor !== null && !isNaN(parsedSoldFor) ? parsedSoldFor : null,
         image_url: imageUrl ?? null,
         notes: fields.notes || "",
       };
@@ -119,13 +126,13 @@ export function ItemForm({ projectId, itemNumber, item, isAdmin }: ItemFormProps
       const currentItemNumber = item?.item_number ?? itemNumber;
 
       const result = item
-        ? await updateItem(item.id, shared)
+        ? await updateItem(item.id, updatePayload)
         : await createItem({
-            ...shared,
+            ...updatePayload,
             project_id: projectId,
             item_number: currentItemNumber,
             product_id: productId ?? null,
-          });
+          } as Parameters<typeof createItem>[0]);
 
       if (result.error) {
         setError(result.error);

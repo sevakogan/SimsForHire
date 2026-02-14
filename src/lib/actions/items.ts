@@ -106,21 +106,8 @@ export async function createItem(input: {
 
 export async function updateItem(
   id: string,
-  input: Partial<{
-    item_type: string;
-    description: string;
-    item_link: string | null;
-    retail_price: number;
-    retail_shipping: number;
-    discount_percent: number;
-    my_cost: number;
-    my_shipping: number;
-    price_sold_for: number | null;
-    image_url: string | null;
-    notes: string;
-    model_number: string;
-    product_id: string | null;
-  }>
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  input: Record<string, any>
 ): Promise<{ error: string | null }> {
   const supabase = await createSupabaseServer();
   const { error } = await supabase.from("items").update(input).eq("id", id);
