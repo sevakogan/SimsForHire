@@ -135,7 +135,6 @@ export function ItemForm({ projectId, itemNumber, item, isAdmin }: ItemFormProps
             ...updatePayload,
             project_id: projectId,
             item_number: currentItemNumber,
-            product_id: productId ?? null,
           } as Parameters<typeof createItem>[0]);
 
       if (result.error) {

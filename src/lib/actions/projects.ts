@@ -136,7 +136,10 @@ export async function getProjectByShareToken(
     .eq("share_token", token)
     .single();
 
-  if (error || !project) return { project: null, client: null };
+  if (error || !project) {
+    console.error("[getProjectByShareToken] error:", error?.message, "token:", token);
+    return { project: null, client: null };
+  }
 
   const { data: client } = await supabase
     .from("clients")
@@ -160,7 +163,7 @@ export async function getClientSafeItemsByProjectId(
   const supabase = getAdminSupabase();
 
   const CLIENT_SAFE_COLUMNS =
-    "id, project_id, item_number, item_type, description, item_link, retail_price, retail_shipping, discount_percent, price_sold_for, image_url, notes, model_number, product_id, seller_merchant, acceptance_status, created_at, updated_at";
+    "id, project_id, item_number, item_type, description, item_link, retail_price, retail_shipping, discount_percent, price_sold_for, image_url, notes, model_number, seller_merchant, acceptance_status, created_at, updated_at";
 
   const { data, error } = await supabase
     .from("items")
@@ -168,7 +171,10 @@ export async function getClientSafeItemsByProjectId(
     .eq("project_id", projectId)
     .order("item_number", { ascending: true });
 
-  if (error) return [];
+  if (error) {
+    console.error("[getClientSafeItemsByProjectId] error:", error.message, "projectId:", projectId);
+    return [];
+  }
   return (data ?? []) as ClientItem[];
 }
 

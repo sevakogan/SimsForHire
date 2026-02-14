@@ -4,7 +4,7 @@ import { createSupabaseServer } from "@/lib/supabase-server";
 import type { Item, ClientItem } from "@/types";
 
 const CLIENT_SAFE_COLUMNS =
-  "id, project_id, item_number, item_type, description, item_link, retail_price, retail_shipping, discount_percent, price_sold_for, image_url, notes, model_number, product_id, seller_merchant, acceptance_status, created_at, updated_at";
+  "id, project_id, item_number, item_type, description, item_link, retail_price, retail_shipping, discount_percent, price_sold_for, image_url, notes, model_number, seller_merchant, acceptance_status, created_at, updated_at";
 
 export async function getItems(projectId: string): Promise<Item[]> {
   const supabase = await createSupabaseServer();
@@ -74,7 +74,6 @@ export async function createItem(input: {
   image_url?: string | null;
   notes?: string;
   model_number?: string;
-  product_id?: string | null;
   seller_merchant?: string;
 }): Promise<{ id: string | null; error: string | null }> {
   const supabase = await createSupabaseServer();
@@ -96,7 +95,6 @@ export async function createItem(input: {
       image_url: input.image_url ?? null,
       notes: input.notes ?? "",
       model_number: input.model_number ?? "",
-      product_id: input.product_id ?? null,
       seller_merchant: input.seller_merchant ?? "",
     })
     .select("id")
