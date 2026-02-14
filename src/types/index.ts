@@ -2,6 +2,7 @@ export type UserRole = "admin" | "collaborator" | "client";
 export type UserStatus = "pending" | "approved" | "denied";
 export type ProjectStatus = "draft" | "quote" | "accepted" | "completed";
 export type FulfillmentType = "pickup" | "delivery";
+export type AcceptanceStatus = "pending" | "accepted" | "rejected";
 
 export interface Profile {
   id: string;
@@ -59,6 +60,7 @@ export interface Item {
   model_number: string;
   product_id: string | null;
   seller_merchant: string;
+  acceptance_status: AcceptanceStatus;
   created_at: string;
   updated_at: string;
 }

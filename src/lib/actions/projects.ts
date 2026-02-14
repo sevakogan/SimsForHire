@@ -2,7 +2,7 @@
 
 import { createSupabaseServer } from "@/lib/supabase-server";
 import { getAdminSupabase } from "@/lib/supabase-admin";
-import type { Project, ProjectStatus, FulfillmentType, ClientItem } from "@/types";
+import type { Project, ProjectStatus, FulfillmentType, ClientItem, AcceptanceStatus } from "@/types";
 
 export async function getProjects(filters?: {
   clientId?: string;
@@ -160,7 +160,7 @@ export async function getClientSafeItemsByProjectId(
   const supabase = getAdminSupabase();
 
   const CLIENT_SAFE_COLUMNS =
-    "id, project_id, item_number, item_type, description, item_link, retail_price, retail_shipping, discount_percent, price_sold_for, image_url, notes, model_number, product_id, seller_merchant, created_at, updated_at";
+    "id, project_id, item_number, item_type, description, item_link, retail_price, retail_shipping, discount_percent, price_sold_for, image_url, notes, model_number, product_id, seller_merchant, acceptance_status, created_at, updated_at";
 
   const { data, error } = await supabase
     .from("items")
@@ -170,4 +170,95 @@ export async function getClientSafeItemsByProjectId(
 
   if (error) return [];
   return (data ?? []) as ClientItem[];
+}
+
+/**
+ * Accept all items for a project via share token.
+ * Sets all items to "accepted" and updates project status to "accepted".
+ */
+export async function acceptAllItemsByShareToken(
+  shareToken: string
+): Promise<{ error: string | null }> {
+  if (!shareToken) return { error: "Invalid token" };
+
+  const supabase = getAdminSupabase();
+
+  // Verify the share token and get the project
+  const { data: project } = await supabase
+    .from("projects")
+    .select("id")
+    .eq("share_token", shareToken)
+    .single();
+
+  if (!project) return { error: "Invalid share link" };
+
+  // Update all items to accepted
+  const { error: itemsError } = await supabase
+    .from("items")
+    .update({ acceptance_status: "accepted" as AcceptanceStatus })
+    .eq("project_id", project.id);
+
+  if (itemsError) return { error: itemsError.message };
+
+  // Update project status to accepted
+  const { error: projectError } = await supabase
+    .from("projects")
+    .update({ status: "accepted" as ProjectStatus })
+    .eq("id", project.id);
+
+  if (projectError) return { error: projectError.message };
+  return { error: null };
+}
+
+/**
+ * Submit per-item acceptance decisions via share token.
+ * If all items accepted → project status becomes "accepted".
+ * If any rejected → project stays at current status (admin notified via item status).
+ */
+export async function submitItemDecisions(
+  shareToken: string,
+  decisions: { itemId: string; status: AcceptanceStatus }[]
+): Promise<{ error: string | null }> {
+  if (!shareToken) return { error: "Invalid token" };
+
+  const supabase = getAdminSupabase();
+
+  // Verify share token
+  const { data: project } = await supabase
+    .from("projects")
+    .select("id")
+    .eq("share_token", shareToken)
+    .single();
+
+  if (!project) return { error: "Invalid share link" };
+
+  // Update each item's acceptance status
+  for (const decision of decisions) {
+    const { error } = await supabase
+      .from("items")
+      .update({ acceptance_status: decision.status })
+      .eq("id", decision.itemId)
+      .eq("project_id", project.id); // Security: ensure item belongs to this project
+
+    if (error) return { error: error.message };
+  }
+
+  // Check if all items are now accepted
+  const { data: items } = await supabase
+    .from("items")
+    .select("acceptance_status")
+    .eq("project_id", project.id);
+
+  const allAccepted = items?.every(
+    (i) => i.acceptance_status === "accepted"
+  );
+
+  if (allAccepted) {
+    await supabase
+      .from("projects")
+      .update({ status: "accepted" as ProjectStatus })
+      .eq("id", project.id);
+  }
+
+  return { error: null };
 }

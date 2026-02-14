@@ -5,6 +5,7 @@ import {
   getClientSafeItemsByProjectId,
 } from "@/lib/actions/projects";
 import { firstImage } from "@/lib/parse-images";
+import { ShareActions } from "./share-actions";
 import type { Metadata } from "next";
 
 interface Props {
@@ -290,6 +291,13 @@ export default async function SharedInvoicePage({ params }: Props) {
                 </span>
               </div>
             </div>
+
+            {/* Accept/Reject Actions */}
+            <ShareActions
+              items={items}
+              shareToken={token}
+              projectStatus={project.status}
+            />
           </>
         )}
 

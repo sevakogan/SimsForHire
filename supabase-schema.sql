@@ -103,6 +103,7 @@ CREATE TABLE items (
   notes TEXT DEFAULT '',
   model_number TEXT NOT NULL DEFAULT '',
   seller_merchant TEXT NOT NULL DEFAULT '',
+  acceptance_status TEXT NOT NULL DEFAULT 'pending' CHECK (acceptance_status IN ('pending', 'accepted', 'rejected')),
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );

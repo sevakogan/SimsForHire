@@ -7,12 +7,36 @@ import { deleteItem } from "@/lib/actions/items";
 import { useRouter } from "next/navigation";
 import { firstImage } from "@/lib/parse-images";
 import { TypeFilterPills } from "@/components/products/type-filter-pills";
-import type { Item, ClientItem } from "@/types";
+import type { Item, ClientItem, AcceptanceStatus } from "@/types";
 
 interface ItemsTableProps {
   items: (Item | ClientItem)[];
   projectId: string;
   isAdmin: boolean;
+}
+
+function AcceptanceBadge({ status }: { status: AcceptanceStatus }) {
+  if (status === "pending") return null;
+
+  if (status === "accepted") {
+    return (
+      <span className="inline-flex items-center gap-0.5 rounded-full bg-green-50 px-1.5 py-0.5 text-[9px] font-medium text-green-700">
+        <svg className="h-2.5 w-2.5" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+        </svg>
+        Accepted
+      </span>
+    );
+  }
+
+  return (
+    <span className="inline-flex items-center gap-0.5 rounded-full bg-red-50 px-1.5 py-0.5 text-[9px] font-medium text-red-700">
+      <svg className="h-2.5 w-2.5" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+      </svg>
+      Rejected
+    </span>
+  );
 }
 
 function formatCurrency(value: number): string {
@@ -164,11 +188,16 @@ export function ItemsTable({ items, projectId, isAdmin }: ItemsTableProps) {
                 >
                   {item.description || item.item_type}
                 </Link>
-                {item.item_type && (
-                  <span className="mt-0.5 inline-block rounded-full bg-muted/60 px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
-                    {item.item_type}
-                  </span>
-                )}
+                <div className="flex items-center gap-1.5 mt-0.5">
+                  {item.item_type && (
+                    <span className="inline-block rounded-full bg-muted/60 px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
+                      {item.item_type}
+                    </span>
+                  )}
+                  {isAdmin && item.acceptance_status && item.acceptance_status !== "pending" && (
+                    <AcceptanceBadge status={item.acceptance_status} />
+                  )}
+                </div>
               </div>
 
               <div className="w-14 shrink-0 text-center">
@@ -263,11 +292,16 @@ export function ItemsTable({ items, projectId, isAdmin }: ItemsTableProps) {
                   >
                     {item.description || item.item_type}
                   </Link>
-                  {item.item_type && (
-                    <span className="mt-0.5 inline-block rounded-full bg-muted/60 px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
-                      {item.item_type}
-                    </span>
-                  )}
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    {item.item_type && (
+                      <span className="inline-block rounded-full bg-muted/60 px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
+                        {item.item_type}
+                      </span>
+                    )}
+                    {isAdmin && item.acceptance_status && item.acceptance_status !== "pending" && (
+                      <AcceptanceBadge status={item.acceptance_status} />
+                    )}
+                  </div>
                 </div>
                 {isAdmin && (
                   <button
