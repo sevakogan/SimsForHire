@@ -14,7 +14,7 @@ const navTabs = [
 
 export function TopNav() {
   const pathname = usePathname();
-  const { profile, signOut, isAdmin } = useAuth();
+  const { user, profile, signOut, isAdmin } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -38,7 +38,12 @@ export function TopNav() {
     }
   }, [dropdownOpen]);
 
-  const displayName = profile?.full_name ?? profile?.email ?? "";
+  // Use profile data first, fall back to Google OAuth user metadata
+  const meta = user?.user_metadata;
+  const fullName = profile?.full_name ?? (meta?.full_name as string | undefined) ?? null;
+  const avatarUrl = profile?.avatar_url ?? (meta?.avatar_url as string | undefined) ?? null;
+  const email = profile?.email ?? user?.email ?? "";
+  const displayName = fullName ?? email;
   const initials = displayName
     .split(" ")
     .map((w) => w[0])
@@ -100,9 +105,9 @@ export function TopNav() {
             onClick={() => setDropdownOpen(!dropdownOpen)}
             className="flex items-center gap-2 rounded-lg px-2 py-1.5 transition-colors hover:bg-muted"
           >
-            {profile?.avatar_url ? (
+            {avatarUrl ? (
               <Image
-                src={profile.avatar_url}
+                src={avatarUrl}
                 alt=""
                 width={32}
                 height={32}
@@ -133,9 +138,9 @@ export function TopNav() {
               {/* User info header */}
               <div className="border-b border-border px-4 py-3">
                 <div className="flex items-center gap-3">
-                  {profile?.avatar_url ? (
+                  {avatarUrl ? (
                     <Image
-                      src={profile.avatar_url}
+                      src={avatarUrl}
                       alt=""
                       width={40}
                       height={40}
@@ -148,10 +153,10 @@ export function TopNav() {
                   )}
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-semibold text-foreground">
-                      {profile?.full_name ?? "User"}
+                      {fullName ?? "User"}
                     </p>
                     <p className="truncate text-xs text-muted-foreground">
-                      {profile?.email}
+                      {email}
                     </p>
                   </div>
                 </div>
@@ -242,11 +247,9 @@ export function TopNav() {
             })}
           </div>
           <div className="mt-2 border-t border-border/50 pt-2">
-            {profile && (
-              <p className="px-3 py-1 text-xs text-muted-foreground truncate">
-                {profile.full_name ?? profile.email}
-              </p>
-            )}
+            <p className="px-3 py-1 text-xs text-muted-foreground truncate">
+              {fullName ?? email}
+            </p>
             <button
               onClick={signOut}
               className="w-full rounded-lg px-3 py-2.5 text-left text-sm font-medium text-red-600 transition-colors hover:bg-red-50"
