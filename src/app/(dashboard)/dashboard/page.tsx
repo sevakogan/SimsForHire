@@ -5,6 +5,7 @@ import type { DashboardClient } from "@/components/dashboard/dashboard-clients";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import { buttonStyles } from "@/components/ui/form-styles";
+import { getUnreadNoteCountsByClients } from "@/lib/actions/items";
 import type { Profile, Project, Client, Item } from "@/types";
 import { isAdminRole } from "@/types";
 
@@ -61,6 +62,10 @@ async function AdminDashboard() {
     .from("projects")
     .select("id, client_id");
 
+  // Fetch unread note counts per client in parallel with financial rollup
+  const clientIds = (allClients ?? []).map((c) => c.id);
+  const unreadNoteCounts = await getUnreadNoteCountsByClients(clientIds);
+
   // Build per-client financials
   const clientFinancials = new Map<string, { totalCharge: number; totalCost: number }>();
 
@@ -96,6 +101,7 @@ async function AdminDashboard() {
       email: c.email,
       totalCharge: financials.totalCharge,
       totalCost: financials.totalCost,
+      unreadNotes: unreadNoteCounts.get(c.id) ?? 0,
     };
   });
 

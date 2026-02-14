@@ -127,10 +127,10 @@ export async function deleteItem(
 }
 
 /**
- * Count items with non-null client notes for a project.
- * Used to show notification badges in admin views.
+ * Count items with unread client notes for a project.
+ * A note is "unread" when client_note is non-empty AND client_note_read_at is null.
  */
-export async function getClientNoteCount(
+export async function getUnreadNoteCount(
   projectId: string
 ): Promise<number> {
   const supabase = await createSupabaseServer();
@@ -139,17 +139,18 @@ export async function getClientNoteCount(
     .select("id", { count: "exact", head: true })
     .eq("project_id", projectId)
     .not("client_note", "is", null)
-    .neq("client_note", "");
+    .neq("client_note", "")
+    .is("client_note_read_at", null);
 
   if (error) return 0;
   return count ?? 0;
 }
 
 /**
- * Get client note counts for multiple projects at once.
- * Returns a map of projectId → count of items with client notes.
+ * Get unread client note counts for multiple projects at once.
+ * Returns a map of projectId → count of items with unread notes.
  */
-export async function getClientNoteCountsByProjects(
+export async function getUnreadNoteCountsByProjects(
   projectIds: string[]
 ): Promise<Map<string, number>> {
   if (projectIds.length === 0) return new Map();
@@ -157,10 +158,11 @@ export async function getClientNoteCountsByProjects(
   const supabase = await createSupabaseServer();
   const { data, error } = await supabase
     .from("items")
-    .select("project_id, client_note")
+    .select("project_id")
     .in("project_id", projectIds)
     .not("client_note", "is", null)
-    .neq("client_note", "");
+    .neq("client_note", "")
+    .is("client_note_read_at", null);
 
   if (error || !data) return new Map();
 
@@ -170,4 +172,70 @@ export async function getClientNoteCountsByProjects(
     counts.set(item.project_id, current + 1);
   }
   return counts;
+}
+
+/**
+ * Get unread client note counts rolled up per client.
+ * Returns a map of clientId → total unread note count across all projects.
+ */
+export async function getUnreadNoteCountsByClients(
+  clientIds: string[]
+): Promise<Map<string, number>> {
+  if (clientIds.length === 0) return new Map();
+
+  const supabase = await createSupabaseServer();
+
+  // Get items with unread notes, joined to their project for client_id
+  const { data, error } = await supabase
+    .from("items")
+    .select("project_id, projects!inner(client_id)")
+    .not("client_note", "is", null)
+    .neq("client_note", "")
+    .is("client_note_read_at", null);
+
+  if (error || !data) return new Map();
+
+  const counts = new Map<string, number>();
+  for (const item of data) {
+    const clientId = (item.projects as unknown as { client_id: string }).client_id;
+    if (!clientIds.includes(clientId)) continue;
+    const current = counts.get(clientId) ?? 0;
+    counts.set(clientId, current + 1);
+  }
+  return counts;
+}
+
+/**
+ * Mark a single item's client note as read.
+ */
+export async function markNoteRead(
+  itemId: string
+): Promise<{ error: string | null }> {
+  const supabase = await createSupabaseServer();
+  const { error } = await supabase
+    .from("items")
+    .update({ client_note_read_at: new Date().toISOString() })
+    .eq("id", itemId);
+
+  if (error) return { error: error.message };
+  return { error: null };
+}
+
+/**
+ * Mark all client notes in a project as read.
+ */
+export async function markAllNotesReadInProject(
+  projectId: string
+): Promise<{ error: string | null }> {
+  const supabase = await createSupabaseServer();
+  const { error } = await supabase
+    .from("items")
+    .update({ client_note_read_at: new Date().toISOString() })
+    .eq("project_id", projectId)
+    .not("client_note", "is", null)
+    .neq("client_note", "")
+    .is("client_note_read_at", null);
+
+  if (error) return { error: error.message };
+  return { error: null };
 }

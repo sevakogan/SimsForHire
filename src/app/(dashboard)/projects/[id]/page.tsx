@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getProjectById } from "@/lib/actions/projects";
-import { getItems, getItemsForClient, getClientNoteCount } from "@/lib/actions/items";
+import { getItems, getItemsForClient, getUnreadNoteCount } from "@/lib/actions/items";
 import { getClientById } from "@/lib/actions/clients";
 import { createSupabaseServer } from "@/lib/supabase-server";
 import { Badge } from "@/components/ui/badge";
@@ -50,7 +50,7 @@ export default async function ProjectDetailPage({ params }: Props) {
   const client = await getClientById(project.client_id);
   const [items, noteCount] = await Promise.all([
     admin ? getItems(id) : getItemsForClient(id),
-    admin ? getClientNoteCount(id) : Promise.resolve(0),
+    admin ? getUnreadNoteCount(id) : Promise.resolve(0),
   ]);
 
   const totalRetail = items.reduce(
@@ -173,7 +173,7 @@ export default async function ProjectDetailPage({ params }: Props) {
         )}
       </div>
 
-      <ItemsTable items={items} projectId={id} isAdmin={admin} clientNoteCount={noteCount} />
+      <ItemsTable items={items} projectId={id} isAdmin={admin} unreadNoteCount={noteCount} />
 
       {/* Inline add item bar */}
       {admin && <InlineAddItem projectId={id} isAdmin={admin} />}

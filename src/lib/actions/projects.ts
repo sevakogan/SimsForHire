@@ -286,9 +286,10 @@ export async function saveClientNote(
     return { error: "This invoice is no longer editable" };
   }
 
+  // When a customer writes/updates a note, reset read status so admin sees it as new
   const { error } = await supabase
     .from("items")
-    .update({ client_note: note || null })
+    .update({ client_note: note || null, client_note_read_at: null })
     .eq("id", itemId)
     .eq("project_id", project.id);
 

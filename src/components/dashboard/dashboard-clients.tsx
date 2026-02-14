@@ -10,6 +10,7 @@ export interface DashboardClient {
   email: string | null;
   totalCharge: number;
   totalCost: number;
+  unreadNotes: number;
 }
 
 interface DashboardClientsProps {
@@ -132,6 +133,16 @@ function CardsView({ clients }: { clients: DashboardClient[] }) {
             {/* Left accent stripe */}
             <div className={`absolute inset-y-0 left-0 w-1.5 bg-gradient-to-b ${colorClass}`} />
 
+            {/* Unread notes badge */}
+            {client.unreadNotes > 0 && (
+              <div className="absolute top-2.5 right-2.5 flex items-center gap-1 rounded-full bg-red-500 px-1.5 py-0.5 text-[10px] font-bold text-white shadow-sm">
+                <svg className="h-2.5 w-2.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.087.16 2.185.283 3.293.369V21l4.076-4.076a1.526 1.526 0 0 1 1.037-.443 48.282 48.282 0 0 0 5.68-.494c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0 0 12 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018Z" />
+                </svg>
+                {client.unreadNotes}
+              </div>
+            )}
+
             <div className="flex h-full flex-col justify-between pl-5 pr-4 py-4">
               {/* Top section: avatar + name + contact */}
               <div className="flex items-start gap-3">
@@ -197,7 +208,17 @@ function ListView({ clients }: { clients: DashboardClient[] }) {
             className="flex items-center justify-between rounded-xl border border-border/60 bg-white p-3 shadow-sm transition-all hover:border-primary/20 hover:shadow-md sm:p-4"
           >
             <div className="min-w-0 flex-1">
-              <p className="text-sm font-medium text-foreground truncate sm:text-base">{client.name}</p>
+              <div className="flex items-center gap-2">
+                <p className="text-sm font-medium text-foreground truncate sm:text-base">{client.name}</p>
+                {client.unreadNotes > 0 && (
+                  <span className="flex items-center gap-0.5 rounded-full bg-red-500 px-1.5 py-0.5 text-[10px] font-bold text-white">
+                    <svg className="h-2.5 w-2.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.087.16 2.185.283 3.293.369V21l4.076-4.076a1.526 1.526 0 0 1 1.037-.443 48.282 48.282 0 0 0 5.68-.494c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0 0 12 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018Z" />
+                    </svg>
+                    {client.unreadNotes}
+                  </span>
+                )}
+              </div>
               <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
                 {client.phone && <span>{client.phone}</span>}
                 {client.email && <span className="truncate">{client.email}</span>}

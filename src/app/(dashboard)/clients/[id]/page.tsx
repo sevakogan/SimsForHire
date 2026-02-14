@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getClientById } from "@/lib/actions/clients";
 import { getProjects } from "@/lib/actions/projects";
-import { getClientNoteCountsByProjects } from "@/lib/actions/items";
+import { getUnreadNoteCountsByProjects } from "@/lib/actions/items";
 import { ClientDetailClient } from "./client-detail-client";
 import { ProjectCard } from "./project-card";
 import { buttonStyles, cardStyles } from "@/components/ui/form-styles";
@@ -19,7 +19,7 @@ export default async function ClientDetailPage({ params }: Props) {
 
   const projects = await getProjects({ clientId: id });
   const projectIds = projects.map((p) => p.id);
-  const noteCountsMap = await getClientNoteCountsByProjects(projectIds);
+  const noteCountsMap = await getUnreadNoteCountsByProjects(projectIds);
 
   return (
     <div className="space-y-4 sm:space-y-6">

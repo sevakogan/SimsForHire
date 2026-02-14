@@ -3,7 +3,7 @@
 import { useState, useMemo, useRef, useCallback } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { deleteItem, updateItem } from "@/lib/actions/items";
+import { deleteItem, updateItem, markNoteRead } from "@/lib/actions/items";
 import { useRouter } from "next/navigation";
 import { firstImage } from "@/lib/parse-images";
 import { TypeFilterPills } from "@/components/products/type-filter-pills";
@@ -15,7 +15,7 @@ interface ItemsTableProps {
   items: (Item | ClientItem)[];
   projectId: string;
   isAdmin: boolean;
-  clientNoteCount?: number;
+  unreadNoteCount?: number;
 }
 
 function AcceptanceBadge({ status }: { status: AcceptanceStatus }) {
@@ -42,15 +42,41 @@ function AcceptanceBadge({ status }: { status: AcceptanceStatus }) {
   );
 }
 
-function ClientNoteInline({ note }: { note: string }) {
+function ClientNoteInline({
+  note,
+  itemId,
+  isUnread,
+  onDismiss,
+}: {
+  note: string;
+  itemId: string;
+  isUnread: boolean;
+  onDismiss: (itemId: string) => void;
+}) {
   return (
-    <div className="flex items-start gap-1.5 mt-1.5">
+    <div className={`flex items-start gap-1.5 mt-1.5 group/note ${isUnread ? "" : "opacity-50"}`}>
       <svg className="h-3.5 w-3.5 text-blue-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
         <path strokeLinecap="round" strokeLinejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.087.16 2.185.283 3.293.369V21l4.076-4.076a1.526 1.526 0 0 1 1.037-.443 48.282 48.282 0 0 0 5.68-.494c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0 0 12 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018Z" />
       </svg>
-      <span className="text-xs text-blue-600 italic leading-tight">
+      <span className="text-xs text-blue-600 italic leading-tight flex-1">
         &ldquo;{note}&rdquo;
       </span>
+      {isUnread && (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onDismiss(itemId);
+          }}
+          className="shrink-0 rounded p-0.5 text-gray-400 opacity-0 transition-opacity group-hover/note:opacity-100 hover:text-gray-600 hover:bg-gray-100"
+          title="Mark as read"
+        >
+          <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+          </svg>
+        </button>
+      )}
     </div>
   );
 }
@@ -136,11 +162,13 @@ function InlineNumberInput({
 
 /* ─── Main Component ─── */
 
-export function ItemsTable({ items, projectId, isAdmin, clientNoteCount = 0 }: ItemsTableProps) {
+export function ItemsTable({ items, projectId, isAdmin, unreadNoteCount = 0 }: ItemsTableProps) {
   const router = useRouter();
   const [typeFilter, setTypeFilter] = useState("");
   const [view, setView] = useState<ViewMode>("list");
   const [localItems, setLocalItems] = useState(items);
+  const [dismissedNoteIds, setDismissedNoteIds] = useState<Set<string>>(new Set());
+  const [localUnreadCount, setLocalUnreadCount] = useState(unreadNoteCount);
 
   // Sync localItems when server data changes
   const itemsKey = items.map((i) => `${i.id}-${i.updated_at}`).join(",");
@@ -182,6 +210,14 @@ export function ItemsTable({ items, projectId, isAdmin, clientNoteCount = 0 }: I
     updateItem(itemId, { [field]: value });
   }
 
+  function handleDismissNote(itemId: string) {
+    // Optimistic: hide the badge immediately
+    setDismissedNoteIds((prev) => new Set([...prev, itemId]));
+    setLocalUnreadCount((prev) => Math.max(0, prev - 1));
+    // Fire server update
+    markNoteRead(itemId);
+  }
+
   if (items.length === 0) {
     return (
       <div className="rounded-2xl border border-dashed border-border/60 py-12 text-center">
@@ -217,6 +253,7 @@ export function ItemsTable({ items, projectId, isAdmin, clientNoteCount = 0 }: I
           projectId={projectId}
           isAdmin={isAdmin}
           onDelete={handleDelete}
+          dismissedNoteIds={dismissedNoteIds}
         />
       )}
 
@@ -329,8 +366,15 @@ export function ItemsTable({ items, projectId, isAdmin, clientNoteCount = 0 }: I
                         <AcceptanceBadge status={item.acceptance_status} />
                       )}
                     </div>
-                    {isAdmin && "client_note" in item && item.client_note && (
-                      <ClientNoteInline note={item.client_note} />
+                    {isAdmin && item.client_note && (
+                      <ClientNoteInline
+                        note={item.client_note}
+                        itemId={item.id}
+                        isUnread={
+                          !("client_note_read_at" in item && (item as Item).client_note_read_at) && !dismissedNoteIds.has(item.id)
+                        }
+                        onDismiss={handleDismissNote}
+                      />
                     )}
                   </div>
 
@@ -451,8 +495,15 @@ export function ItemsTable({ items, projectId, isAdmin, clientNoteCount = 0 }: I
                           <AcceptanceBadge status={item.acceptance_status} />
                         )}
                       </div>
-                      {isAdmin && "client_note" in item && item.client_note && (
-                        <ClientNoteInline note={item.client_note} />
+                      {isAdmin && item.client_note && (
+                        <ClientNoteInline
+                          note={item.client_note}
+                          itemId={item.id}
+                          isUnread={
+                            !("client_note_read_at" in item && (item as Item).client_note_read_at) && !dismissedNoteIds.has(item.id)
+                          }
+                          onDismiss={handleDismissNote}
+                        />
                       )}
                     </div>
                     {isAdmin && (
@@ -530,9 +581,10 @@ interface ItemsCardGridProps {
   projectId: string;
   isAdmin: boolean;
   onDelete: (id: string) => void;
+  dismissedNoteIds: Set<string>;
 }
 
-function ItemsCardGrid({ items, projectId, isAdmin, onDelete }: ItemsCardGridProps) {
+function ItemsCardGrid({ items, projectId, isAdmin, onDelete, dismissedNoteIds }: ItemsCardGridProps) {
   if (items.length === 0) {
     return (
       <div className="rounded-xl border border-dashed border-border p-8 text-center">
@@ -586,15 +638,21 @@ function ItemsCardGrid({ items, projectId, isAdmin, onDelete }: ItemsCardGridPro
                 </div>
               )}
               {/* Client note indicator */}
-              {isAdmin && "client_note" in item && item.client_note && (
-                <div className="absolute top-1.5 left-1.5">
-                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-blue-500 text-white shadow-sm">
-                    <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.087.16 2.185.283 3.293.369V21l4.076-4.076a1.526 1.526 0 0 1 1.037-.443 48.282 48.282 0 0 0 5.68-.494c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0 0 12 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018Z" />
-                    </svg>
-                  </span>
-                </div>
-              )}
+              {isAdmin && item.client_note && (() => {
+                const noteIsUnread =
+                  !("client_note_read_at" in item && (item as Item).client_note_read_at) && !dismissedNoteIds.has(item.id);
+                return (
+                  <div className="absolute top-1.5 left-1.5">
+                    <span className={`flex h-5 w-5 items-center justify-center rounded-full shadow-sm ${
+                      noteIsUnread ? "bg-blue-500 text-white" : "bg-gray-300 text-white"
+                    }`}>
+                      <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.087.16 2.185.283 3.293.369V21l4.076-4.076a1.526 1.526 0 0 1 1.037-.443 48.282 48.282 0 0 0 5.68-.494c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0 0 12 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018Z" />
+                      </svg>
+                    </span>
+                  </div>
+                );
+              })()}
             </div>
 
             {/* Info */}
