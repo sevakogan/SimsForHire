@@ -8,9 +8,10 @@ import type { Client } from "@/types";
 
 interface ClientFormProps {
   client?: Client;
+  onSuccess?: () => void;
 }
 
-export function ClientForm({ client }: ClientFormProps) {
+export function ClientForm({ client, onSuccess }: ClientFormProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -20,34 +21,39 @@ export function ClientForm({ client }: ClientFormProps) {
     setLoading(true);
     setError(null);
 
-    const form = new FormData(e.currentTarget);
-    const input = {
-      name: form.get("name") as string,
-      phone: form.get("phone") as string,
-      email: form.get("email") as string,
-      address: form.get("address") as string,
-    };
+    try {
+      const form = new FormData(e.currentTarget);
+      const name = (form.get("name") as string).trim();
+      const phone = (form.get("phone") as string).trim() || null;
+      const email = (form.get("email") as string).trim() || null;
+      const address = (form.get("address") as string).trim() || null;
 
-    if (!input.name.trim()) {
-      setError("Name is required");
+      if (!name) {
+        setError("Name is required");
+        setLoading(false);
+        return;
+      }
+
+      const result = client
+        ? await updateClient(client.id, { name, phone, email, address })
+        : await createClient({ name, phone: phone ?? undefined, email: email ?? undefined, address: address ?? undefined });
+
+      if (result.error) {
+        setError(result.error);
+        setLoading(false);
+        return;
+      }
+
+      if (!client && "id" in result && result.id) {
+        router.push(`/clients/${result.id}`);
+      } else {
+        router.refresh();
+        onSuccess?.();
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "An unexpected error occurred");
+    } finally {
       setLoading(false);
-      return;
-    }
-
-    const result = client
-      ? await updateClient(client.id, input)
-      : await createClient(input);
-
-    if (result.error) {
-      setError(result.error);
-      setLoading(false);
-      return;
-    }
-
-    if (!client && "id" in result && result.id) {
-      router.push(`/clients/${result.id}`);
-    } else {
-      router.refresh();
     }
   }
 

@@ -20,16 +20,13 @@ export default async function ClientDetailPage({ params }: Props) {
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <Link
-            href="/clients"
-            className="text-xs sm:text-sm text-muted-foreground hover:text-foreground"
-          >
-            Clients
+      <div>
+        <div className="flex items-center gap-1.5 text-xs sm:text-sm text-muted-foreground">
+          <Link href="/dashboard" className="hover:text-foreground transition-colors">
+            Dashboard
           </Link>
-          <h1 className="text-lg sm:text-2xl font-bold text-foreground">{client.name}</h1>
         </div>
+        <h1 className="text-lg sm:text-2xl font-bold text-foreground">{client.name}</h1>
       </div>
 
       <div className={`${cardStyles.base} !p-4 sm:!p-6`}>

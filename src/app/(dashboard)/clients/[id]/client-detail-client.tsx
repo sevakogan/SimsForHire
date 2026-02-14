@@ -28,7 +28,7 @@ export function ClientDetailClient({ client }: Props) {
       <h3 className="mb-4 text-sm font-semibold text-foreground">
         Edit Client
       </h3>
-      <ClientForm client={client} />
+      <ClientForm client={client} onSuccess={() => setEditing(false)} />
     </div>
   );
 }

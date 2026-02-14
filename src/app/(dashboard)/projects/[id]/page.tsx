@@ -77,14 +77,19 @@ export default async function ProjectDetailPage({ params }: Props) {
   return (
     <div className="space-y-4 sm:space-y-6">
       <div>
-        {admin && client && (
-          <Link
-            href={`/clients/${client.id}`}
-            className="text-xs sm:text-sm text-muted-foreground hover:text-foreground"
-          >
-            {client.name}
+        <div className="flex items-center gap-1.5 text-xs sm:text-sm text-muted-foreground">
+          <Link href="/dashboard" className="hover:text-foreground transition-colors">
+            Dashboard
           </Link>
-        )}
+          {admin && client && (
+            <>
+              <span className="text-muted-foreground/40">›</span>
+              <Link href={`/clients/${client.id}`} className="hover:text-foreground transition-colors">
+                {client.name}
+              </Link>
+            </>
+          )}
+        </div>
         <div className="flex items-center gap-2 sm:gap-3">
           <h1 className="text-lg sm:text-2xl font-bold text-foreground truncate">{project.name}</h1>
           <Badge variant={project.status}>{project.status}</Badge>

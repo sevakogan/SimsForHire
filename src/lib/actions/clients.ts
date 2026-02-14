@@ -60,16 +60,23 @@ export async function updateClient(
   id: string,
   input: {
     name?: string;
-    phone?: string;
-    email?: string;
-    address?: string;
+    phone?: string | null;
+    email?: string | null;
+    address?: string | null;
   }
 ): Promise<{ error: string | null }> {
   const supabase = await createSupabaseServer();
 
+  const payload = {
+    ...(input.name !== undefined && { name: input.name }),
+    phone: input.phone || null,
+    email: input.email || null,
+    address: input.address || null,
+  };
+
   const { error } = await supabase
     .from("clients")
-    .update(input)
+    .update(payload)
     .eq("id", id);
 
   if (error) return { error: error.message };
