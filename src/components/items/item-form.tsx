@@ -179,8 +179,21 @@ export function ItemForm({ projectId, itemNumber, item, isAdmin }: ItemFormProps
         />
       </div>
 
-      {/* Row 2: # | Model # | Description | Link */}
+      {/* Row 2: Seller/Merchant | # | Model # | Description | Link */}
       <div className="flex flex-wrap gap-2">
+        <div className={`${pillWrapper} w-32 shrink-0`}>
+          <label htmlFor="seller_merchant" className={pillLabel}>Seller/Merchant</label>
+          <input
+            id="seller_merchant"
+            name="seller_merchant"
+            type="text"
+            value={fields.seller_merchant}
+            onChange={(e) => updateField("seller_merchant", e.target.value)}
+            placeholder="Seller…"
+            className={pillInput}
+          />
+        </div>
+
         <div className={`${pillWrapperReadonly} w-16 shrink-0`}>
           <span className={pillLabel}>#</span>
           <input
@@ -302,18 +315,6 @@ export function ItemForm({ projectId, itemNumber, item, isAdmin }: ItemFormProps
           />
         </div>
 
-        <div className={`${pillWrapper} w-32 shrink-0`}>
-          <label htmlFor="seller_merchant" className={pillLabel}>Seller/Merchant</label>
-          <input
-            id="seller_merchant"
-            name="seller_merchant"
-            type="text"
-            value={fields.seller_merchant}
-            onChange={(e) => updateField("seller_merchant", e.target.value)}
-            placeholder="Seller…"
-            className={pillInput}
-          />
-        </div>
       </div>
 
       {!isAdmin && (
