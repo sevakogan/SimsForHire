@@ -52,6 +52,7 @@ export interface Item {
   price_sold_for: number | null;
   image_url: string | null;
   notes: string;
+  model_number: string;
   product_id: string | null;
   created_at: string;
   updated_at: string;

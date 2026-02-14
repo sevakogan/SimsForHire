@@ -98,6 +98,7 @@ CREATE TABLE items (
   price_sold_for NUMERIC(12, 2),
   image_url TEXT,
   notes TEXT DEFAULT '',
+  model_number TEXT NOT NULL DEFAULT '',
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );

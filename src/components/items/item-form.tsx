@@ -25,6 +25,7 @@ interface ItemFormProps {
 }
 
 interface FormFields {
+  model_number: string;
   item_type: string;
   description: string;
   item_link: string;
@@ -39,6 +40,7 @@ interface FormFields {
 
 function buildInitialFields(item?: Item): FormFields {
   return {
+    model_number: item?.model_number ?? "",
     item_type: item?.item_type ?? "",
     description: item?.description ?? "",
     item_link: item?.item_link ?? "",
@@ -71,6 +73,7 @@ export function ItemForm({ projectId, itemNumber, item, isAdmin }: ItemFormProps
 
     setFields((prev) => ({
       ...prev,
+      model_number: product.model_number || prev.model_number,
       item_type: product.type || prev.item_type,
       description: product.description || prev.description,
       item_link: "",
@@ -98,6 +101,7 @@ export function ItemForm({ projectId, itemNumber, item, isAdmin }: ItemFormProps
     const input = {
       project_id: projectId,
       item_number: item?.item_number ?? itemNumber,
+      model_number: fields.model_number || undefined,
       item_type: fields.item_type,
       description: fields.description,
       item_link: fields.item_link || undefined,
@@ -155,7 +159,7 @@ export function ItemForm({ projectId, itemNumber, item, isAdmin }: ItemFormProps
         />
       </div>
 
-      {/* Row 2: Item # | Description | Link */}
+      {/* Row 2: # | Model # | Description | Link */}
       <div className="flex flex-wrap gap-2">
         <div className={`${pillWrapperReadonly} w-16 shrink-0`}>
           <span className={pillLabel}>#</span>
@@ -167,7 +171,20 @@ export function ItemForm({ projectId, itemNumber, item, isAdmin }: ItemFormProps
           />
         </div>
 
-        <div className={`${pillWrapper} min-w-[160px] flex-[2]`}>
+        <div className={`${pillWrapper} w-28 shrink-0`}>
+          <label htmlFor="model_number" className={pillLabel}>Model #</label>
+          <input
+            id="model_number"
+            name="model_number"
+            type="text"
+            value={fields.model_number}
+            onChange={(e) => updateField("model_number", e.target.value)}
+            placeholder="Model…"
+            className={pillInput}
+          />
+        </div>
+
+        <div className={`${pillWrapper} min-w-[160px] flex-1`}>
           <label htmlFor="description" className={pillLabel}>Description *</label>
           <input
             id="description"
@@ -181,7 +198,7 @@ export function ItemForm({ projectId, itemNumber, item, isAdmin }: ItemFormProps
           />
         </div>
 
-        <div className={`${pillWrapper} min-w-[140px] flex-1`}>
+        <div className={`${pillWrapper} w-32 shrink-0`}>
           <label htmlFor="item_link" className={pillLabel}>Link</label>
           <input
             id="item_link"
@@ -195,10 +212,10 @@ export function ItemForm({ projectId, itemNumber, item, isAdmin }: ItemFormProps
         </div>
       </div>
 
-      {/* Row 3: Retail | Ship | Disc % | Sold | Admin: My Cost | My Ship */}
+      {/* Row 3: Retail Cost | Wholesale % | Wholesale Cost (admin) | Sale Price | S/H */}
       <div className="flex flex-wrap gap-2">
         <div className={`${pillWrapper} w-24 shrink-0`}>
-          <label htmlFor="retail_price" className={pillLabel}>Retail</label>
+          <label htmlFor="retail_price" className={pillLabel}>Retail Cost</label>
           <input
             id="retail_price"
             name="retail_price"
@@ -206,6 +223,48 @@ export function ItemForm({ projectId, itemNumber, item, isAdmin }: ItemFormProps
             step="0.01"
             value={fields.retail_price}
             onChange={(e) => updateField("retail_price", e.target.value)}
+            className={pillInput}
+          />
+        </div>
+
+        <div className={`${pillWrapper} w-24 shrink-0`}>
+          <label htmlFor="discount_percent" className={pillLabel}>Wholesale %</label>
+          <input
+            id="discount_percent"
+            name="discount_percent"
+            type="number"
+            step="0.01"
+            value={fields.discount_percent}
+            onChange={(e) => updateField("discount_percent", e.target.value)}
+            className={pillInput}
+          />
+        </div>
+
+        {isAdmin && (
+          <div className={`${pillWrapperAdmin} w-28 shrink-0`}>
+            <label htmlFor="my_cost" className={pillLabelAdmin}>Wholesale Cost</label>
+            <input
+              id="my_cost"
+              name="my_cost"
+              type="number"
+              step="0.01"
+              value={fields.my_cost}
+              onChange={(e) => updateField("my_cost", e.target.value)}
+              className={pillInput}
+            />
+          </div>
+        )}
+
+        <div className={`${pillWrapper} w-24 shrink-0`}>
+          <label htmlFor="price_sold_for" className={pillLabel}>Sale Price</label>
+          <input
+            id="price_sold_for"
+            name="price_sold_for"
+            type="number"
+            step="0.01"
+            value={fields.price_sold_for}
+            onChange={(e) => updateField("price_sold_for", e.target.value)}
+            placeholder="—"
             className={pillInput}
           />
         </div>
@@ -222,71 +281,12 @@ export function ItemForm({ projectId, itemNumber, item, isAdmin }: ItemFormProps
             className={pillInput}
           />
         </div>
-
-        <div className={`${pillWrapper} w-20 shrink-0`}>
-          <label htmlFor="discount_percent" className={pillLabel}>Disc %</label>
-          <input
-            id="discount_percent"
-            name="discount_percent"
-            type="number"
-            step="0.01"
-            value={fields.discount_percent}
-            onChange={(e) => updateField("discount_percent", e.target.value)}
-            className={pillInput}
-          />
-        </div>
-
-        <div className={`${pillWrapper} w-24 shrink-0`}>
-          <label htmlFor="price_sold_for" className={pillLabel}>Sold</label>
-          <input
-            id="price_sold_for"
-            name="price_sold_for"
-            type="number"
-            step="0.01"
-            value={fields.price_sold_for}
-            onChange={(e) => updateField("price_sold_for", e.target.value)}
-            placeholder="—"
-            className={pillInput}
-          />
-        </div>
-
-        {isAdmin && (
-          <>
-            <div className={`${pillWrapperAdmin} w-24 shrink-0`}>
-              <label htmlFor="my_cost" className={pillLabelAdmin}>My Cost</label>
-              <input
-                id="my_cost"
-                name="my_cost"
-                type="number"
-                step="0.01"
-                value={fields.my_cost}
-                onChange={(e) => updateField("my_cost", e.target.value)}
-                className={pillInput}
-              />
-            </div>
-
-            <div className={`${pillWrapperAdmin} w-24 shrink-0`}>
-              <label htmlFor="my_shipping" className={pillLabelAdmin}>My Ship</label>
-              <input
-                id="my_shipping"
-                name="my_shipping"
-                type="number"
-                step="0.01"
-                value={fields.my_shipping}
-                onChange={(e) => updateField("my_shipping", e.target.value)}
-                className={pillInput}
-              />
-            </div>
-          </>
-        )}
       </div>
 
       {!isAdmin && (
-        <>
-          <input type="hidden" name="my_cost" value="0" />
-          <input type="hidden" name="my_shipping" value="0" />
-        </>
+        <input type="hidden" name="my_cost" value="0" />
       )}
+      <input type="hidden" name="my_shipping" value={fields.my_shipping} />
 
       {/* Row 4: Notes */}
       <div className={pillWrapper}>
