@@ -12,7 +12,10 @@ const adminTabs = [
   { label: "Users", href: "/dashboard/users" },
 ];
 
-const clientTabs = [{ label: "My Quotes", href: "/dashboard" }];
+const clientTabs = [
+  { label: "My Quotes", href: "/dashboard" },
+  { label: "Products", href: "/catalog" },
+];
 
 export function TopNav() {
   const pathname = usePathname();

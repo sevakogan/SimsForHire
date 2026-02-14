@@ -1,7 +1,6 @@
 import { createSupabaseServer } from "@/lib/supabase-server";
 import { getProducts, getProductsForClient } from "@/lib/actions/products";
-import { ProductsTable } from "@/components/products/products-table";
-import { QuickAddProduct } from "@/components/products/quick-add-product";
+import { ProductsView } from "@/components/products/products-view";
 import type { Profile } from "@/types";
 import { isAdminRole } from "@/types";
 
@@ -32,10 +31,7 @@ export default async function CatalogPage() {
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold text-foreground">Products</h1>
-
-      {admin && <QuickAddProduct isAdmin={admin} />}
-
-      <ProductsTable products={products} isAdmin={admin} />
+      <ProductsView products={products} isAdmin={admin} />
     </div>
   );
 }
