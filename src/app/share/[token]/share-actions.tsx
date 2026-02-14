@@ -31,8 +31,14 @@ export function ShareActions({
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Already fully accepted
-  const alreadyAccepted = projectStatus === "accepted" || projectStatus === "completed";
+  // Already fully accepted (project promoted by admin, or all items already accepted by client)
+  const allItemsAlreadyAccepted = items.every(
+    (i) => i.acceptance_status === "accepted"
+  );
+  const alreadyAccepted =
+    projectStatus === "accepted" ||
+    projectStatus === "completed" ||
+    allItemsAlreadyAccepted;
   const allItemsDecided = Object.values(decisions).every(
     (d) => d === "accepted" || d === "rejected"
   );

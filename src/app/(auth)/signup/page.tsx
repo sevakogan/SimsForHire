@@ -5,36 +5,61 @@ import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { formStyles, buttonStyles } from "@/components/ui/form-styles";
+import { validateSignupForm } from "@/lib/validation";
 
-function LoginForm() {
+function SignupForm() {
+  const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const searchParams = useSearchParams();
   const authError = searchParams.get("error");
-  const message = searchParams.get("message");
 
-  async function handleEmailSignIn(e: React.FormEvent) {
+  async function handleEmailSignup(e: React.FormEvent) {
     e.preventDefault();
-    setLoading(true);
     setError(null);
 
-    const { error: signInError } = await supabase.auth.signInWithPassword({
+    const validation = validateSignupForm({
+      email,
+      fullName,
+      password,
+      confirmPassword,
+    });
+    if (!validation.valid) {
+      setError(validation.error ?? "Invalid input");
+      return;
+    }
+
+    setLoading(true);
+
+    const { data, error: signUpError } = await supabase.auth.signUp({
       email,
       password,
+      options: {
+        data: { full_name: fullName.trim() },
+        emailRedirectTo: `${window.location.origin}/auth/callback`,
+      },
     });
 
-    if (signInError) {
-      setError(signInError.message);
+    if (signUpError) {
+      setError(signUpError.message);
       setLoading(false);
       return;
     }
 
-    window.location.href = "/dashboard";
+    // If session returned, email confirmation is disabled — go to dashboard
+    if (data.session) {
+      window.location.href = "/dashboard";
+      return;
+    }
+
+    // Otherwise, email confirmation is required
+    window.location.href = "/confirm";
   }
 
-  async function handleGoogleSignIn() {
+  async function handleGoogleSignUp() {
     setLoading(true);
     setError(null);
     const { error } = await supabase.auth.signInWithOAuth({
@@ -54,7 +79,7 @@ function LoginForm() {
       <div className="mb-8 text-center">
         <h1 className="text-2xl font-bold text-foreground">SimsForHire</h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Sign in to your account
+          Create your account
         </p>
       </div>
 
@@ -64,19 +89,28 @@ function LoginForm() {
         </div>
       )}
 
-      {message === "password-updated" && (
-        <div className="mb-4 rounded-lg bg-green-50 p-3 text-sm text-green-700">
-          Password updated successfully. Sign in with your new password.
-        </div>
-      )}
-
       {error && (
         <div className="mb-4 rounded-lg bg-red-50 p-3 text-sm text-red-600">
           {error}
         </div>
       )}
 
-      <form onSubmit={handleEmailSignIn} className="space-y-4">
+      <form onSubmit={handleEmailSignup} className="space-y-4">
+        <div>
+          <label htmlFor="fullName" className={formStyles.label}>
+            Full Name
+          </label>
+          <input
+            id="fullName"
+            type="text"
+            value={fullName}
+            onChange={(e) => setFullName(e.target.value)}
+            placeholder="John Doe"
+            required
+            className={formStyles.input}
+          />
+        </div>
+
         <div>
           <label htmlFor="email" className={formStyles.label}>
             Email
@@ -93,22 +127,32 @@ function LoginForm() {
         </div>
 
         <div>
-          <div className="flex items-center justify-between mb-1.5">
-            <label htmlFor="password" className="text-sm font-medium text-foreground">
-              Password
-            </label>
-            <Link
-              href="/forgot-password"
-              className="text-xs text-primary hover:text-primary-hover transition-colors"
-            >
-              Forgot password?
-            </Link>
-          </div>
+          <label htmlFor="password" className={formStyles.label}>
+            Password
+          </label>
           <input
             id="password"
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            placeholder="••••••••"
+            required
+            className={formStyles.input}
+          />
+          <p className="mt-1 text-xs text-muted-foreground">
+            Must be at least 8 characters
+          </p>
+        </div>
+
+        <div>
+          <label htmlFor="confirmPassword" className={formStyles.label}>
+            Confirm Password
+          </label>
+          <input
+            id="confirmPassword"
+            type="password"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
             placeholder="••••••••"
             required
             className={formStyles.input}
@@ -120,7 +164,7 @@ function LoginForm() {
           disabled={loading}
           className={`${buttonStyles.primary} w-full`}
         >
-          {loading ? "Signing in..." : "Sign In"}
+          {loading ? "Creating account..." : "Create Account"}
         </button>
       </form>
 
@@ -136,7 +180,7 @@ function LoginForm() {
 
       {/* Google OAuth */}
       <button
-        onClick={handleGoogleSignIn}
+        onClick={handleGoogleSignUp}
         disabled={loading}
         className="flex w-full items-center justify-center gap-3 rounded-lg border border-border bg-white px-4 py-3 text-sm font-medium text-foreground shadow-sm transition-all hover:bg-muted hover:shadow-md disabled:opacity-50"
       >
@@ -158,23 +202,23 @@ function LoginForm() {
             fill="#EA4335"
           />
         </svg>
-        Sign in with Google
+        Sign up with Google
       </button>
 
       <p className="mt-6 text-center text-sm text-muted-foreground">
-        Don&apos;t have an account?{" "}
+        Already have an account?{" "}
         <Link
-          href="/signup"
+          href="/login"
           className="font-medium text-primary hover:text-primary-hover transition-colors"
         >
-          Sign up
+          Sign in
         </Link>
       </p>
     </div>
   );
 }
 
-export default function LoginPage() {
+export default function SignupPage() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-muted">
       <Suspense
@@ -184,7 +228,7 @@ export default function LoginPage() {
           </div>
         }
       >
-        <LoginForm />
+        <SignupForm />
       </Suspense>
     </div>
   );

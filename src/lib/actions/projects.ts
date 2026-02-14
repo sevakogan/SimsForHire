@@ -180,7 +180,8 @@ export async function getClientSafeItemsByProjectId(
 
 /**
  * Accept all items for a project via share token.
- * Sets all items to "accepted" and updates project status to "accepted".
+ * Sets all items to "accepted". Project status is NOT changed —
+ * the admin reviews item decisions and promotes the status manually.
  */
 export async function acceptAllItemsByShareToken(
   shareToken: string
@@ -205,21 +206,13 @@ export async function acceptAllItemsByShareToken(
     .eq("project_id", project.id);
 
   if (itemsError) return { error: itemsError.message };
-
-  // Update project status to accepted
-  const { error: projectError } = await supabase
-    .from("projects")
-    .update({ status: "accepted" as ProjectStatus })
-    .eq("id", project.id);
-
-  if (projectError) return { error: projectError.message };
   return { error: null };
 }
 
 /**
  * Submit per-item acceptance decisions via share token.
- * If all items accepted → project status becomes "accepted".
- * If any rejected → project stays at current status (admin notified via item status).
+ * Updates each item's acceptance_status. Project status is NOT changed —
+ * the admin reviews item decisions and promotes the status manually.
  */
 export async function submitItemDecisions(
   shareToken: string,
@@ -247,23 +240,6 @@ export async function submitItemDecisions(
       .eq("project_id", project.id); // Security: ensure item belongs to this project
 
     if (error) return { error: error.message };
-  }
-
-  // Check if all items are now accepted
-  const { data: items } = await supabase
-    .from("items")
-    .select("acceptance_status")
-    .eq("project_id", project.id);
-
-  const allAccepted = items?.every(
-    (i) => i.acceptance_status === "accepted"
-  );
-
-  if (allAccepted) {
-    await supabase
-      .from("projects")
-      .update({ status: "accepted" as ProjectStatus })
-      .eq("id", project.id);
   }
 
   return { error: null };
