@@ -52,6 +52,13 @@ function emptyProductFields(name: string = ""): NewProductFields {
   };
 }
 
+function formatCurrency(value: number): string {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+  }).format(value);
+}
+
 export function InlineAddItem({ projectId, isAdmin }: InlineAddItemProps) {
   const router = useRouter();
   const [mode, setMode] = useState<Mode>("collapsed");
@@ -65,7 +72,7 @@ export function InlineAddItem({ projectId, isAdmin }: InlineAddItemProps) {
     emptyProductFields()
   );
 
-  const containerRef = useRef<HTMLDivElement>(null);
+  const searchRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -76,7 +83,6 @@ export function InlineAddItem({ projectId, isAdmin }: InlineAddItemProps) {
         setDropdownOpen(false);
         return;
       }
-
       setLoading(true);
       try {
         const data = await searchProducts(searchQuery, isAdmin);
@@ -91,67 +97,67 @@ export function InlineAddItem({ projectId, isAdmin }: InlineAddItemProps) {
     [isAdmin]
   );
 
+  // Debounced search
   useEffect(() => {
     if (mode !== "searching") return;
-
     if (debounceRef.current) clearTimeout(debounceRef.current);
-
     if (!query.trim()) {
       setResults([]);
       setDropdownOpen(false);
       return;
     }
-
-    debounceRef.current = setTimeout(() => {
-      handleSearch(query);
-    }, 300);
-
+    debounceRef.current = setTimeout(() => handleSearch(query), 300);
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
   }, [query, handleSearch, mode]);
 
-  // Click outside to close
+  // Click outside to close search
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
-      if (
-        containerRef.current &&
-        !containerRef.current.contains(e.target as Node)
-      ) {
+      if (searchRef.current && !searchRef.current.contains(e.target as Node)) {
         if (mode === "searching" && !query.trim()) {
           setMode("collapsed");
         }
         setDropdownOpen(false);
       }
     }
-
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [mode, query]);
 
-  // Focus input when opening search
+  // Auto-focus search input
   useEffect(() => {
     if (mode === "searching") {
-      inputRef.current?.focus();
+      setTimeout(() => inputRef.current?.focus(), 50);
     }
   }, [mode]);
 
-  function formatCurrency(value: number): string {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-    }).format(value);
-  }
+  // Escape key handling
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") {
+        if (mode === "create-product") {
+          setMode("searching");
+          setError(null);
+        } else if (mode === "searching") {
+          setMode("collapsed");
+          setQuery("");
+          setDropdownOpen(false);
+        }
+      }
+    }
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [mode]);
 
-  // Select a product from search — create item from it
+  // Select a product → create item from it
   async function handleSelectProduct(product: ProductSearchResult) {
     setSaving(true);
     setError(null);
     setDropdownOpen(false);
-
     try {
       const nextNumber = await getNextItemNumber(projectId);
-
       const result = await createItem({
         project_id: projectId,
         item_number: nextNumber,
@@ -166,14 +172,11 @@ export function InlineAddItem({ projectId, isAdmin }: InlineAddItemProps) {
         image_url: product.image_url ?? undefined,
         product_id: product.id,
       });
-
       if (result.error) {
         setError(result.error);
         setSaving(false);
         return;
       }
-
-      // Reset and refresh
       setQuery("");
       setMode("collapsed");
       setResults([]);
@@ -185,7 +188,6 @@ export function InlineAddItem({ projectId, isAdmin }: InlineAddItemProps) {
     }
   }
 
-  // Open "Create New Item" modal (product form)
   function handleCreateNew() {
     setDropdownOpen(false);
     setProductFields(emptyProductFields(query));
@@ -196,14 +198,12 @@ export function InlineAddItem({ projectId, isAdmin }: InlineAddItemProps) {
     setProductFields((prev) => ({ ...prev, [name]: value }));
   }
 
-  // Submit new product, then create item from it
+  // Submit new product + create item
   async function handleCreateProductAndItem(e: React.FormEvent) {
     e.preventDefault();
     setSaving(true);
     setError(null);
-
     try {
-      // 1. Create the product
       const productResult = await createProduct({
         name: productFields.name,
         model_number: productFields.model_number,
@@ -217,16 +217,12 @@ export function InlineAddItem({ projectId, isAdmin }: InlineAddItemProps) {
         notes: productFields.notes || undefined,
         manufacturer_website: productFields.manufacturer_website || undefined,
       });
-
       if (productResult.error) {
         setError(productResult.error);
         setSaving(false);
         return;
       }
-
-      // 2. Create the item from the new product
       const nextNumber = await getNextItemNumber(projectId);
-
       const itemResult = await createItem({
         project_id: projectId,
         item_number: nextNumber,
@@ -241,14 +237,11 @@ export function InlineAddItem({ projectId, isAdmin }: InlineAddItemProps) {
         image_url: productFields.image_url ?? undefined,
         product_id: productResult.id ?? undefined,
       });
-
       if (itemResult.error) {
         setError(itemResult.error);
         setSaving(false);
         return;
       }
-
-      // Reset and refresh
       setQuery("");
       setMode("collapsed");
       setProductFields(emptyProductFields());
@@ -260,55 +253,36 @@ export function InlineAddItem({ projectId, isAdmin }: InlineAddItemProps) {
     }
   }
 
-  // --- Collapsed state ---
+  // ── Collapsed ─────────────────────────────────────────────
   if (mode === "collapsed") {
     return (
       <button
         onClick={() => setMode("searching")}
-        className="flex w-full items-center gap-3 rounded-xl border border-dashed border-border bg-white px-4 py-3 text-left transition-all hover:border-primary/40 hover:bg-muted/30"
+        className="flex w-full items-center gap-3 rounded-xl border border-dashed border-border/50 bg-transparent px-3 py-2.5 text-left transition-all hover:border-primary/30 hover:bg-muted/20"
       >
-        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-          <svg
-            className="h-4 w-4"
-            fill="none"
-            viewBox="0 0 24 24"
-            strokeWidth={2}
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M12 4.5v15m7.5-7.5h-15"
-            />
+        <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
+          <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
           </svg>
         </div>
-        <span className="text-sm text-muted-foreground">Add an item</span>
+        <span className="text-sm text-muted-foreground/70">Add an item</span>
       </button>
     );
   }
 
-  // --- Search mode ---
+  // ── Search mode ───────────────────────────────────────────
   if (mode === "searching") {
     return (
-      <div ref={containerRef} className="relative">
-        <div className="flex items-center gap-3 rounded-xl border border-border bg-white px-4 py-2.5 shadow-sm focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20">
-          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-            <svg
-              className="h-4 w-4"
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth={2}
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M12 4.5v15m7.5-7.5h-15"
-              />
+      <div ref={searchRef} className="relative">
+        {/* Search bar */}
+        <div className="flex items-center gap-3 rounded-xl border border-border bg-white px-3 py-2 shadow-sm transition-all focus-within:border-primary focus-within:shadow-md focus-within:shadow-primary/5">
+          <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
+            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
             </svg>
           </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+          <div className="min-w-0 flex-1">
+            <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground/60 leading-none mb-0.5">
               Add an item
             </p>
             <input
@@ -319,92 +293,95 @@ export function InlineAddItem({ projectId, isAdmin }: InlineAddItemProps) {
               onFocus={() => {
                 if (results.length > 0 || query.trim()) setDropdownOpen(true);
               }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && query.trim() && results.length === 0 && !loading) {
+                  e.preventDefault();
+                  handleCreateNew();
+                }
+              }}
               placeholder="Search products or type a name…"
-              className="w-full bg-transparent text-sm text-foreground placeholder:text-muted-foreground/60 focus:outline-none"
+              className="w-full bg-transparent text-sm text-foreground placeholder:text-muted-foreground/40 focus:outline-none"
             />
           </div>
           {loading && (
-            <span className="shrink-0 text-xs text-muted-foreground">
-              Searching…
-            </span>
+            <div className="shrink-0">
+              <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary/20 border-t-primary" />
+            </div>
           )}
           {saving && (
-            <span className="shrink-0 text-xs text-primary">Adding…</span>
+            <span className="shrink-0 text-xs font-medium text-primary animate-pulse">
+              Adding…
+            </span>
           )}
         </div>
 
         {error && (
-          <div className="mt-1 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">
+          <div className="mt-1.5 rounded-lg bg-red-50 px-3 py-2 text-xs text-red-600">
             {error}
           </div>
         )}
 
         {/* Dropdown */}
         {dropdownOpen && query.trim() && (
-          <div className="absolute z-50 mt-1 w-full rounded-xl border border-border bg-white shadow-lg max-h-72 overflow-y-auto">
-            {/* Product results */}
+          <div className="absolute z-50 mt-1.5 w-full rounded-xl border border-border bg-white shadow-xl shadow-black/5 max-h-80 overflow-y-auto animate-slide-down">
+            {/* Product matches */}
             {results.map((product) => (
               <button
                 key={product.id}
                 type="button"
                 onClick={() => handleSelectProduct(product)}
                 disabled={saving}
-                className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-muted/50 border-b border-border/50 last:border-b-0 disabled:opacity-50"
+                className="flex w-full items-center gap-3 px-3 py-2.5 text-left transition-colors hover:bg-muted/40 border-b border-border/30 last:border-b-0 disabled:opacity-50"
               >
                 {product.image_url ? (
                   <Image
                     src={product.image_url}
                     alt=""
-                    width={36}
-                    height={36}
-                    className="rounded object-cover shrink-0"
+                    width={32}
+                    height={32}
+                    className="h-8 w-8 rounded-lg object-cover shrink-0"
                   />
                 ) : (
-                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded bg-muted text-xs text-muted-foreground">
-                    --
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-muted/40 text-muted-foreground/40">
+                    <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0 0 22.5 18.75V5.25A2.25 2.25 0 0 0 20.25 3H3.75A2.25 2.25 0 0 0 1.5 5.25v13.5A2.25 2.25 0 0 0 3.75 21Z" />
+                    </svg>
                   </div>
                 )}
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-foreground truncate">
                     {product.name}
                   </p>
-                  <p className="text-xs text-muted-foreground truncate">
-                    {product.model_number && `${product.model_number} · `}
-                    {product.type}
-                    {product.description && ` · ${product.description}`}
+                  <p className="text-xs text-muted-foreground/70 truncate">
+                    {[product.model_number, product.type, product.description]
+                      .filter(Boolean)
+                      .join(" · ")}
                   </p>
                 </div>
-                <span className="shrink-0 text-sm font-medium text-foreground">
+                <span className="shrink-0 text-sm font-medium text-foreground tabular-nums">
                   {formatCurrency(product.sales_price)}
                 </span>
               </button>
             ))}
 
-            {/* Create new item option */}
+            {/* Create new — always shown when not loading */}
             {!loading && (
               <button
                 type="button"
                 onClick={handleCreateNew}
-                className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-primary/5 border-t border-border/50"
+                className="flex w-full items-center gap-3 px-3 py-2.5 text-left transition-colors hover:bg-primary/5 border-t border-border/40"
               >
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                  <svg
-                    className="h-5 w-5"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    strokeWidth={2}
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M12 4.5v15m7.5-7.5h-15"
-                    />
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
                   </svg>
                 </div>
-                <p className="text-sm font-medium text-foreground">
-                  Create new item: &ldquo;{query}&rdquo;
-                </p>
+                <span className="text-sm font-medium text-foreground">
+                  Create new item: &ldquo;<span className="text-primary">{query}</span>&rdquo;
+                </span>
+                <span className="ml-auto text-xs text-muted-foreground/50">
+                  Enter ↵
+                </span>
               </button>
             )}
           </div>
@@ -413,237 +390,216 @@ export function InlineAddItem({ projectId, isAdmin }: InlineAddItemProps) {
     );
   }
 
-  // --- Create product modal ---
+  // ── Create product modal (backdrop overlay) ───────────────
   return (
-    <div ref={containerRef}>
-      <div className="rounded-xl border border-border bg-white p-4 shadow-sm">
-        <div className="mb-3 flex items-center justify-between">
-          <h3 className="text-sm font-semibold text-foreground">
-            Create New Item
-          </h3>
-          <button
-            type="button"
-            onClick={() => {
-              setMode("searching");
-              setError(null);
-            }}
-            className="rounded-md px-2 py-1 text-xs text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
-          >
-            Back
-          </button>
-        </div>
+    <>
+      {/* Backdrop */}
+      <div
+        className="fixed inset-0 z-40 bg-black/20 backdrop-blur-[2px] animate-fade-in"
+        onClick={() => {
+          setMode("searching");
+          setError(null);
+        }}
+      />
 
-        {error && (
-          <div className="mb-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">
-            {error}
-          </div>
-        )}
-
-        <form onSubmit={handleCreateProductAndItem} className="space-y-3">
-          {/* Row 1: Name | Model # | Type — all equal short */}
-          <div className="flex flex-wrap gap-2">
-            <div className={`${pillWrapper} min-w-[120px] flex-1`}>
-              <label htmlFor="new_name" className={pillLabel}>
-                Name *
-              </label>
-              <input
-                id="new_name"
-                type="text"
-                required
-                autoFocus
-                value={productFields.name}
-                onChange={(e) => updateProductField("name", e.target.value)}
-                placeholder="Product name…"
-                className={pillInput}
-              />
-            </div>
-
-            <div className={`${pillWrapper} min-w-[120px] flex-1`}>
-              <label htmlFor="new_model" className={pillLabel}>
-                Model #
-              </label>
-              <input
-                id="new_model"
-                type="text"
-                value={productFields.model_number}
-                onChange={(e) =>
-                  updateProductField("model_number", e.target.value)
-                }
-                placeholder="Model…"
-                className={pillInput}
-              />
-            </div>
-
-            <div className={`${pillWrapper} min-w-[120px] flex-1`}>
-              <label htmlFor="new_type" className={pillLabel}>
-                Type
-              </label>
-              <input
-                id="new_type"
-                type="text"
-                value={productFields.type}
-                onChange={(e) => updateProductField("type", e.target.value)}
-                placeholder="Furniture…"
-                className={pillInput}
-              />
-            </div>
-          </div>
-
-          {/* Row 2: Description — 2x width of a short field */}
-          <div className="flex gap-2">
-            <div className={`${pillWrapper} flex-[2] min-w-[240px]`}>
-              <label htmlFor="new_description" className={pillLabel}>
-                Description
-              </label>
-              <input
-                id="new_description"
-                type="text"
-                value={productFields.description}
-                onChange={(e) =>
-                  updateProductField("description", e.target.value)
-                }
-                placeholder="Brief description…"
-                className={pillInput}
-              />
-            </div>
-            <div className="flex-1" />
-          </div>
-
-          {/* Row 3: Prices */}
-          <div className="flex flex-wrap gap-2">
-            <div className={`${pillWrapper} w-28 shrink-0`}>
-              <label htmlFor="new_retail" className={pillLabel}>
-                Retail $
-              </label>
-              <input
-                id="new_retail"
-                type="number"
-                step="0.01"
-                value={productFields.retail_price}
-                onChange={(e) =>
-                  updateProductField("retail_price", e.target.value)
-                }
-                className={pillInput}
-              />
-            </div>
-
-            <div className={`${pillWrapper} w-28 shrink-0`}>
-              <label htmlFor="new_sales" className={pillLabel}>
-                Sales $
-              </label>
-              <input
-                id="new_sales"
-                type="number"
-                step="0.01"
-                value={productFields.sales_price}
-                onChange={(e) =>
-                  updateProductField("sales_price", e.target.value)
-                }
-                className={pillInput}
-              />
-            </div>
-
-            {isAdmin && (
-              <div className={`${pillWrapperAdmin} w-28 shrink-0`}>
-                <label htmlFor="new_cost" className={pillLabelAdmin}>
-                  Dealer $
-                </label>
-                <input
-                  id="new_cost"
-                  type="number"
-                  step="0.01"
-                  value={productFields.cost}
-                  onChange={(e) => updateProductField("cost", e.target.value)}
-                  className={pillInput}
-                />
-              </div>
-            )}
-
-            <div className={`${pillWrapper} w-28 shrink-0`}>
-              <label htmlFor="new_shipping" className={pillLabel}>
-                S/H
-              </label>
-              <input
-                id="new_shipping"
-                type="number"
-                step="0.01"
-                value={productFields.shipping}
-                onChange={(e) =>
-                  updateProductField("shipping", e.target.value)
-                }
-                className={pillInput}
-              />
-            </div>
-          </div>
-
-          {/* Row 4: Website | Image | Notes */}
-          <div className="flex flex-wrap gap-2">
-            <div className={`${pillWrapper} min-w-[160px] flex-1`}>
-              <label htmlFor="new_website" className={pillLabel}>
-                Manufacturer Website
-              </label>
-              <input
-                id="new_website"
-                type="url"
-                value={productFields.manufacturer_website}
-                onChange={(e) =>
-                  updateProductField("manufacturer_website", e.target.value)
-                }
-                placeholder="https://…"
-                className={`${pillInput} text-xs`}
-              />
-            </div>
-
-            <div className={`${pillWrapper} min-w-[120px]`}>
-              <label className={pillLabel}>Image</label>
-              <ImageUpload
-                currentUrl={null}
-                onUpload={(url) =>
-                  setProductFields((prev) => ({ ...prev, image_url: url }))
-                }
-                onRemove={() =>
-                  setProductFields((prev) => ({ ...prev, image_url: null }))
-                }
-              />
-            </div>
-
-            <div className={`${pillWrapper} min-w-[160px] flex-1`}>
-              <label htmlFor="new_notes" className={pillLabel}>
-                Notes
-              </label>
-              <input
-                id="new_notes"
-                type="text"
-                value={productFields.notes}
-                onChange={(e) => updateProductField("notes", e.target.value)}
-                placeholder="Notes…"
-                className={pillInput}
-              />
-            </div>
-          </div>
-
-          {/* Actions */}
-          <div className="flex items-center gap-2 pt-1">
-            <button
-              type="submit"
-              disabled={saving}
-              className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white shadow-sm transition-all hover:bg-primary-hover disabled:opacity-50"
-            >
-              {saving ? "Creating…" : "Create & Add Item"}
-            </button>
+      {/* Modal */}
+      <div className="fixed inset-x-0 top-[10%] z-50 mx-auto w-full max-w-2xl px-4 animate-slide-up">
+        <div className="rounded-2xl border border-border bg-white p-5 shadow-2xl shadow-black/10">
+          {/* Header */}
+          <div className="mb-4 flex items-center justify-between">
+            <h3 className="text-base font-semibold text-foreground">
+              Create New Item
+            </h3>
             <button
               type="button"
               onClick={() => {
                 setMode("searching");
                 setError(null);
               }}
-              className="rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground/60 transition-colors hover:bg-muted hover:text-foreground"
             >
-              Cancel
+              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+              </svg>
             </button>
           </div>
-        </form>
+
+          {error && (
+            <div className="mb-4 rounded-lg bg-red-50 px-3 py-2 text-xs text-red-600">
+              {error}
+            </div>
+          )}
+
+          <form onSubmit={handleCreateProductAndItem} className="space-y-3">
+            {/* Row 1: Name | Model # | Type */}
+            <div className="flex flex-wrap gap-2">
+              <div className={`${pillWrapper} min-w-[120px] flex-1`}>
+                <label htmlFor="new_name" className={pillLabel}>Name *</label>
+                <input
+                  id="new_name"
+                  type="text"
+                  required
+                  autoFocus
+                  value={productFields.name}
+                  onChange={(e) => updateProductField("name", e.target.value)}
+                  placeholder="Product name…"
+                  className={pillInput}
+                />
+              </div>
+              <div className={`${pillWrapper} min-w-[120px] flex-1`}>
+                <label htmlFor="new_model" className={pillLabel}>Model #</label>
+                <input
+                  id="new_model"
+                  type="text"
+                  value={productFields.model_number}
+                  onChange={(e) => updateProductField("model_number", e.target.value)}
+                  placeholder="Model…"
+                  className={pillInput}
+                />
+              </div>
+              <div className={`${pillWrapper} min-w-[120px] flex-1`}>
+                <label htmlFor="new_type" className={pillLabel}>Type</label>
+                <input
+                  id="new_type"
+                  type="text"
+                  value={productFields.type}
+                  onChange={(e) => updateProductField("type", e.target.value)}
+                  placeholder="Furniture…"
+                  className={pillInput}
+                />
+              </div>
+            </div>
+
+            {/* Row 2: Description (2x width) */}
+            <div className="flex gap-2">
+              <div className={`${pillWrapper} flex-[2] min-w-[240px]`}>
+                <label htmlFor="new_description" className={pillLabel}>Description</label>
+                <input
+                  id="new_description"
+                  type="text"
+                  value={productFields.description}
+                  onChange={(e) => updateProductField("description", e.target.value)}
+                  placeholder="Brief description…"
+                  className={pillInput}
+                />
+              </div>
+              <div className="flex-1" />
+            </div>
+
+            {/* Row 3: Prices */}
+            <div className="flex flex-wrap gap-2">
+              <div className={`${pillWrapper} w-28 shrink-0`}>
+                <label htmlFor="new_retail" className={pillLabel}>Retail $</label>
+                <input
+                  id="new_retail"
+                  type="number"
+                  step="0.01"
+                  value={productFields.retail_price}
+                  onChange={(e) => updateProductField("retail_price", e.target.value)}
+                  className={pillInput}
+                />
+              </div>
+              <div className={`${pillWrapper} w-28 shrink-0`}>
+                <label htmlFor="new_sales" className={pillLabel}>Sales $</label>
+                <input
+                  id="new_sales"
+                  type="number"
+                  step="0.01"
+                  value={productFields.sales_price}
+                  onChange={(e) => updateProductField("sales_price", e.target.value)}
+                  className={pillInput}
+                />
+              </div>
+              {isAdmin && (
+                <div className={`${pillWrapperAdmin} w-28 shrink-0`}>
+                  <label htmlFor="new_cost" className={pillLabelAdmin}>Dealer $</label>
+                  <input
+                    id="new_cost"
+                    type="number"
+                    step="0.01"
+                    value={productFields.cost}
+                    onChange={(e) => updateProductField("cost", e.target.value)}
+                    className={pillInput}
+                  />
+                </div>
+              )}
+              <div className={`${pillWrapper} w-28 shrink-0`}>
+                <label htmlFor="new_shipping" className={pillLabel}>S/H</label>
+                <input
+                  id="new_shipping"
+                  type="number"
+                  step="0.01"
+                  value={productFields.shipping}
+                  onChange={(e) => updateProductField("shipping", e.target.value)}
+                  className={pillInput}
+                />
+              </div>
+            </div>
+
+            {/* Row 4: Website | Image | Notes */}
+            <div className="flex flex-wrap gap-2">
+              <div className={`${pillWrapper} min-w-[160px] flex-1`}>
+                <label htmlFor="new_website" className={pillLabel}>Manufacturer Website</label>
+                <input
+                  id="new_website"
+                  type="url"
+                  value={productFields.manufacturer_website}
+                  onChange={(e) => updateProductField("manufacturer_website", e.target.value)}
+                  placeholder="https://…"
+                  className={`${pillInput} text-xs`}
+                />
+              </div>
+              <div className={`${pillWrapper} min-w-[120px]`}>
+                <label className={pillLabel}>Image</label>
+                <ImageUpload
+                  currentUrl={null}
+                  onUpload={(url) =>
+                    setProductFields((prev) => ({ ...prev, image_url: url }))
+                  }
+                  onRemove={() =>
+                    setProductFields((prev) => ({ ...prev, image_url: null }))
+                  }
+                />
+              </div>
+              <div className={`${pillWrapper} min-w-[160px] flex-1`}>
+                <label htmlFor="new_notes" className={pillLabel}>Notes</label>
+                <input
+                  id="new_notes"
+                  type="text"
+                  value={productFields.notes}
+                  onChange={(e) => updateProductField("notes", e.target.value)}
+                  placeholder="Notes…"
+                  className={pillInput}
+                />
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="flex items-center gap-2 pt-2">
+              <button
+                type="submit"
+                disabled={saving}
+                className="inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-sm font-medium text-white shadow-sm transition-all hover:bg-primary-hover disabled:opacity-50"
+              >
+                {saving && (
+                  <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                )}
+                {saving ? "Creating…" : "Create & Add Item"}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setMode("searching");
+                  setError(null);
+                }}
+                className="rounded-lg px-4 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
-    </div>
+    </>
   );
 }
