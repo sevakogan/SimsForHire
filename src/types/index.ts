@@ -32,6 +32,7 @@ export interface Project {
   status: ProjectStatus;
   invoice_link: string | null;
   invoice_link_2: string | null;
+  date_required: string | null;
   created_by: string | null;
   created_at: string;
   updated_at: string;

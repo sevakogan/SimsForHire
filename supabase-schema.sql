@@ -69,6 +69,7 @@ CREATE TABLE projects (
   status TEXT NOT NULL DEFAULT 'draft' CHECK (status IN ('draft', 'quote', 'accepted', 'completed')),
   invoice_link TEXT,
   invoice_link_2 TEXT,
+  date_required DATE,
   created_by UUID REFERENCES profiles(id),
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { updateProject, deleteProject } from "@/lib/actions/projects";
@@ -13,126 +13,45 @@ interface ProjectCardProps {
 }
 
 export function ProjectCard({ project }: ProjectCardProps) {
-  const router = useRouter();
-  const [renaming, setRenaming] = useState(false);
+  const [showEdit, setShowEdit] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [name, setName] = useState(project.name);
-  const [saving, setSaving] = useState(false);
-  const [deleting, setDeleting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    if (renaming && inputRef.current) {
-      inputRef.current.focus();
-      inputRef.current.select();
-    }
-  }, [renaming]);
-
-  async function handleRename() {
-    const trimmed = name.trim();
-    if (!trimmed || trimmed === project.name) {
-      setName(project.name);
-      setRenaming(false);
-      return;
-    }
-
-    setSaving(true);
-    setError(null);
-    try {
-      const result = await updateProject(project.id, { name: trimmed });
-      if (result.error) {
-        setError(result.error);
-        return;
-      }
-      setRenaming(false);
-      router.refresh();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to rename");
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  async function handleDelete() {
-    setDeleting(true);
-    setError(null);
-    try {
-      const result = await deleteProject(project.id);
-      if (result.error) {
-        setError(result.error);
-        setDeleting(false);
-        return;
-      }
-      router.refresh();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to delete");
-      setDeleting(false);
-    }
-  }
-
-  function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      handleRename();
-    } else if (e.key === "Escape") {
-      setName(project.name);
-      setRenaming(false);
-    }
-  }
 
   return (
     <>
-      <div className="flex items-center justify-between rounded-xl border border-border bg-white p-3.5 shadow-sm transition-all hover:border-primary/20 hover:shadow-md sm:p-5">
-        <Link href={`/projects/${project.id}`} className="min-w-0 flex-1">
-          {renaming ? null : (
-            <div>
-              <p className="text-sm sm:text-base font-medium text-foreground truncate">
-                {project.name}
-              </p>
-              <p className="text-xs sm:text-sm text-muted-foreground">
-                {new Date(project.created_at).toLocaleDateString()}
-              </p>
-            </div>
-          )}
-        </Link>
-
-        {renaming && (
-          <div className="min-w-0 flex-1 mr-2" onClick={(e) => e.stopPropagation()}>
-            <input
-              ref={inputRef}
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              onKeyDown={handleKeyDown}
-              onBlur={handleRename}
-              disabled={saving}
-              className={`${formStyles.input} !py-1.5 text-sm`}
-            />
-          </div>
-        )}
+      <Link
+        href={`/projects/${project.id}`}
+        className="flex items-center justify-between rounded-xl border border-border bg-white p-3.5 shadow-sm transition-all hover:border-primary/20 hover:shadow-md sm:p-5"
+      >
+        <div className="min-w-0 flex-1">
+          <p className="text-sm sm:text-base font-medium text-foreground truncate">
+            {project.name}
+          </p>
+          <p className="text-xs sm:text-sm text-muted-foreground">
+            {new Date(project.created_at).toLocaleDateString()}
+          </p>
+        </div>
 
         <div className="flex items-center gap-2 ml-3 shrink-0">
           <Badge variant={project.status}>{project.status}</Badge>
 
-          {!renaming && (
-            <button
-              onClick={(e) => {
-                e.preventDefault();
-                setRenaming(true);
-              }}
-              className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-              title="Rename project"
-            >
-              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
-              </svg>
-            </button>
-          )}
+          <button
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setShowEdit(true);
+            }}
+            className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            title="Edit project"
+          >
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
+            </svg>
+          </button>
 
           <button
             onClick={(e) => {
               e.preventDefault();
+              e.stopPropagation();
               setShowDeleteConfirm(true);
             }}
             className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-red-50 hover:text-red-600"
@@ -143,41 +62,193 @@ export function ProjectCard({ project }: ProjectCardProps) {
             </svg>
           </button>
         </div>
-      </div>
+      </Link>
 
-      {error && (
-        <p className="mt-1 text-xs text-red-600">{error}</p>
+      {showEdit && (
+        <EditProjectModal
+          project={project}
+          onClose={() => setShowEdit(false)}
+        />
       )}
 
-      {/* Delete confirmation modal */}
       {showDeleteConfirm && (
         <DeleteConfirmModal
           projectName={project.name}
-          deleting={deleting}
-          onConfirm={handleDelete}
-          onCancel={() => setShowDeleteConfirm(false)}
+          projectId={project.id}
+          onClose={() => setShowDeleteConfirm(false)}
         />
       )}
     </>
   );
 }
 
-function DeleteConfirmModal({
-  projectName,
-  deleting,
-  onConfirm,
-  onCancel,
+function EditProjectModal({
+  project,
+  onClose,
 }: {
-  projectName: string;
-  deleting: boolean;
-  onConfirm: () => void;
-  onCancel: () => void;
+  project: Project;
+  onClose: () => void;
 }) {
-  const [confirmText, setConfirmText] = useState("");
-  const isConfirmed = confirmText.toLowerCase() === "delete";
+  const router = useRouter();
+  const [name, setName] = useState(project.name);
+  const [dateRequired, setDateRequired] = useState(project.date_required ?? "");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function handleSave() {
+    const trimmedName = name.trim();
+    if (!trimmedName) {
+      setError("Name is required");
+      return;
+    }
+
+    setSaving(true);
+    setError(null);
+
+    try {
+      const result = await updateProject(project.id, {
+        name: trimmedName,
+        date_required: dateRequired || null,
+      });
+
+      if (result.error) {
+        setError(result.error);
+        return;
+      }
+
+      router.refresh();
+      onClose();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to update project");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  function handleKeyDown(e: React.KeyboardEvent) {
+    if (e.key === "Escape") {
+      onClose();
+    }
+  }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4"
+      onClick={onClose}
+      onKeyDown={handleKeyDown}
+    >
+      <div
+        className="w-full max-w-md rounded-xl border border-border bg-white p-6 shadow-xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h3 className="mb-4 text-base font-semibold text-foreground">
+          Edit Project
+        </h3>
+
+        {error && (
+          <div className="mb-4 rounded-lg bg-red-50 p-3 text-sm text-red-600">
+            {error}
+          </div>
+        )}
+
+        <div className="space-y-4">
+          <div className={formStyles.group}>
+            <label htmlFor="edit-name" className={formStyles.label}>
+              Name *
+            </label>
+            <input
+              id="edit-name"
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              autoFocus
+              className={formStyles.input}
+            />
+          </div>
+
+          <div className={formStyles.group}>
+            <label className={formStyles.label}>Date Created</label>
+            <input
+              type="text"
+              value={new Date(project.created_at).toLocaleDateString()}
+              disabled
+              className={`${formStyles.input} cursor-not-allowed opacity-60`}
+            />
+          </div>
+
+          <div className={formStyles.group}>
+            <label htmlFor="edit-date-required" className={formStyles.label}>
+              Date Required
+            </label>
+            <input
+              id="edit-date-required"
+              type="date"
+              value={dateRequired}
+              onChange={(e) => setDateRequired(e.target.value)}
+              className={formStyles.input}
+            />
+          </div>
+        </div>
+
+        <div className="mt-6 flex justify-end gap-3">
+          <button
+            onClick={onClose}
+            disabled={saving}
+            className={buttonStyles.secondary}
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            className={buttonStyles.primary}
+          >
+            {saving ? "Saving..." : "Save Changes"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function DeleteConfirmModal({
+  projectName,
+  projectId,
+  onClose,
+}: {
+  projectName: string;
+  projectId: string;
+  onClose: () => void;
+}) {
+  const router = useRouter();
+  const [confirmText, setConfirmText] = useState("");
+  const [deleting, setDeleting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const isConfirmed = confirmText.toLowerCase() === "delete";
+
+  async function handleDelete() {
+    setDeleting(true);
+    setError(null);
+    try {
+      const result = await deleteProject(projectId);
+      if (result.error) {
+        setError(result.error);
+        setDeleting(false);
+        return;
+      }
+      router.refresh();
+      onClose();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to delete");
+      setDeleting(false);
+    }
+  }
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4"
+      onClick={onClose}
+    >
       <div
         className="w-full max-w-md rounded-xl border border-border bg-white p-6 shadow-xl"
         onClick={(e) => e.stopPropagation()}
@@ -193,14 +264,23 @@ function DeleteConfirmModal({
               Delete Project
             </h3>
             <p className="text-sm text-muted-foreground">
-              This will permanently delete <span className="font-medium text-foreground">{projectName}</span> and all its items.
+              This will permanently delete{" "}
+              <span className="font-medium text-foreground">{projectName}</span>{" "}
+              and all its items.
             </p>
           </div>
         </div>
 
+        {error && (
+          <div className="mb-4 rounded-lg bg-red-50 p-3 text-sm text-red-600">
+            {error}
+          </div>
+        )}
+
         <div className="mb-4">
           <label className="block text-sm font-medium text-foreground mb-1.5">
-            Type <span className="font-semibold text-red-600">delete</span> to confirm
+            Type <span className="font-semibold text-red-600">delete</span> to
+            confirm
           </label>
           <input
             type="text"
@@ -214,14 +294,14 @@ function DeleteConfirmModal({
 
         <div className="flex justify-end gap-3">
           <button
-            onClick={onCancel}
+            onClick={onClose}
             disabled={deleting}
             className={buttonStyles.secondary}
           >
             Cancel
           </button>
           <button
-            onClick={onConfirm}
+            onClick={handleDelete}
             disabled={!isConfirmed || deleting}
             className={buttonStyles.danger}
           >

@@ -67,6 +67,7 @@ export async function updateProject(
     status?: ProjectStatus;
     invoice_link?: string;
     invoice_link_2?: string;
+    date_required?: string | null;
   }
 ): Promise<{ error: string | null }> {
   const supabase = await createSupabaseServer();
