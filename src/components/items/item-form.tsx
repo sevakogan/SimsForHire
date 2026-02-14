@@ -36,6 +36,7 @@ interface FormFields {
   my_shipping: string;
   price_sold_for: string;
   notes: string;
+  seller_merchant: string;
 }
 
 function buildInitialFields(item?: Item): FormFields {
@@ -51,6 +52,7 @@ function buildInitialFields(item?: Item): FormFields {
     my_shipping: String(item?.my_shipping ?? 0),
     price_sold_for: item?.price_sold_for != null ? String(item.price_sold_for) : "",
     notes: item?.notes ?? "",
+    seller_merchant: item?.seller_merchant ?? "",
   };
 }
 
@@ -81,6 +83,7 @@ export function ItemForm({ projectId, itemNumber, item, isAdmin }: ItemFormProps
       retail_shipping: String(product.shipping),
       price_sold_for: String(product.sales_price),
       my_cost: product.cost != null ? String(product.cost) : prev.my_cost,
+      seller_merchant: product.seller_merchant || prev.seller_merchant,
     }));
 
     if (product.image_url) {
@@ -121,6 +124,7 @@ export function ItemForm({ projectId, itemNumber, item, isAdmin }: ItemFormProps
         price_sold_for: parsedSoldFor !== null && !isNaN(parsedSoldFor) ? parsedSoldFor : null,
         image_url: imageUrl ?? null,
         notes: fields.notes || "",
+        seller_merchant: fields.seller_merchant || "",
       };
 
       const currentItemNumber = item?.item_number ?? itemNumber;
@@ -294,6 +298,19 @@ export function ItemForm({ projectId, itemNumber, item, isAdmin }: ItemFormProps
             step="0.01"
             value={fields.retail_shipping}
             onChange={(e) => updateField("retail_shipping", e.target.value)}
+            className={pillInput}
+          />
+        </div>
+
+        <div className={`${pillWrapper} w-32 shrink-0`}>
+          <label htmlFor="seller_merchant" className={pillLabel}>Seller/Merchant</label>
+          <input
+            id="seller_merchant"
+            name="seller_merchant"
+            type="text"
+            value={fields.seller_merchant}
+            onChange={(e) => updateField("seller_merchant", e.target.value)}
+            placeholder="Seller…"
             className={pillInput}
           />
         </div>

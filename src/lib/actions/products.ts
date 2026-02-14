@@ -4,7 +4,7 @@ import { createSupabaseServer } from "@/lib/supabase-server";
 import type { Product, ClientProduct, ProductSearchResult } from "@/types";
 
 const CLIENT_SAFE_COLUMNS =
-  "id, model_number, name, type, description, retail_price, sales_price, shipping, image_url, notes, manufacturer_website, created_at, updated_at";
+  "id, model_number, name, type, description, retail_price, sales_price, shipping, image_url, notes, manufacturer_website, seller_merchant, created_at, updated_at";
 
 export async function getProducts(): Promise<Product[]> {
   const supabase = await createSupabaseServer();
@@ -52,6 +52,7 @@ export async function createProduct(input: {
   image_url?: string;
   notes?: string;
   manufacturer_website?: string;
+  seller_merchant?: string;
 }): Promise<{ id: string | null; error: string | null }> {
   const supabase = await createSupabaseServer();
 
@@ -74,6 +75,7 @@ export async function createProduct(input: {
       image_url: input.image_url ?? null,
       notes: input.notes ?? "",
       manufacturer_website: input.manufacturer_website ?? null,
+      seller_merchant: input.seller_merchant ?? "",
       created_by: user.id,
     })
     .select("id")
@@ -97,6 +99,7 @@ export async function updateProduct(
     image_url: string;
     notes: string;
     manufacturer_website: string;
+    seller_merchant: string;
   }>
 ): Promise<{ error: string | null }> {
   const supabase = await createSupabaseServer();
@@ -130,7 +133,7 @@ export async function searchProducts(
 
   const { data, error } = await supabase
     .from("products")
-    .select("id, model_number, name, type, description, retail_price, cost, sales_price, shipping, image_url")
+    .select("id, model_number, name, type, description, retail_price, cost, sales_price, shipping, image_url, seller_merchant")
     .or(
       `name.ilike.%${searchTerm}%,model_number.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%`
     )

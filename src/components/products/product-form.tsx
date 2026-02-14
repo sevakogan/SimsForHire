@@ -57,6 +57,8 @@ export function ProductForm({ product, isAdmin }: ProductFormProps) {
       notes: (form.get("notes") as string) || undefined,
       manufacturer_website:
         (form.get("manufacturer_website") as string) || undefined,
+      seller_merchant:
+        (form.get("seller_merchant") as string) || "",
     };
 
     const result = product
@@ -189,6 +191,20 @@ export function ProductForm({ product, isAdmin }: ProductFormProps) {
             type="number"
             step="0.01"
             defaultValue={product?.shipping ?? 0}
+            className={pillInput}
+          />
+        </div>
+
+        <div className={`${pillWrapper} w-32 shrink-0`}>
+          <label htmlFor="seller_merchant" className={pillLabel}>
+            Seller/Merchant
+          </label>
+          <input
+            id="seller_merchant"
+            name="seller_merchant"
+            type="text"
+            defaultValue={product?.seller_merchant ?? ""}
+            placeholder="Seller…"
             className={pillInput}
           />
         </div>

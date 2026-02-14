@@ -54,6 +54,7 @@ export interface Item {
   notes: string;
   model_number: string;
   product_id: string | null;
+  seller_merchant: string;
   created_at: string;
   updated_at: string;
 }
@@ -73,6 +74,7 @@ export interface Product {
   image_url: string | null;
   notes: string;
   manufacturer_website: string | null;
+  seller_merchant: string;
   created_by: string | null;
   created_at: string;
   updated_at: string;
@@ -91,6 +93,7 @@ export interface ProductSearchResult {
   sales_price: number;
   shipping: number;
   image_url: string | null;
+  seller_merchant: string;
 }
 
 export function isAdminRole(role: UserRole): boolean {

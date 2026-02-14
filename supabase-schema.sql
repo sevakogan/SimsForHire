@@ -99,6 +99,7 @@ CREATE TABLE items (
   image_url TEXT,
   notes TEXT DEFAULT '',
   model_number TEXT NOT NULL DEFAULT '',
+  seller_merchant TEXT NOT NULL DEFAULT '',
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -259,6 +260,7 @@ CREATE TABLE products (
   image_url TEXT,
   notes TEXT DEFAULT '',
   manufacturer_website TEXT,
+  seller_merchant TEXT NOT NULL DEFAULT '',
   created_by UUID REFERENCES profiles(id),
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
