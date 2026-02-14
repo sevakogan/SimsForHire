@@ -95,9 +95,9 @@ export function QuickAddProduct({ isAdmin }: QuickAddProductProps) {
           </div>
         )}
 
-        {/* Row 1: Name | Model # */}
+        {/* Row 1: Name | Model # | Type — all equal short */}
         <div className="flex flex-wrap gap-2">
-          <div className={`${pillWrapper} min-w-[180px] flex-[2]`}>
+          <div className={`${pillWrapper} min-w-[120px] flex-1`}>
             <label htmlFor="qa_name" className={pillLabel}>
               Name *
             </label>
@@ -139,18 +139,21 @@ export function QuickAddProduct({ isAdmin }: QuickAddProductProps) {
           </div>
         </div>
 
-        {/* Row 2: Description */}
-        <div className={pillWrapper}>
-          <label htmlFor="qa_description" className={pillLabel}>
-            Description
-          </label>
-          <input
-            id="qa_description"
-            name="description"
-            type="text"
-            placeholder="Brief description…"
-            className={pillInput}
-          />
+        {/* Row 2: Description — 2x width of a short field */}
+        <div className="flex gap-2">
+          <div className={`${pillWrapper} flex-[2] min-w-[240px]`}>
+            <label htmlFor="qa_description" className={pillLabel}>
+              Description
+            </label>
+            <input
+              id="qa_description"
+              name="description"
+              type="text"
+              placeholder="Brief description…"
+              className={pillInput}
+            />
+          </div>
+          <div className="flex-1" />
         </div>
 
         {/* Row 3: Prices */}

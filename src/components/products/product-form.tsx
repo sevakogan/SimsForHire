@@ -71,23 +71,9 @@ export function ProductForm({ product, isAdmin }: ProductFormProps) {
         </div>
       )}
 
-      {/* Row 1: Model # | Name */}
+      {/* Row 1: Name | Model # | Type — all equal short */}
       <div className="flex flex-wrap gap-2">
-        <div className={`${pillWrapper} min-w-[140px] flex-1`}>
-          <label htmlFor="model_number" className={pillLabel}>
-            Model #
-          </label>
-          <input
-            id="model_number"
-            name="model_number"
-            type="text"
-            defaultValue={product?.model_number ?? ""}
-            placeholder="Model number…"
-            className={pillInput}
-          />
-        </div>
-
-        <div className={`${pillWrapper} min-w-[180px] flex-[2]`}>
+        <div className={`${pillWrapper} min-w-[120px] flex-1`}>
           <label htmlFor="name" className={pillLabel}>
             Name *
           </label>
@@ -101,39 +87,55 @@ export function ProductForm({ product, isAdmin }: ProductFormProps) {
             className={pillInput}
           />
         </div>
+
+        <div className={`${pillWrapper} min-w-[120px] flex-1`}>
+          <label htmlFor="model_number" className={pillLabel}>
+            Model #
+          </label>
+          <input
+            id="model_number"
+            name="model_number"
+            type="text"
+            defaultValue={product?.model_number ?? ""}
+            placeholder="Model number…"
+            className={pillInput}
+          />
+        </div>
+
+        <div className={`${pillWrapper} min-w-[120px] flex-1`}>
+          <label htmlFor="type" className={pillLabel}>
+            Type
+          </label>
+          <input
+            id="type"
+            name="type"
+            type="text"
+            defaultValue={product?.type ?? ""}
+            placeholder="Furniture, Appliance…"
+            className={pillInput}
+          />
+        </div>
       </div>
 
-      {/* Row 2: Type */}
-      <div className={`${pillWrapper} max-w-[300px]`}>
-        <label htmlFor="type" className={pillLabel}>
-          Type
-        </label>
-        <input
-          id="type"
-          name="type"
-          type="text"
-          defaultValue={product?.type ?? ""}
-          placeholder="Furniture, Appliance…"
-          className={pillInput}
-        />
+      {/* Row 2: Description — 2x width of a short field */}
+      <div className="flex gap-2">
+        <div className={`${pillWrapper} flex-[2] min-w-[240px]`}>
+          <label htmlFor="description" className={pillLabel}>
+            Description
+          </label>
+          <textarea
+            id="description"
+            name="description"
+            rows={2}
+            defaultValue={product?.description ?? ""}
+            placeholder="Product description…"
+            className={`${pillInput} resize-none`}
+          />
+        </div>
+        <div className="flex-1" />
       </div>
 
-      {/* Row 3: Description */}
-      <div className={pillWrapper}>
-        <label htmlFor="description" className={pillLabel}>
-          Description
-        </label>
-        <textarea
-          id="description"
-          name="description"
-          rows={2}
-          defaultValue={product?.description ?? ""}
-          placeholder="Product description…"
-          className={`${pillInput} resize-none`}
-        />
-      </div>
-
-      {/* Row 4: Retail Price | Sales Price | Dealer Price (admin only) */}
+      {/* Row 3: Prices — Retail | Sales | Dealer (admin) | S/H */}
       <div className="flex flex-wrap gap-2">
         <div className={`${pillWrapper} w-32 shrink-0`}>
           <label htmlFor="retail_price" className={pillLabel}>
@@ -178,24 +180,23 @@ export function ProductForm({ product, isAdmin }: ProductFormProps) {
             />
           </div>
         )}
+
+        <div className={`${pillWrapper} w-32 shrink-0`}>
+          <label htmlFor="shipping" className={pillLabel}>
+            S/H
+          </label>
+          <input
+            id="shipping"
+            name="shipping"
+            type="number"
+            step="0.01"
+            defaultValue={product?.shipping ?? 0}
+            className={pillInput}
+          />
+        </div>
       </div>
 
       {!isAdmin && <input type="hidden" name="cost" value="0" />}
-
-      {/* Row 5: S/H */}
-      <div className={`${pillWrapper} w-32`}>
-        <label htmlFor="shipping" className={pillLabel}>
-          S/H
-        </label>
-        <input
-          id="shipping"
-          name="shipping"
-          type="number"
-          step="0.01"
-          defaultValue={product?.shipping ?? 0}
-          className={pillInput}
-        />
-      </div>
 
       {/* Row 6: Manufacturer Website */}
       <div className={`${pillWrapper}`}>

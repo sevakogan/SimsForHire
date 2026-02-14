@@ -39,7 +39,7 @@ export function ProductsGrid({ products, isAdmin }: ProductsGridProps) {
   }
 
   return (
-    <div className="grid gap-4 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">
+    <div className="grid gap-3 grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6">
       {products.map((product) => (
         <div
           key={product.id}
@@ -57,7 +57,7 @@ export function ProductsGrid({ products, isAdmin }: ProductsGridProps) {
             ) : (
               <div className="flex h-full w-full items-center justify-center text-muted-foreground">
                 <svg
-                  className="h-10 w-10"
+                  className="h-6 w-6"
                   fill="none"
                   viewBox="0 0 24 24"
                   strokeWidth={1}
@@ -74,59 +74,45 @@ export function ProductsGrid({ products, isAdmin }: ProductsGridProps) {
           </div>
 
           {/* Info */}
-          <div className="p-3">
-            <p className="text-sm font-semibold text-foreground truncate">
+          <div className="p-2">
+            <p className="text-xs font-semibold text-foreground truncate">
               {product.name}
             </p>
             {product.model_number && (
-              <p className="text-xs text-muted-foreground truncate">
+              <p className="text-[10px] text-muted-foreground truncate">
                 {product.model_number}
               </p>
             )}
-            {product.type && (
-              <p className="text-xs text-muted-foreground">{product.type}</p>
-            )}
 
-            <div className="mt-2 flex items-baseline gap-2">
-              <span className="text-sm font-bold text-foreground">
+            <div className="mt-1 flex items-baseline gap-1">
+              <span className="text-xs font-bold text-foreground">
                 {formatCurrency(product.sales_price)}
               </span>
               {product.retail_price > 0 && product.retail_price !== product.sales_price && (
-                <span className="text-xs text-muted-foreground line-through">
+                <span className="text-[10px] text-muted-foreground line-through">
                   {formatCurrency(product.retail_price)}
                 </span>
               )}
             </div>
 
             {isAdmin && "cost" in product && (
-              <p className="mt-0.5 text-xs text-amber-600">
+              <p className="text-[10px] text-amber-600">
                 Dealer: {formatCurrency((product as Product).cost)}
               </p>
             )}
 
-            {product.manufacturer_website && (
-              <a
-                href={product.manufacturer_website}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-1 block text-xs text-primary hover:underline truncate"
-              >
-                Manufacturer ↗
-              </a>
-            )}
-
             {/* Admin actions */}
             {isAdmin && (
-              <div className="mt-2 flex gap-1">
+              <div className="mt-1 flex gap-1">
                 <Link
                   href={`/catalog/${product.id}`}
-                  className={`${buttonStyles.small} text-primary hover:bg-primary/10`}
+                  className={`${buttonStyles.small} !text-[10px] !px-1.5 !py-0.5 text-primary hover:bg-primary/10`}
                 >
                   Edit
                 </Link>
                 <button
                   onClick={() => handleDelete(product.id)}
-                  className={`${buttonStyles.small} text-destructive hover:bg-destructive/10`}
+                  className={`${buttonStyles.small} !text-[10px] !px-1.5 !py-0.5 text-destructive hover:bg-destructive/10`}
                 >
                   Delete
                 </button>

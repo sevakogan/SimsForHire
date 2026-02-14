@@ -4,7 +4,6 @@ import { useState } from "react";
 import Link from "next/link";
 import { ProductsTable } from "@/components/products/products-table";
 import { ProductsGrid } from "@/components/products/products-grid";
-import { QuickAddProduct } from "@/components/products/quick-add-product";
 import type { Product, ClientProduct } from "@/types";
 
 type ViewMode = "grid" | "list";
@@ -64,9 +63,6 @@ export function ProductsView({ products, isAdmin }: ProductsViewProps) {
           </Link>
         )}
       </div>
-
-      {/* Inline quick-add (admin only) */}
-      {isAdmin && <QuickAddProduct isAdmin={isAdmin} />}
 
       {/* Products display */}
       {view === "grid" ? (
