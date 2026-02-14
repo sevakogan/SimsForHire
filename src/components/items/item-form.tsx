@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/pill-styles";
 import { ImageUpload } from "@/components/items/image-upload";
 import { ProductSearch } from "@/components/products/product-search";
+import { TypeTagPicker } from "@/components/products/type-tag-picker";
 import type { Item, ProductSearchResult } from "@/types";
 
 interface ItemFormProps {
@@ -145,9 +146,18 @@ export function ItemForm({ projectId, itemNumber, item, isAdmin }: ItemFormProps
         />
       )}
 
-      {/* Row 1: Item #, Type, Link */}
+      {/* Row 1: Type tag picker */}
+      <div>
+        <p className={`${pillLabel} mb-1.5`}>Type</p>
+        <TypeTagPicker
+          value={fields.item_type}
+          onChange={(val) => updateField("item_type", val)}
+        />
+      </div>
+
+      {/* Row 2: Item # | Description | Link */}
       <div className="flex flex-wrap gap-2">
-        <div className={`${pillWrapperReadonly} w-20 shrink-0`}>
+        <div className={`${pillWrapperReadonly} w-16 shrink-0`}>
           <span className={pillLabel}>#</span>
           <input
             type="number"
@@ -157,21 +167,21 @@ export function ItemForm({ projectId, itemNumber, item, isAdmin }: ItemFormProps
           />
         </div>
 
-        <div className={`${pillWrapper} min-w-[140px] flex-1`}>
-          <label htmlFor="item_type" className={pillLabel}>Type *</label>
+        <div className={`${pillWrapper} min-w-[160px] flex-[2]`}>
+          <label htmlFor="description" className={pillLabel}>Description *</label>
           <input
-            id="item_type"
-            name="item_type"
+            id="description"
+            name="description"
             type="text"
             required
-            value={fields.item_type}
-            onChange={(e) => updateField("item_type", e.target.value)}
-            placeholder="Furniture, Appliance…"
+            value={fields.description}
+            onChange={(e) => updateField("description", e.target.value)}
+            placeholder="Item description…"
             className={pillInput}
           />
         </div>
 
-        <div className={`${pillWrapper} min-w-[180px] flex-[2]`}>
+        <div className={`${pillWrapper} min-w-[140px] flex-1`}>
           <label htmlFor="item_link" className={pillLabel}>Link</label>
           <input
             id="item_link"
@@ -185,25 +195,10 @@ export function ItemForm({ projectId, itemNumber, item, isAdmin }: ItemFormProps
         </div>
       </div>
 
-      {/* Row 2: Description */}
-      <div className={pillWrapper}>
-        <label htmlFor="description" className={pillLabel}>Description *</label>
-        <textarea
-          id="description"
-          name="description"
-          rows={2}
-          required
-          value={fields.description}
-          onChange={(e) => updateField("description", e.target.value)}
-          placeholder="Item description…"
-          className={`${pillInput} resize-none`}
-        />
-      </div>
-
-      {/* Row 3: Pricing pills */}
+      {/* Row 3: Retail | Ship | Disc % | Sold | Admin: My Cost | My Ship */}
       <div className="flex flex-wrap gap-2">
-        <div className={`${pillWrapper} w-28 shrink-0`}>
-          <label htmlFor="retail_price" className={pillLabel}>Retail $</label>
+        <div className={`${pillWrapper} w-24 shrink-0`}>
+          <label htmlFor="retail_price" className={pillLabel}>Retail</label>
           <input
             id="retail_price"
             name="retail_price"
@@ -215,8 +210,8 @@ export function ItemForm({ projectId, itemNumber, item, isAdmin }: ItemFormProps
           />
         </div>
 
-        <div className={`${pillWrapper} w-28 shrink-0`}>
-          <label htmlFor="retail_shipping" className={pillLabel}>Ship $</label>
+        <div className={`${pillWrapper} w-20 shrink-0`}>
+          <label htmlFor="retail_shipping" className={pillLabel}>S/H</label>
           <input
             id="retail_shipping"
             name="retail_shipping"
@@ -228,7 +223,7 @@ export function ItemForm({ projectId, itemNumber, item, isAdmin }: ItemFormProps
           />
         </div>
 
-        <div className={`${pillWrapper} w-28 shrink-0`}>
+        <div className={`${pillWrapper} w-20 shrink-0`}>
           <label htmlFor="discount_percent" className={pillLabel}>Disc %</label>
           <input
             id="discount_percent"
@@ -241,8 +236,8 @@ export function ItemForm({ projectId, itemNumber, item, isAdmin }: ItemFormProps
           />
         </div>
 
-        <div className={`${pillWrapper} w-28 shrink-0`}>
-          <label htmlFor="price_sold_for" className={pillLabel}>Sold $</label>
+        <div className={`${pillWrapper} w-24 shrink-0`}>
+          <label htmlFor="price_sold_for" className={pillLabel}>Sold</label>
           <input
             id="price_sold_for"
             name="price_sold_for"
@@ -254,38 +249,37 @@ export function ItemForm({ projectId, itemNumber, item, isAdmin }: ItemFormProps
             className={pillInput}
           />
         </div>
+
+        {isAdmin && (
+          <>
+            <div className={`${pillWrapperAdmin} w-24 shrink-0`}>
+              <label htmlFor="my_cost" className={pillLabelAdmin}>My Cost</label>
+              <input
+                id="my_cost"
+                name="my_cost"
+                type="number"
+                step="0.01"
+                value={fields.my_cost}
+                onChange={(e) => updateField("my_cost", e.target.value)}
+                className={pillInput}
+              />
+            </div>
+
+            <div className={`${pillWrapperAdmin} w-24 shrink-0`}>
+              <label htmlFor="my_shipping" className={pillLabelAdmin}>My Ship</label>
+              <input
+                id="my_shipping"
+                name="my_shipping"
+                type="number"
+                step="0.01"
+                value={fields.my_shipping}
+                onChange={(e) => updateField("my_shipping", e.target.value)}
+                className={pillInput}
+              />
+            </div>
+          </>
+        )}
       </div>
-
-      {/* Row 4: Admin-only cost pills */}
-      {isAdmin && (
-        <div className="flex flex-wrap gap-2">
-          <div className={`${pillWrapperAdmin} w-28 shrink-0`}>
-            <label htmlFor="my_cost" className={pillLabelAdmin}>My Cost</label>
-            <input
-              id="my_cost"
-              name="my_cost"
-              type="number"
-              step="0.01"
-              value={fields.my_cost}
-              onChange={(e) => updateField("my_cost", e.target.value)}
-              className={pillInput}
-            />
-          </div>
-
-          <div className={`${pillWrapperAdmin} w-28 shrink-0`}>
-            <label htmlFor="my_shipping" className={pillLabelAdmin}>My Ship</label>
-            <input
-              id="my_shipping"
-              name="my_shipping"
-              type="number"
-              step="0.01"
-              value={fields.my_shipping}
-              onChange={(e) => updateField("my_shipping", e.target.value)}
-              className={pillInput}
-            />
-          </div>
-        </div>
-      )}
 
       {!isAdmin && (
         <>
@@ -294,42 +288,45 @@ export function ItemForm({ projectId, itemNumber, item, isAdmin }: ItemFormProps
         </>
       )}
 
-      {/* Row 5: Image + Notes side by side */}
-      <div className="flex flex-wrap gap-2">
-        <div className={`${pillWrapper} min-w-[160px] flex-1`}>
-          <label className={pillLabel}>Image</label>
-          <ImageUpload
-            currentUrl={imageUrl}
-            onUpload={(url) => setImageUrl(url)}
-            onRemove={() => setImageUrl(null)}
-          />
-        </div>
-
-        <div className={`${pillWrapper} min-w-[200px] flex-[2]`}>
-          <label htmlFor="notes" className={pillLabel}>Notes</label>
-          <textarea
-            id="notes"
-            name="notes"
-            rows={2}
-            value={fields.notes}
-            onChange={(e) => updateField("notes", e.target.value)}
-            placeholder="Additional notes…"
-            className={`${pillInput} resize-none`}
-          />
-        </div>
+      {/* Row 4: Notes */}
+      <div className={pillWrapper}>
+        <label htmlFor="notes" className={pillLabel}>Notes</label>
+        <input
+          id="notes"
+          name="notes"
+          type="text"
+          value={fields.notes}
+          onChange={(e) => updateField("notes", e.target.value)}
+          placeholder="Additional notes…"
+          className={pillInput}
+        />
       </div>
 
-      {/* Actions */}
-      <div className="flex gap-2 pt-1">
-        <button type="submit" disabled={loading} className={buttonStyles.primary}>
-          {loading ? "Saving…" : item ? "Update Item" : "Add Item"}
-        </button>
+      {/* Row 5: Image */}
+      <div>
+        <p className={`${pillLabel} mb-1.5`}>Image</p>
+        <ImageUpload
+          currentUrl={imageUrl}
+          onUpload={(url) => setImageUrl(url)}
+          onRemove={() => setImageUrl(null)}
+        />
+      </div>
+
+      {/* Actions — right-aligned, small buttons */}
+      <div className="flex items-center justify-end gap-2 pt-1">
         <button
           type="button"
           onClick={() => router.back()}
-          className={buttonStyles.secondary}
+          className={`${buttonStyles.small} border border-border text-muted-foreground hover:bg-muted hover:text-foreground`}
         >
           Cancel
+        </button>
+        <button
+          type="submit"
+          disabled={loading}
+          className={`${buttonStyles.small} bg-primary text-white shadow-sm hover:bg-primary-hover disabled:opacity-50`}
+        >
+          {loading ? "Saving…" : item ? "Update Item" : "Add Item"}
         </button>
       </div>
     </form>

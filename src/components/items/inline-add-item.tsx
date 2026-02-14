@@ -27,6 +27,7 @@ interface NewProductFields {
   name: string;
   model_number: string;
   type: string;
+  description: string;
   retail_price: string;
   cost: string;
   sales_price: string;
@@ -41,6 +42,7 @@ function emptyProductFields(name: string = ""): NewProductFields {
     name,
     model_number: "",
     type: "",
+    description: "",
     retail_price: "0",
     cost: "0",
     sales_price: "0",
@@ -214,7 +216,7 @@ export function InlineAddItem({ projectId, isAdmin }: InlineAddItemProps) {
         name: productFields.name,
         model_number: productFields.model_number,
         type: productFields.type,
-        description: productFields.name,
+        description: productFields.description || productFields.name,
         retail_price: parseFloat(productFields.retail_price) || 0,
         cost: parseFloat(productFields.cost) || 0,
         sales_price: parseFloat(productFields.sales_price) || 0,
@@ -233,7 +235,7 @@ export function InlineAddItem({ projectId, isAdmin }: InlineAddItemProps) {
         project_id: projectId,
         item_number: nextNumber,
         item_type: productFields.type,
-        description: productFields.name,
+        description: productFields.description || productFields.name,
         retail_price: parseFloat(productFields.retail_price) || 0,
         retail_shipping: parseFloat(productFields.shipping) || 0,
         discount_percent: 0,
@@ -446,7 +448,7 @@ export function InlineAddItem({ projectId, isAdmin }: InlineAddItemProps) {
               />
             </div>
 
-            {/* Row 2: Model# (small) | Name | Retail | Wholesale | Sale | S/H */}
+            {/* Row 2: Model# | Name | Description */}
             <div className="flex flex-wrap gap-2">
               <div className={`${pillWrapper} w-24 shrink-0`}>
                 <label htmlFor="new_model" className={pillLabel}>Model #</label>
@@ -459,7 +461,7 @@ export function InlineAddItem({ projectId, isAdmin }: InlineAddItemProps) {
                   className={pillInput}
                 />
               </div>
-              <div className={`${pillWrapper} min-w-[140px] flex-1`}>
+              <div className={`${pillWrapper} min-w-[120px] flex-1`}>
                 <label htmlFor="new_name" className={pillLabel}>Name *</label>
                 <input
                   id="new_name"
@@ -472,6 +474,21 @@ export function InlineAddItem({ projectId, isAdmin }: InlineAddItemProps) {
                   className={pillInput}
                 />
               </div>
+              <div className={`${pillWrapper} min-w-[160px] flex-[2]`}>
+                <label htmlFor="new_desc" className={pillLabel}>Description</label>
+                <input
+                  id="new_desc"
+                  type="text"
+                  value={productFields.description}
+                  onChange={(e) => updateProductField("description", e.target.value)}
+                  placeholder="Description…"
+                  className={pillInput}
+                />
+              </div>
+            </div>
+
+            {/* Row 3: Retail | Wholesale | Sale Price | S/H | URL */}
+            <div className="flex flex-wrap gap-2">
               <div className={`${pillWrapper} w-24 shrink-0`}>
                 <label htmlFor="new_retail" className={pillLabel}>Retail</label>
                 <input
@@ -518,11 +535,7 @@ export function InlineAddItem({ projectId, isAdmin }: InlineAddItemProps) {
                   className={pillInput}
                 />
               </div>
-            </div>
-
-            {/* Row 3: URL | Notes */}
-            <div className="flex flex-wrap gap-2">
-              <div className={`${pillWrapper} min-w-[180px] flex-1`}>
+              <div className={`${pillWrapper} min-w-[140px] flex-1`}>
                 <label htmlFor="new_website" className={pillLabel}>URL</label>
                 <input
                   id="new_website"
@@ -530,23 +543,25 @@ export function InlineAddItem({ projectId, isAdmin }: InlineAddItemProps) {
                   value={productFields.manufacturer_website}
                   onChange={(e) => updateProductField("manufacturer_website", e.target.value)}
                   placeholder="https://…"
-                  className={`${pillInput} text-xs`}
-                />
-              </div>
-              <div className={`${pillWrapper} min-w-[200px] flex-[2]`}>
-                <label htmlFor="new_notes" className={pillLabel}>Notes</label>
-                <input
-                  id="new_notes"
-                  type="text"
-                  value={productFields.notes}
-                  onChange={(e) => updateProductField("notes", e.target.value)}
-                  placeholder="Notes…"
                   className={pillInput}
                 />
               </div>
             </div>
 
-            {/* Row 4: Image upload (up to 8) */}
+            {/* Row 4: Notes */}
+            <div className={`${pillWrapper}`}>
+              <label htmlFor="new_notes" className={pillLabel}>Notes</label>
+              <input
+                id="new_notes"
+                type="text"
+                value={productFields.notes}
+                onChange={(e) => updateProductField("notes", e.target.value)}
+                placeholder="Additional notes…"
+                className={pillInput}
+              />
+            </div>
+
+            {/* Row 5: Image upload (up to 8) */}
             <div>
               <p className={`${pillLabel} mb-1.5`}>Images (up to 8)</p>
               <MultiImageUpload
@@ -558,27 +573,27 @@ export function InlineAddItem({ projectId, isAdmin }: InlineAddItemProps) {
               />
             </div>
 
-            {/* Actions */}
-            <div className="flex items-center gap-2 pt-2">
-              <button
-                type="submit"
-                disabled={saving}
-                className="inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-sm font-medium text-white shadow-sm transition-all hover:bg-primary-hover disabled:opacity-50"
-              >
-                {saving && (
-                  <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/30 border-t-white" />
-                )}
-                {saving ? "Creating…" : "Create & Add Item"}
-              </button>
+            {/* Actions — right-aligned, small buttons */}
+            <div className="flex items-center justify-end gap-2 pt-1">
               <button
                 type="button"
                 onClick={() => {
                   setMode("searching");
                   setError(null);
                 }}
-                className="rounded-lg px-4 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                className="inline-flex items-center justify-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-xs font-medium text-muted-foreground transition-all hover:bg-muted hover:text-foreground"
               >
                 Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={saving}
+                className="inline-flex items-center justify-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-white shadow-sm transition-all hover:bg-primary-hover disabled:opacity-50"
+              >
+                {saving && (
+                  <div className="h-3 w-3 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                )}
+                {saving ? "Creating…" : "Create & Add"}
               </button>
             </div>
           </form>

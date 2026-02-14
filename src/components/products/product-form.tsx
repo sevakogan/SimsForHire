@@ -58,7 +58,7 @@ export function ProductForm({ product, isAdmin }: ProductFormProps) {
       model_number: (form.get("model_number") as string) || "",
       name: (form.get("name") as string) || "",
       type,
-      description: (form.get("name") as string) || "",
+      description: (form.get("description") as string) || (form.get("name") as string) || "",
       retail_price: parseFloat(form.get("retail_price") as string) || 0,
       cost: parseFloat(form.get("cost") as string) || 0,
       sales_price: parseFloat(form.get("sales_price") as string) || 0,
@@ -97,7 +97,7 @@ export function ProductForm({ product, isAdmin }: ProductFormProps) {
         <TypeTagPicker value={type} onChange={setType} />
       </div>
 
-      {/* Row 2: Model# (small) | Name | Retail | Wholesale | Sale | S/H — one line */}
+      {/* Row 2: Model# | Name | Description */}
       <div className="flex flex-wrap gap-2">
         <div className={`${pillWrapper} w-24 shrink-0`}>
           <label htmlFor="model_number" className={pillLabel}>
@@ -113,7 +113,7 @@ export function ProductForm({ product, isAdmin }: ProductFormProps) {
           />
         </div>
 
-        <div className={`${pillWrapper} min-w-[140px] flex-1`}>
+        <div className={`${pillWrapper} min-w-[120px] flex-1`}>
           <label htmlFor="name" className={pillLabel}>
             Name *
           </label>
@@ -128,6 +128,23 @@ export function ProductForm({ product, isAdmin }: ProductFormProps) {
           />
         </div>
 
+        <div className={`${pillWrapper} min-w-[160px] flex-[2]`}>
+          <label htmlFor="description" className={pillLabel}>
+            Description
+          </label>
+          <input
+            id="description"
+            name="description"
+            type="text"
+            defaultValue={product?.description ?? ""}
+            placeholder="Description…"
+            className={pillInput}
+          />
+        </div>
+      </div>
+
+      {/* Row 3: Retail | Wholesale | Sale Price | S/H | URL */}
+      <div className="flex flex-wrap gap-2">
         <div className={`${pillWrapper} w-24 shrink-0`}>
           <label htmlFor="retail_price" className={pillLabel}>
             Retail
@@ -185,13 +202,8 @@ export function ProductForm({ product, isAdmin }: ProductFormProps) {
             className={pillInput}
           />
         </div>
-      </div>
 
-      {!isAdmin && <input type="hidden" name="cost" value="0" />}
-
-      {/* Row 3: URL | Notes */}
-      <div className="flex flex-wrap gap-2">
-        <div className={`${pillWrapper} min-w-[180px] flex-1`}>
+        <div className={`${pillWrapper} min-w-[140px] flex-1`}>
           <label htmlFor="manufacturer_website" className={pillLabel}>
             URL
           </label>
@@ -201,23 +213,26 @@ export function ProductForm({ product, isAdmin }: ProductFormProps) {
             type="url"
             defaultValue={product?.manufacturer_website ?? ""}
             placeholder="https://…"
-            className={`${pillInput} text-xs`}
-          />
-        </div>
-
-        <div className={`${pillWrapper} min-w-[200px] flex-[2]`}>
-          <label htmlFor="notes" className={pillLabel}>
-            Notes
-          </label>
-          <input
-            id="notes"
-            name="notes"
-            type="text"
-            defaultValue={product?.notes ?? ""}
-            placeholder="Additional notes…"
             className={pillInput}
           />
         </div>
+      </div>
+
+      {!isAdmin && <input type="hidden" name="cost" value="0" />}
+
+      {/* Row 4: Notes */}
+      <div className={pillWrapper}>
+        <label htmlFor="notes" className={pillLabel}>
+          Notes
+        </label>
+        <input
+          id="notes"
+          name="notes"
+          type="text"
+          defaultValue={product?.notes ?? ""}
+          placeholder="Additional notes…"
+          className={pillInput}
+        />
       </div>
 
       {/* Row 4: Image upload (up to 8) */}
@@ -226,21 +241,21 @@ export function ProductForm({ product, isAdmin }: ProductFormProps) {
         <MultiImageUpload images={images} onChange={setImages} max={8} />
       </div>
 
-      {/* Actions */}
-      <div className="flex gap-2 pt-1">
-        <button
-          type="submit"
-          disabled={loading}
-          className={buttonStyles.primary}
-        >
-          {loading ? "Saving…" : product ? "Update Product" : "Add Product"}
-        </button>
+      {/* Actions — right-aligned, small buttons */}
+      <div className="flex items-center justify-end gap-2 pt-1">
         <button
           type="button"
           onClick={() => router.back()}
-          className={buttonStyles.secondary}
+          className={`${buttonStyles.small} border border-border text-muted-foreground hover:bg-muted hover:text-foreground`}
         >
           Cancel
+        </button>
+        <button
+          type="submit"
+          disabled={loading}
+          className={`${buttonStyles.small} bg-primary text-white shadow-sm hover:bg-primary-hover disabled:opacity-50`}
+        >
+          {loading ? "Saving…" : product ? "Update Product" : "Add Product"}
         </button>
       </div>
     </form>
