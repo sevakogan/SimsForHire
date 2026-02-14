@@ -91,6 +91,7 @@ function EditProjectModal({
 }) {
   const router = useRouter();
   const [name, setName] = useState(project.name);
+  const [dateRequired, setDateRequired] = useState(project.date_required ?? "");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -105,7 +106,10 @@ function EditProjectModal({
     setError(null);
 
     try {
-      const result = await updateProject(project.id, { name: trimmedName });
+      const result = await updateProject(project.id, {
+        name: trimmedName,
+        date_required: dateRequired || null,
+      });
 
       if (result.error) {
         setError(result.error);
@@ -172,6 +176,18 @@ function EditProjectModal({
             />
           </div>
 
+          <div className={formStyles.group}>
+            <label htmlFor="edit-date-required" className={formStyles.label}>
+              Date Required
+            </label>
+            <input
+              id="edit-date-required"
+              type="date"
+              value={dateRequired}
+              onChange={(e) => setDateRequired(e.target.value)}
+              className={formStyles.input}
+            />
+          </div>
         </div>
 
         <div className="mt-6 flex justify-end gap-3">
