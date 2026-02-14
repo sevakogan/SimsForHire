@@ -133,7 +133,7 @@ async function ClientDashboard({ clientId }: { clientId: string | null }) {
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold text-foreground">
-        {client?.name ?? "My Quotes"}
+        {client?.name ?? "Dashboard"}
       </h1>
 
       {projects.length > 0 ? (

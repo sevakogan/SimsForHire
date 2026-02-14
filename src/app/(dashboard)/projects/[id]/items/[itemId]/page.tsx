@@ -49,7 +49,7 @@ export default async function EditItemPage({ params }: Props) {
           {project.name}
         </Link>
         <h1 className="text-2xl font-bold text-foreground">
-          Edit Product
+          Product Page
         </h1>
       </div>
       <div className={cardStyles.base}>

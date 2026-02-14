@@ -152,8 +152,8 @@ export default async function ProjectDetailPage({ params }: Props) {
       {/* Admin actions */}
       {admin && <ProjectActions project={project} />}
 
-      {/* Items section */}
-      <h2 className="text-lg font-semibold text-foreground">Items</h2>
+      {/* Invoice items */}
+      <h2 className="text-lg font-semibold text-foreground">Invoice</h2>
 
       <ItemsTable items={items} projectId={id} isAdmin={admin} />
 

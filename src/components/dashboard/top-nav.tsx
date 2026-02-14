@@ -13,7 +13,7 @@ const adminTabs = [
 ];
 
 const clientTabs = [
-  { label: "My Quotes", href: "/dashboard" },
+  { label: "Dashboard", href: "/dashboard" },
   { label: "Products", href: "/catalog" },
 ];
 
