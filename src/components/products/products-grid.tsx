@@ -5,6 +5,7 @@ import Link from "next/link";
 import { buttonStyles } from "@/components/ui/form-styles";
 import { deleteProduct } from "@/lib/actions/products";
 import { useRouter } from "next/navigation";
+import { firstImage } from "@/lib/parse-images";
 import type { Product, ClientProduct } from "@/types";
 
 interface ProductsGridProps {
@@ -40,16 +41,18 @@ export function ProductsGrid({ products, isAdmin }: ProductsGridProps) {
 
   return (
     <div className="grid gap-3 grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6">
-      {products.map((product) => (
+      {products.map((product) => {
+        const thumb = firstImage(product.image_url);
+        return (
         <div
           key={product.id}
           className="group rounded-xl border border-border bg-white shadow-sm transition-all hover:shadow-md hover:border-primary/20 overflow-hidden"
         >
           {/* Image */}
           <div className="relative aspect-square bg-muted/30">
-            {product.image_url ? (
+            {thumb ? (
               <Image
-                src={product.image_url}
+                src={thumb}
                 alt={product.name}
                 fill
                 className="object-cover"
@@ -120,7 +123,8 @@ export function ProductsGrid({ products, isAdmin }: ProductsGridProps) {
             )}
           </div>
         </div>
-      ))}
+        );
+      })}
     </div>
   );
 }

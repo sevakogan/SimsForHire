@@ -16,18 +16,25 @@ interface ImageUploadProps {
 export function ImageUpload({ currentUrl, onUpload, onRemove, bucket = "item-images" }: ImageUploadProps) {
   const { user } = useAuth();
   const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [preview, setPreview] = useState<string | null>(currentUrl ?? null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   async function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
-    if (!file || !user) return;
+    if (!file) return;
+    if (!user) {
+      setError("You must be logged in to upload images");
+      return;
+    }
 
     if (!file.type.startsWith("image/")) {
+      setError("Please select an image file");
       return;
     }
 
     setUploading(true);
+    setError(null);
 
     try {
       const compressed = await imageCompression(file, {
@@ -39,14 +46,17 @@ export function ImageUpload({ currentUrl, onUpload, onRemove, bucket = "item-ima
       const ext = file.name.split(".").pop() ?? "jpg";
       const fileName = `${user.id}/${Date.now()}-${Math.random().toString(36).substring(7)}.${ext}`;
 
-      const { error } = await supabase.storage
+      const { error: uploadError } = await supabase.storage
         .from(bucket)
         .upload(fileName, compressed, {
           contentType: compressed.type,
           upsert: false,
         });
 
-      if (error) throw error;
+      if (uploadError) {
+        setError(`Upload failed: ${uploadError.message}`);
+        return;
+      }
 
       const {
         data: { publicUrl },
@@ -54,8 +64,8 @@ export function ImageUpload({ currentUrl, onUpload, onRemove, bucket = "item-ima
 
       setPreview(publicUrl);
       onUpload(publicUrl);
-    } catch {
-      // Upload failed silently
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Upload failed");
     } finally {
       setUploading(false);
     }
@@ -64,6 +74,7 @@ export function ImageUpload({ currentUrl, onUpload, onRemove, bucket = "item-ima
   function handleRemove() {
     setPreview(null);
     onRemove();
+    setError(null);
     if (inputRef.current) inputRef.current.value = "";
   }
 
@@ -113,6 +124,10 @@ export function ImageUpload({ currentUrl, onUpload, onRemove, bucket = "item-ima
             disabled={uploading}
           />
         </label>
+      )}
+
+      {error && (
+        <p className="mt-1.5 text-xs text-red-600">{error}</p>
       )}
     </div>
   );

@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { deleteItem } from "@/lib/actions/items";
 import { useRouter } from "next/navigation";
+import { firstImage } from "@/lib/parse-images";
 import type { Item, ClientItem } from "@/types";
 
 interface ItemsTableProps {
@@ -49,6 +50,8 @@ export function ItemsTable({ items, projectId, isAdmin }: ItemsTableProps) {
       {items.map((item) => {
         const total = (item.price_sold_for ?? item.retail_price) + item.retail_shipping;
 
+        const thumb = firstImage(item.image_url);
+
         return (
           <div
             key={item.id}
@@ -68,9 +71,9 @@ export function ItemsTable({ items, projectId, isAdmin }: ItemsTableProps) {
 
             {/* Thumbnail */}
             <div className="shrink-0">
-              {item.image_url ? (
+              {thumb ? (
                 <Image
-                  src={item.image_url}
+                  src={thumb}
                   alt=""
                   width={40}
                   height={40}

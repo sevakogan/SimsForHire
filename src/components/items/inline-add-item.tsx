@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/pill-styles";
 import { MultiImageUpload } from "@/components/items/multi-image-upload";
 import { TypeTagPicker } from "@/components/products/type-tag-picker";
+import { firstImage } from "@/lib/parse-images";
 import type { ProductSearchResult } from "@/types";
 
 interface InlineAddItemProps {
@@ -333,7 +334,9 @@ export function InlineAddItem({ projectId, isAdmin }: InlineAddItemProps) {
         {dropdownOpen && query.trim() && (
           <div className="absolute z-50 mt-1.5 w-full rounded-xl border border-border bg-white shadow-xl shadow-black/5 max-h-80 overflow-y-auto animate-slide-down">
             {/* Product matches */}
-            {results.map((product) => (
+            {results.map((product) => {
+              const thumb = firstImage(product.image_url);
+              return (
               <button
                 key={product.id}
                 type="button"
@@ -341,9 +344,9 @@ export function InlineAddItem({ projectId, isAdmin }: InlineAddItemProps) {
                 disabled={saving}
                 className="flex w-full items-center gap-3 px-3 py-2.5 text-left transition-colors hover:bg-muted/40 border-b border-border/30 last:border-b-0 disabled:opacity-50"
               >
-                {product.image_url ? (
+                {thumb ? (
                   <Image
-                    src={product.image_url}
+                    src={thumb}
                     alt=""
                     width={32}
                     height={32}
@@ -370,7 +373,8 @@ export function InlineAddItem({ projectId, isAdmin }: InlineAddItemProps) {
                   {formatCurrency(product.sales_price)}
                 </span>
               </button>
-            ))}
+              );
+            })}
 
             {/* Create new — always shown when not loading */}
             {!loading && (

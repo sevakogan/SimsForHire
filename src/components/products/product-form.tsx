@@ -13,22 +13,12 @@ import {
 } from "@/components/ui/pill-styles";
 import { MultiImageUpload } from "@/components/items/multi-image-upload";
 import { TypeTagPicker } from "@/components/products/type-tag-picker";
+import { parseImages } from "@/lib/parse-images";
 import type { Product } from "@/types";
 
 interface ProductFormProps {
   product?: Product;
   isAdmin: boolean;
-}
-
-function parseImages(imageUrl: string | null | undefined): string[] {
-  if (!imageUrl) return [];
-  try {
-    const parsed = JSON.parse(imageUrl);
-    if (Array.isArray(parsed)) return parsed;
-  } catch {
-    // Not JSON — treat as single URL
-  }
-  return imageUrl ? [imageUrl] : [];
 }
 
 export function ProductForm({ product, isAdmin }: ProductFormProps) {
