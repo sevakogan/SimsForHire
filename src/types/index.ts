@@ -52,11 +52,45 @@ export interface Item {
   price_sold_for: number | null;
   image_url: string | null;
   notes: string;
+  product_id: string | null;
   created_at: string;
   updated_at: string;
 }
 
 export type ClientItem = Omit<Item, "my_cost" | "my_shipping">;
+
+export interface Product {
+  id: string;
+  model_number: string;
+  name: string;
+  type: string;
+  description: string;
+  retail_price: number;
+  cost: number;
+  sales_price: number;
+  shipping: number;
+  image_url: string | null;
+  notes: string;
+  manufacturer_website: string | null;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export type ClientProduct = Omit<Product, "cost">;
+
+export interface ProductSearchResult {
+  id: string;
+  model_number: string;
+  name: string;
+  type: string;
+  description: string;
+  retail_price: number;
+  cost?: number;
+  sales_price: number;
+  shipping: number;
+  image_url: string | null;
+}
 
 export function isAdminRole(role: UserRole): boolean {
   return role === "admin" || role === "collaborator";

@@ -10,9 +10,10 @@ interface ImageUploadProps {
   currentUrl?: string | null;
   onUpload: (url: string) => void;
   onRemove: () => void;
+  bucket?: string;
 }
 
-export function ImageUpload({ currentUrl, onUpload, onRemove }: ImageUploadProps) {
+export function ImageUpload({ currentUrl, onUpload, onRemove, bucket = "item-images" }: ImageUploadProps) {
   const { user } = useAuth();
   const [uploading, setUploading] = useState(false);
   const [preview, setPreview] = useState<string | null>(currentUrl ?? null);
@@ -39,7 +40,7 @@ export function ImageUpload({ currentUrl, onUpload, onRemove }: ImageUploadProps
       const fileName = `${user.id}/${Date.now()}-${Math.random().toString(36).substring(7)}.${ext}`;
 
       const { error } = await supabase.storage
-        .from("item-images")
+        .from(bucket)
         .upload(fileName, compressed, {
           contentType: compressed.type,
           upsert: false,
@@ -49,7 +50,7 @@ export function ImageUpload({ currentUrl, onUpload, onRemove }: ImageUploadProps
 
       const {
         data: { publicUrl },
-      } = supabase.storage.from("item-images").getPublicUrl(fileName);
+      } = supabase.storage.from(bucket).getPublicUrl(fileName);
 
       setPreview(publicUrl);
       onUpload(publicUrl);

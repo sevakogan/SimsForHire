@@ -4,8 +4,17 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createItem, updateItem } from "@/lib/actions/items";
 import { buttonStyles } from "@/components/ui/form-styles";
+import {
+  pillLabel,
+  pillInput,
+  pillWrapper,
+  pillWrapperReadonly,
+  pillWrapperAdmin,
+  pillLabelAdmin,
+} from "@/components/ui/pill-styles";
 import { ImageUpload } from "@/components/items/image-upload";
-import type { Item } from "@/types";
+import { ProductSearch } from "@/components/products/product-search";
+import type { Item, ProductSearchResult } from "@/types";
 
 interface ItemFormProps {
   projectId: string;
@@ -14,44 +23,94 @@ interface ItemFormProps {
   isAdmin: boolean;
 }
 
-const pillLabel = "text-[11px] font-semibold uppercase tracking-wider text-muted-foreground";
-const pillInput =
-  "w-full bg-transparent text-sm text-foreground placeholder:text-muted-foreground/60 focus:outline-none";
-const pillWrapper =
-  "flex flex-col gap-0.5 rounded-lg border border-border bg-white px-3 py-1.5 shadow-sm transition-all focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20";
-const pillWrapperReadonly =
-  "flex flex-col gap-0.5 rounded-lg border border-border bg-muted/50 px-3 py-1.5 shadow-sm";
+interface FormFields {
+  item_type: string;
+  description: string;
+  item_link: string;
+  retail_price: string;
+  retail_shipping: string;
+  discount_percent: string;
+  my_cost: string;
+  my_shipping: string;
+  price_sold_for: string;
+  notes: string;
+}
+
+function buildInitialFields(item?: Item): FormFields {
+  return {
+    item_type: item?.item_type ?? "",
+    description: item?.description ?? "",
+    item_link: item?.item_link ?? "",
+    retail_price: String(item?.retail_price ?? 0),
+    retail_shipping: String(item?.retail_shipping ?? 0),
+    discount_percent: String(item?.discount_percent ?? 0),
+    my_cost: String(item?.my_cost ?? 0),
+    my_shipping: String(item?.my_shipping ?? 0),
+    price_sold_for: item?.price_sold_for != null ? String(item.price_sold_for) : "",
+    notes: item?.notes ?? "",
+  };
+}
 
 export function ItemForm({ projectId, itemNumber, item, isAdmin }: ItemFormProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [imageUrl, setImageUrl] = useState<string | null>(item?.image_url ?? null);
+  const [fields, setFields] = useState<FormFields>(() => buildInitialFields(item));
+  const [selectedProduct, setSelectedProduct] = useState<ProductSearchResult | null>(null);
+  const [productId, setProductId] = useState<string | null>(item?.product_id ?? null);
+
+  function updateField(name: keyof FormFields, value: string) {
+    setFields((prev) => ({ ...prev, [name]: value }));
+  }
+
+  function handleProductSelect(product: ProductSearchResult) {
+    setSelectedProduct(product);
+    setProductId(product.id);
+
+    setFields((prev) => ({
+      ...prev,
+      item_type: product.type || prev.item_type,
+      description: product.description || prev.description,
+      item_link: "",
+      retail_price: String(product.retail_price),
+      retail_shipping: String(product.shipping),
+      price_sold_for: String(product.sales_price),
+      my_cost: product.cost != null ? String(product.cost) : prev.my_cost,
+    }));
+
+    if (product.image_url) {
+      setImageUrl(product.image_url);
+    }
+  }
+
+  function handleProductClear() {
+    setSelectedProduct(null);
+    setProductId(null);
+  }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setLoading(true);
     setError(null);
 
-    const form = new FormData(e.currentTarget);
-
     const input = {
       project_id: projectId,
       item_number: item?.item_number ?? itemNumber,
-      item_type: form.get("item_type") as string,
-      description: form.get("description") as string,
-      item_link: (form.get("item_link") as string) || undefined,
-      retail_price: parseFloat(form.get("retail_price") as string) || 0,
-      retail_shipping: parseFloat(form.get("retail_shipping") as string) || 0,
-      discount_percent: parseFloat(form.get("discount_percent") as string) || 0,
-      my_cost: parseFloat(form.get("my_cost") as string) || 0,
-      my_shipping: parseFloat(form.get("my_shipping") as string) || 0,
-      price_sold_for:
-        (form.get("price_sold_for") as string)
-          ? parseFloat(form.get("price_sold_for") as string)
-          : undefined,
+      item_type: fields.item_type,
+      description: fields.description,
+      item_link: fields.item_link || undefined,
+      retail_price: parseFloat(fields.retail_price) || 0,
+      retail_shipping: parseFloat(fields.retail_shipping) || 0,
+      discount_percent: parseFloat(fields.discount_percent) || 0,
+      my_cost: parseFloat(fields.my_cost) || 0,
+      my_shipping: parseFloat(fields.my_shipping) || 0,
+      price_sold_for: fields.price_sold_for
+        ? parseFloat(fields.price_sold_for)
+        : undefined,
       image_url: imageUrl ?? undefined,
-      notes: (form.get("notes") as string) || undefined,
+      notes: fields.notes || undefined,
+      product_id: productId ?? undefined,
     };
 
     const result = item
@@ -76,6 +135,16 @@ export function ItemForm({ projectId, itemNumber, item, isAdmin }: ItemFormProps
         </div>
       )}
 
+      {/* Product Search — only shown when creating new items */}
+      {!item && (
+        <ProductSearch
+          onSelect={handleProductSelect}
+          onClear={handleProductClear}
+          selectedProduct={selectedProduct}
+          isAdmin={isAdmin}
+        />
+      )}
+
       {/* Row 1: Item #, Type, Link */}
       <div className="flex flex-wrap gap-2">
         <div className={`${pillWrapperReadonly} w-20 shrink-0`}>
@@ -95,7 +164,8 @@ export function ItemForm({ projectId, itemNumber, item, isAdmin }: ItemFormProps
             name="item_type"
             type="text"
             required
-            defaultValue={item?.item_type ?? ""}
+            value={fields.item_type}
+            onChange={(e) => updateField("item_type", e.target.value)}
             placeholder="Furniture, Appliance…"
             className={pillInput}
           />
@@ -107,7 +177,8 @@ export function ItemForm({ projectId, itemNumber, item, isAdmin }: ItemFormProps
             id="item_link"
             name="item_link"
             type="url"
-            defaultValue={item?.item_link ?? ""}
+            value={fields.item_link}
+            onChange={(e) => updateField("item_link", e.target.value)}
             placeholder="https://…"
             className={pillInput}
           />
@@ -122,7 +193,8 @@ export function ItemForm({ projectId, itemNumber, item, isAdmin }: ItemFormProps
           name="description"
           rows={2}
           required
-          defaultValue={item?.description ?? ""}
+          value={fields.description}
+          onChange={(e) => updateField("description", e.target.value)}
           placeholder="Item description…"
           className={`${pillInput} resize-none`}
         />
@@ -137,7 +209,8 @@ export function ItemForm({ projectId, itemNumber, item, isAdmin }: ItemFormProps
             name="retail_price"
             type="number"
             step="0.01"
-            defaultValue={item?.retail_price ?? 0}
+            value={fields.retail_price}
+            onChange={(e) => updateField("retail_price", e.target.value)}
             className={pillInput}
           />
         </div>
@@ -149,7 +222,8 @@ export function ItemForm({ projectId, itemNumber, item, isAdmin }: ItemFormProps
             name="retail_shipping"
             type="number"
             step="0.01"
-            defaultValue={item?.retail_shipping ?? 0}
+            value={fields.retail_shipping}
+            onChange={(e) => updateField("retail_shipping", e.target.value)}
             className={pillInput}
           />
         </div>
@@ -161,7 +235,8 @@ export function ItemForm({ projectId, itemNumber, item, isAdmin }: ItemFormProps
             name="discount_percent"
             type="number"
             step="0.01"
-            defaultValue={item?.discount_percent ?? 0}
+            value={fields.discount_percent}
+            onChange={(e) => updateField("discount_percent", e.target.value)}
             className={pillInput}
           />
         </div>
@@ -173,7 +248,8 @@ export function ItemForm({ projectId, itemNumber, item, isAdmin }: ItemFormProps
             name="price_sold_for"
             type="number"
             step="0.01"
-            defaultValue={item?.price_sold_for ?? ""}
+            value={fields.price_sold_for}
+            onChange={(e) => updateField("price_sold_for", e.target.value)}
             placeholder="—"
             className={pillInput}
           />
@@ -183,26 +259,28 @@ export function ItemForm({ projectId, itemNumber, item, isAdmin }: ItemFormProps
       {/* Row 4: Admin-only cost pills */}
       {isAdmin && (
         <div className="flex flex-wrap gap-2">
-          <div className={`${pillWrapper} w-28 shrink-0 border-amber-200 bg-amber-50/50`}>
-            <label htmlFor="my_cost" className={`${pillLabel} text-amber-700`}>My Cost</label>
+          <div className={`${pillWrapperAdmin} w-28 shrink-0`}>
+            <label htmlFor="my_cost" className={pillLabelAdmin}>My Cost</label>
             <input
               id="my_cost"
               name="my_cost"
               type="number"
               step="0.01"
-              defaultValue={item?.my_cost ?? 0}
+              value={fields.my_cost}
+              onChange={(e) => updateField("my_cost", e.target.value)}
               className={pillInput}
             />
           </div>
 
-          <div className={`${pillWrapper} w-28 shrink-0 border-amber-200 bg-amber-50/50`}>
-            <label htmlFor="my_shipping" className={`${pillLabel} text-amber-700`}>My Ship</label>
+          <div className={`${pillWrapperAdmin} w-28 shrink-0`}>
+            <label htmlFor="my_shipping" className={pillLabelAdmin}>My Ship</label>
             <input
               id="my_shipping"
               name="my_shipping"
               type="number"
               step="0.01"
-              defaultValue={item?.my_shipping ?? 0}
+              value={fields.my_shipping}
+              onChange={(e) => updateField("my_shipping", e.target.value)}
               className={pillInput}
             />
           </div>
@@ -221,7 +299,7 @@ export function ItemForm({ projectId, itemNumber, item, isAdmin }: ItemFormProps
         <div className={`${pillWrapper} min-w-[160px] flex-1`}>
           <label className={pillLabel}>Image</label>
           <ImageUpload
-            currentUrl={item?.image_url}
+            currentUrl={imageUrl}
             onUpload={(url) => setImageUrl(url)}
             onRemove={() => setImageUrl(null)}
           />
@@ -233,7 +311,8 @@ export function ItemForm({ projectId, itemNumber, item, isAdmin }: ItemFormProps
             id="notes"
             name="notes"
             rows={2}
-            defaultValue={item?.notes ?? ""}
+            value={fields.notes}
+            onChange={(e) => updateField("notes", e.target.value)}
             placeholder="Additional notes…"
             className={`${pillInput} resize-none`}
           />
