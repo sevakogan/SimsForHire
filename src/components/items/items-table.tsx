@@ -103,6 +103,12 @@ export function ItemsTable({ items, projectId, isAdmin }: ItemsTableProps) {
               Selling Price
             </span>
           </div>
+          {/* S/H */}
+          <div className="w-20 shrink-0 text-right">
+            <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70">
+              S/H
+            </span>
+          </div>
           {/* Total */}
           <div className="w-24 shrink-0 text-right">
             <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70">
@@ -196,6 +202,13 @@ export function ItemsTable({ items, projectId, isAdmin }: ItemsTableProps) {
               <div className="w-24 shrink-0 text-right">
                 <span className="inline-block w-full rounded-md border border-border/60 bg-white px-2 py-1 text-sm font-medium text-foreground text-right">
                   {formatCurrency(sellingPrice)}
+                </span>
+              </div>
+
+              {/* S/H */}
+              <div className="w-20 shrink-0 text-right">
+                <span className="inline-block w-full rounded-md border border-border/60 bg-white px-2 py-1 text-sm text-foreground text-right">
+                  {formatCurrency(item.retail_shipping)}
                 </span>
               </div>
 
