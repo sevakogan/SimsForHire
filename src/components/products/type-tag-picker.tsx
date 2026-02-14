@@ -57,7 +57,7 @@ export function TypeTagPicker({ value, onChange }: TypeTagPickerProps) {
           key={tag}
           type="button"
           onClick={() => handleSelectTag(tag)}
-          className={`rounded-full px-3 py-1 text-xs font-medium transition-all ${
+          className={`rounded-full px-2.5 py-0.5 text-[11px] font-medium transition-all ${
             value === tag
               ? "bg-primary text-white shadow-sm"
               : "bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground"
@@ -72,7 +72,7 @@ export function TypeTagPicker({ value, onChange }: TypeTagPickerProps) {
         <button
           type="button"
           onClick={() => onChange("")}
-          className="flex items-center gap-1 rounded-full bg-primary px-3 py-1 text-xs font-medium text-white shadow-sm"
+          className="flex items-center gap-1 rounded-full bg-primary px-2.5 py-0.5 text-[11px] font-medium text-white shadow-sm"
         >
           {value}
           <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
@@ -100,12 +100,12 @@ export function TypeTagPicker({ value, onChange }: TypeTagPickerProps) {
               }
             }}
             placeholder="Custom type…"
-            className="w-24 rounded-full border border-border bg-white px-3 py-1 text-xs text-foreground placeholder:text-muted-foreground/50 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/20"
+            className="w-20 rounded-full border border-border bg-white px-2.5 py-0.5 text-[11px] text-foreground placeholder:text-muted-foreground/50 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/20"
           />
           <button
             type="button"
             onClick={handleAddCustom}
-            className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10 text-primary transition-colors hover:bg-primary/20"
+            className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/10 text-primary transition-colors hover:bg-primary/20"
           >
             <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
@@ -116,7 +116,7 @@ export function TypeTagPicker({ value, onChange }: TypeTagPickerProps) {
         <button
           type="button"
           onClick={() => setShowCustomInput(true)}
-          className="flex h-6 w-6 items-center justify-center rounded-full border border-dashed border-border/60 text-muted-foreground/50 transition-all hover:border-primary/40 hover:text-primary"
+          className="flex h-5 w-5 items-center justify-center rounded-full border border-dashed border-border/60 text-muted-foreground/50 transition-all hover:border-primary/40 hover:text-primary"
           title="Add custom type"
         >
           <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
