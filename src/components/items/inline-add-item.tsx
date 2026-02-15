@@ -171,7 +171,7 @@ export function InlineAddItem({ projectId, isAdmin }: InlineAddItemProps) {
         my_cost: product.cost ?? 0,
         my_shipping: 0,
         price_sold_for: product.sales_price,
-        image_url: product.image_url ?? undefined,
+        image_url: product.image_url ?? null,
         product_id: product.id,
       });
       if (result.error) {
@@ -223,8 +223,9 @@ export function InlineAddItem({ projectId, isAdmin }: InlineAddItemProps) {
         sales_price: parseFloat(productFields.sales_price) || 0,
         shipping: parseFloat(productFields.shipping) || 0,
         image_url: imageUrl,
-        notes: productFields.notes || undefined,
-        manufacturer_website: productFields.manufacturer_website || undefined,
+        notes: productFields.notes || "",
+        manufacturer_website: productFields.manufacturer_website || "",
+        seller_merchant: "",
       });
       if (productResult.error) {
         setError(productResult.error);
@@ -243,7 +244,7 @@ export function InlineAddItem({ projectId, isAdmin }: InlineAddItemProps) {
         my_cost: parseFloat(productFields.cost) || 0,
         my_shipping: 0,
         price_sold_for: parseFloat(productFields.sales_price) || 0,
-        image_url: productFields.images[0] ?? undefined,
+        image_url: productFields.images[0] ?? null,
         product_id: productResult.id,
       });
       if (itemResult.error) {
