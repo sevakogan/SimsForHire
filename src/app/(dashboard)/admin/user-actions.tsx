@@ -3,7 +3,8 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import {
-  approveUser,
+  approveAsClient,
+  approveAsEmployee,
   denyUser,
   assignClientToUser,
   updateUserRole,
@@ -23,9 +24,22 @@ export function UserActions({ user, clients }: Props) {
   const [loading, setLoading] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
 
-  async function handleApprove() {
+  async function handleApproveAsClient() {
     setLoading(true);
-    await approveUser(user.id);
+    const result = await approveAsClient(user.id);
+    if (result.error) {
+      console.error("Approve as client error:", result.error);
+    }
+    router.refresh();
+    setLoading(false);
+  }
+
+  async function handleApproveAsEmployee() {
+    setLoading(true);
+    const result = await approveAsEmployee(user.id);
+    if (result.error) {
+      console.error("Approve as employee error:", result.error);
+    }
     router.refresh();
     setLoading(false);
   }
@@ -62,6 +76,7 @@ export function UserActions({ user, clients }: Props) {
     setConfirmDelete(false);
   }
 
+  // Delete confirmation
   if (confirmDelete) {
     return (
       <div className="flex items-center gap-2">
@@ -84,27 +99,38 @@ export function UserActions({ user, clients }: Props) {
     );
   }
 
+  // Pending users: show Client / Employee / Decline buttons
+  if (user.status === "pending") {
+    return (
+      <div className="flex flex-wrap items-center gap-2">
+        <button
+          onClick={handleApproveAsClient}
+          disabled={loading}
+          className={`${buttonStyles.small} bg-blue-50 text-blue-700 hover:bg-blue-100`}
+        >
+          {loading ? "..." : "Client"}
+        </button>
+        <button
+          onClick={handleApproveAsEmployee}
+          disabled={loading}
+          className={`${buttonStyles.small} bg-green-50 text-green-700 hover:bg-green-100`}
+        >
+          {loading ? "..." : "Employee"}
+        </button>
+        <button
+          onClick={handleDeny}
+          disabled={loading}
+          className={`${buttonStyles.small} bg-red-50 text-red-700 hover:bg-red-100`}
+        >
+          {loading ? "..." : "Decline"}
+        </button>
+      </div>
+    );
+  }
+
+  // Approved users: show role selector + delete
   return (
     <div className="flex flex-wrap items-center gap-2">
-      {user.status === "pending" && (
-        <>
-          <button
-            onClick={handleApprove}
-            disabled={loading}
-            className={`${buttonStyles.small} bg-success/10 text-green-700 hover:bg-success/20`}
-          >
-            Approve
-          </button>
-          <button
-            onClick={handleDeny}
-            disabled={loading}
-            className={`${buttonStyles.small} bg-destructive/10 text-red-700 hover:bg-destructive/20`}
-          >
-            Deny
-          </button>
-        </>
-      )}
-
       <select
         onChange={handleRoleChange}
         defaultValue={user.role}

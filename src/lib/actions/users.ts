@@ -50,6 +50,63 @@ export async function approveUser(
   return { error: null };
 }
 
+export async function approveAsClient(
+  userId: string
+): Promise<{ error: string | null }> {
+  const admin = getAdminSupabase();
+
+  // Get the user's profile to use their name for the client record
+  const { data: profile, error: fetchError } = await admin
+    .from("profiles")
+    .select("full_name, email")
+    .eq("id", userId)
+    .single();
+
+  if (fetchError) return { error: fetchError.message };
+
+  // Create a client record for them
+  const { data: client, error: clientError } = await admin
+    .from("clients")
+    .insert({
+      name: profile.full_name ?? profile.email,
+      email: profile.email,
+      created_by: userId,
+    })
+    .select("id")
+    .single();
+
+  if (clientError) return { error: clientError.message };
+
+  // Update profile: set role to client, status to approved, link to client record
+  const { error: profileError } = await admin
+    .from("profiles")
+    .update({
+      role: "client",
+      status: "approved",
+      client_id: client.id,
+    })
+    .eq("id", userId);
+
+  if (profileError) return { error: profileError.message };
+  return { error: null };
+}
+
+export async function approveAsEmployee(
+  userId: string
+): Promise<{ error: string | null }> {
+  const admin = getAdminSupabase();
+  const { error } = await admin
+    .from("profiles")
+    .update({
+      role: "collaborator",
+      status: "approved",
+    })
+    .eq("id", userId);
+
+  if (error) return { error: error.message };
+  return { error: null };
+}
+
 export async function denyUser(
   id: string
 ): Promise<{ error: string | null }> {

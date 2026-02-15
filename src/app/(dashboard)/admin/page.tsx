@@ -1,12 +1,14 @@
 import { getUsers, getClientsAdmin } from "@/lib/actions/users";
+import type { ProfileWithClient } from "@/lib/actions/users";
 import { Badge } from "@/components/ui/badge";
 import { tableStyles } from "@/components/ui/form-styles";
 import { UserActions } from "./user-actions";
 import { InviteUserForm } from "./invite-user-form";
+import type { Client } from "@/types";
 
 export default async function AdminPage() {
-  let users;
-  let clients;
+  let users: ProfileWithClient[];
+  let clients: Client[];
 
   try {
     [users, clients] = await Promise.all([getUsers(), getClientsAdmin()]);
@@ -22,12 +24,13 @@ export default async function AdminPage() {
     );
   }
 
-  // Split into company users (admin/collaborator) and client users
-  const companyUsers = users.filter(
-    (u) => u.role === "admin" || u.role === "collaborator"
-  );
-  const clientUsers = users.filter((u) => u.role === "client");
   const pendingUsers = users.filter((u) => u.status === "pending");
+  const companyUsers = users.filter(
+    (u) => (u.role === "admin" || u.role === "collaborator") && u.status !== "pending"
+  );
+  const clientUsers = users.filter(
+    (u) => u.role === "client" && u.status !== "pending"
+  );
 
   return (
     <div className="space-y-6 sm:space-y-8">
@@ -50,7 +53,7 @@ export default async function AdminPage() {
             {pendingUsers.map((user) => (
               <div
                 key={user.id}
-                className="flex items-center justify-between rounded-xl border border-amber-200 bg-amber-50/50 px-4 py-3"
+                className="flex flex-col gap-2 rounded-xl border border-amber-200 bg-amber-50/50 px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
               >
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-medium text-foreground truncate">
@@ -67,14 +70,14 @@ export default async function AdminPage() {
         </section>
       )}
 
-      {/* Company Users */}
+      {/* Company Users (employees) */}
       <section className="space-y-3">
         <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
           Company Users ({companyUsers.length})
         </h2>
 
         {companyUsers.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No company users.</p>
+          <p className="text-sm text-muted-foreground">No company users yet.</p>
         ) : (
           <>
             {/* Desktop table */}
@@ -179,8 +182,8 @@ function UserCard({
   clients,
   showClient,
 }: {
-  user: import("@/lib/actions/users").ProfileWithClient;
-  clients: import("@/types").Client[];
+  user: ProfileWithClient;
+  clients: Client[];
   showClient?: boolean;
 }) {
   return (
