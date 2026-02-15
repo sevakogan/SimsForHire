@@ -189,6 +189,7 @@ export function ItemForm({ projectId, itemNumber, item, isAdmin }: ItemFormProps
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to save");
+    } finally {
       setLoading(false);
     }
   }
@@ -265,7 +266,7 @@ export function ItemForm({ projectId, itemNumber, item, isAdmin }: ItemFormProps
             <input
               id="item_link"
               name="item_link"
-              type="url"
+              type="text"
               value={fields.item_link}
               onChange={(e) => updateField("item_link", e.target.value)}
               placeholder="https://…"
