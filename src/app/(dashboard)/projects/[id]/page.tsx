@@ -10,6 +10,7 @@ import { buttonStyles, cardStyles } from "@/components/ui/form-styles";
 import { ItemsTable } from "@/components/items/items-table";
 import { InlineAddItem } from "@/components/items/inline-add-item";
 import { ProjectActions } from "./project-actions";
+import { InvoiceInfoCard } from "./invoice-info-card";
 import { ShipmentsSection } from "./shipments-section";
 import type { Profile, Item } from "@/types";
 import { isAdminRole } from "@/types";
@@ -137,38 +138,15 @@ export default async function ProjectDetailPage({ params }: Props) {
         </div>
       )}
 
-      {/* Invoice number card — admin */}
+      {/* Invoice number card — admin (inline-editable) */}
       {admin && (
-        <div className={`${cardStyles.base} !p-4 sm:!p-5`}>
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-[10px] sm:text-xs font-medium uppercase text-muted-foreground">
-                Invoice Number
-              </p>
-              <p className="text-sm font-semibold text-foreground mt-0.5">
-                {project.invoice_number || <span className="text-muted-foreground/50 font-normal">Not set</span>}
-              </p>
-            </div>
-            {project.date_required && (
-              <div className="text-right">
-                <p className="text-[10px] sm:text-xs font-medium uppercase text-muted-foreground">
-                  Required By
-                </p>
-                <p className="text-sm text-foreground mt-0.5">
-                  {new Date(project.date_required).toLocaleDateString()}
-                </p>
-              </div>
-            )}
-            <div className="text-right">
-              <p className="text-[10px] sm:text-xs font-medium uppercase text-muted-foreground">
-                Fulfillment
-              </p>
-              <p className="text-sm text-foreground mt-0.5 capitalize">
-                {project.fulfillment_type}
-              </p>
-            </div>
-          </div>
-        </div>
+        <InvoiceInfoCard
+          projectId={project.id}
+          invoiceNumber={project.invoice_number}
+          dateRequired={project.date_required}
+          fulfillmentType={project.fulfillment_type}
+          notes={project.notes ?? ""}
+        />
       )}
 
       {/* Invoice links */}

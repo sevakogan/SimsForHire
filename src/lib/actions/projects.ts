@@ -67,12 +67,26 @@ export async function createProject(input: {
 
   if (!user) return { id: null, error: "Not authenticated" };
 
+  // Auto-generate next invoice number (max existing + 1)
+  const { data: maxRow } = await supabase
+    .from("projects")
+    .select("invoice_number")
+    .not("invoice_number", "is", null)
+    .order("invoice_number", { ascending: false })
+    .limit(1)
+    .single();
+
+  const nextNumber = maxRow?.invoice_number
+    ? String(Number(maxRow.invoice_number) + 1)
+    : "1001";
+
   const { data, error } = await supabase
     .from("projects")
     .insert({
       client_id: input.client_id,
       name: input.name,
       status: "draft" as ProjectStatus,
+      invoice_number: nextNumber,
       created_by: user.id,
     })
     .select("id")
@@ -94,6 +108,7 @@ export async function updateProject(
     invoice_link_2?: string;
     date_required?: string | null;
     fulfillment_type?: FulfillmentType;
+    notes?: string;
   }
 ): Promise<{ error: string | null }> {
   const supabase = await createSupabaseServer();

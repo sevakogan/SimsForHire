@@ -71,6 +71,7 @@ CREATE TABLE projects (
   invoice_link_2 TEXT,
   date_required DATE,
   fulfillment_type TEXT NOT NULL DEFAULT 'delivery' CHECK (fulfillment_type IN ('pickup', 'delivery')),
+  notes TEXT NOT NULL DEFAULT '',
   share_token UUID UNIQUE,
   created_by UUID REFERENCES profiles(id),
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),

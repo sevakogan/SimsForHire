@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { COMPANY_INFO } from "@/lib/constants/company-info";
 
 interface PortalSidebarProps {
   token: string;
@@ -116,11 +117,11 @@ export function PortalSidebar({
       <div className={`border-b border-gray-200 px-4 py-5 ${collapsed ? "px-2 py-4" : ""}`}>
         {collapsed ? (
           <div className="flex items-center justify-center">
-            <span className="text-sm font-bold text-primary">S</span>
+            <span className="text-sm font-bold text-primary">{COMPANY_INFO.name[0]}</span>
           </div>
         ) : (
           <>
-            <h1 className="text-base font-bold text-gray-900">SimsForHire</h1>
+            <h1 className="text-base font-bold text-gray-900">{COMPANY_INFO.name}</h1>
             <p className="mt-1.5 text-sm font-medium text-gray-700 truncate">
               {clientName}
             </p>
@@ -201,7 +202,7 @@ export function PortalSidebar({
           </svg>
         </button>
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-bold text-gray-900 truncate">SimsForHire</p>
+          <p className="text-sm font-bold text-gray-900 truncate">{COMPANY_INFO.name}</p>
           <p className="text-xs text-gray-500 truncate">{clientName}</p>
         </div>
       </div>
