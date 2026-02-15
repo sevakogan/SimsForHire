@@ -1,17 +1,9 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { PRESET_PRODUCT_TYPES } from "@/lib/constants/product-types";
 
-const PRESET_TAGS = [
-  "Base",
-  "Wheels",
-  "Pedals",
-  "Accessories",
-  "Monitors",
-  "PC Related",
-  "Seats",
-  "Motion",
-] as const;
+const PRESET_TAGS = PRESET_PRODUCT_TYPES;
 
 interface TypeTagPickerProps {
   value: string;

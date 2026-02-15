@@ -9,6 +9,7 @@ import { firstImage, isExternalImage } from "@/lib/parse-images";
 import { TypeFilterPills } from "@/components/products/type-filter-pills";
 import { ViewToggle } from "@/components/ui/view-toggle";
 import type { ViewMode } from "@/components/ui/view-toggle";
+import { InlineNumberInput } from "@/components/ui/inline-number-input";
 import type { Item, ClientItem, AcceptanceStatus } from "@/types";
 
 interface ItemsTableProps {
@@ -92,78 +93,6 @@ function formatCurrency(value: number): string {
   }).format(value);
 }
 
-/* ─── Inline editable number input ─── */
-
-interface InlineNumberInputProps {
-  value: number;
-  onSave: (value: number) => void;
-  step?: string;
-  min?: number;
-  className?: string;
-  prefix?: string;
-  isInteger?: boolean;
-}
-
-function InlineNumberInput({
-  value,
-  onSave,
-  step = "0.01",
-  min = 0,
-  className = "",
-  prefix = "",
-  isInteger = false,
-}: InlineNumberInputProps) {
-  const [localValue, setLocalValue] = useState(String(value));
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const handleChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const raw = e.target.value;
-      setLocalValue(raw);
-
-      if (timerRef.current) clearTimeout(timerRef.current);
-      timerRef.current = setTimeout(() => {
-        const parsed = isInteger ? parseInt(raw, 10) : parseFloat(raw);
-        if (!isNaN(parsed) && parsed >= min) {
-          onSave(parsed);
-        }
-      }, 600);
-    },
-    [onSave, min, isInteger]
-  );
-
-  const handleBlur = useCallback(() => {
-    if (timerRef.current) clearTimeout(timerRef.current);
-    const parsed = isInteger ? parseInt(localValue, 10) : parseFloat(localValue);
-    if (!isNaN(parsed) && parsed >= min) {
-      onSave(parsed);
-    } else {
-      setLocalValue(String(value));
-    }
-  }, [localValue, value, onSave, min, isInteger]);
-
-  return (
-    <div className={`relative ${className}`}>
-      {prefix && (
-        <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-muted-foreground pointer-events-none">
-          {prefix}
-        </span>
-      )}
-      <input
-        type="number"
-        step={step}
-        min={min}
-        value={localValue}
-        onChange={handleChange}
-        onBlur={handleBlur}
-        className={`w-full rounded-md border border-border/60 bg-white py-1 text-sm text-foreground text-right focus:outline-none focus:ring-1 focus:ring-primary/40 focus:border-primary/40 ${
-          prefix ? "pl-5 pr-2" : "px-2"
-        }`}
-      />
-    </div>
-  );
-}
-
 /* ─── Main Component ─── */
 
 export function ItemsTable({ items, projectId, isAdmin, unreadNoteCount = 0 }: ItemsTableProps) {
@@ -205,16 +134,26 @@ export function ItemsTable({ items, projectId, isAdmin, unreadNoteCount = 0 }: I
     router.refresh();
   }
 
-  function handleInlineUpdate(itemId: string, field: string, value: number) {
-    // Optimistic local update
-    setLocalItems((prev) =>
-      prev.map((item) =>
-        item.id === itemId ? { ...item, [field]: value } : item
-      )
-    );
-    // Fire server update (no await needed for optimistic)
-    updateItem(itemId, { [field]: value });
-  }
+  const saveTimerRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+
+  const handleInlineUpdate = useCallback(
+    (itemId: string, field: string, value: number) => {
+      // Optimistic local update (immediate)
+      setLocalItems((prev) =>
+        prev.map((item) =>
+          item.id === itemId ? { ...item, [field]: value } : item
+        )
+      );
+      // Debounce server update (600ms)
+      const key = `${itemId}:${field}`;
+      if (saveTimerRef.current[key]) clearTimeout(saveTimerRef.current[key]);
+      saveTimerRef.current[key] = setTimeout(() => {
+        updateItem(itemId, { [field]: value });
+        delete saveTimerRef.current[key];
+      }, 600);
+    },
+    []
+  );
 
   function handleDismissNote(itemId: string) {
     // Optimistic: hide the badge immediately
@@ -404,7 +343,7 @@ export function ItemsTable({ items, projectId, isAdmin, unreadNoteCount = 0 }: I
                   <div className="w-14 shrink-0">
                     <InlineNumberInput
                       value={qty}
-                      onSave={(val) => handleInlineUpdate(item.id, "quantity", val)}
+                      onChange={(val) => handleInlineUpdate(item.id, "quantity", val)}
                       step="1"
                       min={1}
                       isInteger
@@ -421,7 +360,7 @@ export function ItemsTable({ items, projectId, isAdmin, unreadNoteCount = 0 }: I
                   <div className="w-24 shrink-0">
                     <InlineNumberInput
                       value={sellingPrice}
-                      onSave={(val) => handleInlineUpdate(item.id, "price_sold_for", val)}
+                      onChange={(val) => handleInlineUpdate(item.id, "price_sold_for", val)}
                       prefix="$"
                     />
                   </div>
@@ -430,7 +369,7 @@ export function ItemsTable({ items, projectId, isAdmin, unreadNoteCount = 0 }: I
                   <div className="w-20 shrink-0">
                     <InlineNumberInput
                       value={item.retail_shipping}
-                      onSave={(val) => handleInlineUpdate(item.id, "retail_shipping", val)}
+                      onChange={(val) => handleInlineUpdate(item.id, "retail_shipping", val)}
                       prefix="$"
                     />
                   </div>
@@ -559,7 +498,7 @@ export function ItemsTable({ items, projectId, isAdmin, unreadNoteCount = 0 }: I
                       <p className="text-[9px] font-medium uppercase tracking-wider text-muted-foreground/60 mb-0.5">Qty</p>
                       <InlineNumberInput
                         value={qty}
-                        onSave={(val) => handleInlineUpdate(item.id, "quantity", val)}
+                        onChange={(val) => handleInlineUpdate(item.id, "quantity", val)}
                         step="1"
                         min={1}
                         isInteger
@@ -573,7 +512,7 @@ export function ItemsTable({ items, projectId, isAdmin, unreadNoteCount = 0 }: I
                       <p className="text-[9px] font-medium uppercase tracking-wider text-muted-foreground/60 mb-0.5">Selling</p>
                       <InlineNumberInput
                         value={sellingPrice}
-                        onSave={(val) => handleInlineUpdate(item.id, "price_sold_for", val)}
+                        onChange={(val) => handleInlineUpdate(item.id, "price_sold_for", val)}
                         prefix="$"
                       />
                     </div>
@@ -581,7 +520,7 @@ export function ItemsTable({ items, projectId, isAdmin, unreadNoteCount = 0 }: I
                       <p className="text-[9px] font-medium uppercase tracking-wider text-muted-foreground/60 mb-0.5">S/H</p>
                       <InlineNumberInput
                         value={item.retail_shipping}
-                        onSave={(val) => handleInlineUpdate(item.id, "retail_shipping", val)}
+                        onChange={(val) => handleInlineUpdate(item.id, "retail_shipping", val)}
                         prefix="$"
                       />
                     </div>

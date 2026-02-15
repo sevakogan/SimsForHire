@@ -1,15 +1,8 @@
 "use client";
 
-const PRESET_TAGS = [
-  "Base",
-  "Wheels",
-  "Pedals",
-  "Accessories",
-  "Monitors",
-  "PC Related",
-  "Seats",
-  "Motion",
-] as const;
+import { PRESET_PRODUCT_TYPES } from "@/lib/constants/product-types";
+
+const PRESET_TAGS = PRESET_PRODUCT_TYPES;
 
 interface TypeFilterPillsProps {
   value: string;
