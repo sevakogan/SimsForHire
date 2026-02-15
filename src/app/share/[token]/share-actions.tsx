@@ -95,7 +95,7 @@ export function ShareActions({
   const [deleteItemId, setDeleteItemId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
 
-  // Image lightbox state
+  // Image lightbox state — click any thumbnail to enlarge
   const [lightboxItem, setLightboxItem] = useState<ItemDisplayData | null>(null);
 
   const isEditable =
