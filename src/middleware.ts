@@ -73,6 +73,8 @@ export const config = {
     "/clients/:path*",
     "/projects/:path*",
     "/catalog/:path*",
+    "/admin/:path*",
+    "/admin",
     "/profile",
     "/login",
     "/signup",
