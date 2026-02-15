@@ -208,7 +208,7 @@ export function InlineAddItem({ projectId, isAdmin }: InlineAddItemProps) {
     try {
       const imageUrl =
         productFields.images.length === 0
-          ? undefined
+          ? null
           : productFields.images.length === 1
             ? productFields.images[0]
             : JSON.stringify(productFields.images);

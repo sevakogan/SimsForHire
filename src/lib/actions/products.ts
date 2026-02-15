@@ -50,7 +50,7 @@ export async function createProduct(input: {
   cost: number;
   sales_price: number;
   shipping: number;
-  image_url?: string;
+  image_url?: string | null;
   notes?: string;
   manufacturer_website?: string;
   seller_merchant?: string;
@@ -98,13 +98,13 @@ export async function updateProduct(
     cost: number;
     sales_price: number;
     shipping: number;
-    image_url: string;
+    image_url: string | null;
     notes: string;
     manufacturer_website: string;
     seller_merchant: string;
   }>
 ): Promise<{ error: string | null }> {
-  // Clean undefined values so Supabase doesn't skip them
+  // Clean undefined values — null is intentional (e.g. clearing image)
   const cleanInput: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(input)) {
     if (value !== undefined) {

@@ -95,7 +95,7 @@ export function ProductForm({ product, isAdmin }: ProductFormProps) {
 
       const imageUrl =
         images.length === 0
-          ? undefined
+          ? null
           : images.length === 1
             ? images[0]
             : JSON.stringify(images);
@@ -110,8 +110,8 @@ export function ProductForm({ product, isAdmin }: ProductFormProps) {
         sales_price: parseFloat(form.get("sales_price") as string) || 0,
         shipping: parseFloat(form.get("shipping") as string) || 0,
         image_url: imageUrl,
-        notes: (form.get("notes") as string) || undefined,
-        manufacturer_website: urlValue.trim() || undefined,
+        notes: (form.get("notes") as string) || "",
+        manufacturer_website: urlValue.trim() || "",
         seller_merchant:
           (form.get("seller_merchant") as string) || "",
       };
