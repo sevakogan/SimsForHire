@@ -22,6 +22,26 @@ export async function getProjects(filters?: {
   return (data ?? []) as Project[];
 }
 
+export interface ProjectWithClient extends Project {
+  client_name: string;
+}
+
+export async function getProjectsWithClients(): Promise<ProjectWithClient[]> {
+  const supabase = await createSupabaseServer();
+  const { data, error } = await supabase
+    .from("projects")
+    .select("*, clients(name)")
+    .order("created_at", { ascending: false });
+
+  if (error) throw new Error(error.message);
+
+  return (data ?? []).map((p) => ({
+    ...p,
+    client_name: (p.clients as unknown as { name: string })?.name ?? "Unknown",
+    clients: undefined,
+  })) as ProjectWithClient[];
+}
+
 export async function getProjectById(id: string): Promise<Project | null> {
   const supabase = await createSupabaseServer();
   const { data, error } = await supabase
