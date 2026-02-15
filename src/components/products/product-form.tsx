@@ -32,62 +32,66 @@ export function ProductForm({ product, isAdmin }: ProductFormProps) {
     parseImages(product?.image_url)
   );
   const [type, setType] = useState(product?.type ?? "");
+  const [urlValue, setUrlValue] = useState(product?.manufacturer_website ?? "");
 
-  async function handleScrape() {
+  function handleUrlApprove() {
     const form = formRef.current;
     if (!form) return;
 
-    const urlInput = form.elements.namedItem("manufacturer_website") as HTMLInputElement;
-    const url = urlInput?.value?.trim();
+    const url = urlValue.trim();
+    if (!url) return;
 
-    if (!url) {
-      setError("Enter a URL first, then click Fetch.");
-      return;
-    }
-
+    // Fire-and-forget: fetch in background while user continues working
     setScraping(true);
     setError(null);
 
-    try {
-      const result = await scrapeProductUrl(url);
+    scrapeProductUrl(url)
+      .then((result) => {
+        if (result.error) {
+          setError(result.error);
+          return;
+        }
 
-      if (result.error) {
-        setError(result.error);
-        setScraping(false);
-        return;
-      }
+        const currentForm = formRef.current;
+        if (!currentForm) return;
 
-      // Only fill empty fields — don't overwrite user-entered data
-      const nameInput = form.elements.namedItem("name") as HTMLInputElement;
-      const descInput = form.elements.namedItem("description") as HTMLInputElement;
+        // Only fill empty fields — don't overwrite user-entered data
+        const nameInput = currentForm.elements.namedItem("name") as HTMLInputElement;
+        const descInput = currentForm.elements.namedItem("description") as HTMLInputElement;
 
-      if (result.title && !nameInput.value.trim()) {
-        nameInput.value = result.title;
-      }
+        if (result.title && !nameInput.value.trim()) {
+          nameInput.value = result.title;
+        }
 
-      if (result.description && !descInput.value.trim()) {
-        descInput.value = result.description;
-      }
+        if (result.description && !descInput.value.trim()) {
+          descInput.value = result.description;
+        }
 
-      // Append scraped images (up to 8 total)
-      if (result.images.length > 0) {
-        setImages((prev) => {
-          const combined = [...prev, ...result.images];
-          // Deduplicate
-          const seen = new Set<string>();
-          const unique = combined.filter((img) => {
-            if (seen.has(img)) return false;
-            seen.add(img);
-            return true;
+        // Append scraped images (up to 8 total)
+        if (result.images.length > 0) {
+          setImages((prev) => {
+            const combined = [...prev, ...result.images];
+            const seen = new Set<string>();
+            const unique = combined.filter((img) => {
+              if (seen.has(img)) return false;
+              seen.add(img);
+              return true;
+            });
+            return unique.slice(0, 8);
           });
-          return unique.slice(0, 8);
-        });
-      }
-    } catch {
-      setError("Failed to fetch product info.");
-    } finally {
-      setScraping(false);
-    }
+        }
+      })
+      .catch(() => {
+        setError("Failed to fetch product info.");
+      })
+      .finally(() => {
+        setScraping(false);
+      });
+  }
+
+  function handleUrlReject() {
+    setUrlValue("");
+    setScraping(false);
   }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -278,26 +282,50 @@ export function ProductForm({ product, isAdmin }: ProductFormProps) {
               id="manufacturer_website"
               name="manufacturer_website"
               type="url"
-              defaultValue={product?.manufacturer_website ?? ""}
+              value={urlValue}
+              onChange={(e) => setUrlValue(e.target.value)}
               placeholder="https://…"
               className={`${pillInput} flex-1`}
             />
-            <button
-              type="button"
-              onClick={handleScrape}
-              disabled={scraping || loading}
-              className="shrink-0 rounded-md bg-primary/10 px-2 py-1 text-[10px] font-medium text-primary transition-colors hover:bg-primary/20 disabled:opacity-50"
-              title="Fetch product info from URL"
-            >
-              {scraping ? (
-                <svg className="h-3.5 w-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                </svg>
-              ) : (
-                "Fetch"
-              )}
-            </button>
+            {urlValue.trim() && (
+              <>
+                {scraping ? (
+                  <div className="shrink-0 rounded-full p-1" title="Fetching…">
+                    <svg className="h-4 w-4 animate-spin text-primary" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                    </svg>
+                  </div>
+                ) : (
+                  <>
+                    {/* Green check — fetch product info */}
+                    <button
+                      type="button"
+                      onClick={handleUrlApprove}
+                      disabled={loading}
+                      className="shrink-0 rounded-full p-1 text-gray-400 transition-colors hover:bg-green-50 hover:text-green-600 disabled:opacity-50"
+                      title="Fetch product info from URL"
+                    >
+                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+                      </svg>
+                    </button>
+                    {/* Red X — clear URL */}
+                    <button
+                      type="button"
+                      onClick={handleUrlReject}
+                      disabled={loading}
+                      className="shrink-0 rounded-full p-1 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
+                      title="Clear URL"
+                    >
+                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </>
+                )}
+              </>
+            )}
           </div>
         </div>
       </div>
