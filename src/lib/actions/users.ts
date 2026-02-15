@@ -1,7 +1,18 @@
 "use server";
 
 import { getAdminSupabase } from "@/lib/supabase-admin";
+import { createSupabaseServer } from "@/lib/supabase-server";
 import type { Client, Profile, UserRole } from "@/types";
+
+async function getCurrentUserId(): Promise<string | null> {
+  try {
+    const supabase = await createSupabaseServer();
+    const { data: { user } } = await supabase.auth.getUser();
+    return user?.id ?? null;
+  } catch {
+    return null;
+  }
+}
 
 export interface ProfileWithClient extends Profile {
   client_name?: string;
@@ -136,6 +147,11 @@ export async function updateUserRole(
   userId: string,
   role: UserRole
 ): Promise<{ error: string | null }> {
+  const currentId = await getCurrentUserId();
+  if (currentId === userId) {
+    return { error: "You cannot change your own role." };
+  }
+
   const admin = getAdminSupabase();
   const { error } = await admin
     .from("profiles")
@@ -183,6 +199,11 @@ export async function inviteUser(
 export async function deleteUser(
   userId: string
 ): Promise<{ error: string | null }> {
+  const currentId = await getCurrentUserId();
+  if (currentId === userId) {
+    return { error: "You cannot delete your own account." };
+  }
+
   const admin = getAdminSupabase();
 
   // Delete from profiles first (cascade may handle this, but be explicit)
