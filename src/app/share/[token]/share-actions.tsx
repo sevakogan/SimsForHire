@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import { isExternalImage } from "@/lib/parse-images";
 import {
@@ -97,6 +97,10 @@ export function ShareActions({
 
   // Image lightbox state — click any thumbnail to enlarge
   const [lightboxItem, setLightboxItem] = useState<ItemDisplayData | null>(null);
+
+  useEffect(() => {
+    console.log("[ShareActions] hydrated, items:", visibleDisplayData.length, "status:", currentStatus);
+  }, []);
 
   const isEditable =
     currentStatus !== "accepted" && currentStatus !== "completed";
@@ -313,7 +317,10 @@ export function ShareActions({
                       {display.thumb ? (
                         <button
                           type="button"
-                          onClick={() => setLightboxItem(display)}
+                          onClick={() => {
+                            console.log("[ShareActions] lightbox click desktop:", display.id, display.thumb);
+                            setLightboxItem(display);
+                          }}
                           className="shrink-0 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 cursor-pointer"
                         >
                           <Image
@@ -456,7 +463,10 @@ export function ShareActions({
                 {display.thumb ? (
                   <button
                     type="button"
-                    onClick={() => setLightboxItem(display)}
+                    onClick={() => {
+                      console.log("[ShareActions] lightbox click mobile:", display.id, display.thumb);
+                      setLightboxItem(display);
+                    }}
                     className="shrink-0 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 cursor-pointer"
                   >
                     <Image
@@ -753,14 +763,14 @@ export function ShareActions({
 
 /** Updates the server-rendered header badge via DOM */
 function StatusBadgeUpdater({ status }: { status: string }) {
-  if (typeof window === "undefined") return null;
-
-  const badge = document.getElementById("share-status-badge");
-  if (badge) {
-    const style = STATUS_STYLES[status] ?? "bg-gray-100 text-gray-600";
-    badge.className = `inline-flex items-center rounded-full px-3 py-1 text-xs font-medium capitalize ${style}`;
-    badge.textContent = status;
-  }
+  useEffect(() => {
+    const badge = document.getElementById("share-status-badge");
+    if (badge) {
+      const style = STATUS_STYLES[status] ?? "bg-gray-100 text-gray-600";
+      badge.className = `inline-flex items-center rounded-full px-3 py-1 text-xs font-medium capitalize ${style}`;
+      badge.textContent = status;
+    }
+  }, [status]);
 
   return null;
 }
