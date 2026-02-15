@@ -62,6 +62,8 @@ export async function createProduct(input: {
   } = await supabase.auth.getUser();
   if (!user) return { id: null, error: "Not authenticated" };
 
+  console.log("[createProduct]", input.name, "image_url:", JSON.stringify(input.image_url));
+
   const { data, error } = await supabase
     .from("products")
     .insert({
@@ -82,7 +84,11 @@ export async function createProduct(input: {
     .select("id")
     .single();
 
-  if (error) return { id: null, error: error.message };
+  if (error) {
+    console.error("[createProduct] FAILED:", error.message);
+    return { id: null, error: error.message };
+  }
+  console.log("[createProduct] SUCCESS id:", data.id);
   revalidatePath("/catalog");
   return { id: data.id, error: null };
 }
@@ -112,6 +118,8 @@ export async function updateProduct(
     }
   }
 
+  console.log("[updateProduct]", id, "image_url:", JSON.stringify(cleanInput.image_url), "keys:", Object.keys(cleanInput).join(","));
+
   const supabase = await createSupabaseServer();
   const { error } = await supabase
     .from("products")
@@ -119,8 +127,10 @@ export async function updateProduct(
     .eq("id", id);
 
   if (error) {
+    console.error("[updateProduct] FAILED:", error.message);
     return { error: error.message };
   }
+  console.log("[updateProduct] SUCCESS for", id);
 
   // Sync image_url to all linked items when product image changes
   if ("image_url" in cleanInput) {

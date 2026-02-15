@@ -116,6 +116,8 @@ export function ProductForm({ product, isAdmin }: ProductFormProps) {
           (form.get("seller_merchant") as string) || "",
       };
 
+      console.log("[ProductForm] submit", { images, imageUrl, productId: product?.id });
+
       const result = product
         ? await updateProduct(product.id, input)
         : await createProduct(input);
