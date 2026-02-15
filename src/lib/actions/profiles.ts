@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { createSupabaseServer } from "@/lib/supabase-server";
 
 export async function updateProfile(
@@ -36,6 +37,7 @@ export async function updateProfile(
     .eq("id", id);
 
   if (error) return { error: error.message };
+  revalidatePath("/profile");
   return { error: null };
 }
 
@@ -54,6 +56,7 @@ export async function updateEmail(
   const { error } = await supabase.auth.updateUser({ email: newEmail });
 
   if (error) return { error: error.message };
+  revalidatePath("/profile");
   return { error: null };
 }
 
@@ -82,5 +85,6 @@ export async function updatePassword(
   const { error } = await supabase.auth.updateUser({ password: newPassword });
 
   if (error) return { error: error.message };
+  revalidatePath("/profile");
   return { error: null };
 }

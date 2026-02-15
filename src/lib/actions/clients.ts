@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { createSupabaseServer } from "@/lib/supabase-server";
 import type { Client } from "@/types";
 
@@ -53,6 +54,8 @@ export async function createClient(input: {
     .single();
 
   if (error) return { id: null, error: error.message };
+  revalidatePath("/clients");
+  revalidatePath("/dashboard");
   return { id: data.id, error: null };
 }
 
@@ -80,6 +83,8 @@ export async function updateClient(
     .eq("id", id);
 
   if (error) return { error: error.message };
+  revalidatePath("/clients");
+  revalidatePath("/dashboard");
   return { error: null };
 }
 
@@ -89,5 +94,7 @@ export async function deleteClient(
   const supabase = await createSupabaseServer();
   const { error } = await supabase.from("clients").delete().eq("id", id);
   if (error) return { error: error.message };
+  revalidatePath("/clients");
+  revalidatePath("/dashboard");
   return { error: null };
 }

@@ -5,7 +5,7 @@ import Link from "next/link";
 import { buttonStyles } from "@/components/ui/form-styles";
 import { deleteProduct } from "@/lib/actions/products";
 import { useRouter } from "next/navigation";
-import { firstImage } from "@/lib/parse-images";
+import { firstImage, isExternalImage } from "@/lib/parse-images";
 import type { Product, ClientProduct } from "@/types";
 
 interface ProductsGridProps {
@@ -57,6 +57,7 @@ export function ProductsGrid({ products, isAdmin }: ProductsGridProps) {
                 alt={product.name}
                 fill
                 className="object-cover"
+                unoptimized={isExternalImage(thumb)}
               />
             ) : (
               <div className="flex h-full w-full items-center justify-center text-muted-foreground">

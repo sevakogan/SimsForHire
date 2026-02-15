@@ -67,18 +67,9 @@ export function ProductForm({ product, isAdmin }: ProductFormProps) {
           descInput.value = result.description;
         }
 
-        // Append scraped images (up to 8 total)
-        if (result.images.length > 0) {
-          setImages((prev) => {
-            const combined = [...prev, ...result.images];
-            const seen = new Set<string>();
-            const unique = combined.filter((img) => {
-              if (seen.has(img)) return false;
-              seen.add(img);
-              return true;
-            });
-            return unique.slice(0, 8);
-          });
+        // Add first scraped image only (user can manually upload more)
+        if (result.images.length > 0 && images.length === 0) {
+          setImages([result.images[0]]);
         }
       })
       .catch(() => {
@@ -99,44 +90,48 @@ export function ProductForm({ product, isAdmin }: ProductFormProps) {
     setLoading(true);
     setError(null);
 
-    const form = new FormData(e.currentTarget);
+    try {
+      const form = new FormData(e.currentTarget);
 
-    const imageUrl =
-      images.length === 0
-        ? undefined
-        : images.length === 1
-          ? images[0]
-          : JSON.stringify(images);
+      const imageUrl =
+        images.length === 0
+          ? undefined
+          : images.length === 1
+            ? images[0]
+            : JSON.stringify(images);
 
-    const input = {
-      model_number: (form.get("model_number") as string) || "",
-      name: (form.get("name") as string) || "",
-      type,
-      description: (form.get("description") as string) || (form.get("name") as string) || "",
-      retail_price: parseFloat(form.get("retail_price") as string) || 0,
-      cost: parseFloat(form.get("cost") as string) || 0,
-      sales_price: parseFloat(form.get("sales_price") as string) || 0,
-      shipping: parseFloat(form.get("shipping") as string) || 0,
-      image_url: imageUrl,
-      notes: (form.get("notes") as string) || undefined,
-      manufacturer_website:
-        (form.get("manufacturer_website") as string) || undefined,
-      seller_merchant:
-        (form.get("seller_merchant") as string) || "",
-    };
+      const input = {
+        model_number: (form.get("model_number") as string) || "",
+        name: (form.get("name") as string) || "",
+        type,
+        description: (form.get("description") as string) || (form.get("name") as string) || "",
+        retail_price: parseFloat(form.get("retail_price") as string) || 0,
+        cost: parseFloat(form.get("cost") as string) || 0,
+        sales_price: parseFloat(form.get("sales_price") as string) || 0,
+        shipping: parseFloat(form.get("shipping") as string) || 0,
+        image_url: imageUrl,
+        notes: (form.get("notes") as string) || undefined,
+        manufacturer_website: urlValue.trim() || undefined,
+        seller_merchant:
+          (form.get("seller_merchant") as string) || "",
+      };
 
-    const result = product
-      ? await updateProduct(product.id, input)
-      : await createProduct(input);
+      const result = product
+        ? await updateProduct(product.id, input)
+        : await createProduct(input);
 
-    if (result.error) {
-      setError(result.error);
+      if (result.error) {
+        setError(result.error);
+        return;
+      }
+
+      router.push("/catalog");
+      router.refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to save");
+    } finally {
       setLoading(false);
-      return;
     }
-
-    router.push("/catalog");
-    router.refresh();
   }
 
   return (
@@ -153,9 +148,23 @@ export function ProductForm({ product, isAdmin }: ProductFormProps) {
         <TypeTagPicker value={type} onChange={setType} />
       </div>
 
-      {/* Row 2: Name | Model # | Description */}
+      {/* Row 2: Model # | Name | Description */}
       <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
-        <div className={`${pillWrapper} col-span-2 sm:min-w-[120px] sm:flex-1`}>
+        <div className={`${pillWrapper} sm:w-28 sm:shrink-0`}>
+          <label htmlFor="model_number" className={pillLabel}>
+            Model #
+          </label>
+          <input
+            id="model_number"
+            name="model_number"
+            type="text"
+            defaultValue={product?.model_number ?? ""}
+            placeholder="Model…"
+            className={pillInput}
+          />
+        </div>
+
+        <div className={`${pillWrapper} sm:w-32 sm:shrink-0`}>
           <label htmlFor="name" className={pillLabel}>
             Name *
           </label>
@@ -170,21 +179,7 @@ export function ProductForm({ product, isAdmin }: ProductFormProps) {
           />
         </div>
 
-        <div className={`${pillWrapper} sm:w-24 sm:shrink-0`}>
-          <label htmlFor="model_number" className={pillLabel}>
-            Model #
-          </label>
-          <input
-            id="model_number"
-            name="model_number"
-            type="text"
-            defaultValue={product?.model_number ?? ""}
-            placeholder="Model…"
-            className={pillInput}
-          />
-        </div>
-
-        <div className={`${pillWrapper} col-span-2 sm:min-w-[120px] sm:flex-1`}>
+        <div className={`${pillWrapper} col-span-2 sm:min-w-[160px] sm:flex-1`}>
           <label htmlFor="description" className={pillLabel}>
             Description
           </label>
@@ -281,7 +276,7 @@ export function ProductForm({ product, isAdmin }: ProductFormProps) {
             <input
               id="manufacturer_website"
               name="manufacturer_website"
-              type="url"
+              type="text"
               value={urlValue}
               onChange={(e) => setUrlValue(e.target.value)}
               placeholder="https://…"

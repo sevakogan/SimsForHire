@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { deleteItem, updateItem, markNoteRead } from "@/lib/actions/items";
 import { useRouter } from "next/navigation";
-import { firstImage } from "@/lib/parse-images";
+import { firstImage, isExternalImage } from "@/lib/parse-images";
 import { TypeFilterPills } from "@/components/products/type-filter-pills";
 import { ViewToggle } from "@/components/ui/view-toggle";
 import type { ViewMode } from "@/components/ui/view-toggle";
@@ -343,6 +343,7 @@ export function ItemsTable({ items, projectId, isAdmin, unreadNoteCount = 0 }: I
                         width={40}
                         height={40}
                         className="h-10 w-10 rounded-lg object-cover"
+                        unoptimized={isExternalImage(thumb)}
                       />
                     ) : (
                       <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted/40 text-muted-foreground/40">
@@ -473,6 +474,7 @@ export function ItemsTable({ items, projectId, isAdmin, unreadNoteCount = 0 }: I
                           width={44}
                           height={44}
                           className="h-11 w-11 rounded-lg object-cover"
+                          unoptimized={isExternalImage(thumb)}
                         />
                       ) : (
                         <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-muted/40 text-muted-foreground/40">
@@ -619,6 +621,7 @@ function ItemsCardGrid({ items, projectId, isAdmin, onDelete, dismissedNoteIds }
                   alt=""
                   fill
                   className="object-cover"
+                  unoptimized={isExternalImage(thumb)}
                 />
               ) : (
                 <div className="flex h-full w-full items-center justify-center text-muted-foreground">

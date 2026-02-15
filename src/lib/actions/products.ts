@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { createSupabaseServer } from "@/lib/supabase-server";
 import type { Product, ClientProduct, ProductSearchResult } from "@/types";
 
@@ -82,6 +83,7 @@ export async function createProduct(input: {
     .single();
 
   if (error) return { id: null, error: error.message };
+  revalidatePath("/catalog");
   return { id: data.id, error: null };
 }
 
@@ -109,6 +111,8 @@ export async function updateProduct(
     .eq("id", id);
 
   if (error) return { error: error.message };
+  revalidatePath("/catalog");
+  revalidatePath(`/catalog/${id}`);
   return { error: null };
 }
 
@@ -119,6 +123,7 @@ export async function deleteProduct(
   const { error } = await supabase.from("products").delete().eq("id", id);
 
   if (error) return { error: error.message };
+  revalidatePath("/catalog");
   return { error: null };
 }
 

@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { createSupabaseServer } from "@/lib/supabase-server";
 import type { Item, ClientItem } from "@/types";
 
@@ -103,6 +104,7 @@ export async function createItem(input: {
     .single();
 
   if (error) return { id: null, error: error.message };
+  revalidatePath(`/projects/${input.project_id}`);
   return { id: data.id, error: null };
 }
 
@@ -114,6 +116,7 @@ export async function updateItem(
   const supabase = await createSupabaseServer();
   const { error } = await supabase.from("items").update(input).eq("id", id);
   if (error) return { error: error.message };
+  revalidatePath("/projects", "layout");
   return { error: null };
 }
 
@@ -123,6 +126,7 @@ export async function deleteItem(
   const supabase = await createSupabaseServer();
   const { error } = await supabase.from("items").delete().eq("id", id);
   if (error) return { error: error.message };
+  revalidatePath("/projects", "layout");
   return { error: null };
 }
 

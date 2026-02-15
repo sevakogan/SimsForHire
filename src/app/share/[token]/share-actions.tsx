@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
+import { isExternalImage } from "@/lib/parse-images";
 import {
   acceptAllItemsByShareToken,
   submitItemDecisions,
@@ -321,6 +322,7 @@ export function ShareActions({
                             width={36}
                             height={36}
                             className="h-9 w-9 rounded-lg object-cover"
+                            unoptimized={isExternalImage(display.thumb)}
                           />
                         </button>
                       ) : (
@@ -463,6 +465,7 @@ export function ShareActions({
                       width={40}
                       height={40}
                       className="h-10 w-10 rounded-lg object-cover"
+                      unoptimized={isExternalImage(display.thumb)}
                     />
                   </button>
                 ) : (
@@ -723,6 +726,7 @@ export function ShareActions({
                 fill
                 className="object-contain"
                 sizes="(max-width: 448px) 100vw, 448px"
+                unoptimized={isExternalImage(lightboxItem.thumb)}
               />
             </div>
 

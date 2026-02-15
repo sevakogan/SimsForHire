@@ -5,7 +5,7 @@ import Link from "next/link";
 import { tableStyles, buttonStyles } from "@/components/ui/form-styles";
 import { deleteProduct } from "@/lib/actions/products";
 import { useRouter } from "next/navigation";
-import { firstImage } from "@/lib/parse-images";
+import { firstImage, isExternalImage } from "@/lib/parse-images";
 import type { Product, ClientProduct } from "@/types";
 
 interface ProductsTableProps {
@@ -79,6 +79,7 @@ export function ProductsTable({ products, isAdmin }: ProductsTableProps) {
                         width={40}
                         height={40}
                         className="rounded object-cover"
+                        unoptimized={isExternalImage(thumb)}
                       />
                     ) : (
                       <div className="flex h-10 w-10 items-center justify-center rounded bg-muted text-xs text-muted-foreground">
@@ -162,6 +163,7 @@ export function ProductsTable({ products, isAdmin }: ProductsTableProps) {
                       width={44}
                       height={44}
                       className="h-11 w-11 rounded-lg object-cover"
+                      unoptimized={isExternalImage(thumb)}
                     />
                   ) : (
                     <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-muted/40 text-muted-foreground/40">

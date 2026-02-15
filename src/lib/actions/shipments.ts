@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { getAdminSupabase } from "@/lib/supabase-admin";
 import { createSupabaseServer } from "@/lib/supabase-server";
 import type { Shipment, ShipmentStatus } from "@/types";
@@ -91,6 +92,7 @@ export async function createShipment(
   });
 
   if (error) return { error: error.message };
+  revalidatePath("/projects", "layout");
   return { error: null };
 }
 
@@ -122,6 +124,7 @@ export async function updateShipment(
     .eq("id", id);
 
   if (error) return { error: error.message };
+  revalidatePath("/projects", "layout");
   return { error: null };
 }
 
@@ -139,5 +142,6 @@ export async function deleteShipment(
     .eq("id", id);
 
   if (error) return { error: error.message };
+  revalidatePath("/projects", "layout");
   return { error: null };
 }

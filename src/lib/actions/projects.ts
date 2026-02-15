@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { createSupabaseServer } from "@/lib/supabase-server";
 import { getAdminSupabase } from "@/lib/supabase-admin";
 import type { Project, ProjectStatus, FulfillmentType, ClientItem, AcceptanceStatus } from "@/types";
@@ -78,6 +79,8 @@ export async function createProject(input: {
     .single();
 
   if (error) return { id: null, error: error.message };
+  revalidatePath("/projects", "layout");
+  revalidatePath("/dashboard");
   return { id: data.id, error: null };
 }
 
@@ -118,6 +121,8 @@ export async function updateProject(
     .eq("id", id);
 
   if (error) return { error: error.message };
+  revalidatePath("/projects", "layout");
+  revalidatePath("/dashboard");
   return { error: null };
 }
 
@@ -127,6 +132,8 @@ export async function deleteProject(
   const supabase = await createSupabaseServer();
   const { error } = await supabase.from("projects").delete().eq("id", id);
   if (error) return { error: error.message };
+  revalidatePath("/projects", "layout");
+  revalidatePath("/dashboard");
   return { error: null };
 }
 
@@ -154,6 +161,7 @@ export async function generateShareToken(
     .eq("id", projectId);
 
   if (error) return { token: null, error: error.message };
+  revalidatePath("/projects", "layout");
   return { token, error: null };
 }
 
@@ -249,6 +257,7 @@ export async function acceptAllItemsByShareToken(
     .eq("project_id", project.id);
 
   if (itemsError) return { error: itemsError.message };
+  revalidatePath("/projects", "layout");
   return { error: null };
 }
 
@@ -285,6 +294,7 @@ export async function submitItemDecisions(
     if (error) return { error: error.message };
   }
 
+  revalidatePath("/projects", "layout");
   return { error: null };
 }
 
@@ -319,6 +329,7 @@ export async function saveClientNote(
     .eq("project_id", project.id);
 
   if (error) return { error: error.message };
+  revalidatePath("/projects", "layout");
   return { error: null };
 }
 
@@ -352,5 +363,6 @@ export async function deleteItemByShareToken(
     .eq("project_id", project.id);
 
   if (error) return { error: error.message };
+  revalidatePath("/projects", "layout");
   return { error: null };
 }

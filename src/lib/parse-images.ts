@@ -23,3 +23,13 @@ export function firstImage(imageUrl: string | null | undefined): string | null {
   const images = parseImages(imageUrl);
   return images.length > 0 ? images[0] : null;
 }
+
+/**
+ * Check if a URL is an external image (not hosted on our Supabase storage).
+ * External images should use `unoptimized` with Next.js Image to avoid
+ * the optimization proxy being blocked by external servers.
+ */
+export function isExternalImage(url: string | null | undefined): boolean {
+  if (!url) return false;
+  return !url.includes("supabase.co/");
+}

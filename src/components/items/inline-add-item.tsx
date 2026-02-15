@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/pill-styles";
 import { MultiImageUpload } from "@/components/items/multi-image-upload";
 import { TypeTagPicker } from "@/components/products/type-tag-picker";
-import { firstImage } from "@/lib/parse-images";
+import { firstImage, isExternalImage } from "@/lib/parse-images";
 import type { ProductSearchResult } from "@/types";
 
 interface InlineAddItemProps {
@@ -349,6 +349,7 @@ export function InlineAddItem({ projectId, isAdmin }: InlineAddItemProps) {
                     width={32}
                     height={32}
                     className="h-8 w-8 rounded-lg object-cover shrink-0"
+                    unoptimized={isExternalImage(thumb)}
                   />
                 ) : (
                   <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-muted/40 text-muted-foreground/40">

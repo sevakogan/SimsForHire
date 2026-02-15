@@ -4,6 +4,7 @@ import { useState, useRef } from "react";
 import Image from "next/image";
 import imageCompression from "browser-image-compression";
 import { uploadImage } from "@/lib/actions/upload";
+import { isExternalImage } from "@/lib/parse-images";
 
 interface MultiImageUploadProps {
   images: string[];
@@ -87,6 +88,7 @@ export function MultiImageUpload({
               width={72}
               height={72}
               className="h-[72px] w-[72px] rounded-lg border border-border object-cover"
+              unoptimized={isExternalImage(url)}
             />
             <button
               type="button"

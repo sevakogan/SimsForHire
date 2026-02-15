@@ -185,8 +185,7 @@ export function ItemForm({ projectId, itemNumber, item, isAdmin }: ItemFormProps
         return;
       }
 
-      router.push(`/projects/${projectId}`);
-      router.refresh();
+      router.back();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to save");
     } finally {
@@ -441,7 +440,7 @@ export function ItemForm({ projectId, itemNumber, item, isAdmin }: ItemFormProps
           disabled={loading}
           className={`${buttonStyles.small} bg-primary text-white shadow-sm hover:bg-primary-hover disabled:opacity-50`}
         >
-          {loading ? "Saving…" : item ? "Update Item" : "Add Item"}
+          {loading ? "Saving…" : item ? "Done" : "Add Item"}
         </button>
       </div>
     </form>

@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { searchProducts } from "@/lib/actions/products";
 import type { ProductSearchResult } from "@/types";
 import Image from "next/image";
+import { isExternalImage } from "@/lib/parse-images";
 import { pillWrapper, pillLabel, pillInput } from "@/components/ui/pill-styles";
 
 interface ProductSearchProps {
@@ -103,6 +104,7 @@ export function ProductSearch({
             width={32}
             height={32}
             className="rounded object-cover"
+            unoptimized={isExternalImage(selectedProduct.image_url)}
           />
         )}
         <div className="flex-1 min-w-0">
@@ -164,6 +166,7 @@ export function ProductSearch({
                   width={36}
                   height={36}
                   className="rounded object-cover shrink-0"
+                  unoptimized={isExternalImage(product.image_url)}
                 />
               ) : (
                 <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded bg-muted text-xs text-muted-foreground">
