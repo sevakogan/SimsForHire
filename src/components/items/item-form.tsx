@@ -61,6 +61,7 @@ export function ItemForm({ projectId, itemNumber, item, isAdmin }: ItemFormProps
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [scraping, setScraping] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [imageUrl, setImageUrl] = useState<string | null>(item?.image_url ?? null);
   const [fields, setFields] = useState<FormFields>(() => buildInitialFields(item));
@@ -120,9 +121,9 @@ export function ItemForm({ projectId, itemNumber, item, isAdmin }: ItemFormProps
             : prev.description,
         }));
 
-        // Set image if empty
-        if (result.images.length > 0 && !imageUrl) {
-          setImageUrl(result.images[0]);
+        // Set image if empty — use functional check to avoid stale closure
+        if (result.images.length > 0) {
+          setImageUrl((prev) => prev ? prev : result.images[0]);
         }
       })
       .catch(() => {
@@ -424,6 +425,7 @@ export function ItemForm({ projectId, itemNumber, item, isAdmin }: ItemFormProps
           currentUrl={imageUrl}
           onUpload={(url) => setImageUrl(url)}
           onRemove={() => setImageUrl(null)}
+          onUploadingChange={setUploading}
         />
       </div>
 
@@ -438,10 +440,10 @@ export function ItemForm({ projectId, itemNumber, item, isAdmin }: ItemFormProps
         </button>
         <button
           type="submit"
-          disabled={loading}
+          disabled={loading || uploading}
           className={`${buttonStyles.small} bg-primary text-white shadow-sm hover:bg-primary-hover disabled:opacity-50`}
         >
-          {loading ? "Saving…" : item ? "Done" : "Add Item"}
+          {loading ? "Saving…" : uploading ? "Uploading…" : item ? "Done" : "Add Item"}
         </button>
       </div>
     </form>

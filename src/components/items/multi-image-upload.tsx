@@ -10,12 +10,14 @@ interface MultiImageUploadProps {
   images: string[];
   onChange: (images: string[]) => void;
   max?: number;
+  onUploadingChange?: (uploading: boolean) => void;
 }
 
 export function MultiImageUpload({
   images,
   onChange,
   max = 8,
+  onUploadingChange,
 }: MultiImageUploadProps) {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -30,6 +32,7 @@ export function MultiImageUpload({
 
     const toUpload = Array.from(files).slice(0, remaining);
     setUploading(true);
+    onUploadingChange?.(true);
     setError(null);
 
     try {
@@ -66,6 +69,7 @@ export function MultiImageUpload({
       setError(err instanceof Error ? err.message : "Upload failed");
     } finally {
       setUploading(false);
+      onUploadingChange?.(false);
       if (inputRef.current) inputRef.current.value = "";
     }
   }

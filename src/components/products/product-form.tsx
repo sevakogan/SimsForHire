@@ -27,6 +27,7 @@ export function ProductForm({ product, isAdmin }: ProductFormProps) {
   const formRef = useRef<HTMLFormElement>(null);
   const [loading, setLoading] = useState(false);
   const [scraping, setScraping] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [images, setImages] = useState<string[]>(
     parseImages(product?.image_url)
@@ -68,8 +69,8 @@ export function ProductForm({ product, isAdmin }: ProductFormProps) {
         }
 
         // Add first scraped image only (user can manually upload more)
-        if (result.images.length > 0 && images.length === 0) {
-          setImages([result.images[0]]);
+        if (result.images.length > 0) {
+          setImages((prev) => prev.length === 0 ? [result.images[0]] : prev);
         }
       })
       .catch(() => {
@@ -115,8 +116,6 @@ export function ProductForm({ product, isAdmin }: ProductFormProps) {
         seller_merchant:
           (form.get("seller_merchant") as string) || "",
       };
-
-      console.log("[ProductForm] submit", { images, imageUrl, productId: product?.id });
 
       const result = product
         ? await updateProduct(product.id, input)
@@ -299,7 +298,7 @@ export function ProductForm({ product, isAdmin }: ProductFormProps) {
                     <button
                       type="button"
                       onClick={handleUrlApprove}
-                      disabled={loading}
+                      disabled={loading || uploading}
                       className="shrink-0 rounded-full p-1 text-gray-400 transition-colors hover:bg-green-50 hover:text-green-600 disabled:opacity-50"
                       title="Fetch product info from URL"
                     >
@@ -347,7 +346,7 @@ export function ProductForm({ product, isAdmin }: ProductFormProps) {
       {/* Row 4: Image upload (up to 8) */}
       <div>
         <p className={`${pillLabel} mb-1.5`}>Images (up to 8)</p>
-        <MultiImageUpload images={images} onChange={setImages} max={8} />
+        <MultiImageUpload images={images} onChange={setImages} max={8} onUploadingChange={setUploading} />
       </div>
 
       {/* Actions — right-aligned, small buttons */}
@@ -361,10 +360,10 @@ export function ProductForm({ product, isAdmin }: ProductFormProps) {
         </button>
         <button
           type="submit"
-          disabled={loading}
+          disabled={loading || uploading}
           className={`${buttonStyles.small} bg-primary text-white shadow-sm hover:bg-primary-hover disabled:opacity-50`}
         >
-          {loading ? "Saving…" : product ? "Update Product" : "Add Product"}
+          {loading ? "Saving…" : uploading ? "Uploading…" : product ? "Update Product" : "Add Product"}
         </button>
       </div>
     </form>

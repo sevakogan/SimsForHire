@@ -10,9 +10,10 @@ interface ImageUploadProps {
   currentUrl?: string | null;
   onUpload: (url: string) => void;
   onRemove: () => void;
+  onUploadingChange?: (uploading: boolean) => void;
 }
 
-export function ImageUpload({ currentUrl, onUpload, onRemove }: ImageUploadProps) {
+export function ImageUpload({ currentUrl, onUpload, onRemove, onUploadingChange }: ImageUploadProps) {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [preview, setPreview] = useState<string | null>(currentUrl ?? null);
@@ -28,6 +29,7 @@ export function ImageUpload({ currentUrl, onUpload, onRemove }: ImageUploadProps
     }
 
     setUploading(true);
+    onUploadingChange?.(true);
     setError(null);
 
     try {
@@ -55,6 +57,7 @@ export function ImageUpload({ currentUrl, onUpload, onRemove }: ImageUploadProps
       setError(err instanceof Error ? err.message : "Upload failed");
     } finally {
       setUploading(false);
+      onUploadingChange?.(false);
     }
   }
 
