@@ -77,6 +77,7 @@ export async function createItem(input: {
   notes?: string;
   model_number?: string;
   seller_merchant?: string;
+  product_id?: string | null;
 }): Promise<{ id: string | null; error: string | null }> {
   const supabase = await createSupabaseServer();
 
@@ -99,6 +100,7 @@ export async function createItem(input: {
       notes: input.notes ?? "",
       model_number: input.model_number ?? "",
       seller_merchant: input.seller_merchant ?? "",
+      product_id: input.product_id ?? null,
     })
     .select("id")
     .single();

@@ -121,6 +121,17 @@ export async function updateProduct(
   if (error) {
     return { error: error.message };
   }
+
+  // Sync image_url to all linked items when product image changes
+  if ("image_url" in cleanInput) {
+    const imageValue = (cleanInput.image_url as string) ?? null;
+    await supabase
+      .from("items")
+      .update({ image_url: imageValue })
+      .eq("product_id", id);
+    revalidatePath("/projects", "layout");
+  }
+
   revalidatePath("/catalog");
   revalidatePath(`/catalog/${id}`);
   return { error: null };

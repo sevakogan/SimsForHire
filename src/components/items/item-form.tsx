@@ -167,6 +167,7 @@ export function ItemForm({ projectId, itemNumber, item, isAdmin }: ItemFormProps
         image_url: imageUrl ?? null,
         notes: fields.notes || "",
         seller_merchant: fields.seller_merchant || "",
+        product_id: productId,
       };
 
       const currentItemNumber = item?.item_number ?? itemNumber;

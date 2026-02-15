@@ -172,6 +172,7 @@ export function InlineAddItem({ projectId, isAdmin }: InlineAddItemProps) {
         my_shipping: 0,
         price_sold_for: product.sales_price,
         image_url: product.image_url ?? undefined,
+        product_id: product.id,
       });
       if (result.error) {
         setError(result.error);
@@ -243,6 +244,7 @@ export function InlineAddItem({ projectId, isAdmin }: InlineAddItemProps) {
         my_shipping: 0,
         price_sold_for: parseFloat(productFields.sales_price) || 0,
         image_url: productFields.images[0] ?? undefined,
+        product_id: productResult.id,
       });
       if (itemResult.error) {
         setError(itemResult.error);
@@ -542,7 +544,7 @@ export function InlineAddItem({ projectId, isAdmin }: InlineAddItemProps) {
                 <label htmlFor="new_website" className={pillLabel}>URL</label>
                 <input
                   id="new_website"
-                  type="url"
+                  type="text"
                   value={productFields.manufacturer_website}
                   onChange={(e) => updateProductField("manufacturer_website", e.target.value)}
                   placeholder="https://…"
