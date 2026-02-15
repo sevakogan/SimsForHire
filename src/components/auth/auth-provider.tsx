@@ -24,19 +24,30 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
+interface AuthProviderProps {
+  children: React.ReactNode;
+  serverProfile?: Profile | null;
+}
+
+export function AuthProvider({ children, serverProfile }: AuthProviderProps) {
   const [user, setUser] = useState<User | null>(null);
-  const [profile, setProfile] = useState<Profile | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(serverProfile ?? null);
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   const fetchProfile = useCallback(async (userId: string) => {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("profiles")
       .select("*")
       .eq("id", userId)
       .single();
-    if (data) setProfile(data as Profile);
+
+    if (error) {
+      console.error("[AuthProvider] fetchProfile error:", error.message, "userId:", userId);
+    }
+    if (data) {
+      setProfile(data as Profile);
+    }
   }, []);
 
   const refreshProfile = useCallback(async () => {
