@@ -3,12 +3,14 @@ import Link from "next/link";
 import { getProjectById } from "@/lib/actions/projects";
 import { getItems, getItemsForClient, getUnreadNoteCount } from "@/lib/actions/items";
 import { getClientById } from "@/lib/actions/clients";
+import { getShipmentsByProjectId } from "@/lib/actions/shipments";
 import { createSupabaseServer } from "@/lib/supabase-server";
 import { Badge } from "@/components/ui/badge";
 import { buttonStyles, cardStyles } from "@/components/ui/form-styles";
 import { ItemsTable } from "@/components/items/items-table";
 import { InlineAddItem } from "@/components/items/inline-add-item";
 import { ProjectActions } from "./project-actions";
+import { ShipmentsSection } from "./shipments-section";
 import type { Profile, Item } from "@/types";
 import { isAdminRole } from "@/types";
 
@@ -48,9 +50,10 @@ export default async function ProjectDetailPage({ params }: Props) {
   if (!project) notFound();
 
   const client = await getClientById(project.client_id);
-  const [items, noteCount] = await Promise.all([
+  const [items, noteCount, shipments] = await Promise.all([
     admin ? getItems(id) : getItemsForClient(id),
     admin ? getUnreadNoteCount(id) : Promise.resolve(0),
+    admin ? getShipmentsByProjectId(id) : Promise.resolve([]),
   ]);
 
   const totalRetail = items.reduce(
@@ -217,6 +220,11 @@ export default async function ProjectDetailPage({ params }: Props) {
             )}
           </div>
         </div>
+      )}
+
+      {/* Shipments */}
+      {admin && (
+        <ShipmentsSection projectId={id} shipments={shipments} />
       )}
     </div>
   );

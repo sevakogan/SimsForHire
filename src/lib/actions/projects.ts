@@ -163,7 +163,10 @@ export async function generateShareToken(
  */
 export async function getProjectByShareToken(
   token: string
-): Promise<{ project: Project | null; client: { name: string } | null }> {
+): Promise<{
+  project: Project | null;
+  client: { name: string; email: string | null; phone: string | null } | null;
+}> {
   if (!token) return { project: null, client: null };
 
   const supabase = getAdminSupabase();
@@ -181,13 +184,15 @@ export async function getProjectByShareToken(
 
   const { data: client } = await supabase
     .from("clients")
-    .select("name")
+    .select("name, email, phone")
     .eq("id", project.client_id)
     .single();
 
   return {
     project: project as Project,
-    client: client ? { name: client.name } : null,
+    client: client
+      ? { name: client.name, email: client.email ?? null, phone: client.phone ?? null }
+      : null,
   };
 }
 

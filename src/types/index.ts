@@ -110,3 +110,30 @@ export interface ProductSearchResult {
 export function isAdminRole(role: UserRole): boolean {
   return role === "admin" || role === "collaborator";
 }
+
+// Shipments
+export type ShipmentStatus = "label_created" | "in_transit" | "out_for_delivery" | "delivered";
+
+export interface Shipment {
+  id: string;
+  project_id: string;
+  carrier_name: string;
+  tracking_url: string;
+  tracking_number: string;
+  status: ShipmentStatus;
+  notes: string;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+// Contact Messages
+export interface ContactMessage {
+  id: string;
+  project_id: string;
+  sender_name: string;
+  sender_email: string;
+  message: string;
+  read_at: string | null;
+  created_at: string;
+}

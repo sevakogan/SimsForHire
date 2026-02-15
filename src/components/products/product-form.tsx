@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { createProduct, updateProduct } from "@/lib/actions/products";
+import { scrapeProductUrl } from "@/lib/actions/scrape";
 import { buttonStyles } from "@/components/ui/form-styles";
 import {
   pillLabel,
@@ -23,12 +24,71 @@ interface ProductFormProps {
 
 export function ProductForm({ product, isAdmin }: ProductFormProps) {
   const router = useRouter();
+  const formRef = useRef<HTMLFormElement>(null);
   const [loading, setLoading] = useState(false);
+  const [scraping, setScraping] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [images, setImages] = useState<string[]>(
     parseImages(product?.image_url)
   );
   const [type, setType] = useState(product?.type ?? "");
+
+  async function handleScrape() {
+    const form = formRef.current;
+    if (!form) return;
+
+    const urlInput = form.elements.namedItem("manufacturer_website") as HTMLInputElement;
+    const url = urlInput?.value?.trim();
+
+    if (!url) {
+      setError("Enter a URL first, then click Fetch.");
+      return;
+    }
+
+    setScraping(true);
+    setError(null);
+
+    try {
+      const result = await scrapeProductUrl(url);
+
+      if (result.error) {
+        setError(result.error);
+        setScraping(false);
+        return;
+      }
+
+      // Only fill empty fields — don't overwrite user-entered data
+      const nameInput = form.elements.namedItem("name") as HTMLInputElement;
+      const descInput = form.elements.namedItem("description") as HTMLInputElement;
+
+      if (result.title && !nameInput.value.trim()) {
+        nameInput.value = result.title;
+      }
+
+      if (result.description && !descInput.value.trim()) {
+        descInput.value = result.description;
+      }
+
+      // Append scraped images (up to 8 total)
+      if (result.images.length > 0) {
+        setImages((prev) => {
+          const combined = [...prev, ...result.images];
+          // Deduplicate
+          const seen = new Set<string>();
+          const unique = combined.filter((img) => {
+            if (seen.has(img)) return false;
+            seen.add(img);
+            return true;
+          });
+          return unique.slice(0, 8);
+        });
+      }
+    } catch {
+      setError("Failed to fetch product info.");
+    } finally {
+      setScraping(false);
+    }
+  }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -76,7 +136,7 @@ export function ProductForm({ product, isAdmin }: ProductFormProps) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-3">
+    <form ref={formRef} onSubmit={handleSubmit} className="space-y-3">
       {error && (
         <div className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">
           {error}
@@ -135,7 +195,7 @@ export function ProductForm({ product, isAdmin }: ProductFormProps) {
         </div>
       </div>
 
-      {/* Row 3: Seller/Merchant | Retail | Wholesale | Sale Price | S/H | URL */}
+      {/* Row 3: Seller/Merchant | Retail | Wholesale | Sale Price | S/H | URL + Fetch */}
       <div className="grid grid-cols-3 gap-2 sm:flex sm:flex-wrap">
         <div className={`${pillWrapper} col-span-3 sm:w-32 sm:shrink-0`}>
           <label htmlFor="seller_merchant" className={pillLabel}>
@@ -209,18 +269,36 @@ export function ProductForm({ product, isAdmin }: ProductFormProps) {
           />
         </div>
 
-        <div className={`${pillWrapper} col-span-2 sm:w-32 sm:shrink-0`}>
+        <div className={`${pillWrapper} col-span-2 sm:min-w-[140px] sm:flex-1`}>
           <label htmlFor="manufacturer_website" className={pillLabel}>
             URL
           </label>
-          <input
-            id="manufacturer_website"
-            name="manufacturer_website"
-            type="url"
-            defaultValue={product?.manufacturer_website ?? ""}
-            placeholder="https://…"
-            className={pillInput}
-          />
+          <div className="flex items-center gap-1">
+            <input
+              id="manufacturer_website"
+              name="manufacturer_website"
+              type="url"
+              defaultValue={product?.manufacturer_website ?? ""}
+              placeholder="https://…"
+              className={`${pillInput} flex-1`}
+            />
+            <button
+              type="button"
+              onClick={handleScrape}
+              disabled={scraping || loading}
+              className="shrink-0 rounded-md bg-primary/10 px-2 py-1 text-[10px] font-medium text-primary transition-colors hover:bg-primary/20 disabled:opacity-50"
+              title="Fetch product info from URL"
+            >
+              {scraping ? (
+                <svg className="h-3.5 w-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                </svg>
+              ) : (
+                "Fetch"
+              )}
+            </button>
+          </div>
         </div>
       </div>
 

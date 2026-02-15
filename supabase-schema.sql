@@ -293,6 +293,57 @@ CREATE POLICY "Client users can view products"
   USING (auth_role() = 'client' AND auth_status() = 'approved');
 
 -- ============================================================
+-- SHIPMENTS
+-- ============================================================
+
+CREATE TABLE shipments (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  project_id UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+  carrier_name TEXT NOT NULL DEFAULT '',
+  tracking_url TEXT NOT NULL DEFAULT '',
+  tracking_number TEXT NOT NULL DEFAULT '',
+  status TEXT NOT NULL DEFAULT 'in_transit'
+    CHECK (status IN ('label_created', 'in_transit', 'out_for_delivery', 'delivered')),
+  notes TEXT DEFAULT '',
+  created_by UUID REFERENCES profiles(id),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX idx_shipments_project_id ON shipments (project_id);
+
+CREATE TRIGGER set_shipments_updated_at
+  BEFORE UPDATE ON shipments FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+
+ALTER TABLE shipments ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Admins and collaborators can manage all shipments"
+  ON shipments FOR ALL
+  USING (auth_role() IN ('admin', 'collaborator'));
+
+-- ============================================================
+-- CONTACT MESSAGES
+-- ============================================================
+
+CREATE TABLE contact_messages (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  project_id UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+  sender_name TEXT NOT NULL DEFAULT '',
+  sender_email TEXT NOT NULL DEFAULT '',
+  message TEXT NOT NULL DEFAULT '',
+  read_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX idx_contact_messages_project_id ON contact_messages (project_id);
+
+ALTER TABLE contact_messages ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Admins and collaborators can manage all contact messages"
+  ON contact_messages FOR ALL
+  USING (auth_role() IN ('admin', 'collaborator'));
+
+-- ============================================================
 -- AFTER FIRST GOOGLE SIGN-IN, promote yourself to admin:
 -- UPDATE profiles SET role = 'admin', status = 'approved' WHERE email = 'YOUR_EMAIL@gmail.com';
 -- ============================================================
