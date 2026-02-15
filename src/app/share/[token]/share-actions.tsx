@@ -94,6 +94,9 @@ export function ShareActions({
   const [deleteItemId, setDeleteItemId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
 
+  // Image lightbox state
+  const [lightboxItem, setLightboxItem] = useState<ItemDisplayData | null>(null);
+
   const isEditable =
     currentStatus !== "accepted" && currentStatus !== "completed";
 
@@ -307,13 +310,19 @@ export function ShareActions({
                   <td className="px-3 py-2.5 overflow-hidden">
                     <div className="flex items-center gap-2.5">
                       {display.thumb ? (
-                        <Image
-                          src={display.thumb}
-                          alt=""
-                          width={36}
-                          height={36}
-                          className="h-9 w-9 rounded-lg object-cover shrink-0"
-                        />
+                        <button
+                          type="button"
+                          onClick={() => setLightboxItem(display)}
+                          className="shrink-0 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 cursor-pointer"
+                        >
+                          <Image
+                            src={display.thumb}
+                            alt=""
+                            width={36}
+                            height={36}
+                            className="h-9 w-9 rounded-lg object-cover"
+                          />
+                        </button>
                       ) : (
                         <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gray-100 text-gray-400">
                           <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
@@ -443,13 +452,19 @@ export function ShareActions({
                   {index + 1}.
                 </span>
                 {display.thumb ? (
-                  <Image
-                    src={display.thumb}
-                    alt=""
-                    width={40}
-                    height={40}
-                    className="h-10 w-10 rounded-lg object-cover shrink-0"
-                  />
+                  <button
+                    type="button"
+                    onClick={() => setLightboxItem(display)}
+                    className="shrink-0 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 cursor-pointer"
+                  >
+                    <Image
+                      src={display.thumb}
+                      alt=""
+                      width={40}
+                      height={40}
+                      className="h-10 w-10 rounded-lg object-cover"
+                    />
+                  </button>
                 ) : (
                   <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-gray-100 text-gray-400">
                     <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
@@ -674,6 +689,56 @@ export function ShareActions({
               >
                 {deleting ? "Removing..." : "Remove Item"}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Image lightbox overlay */}
+      {lightboxItem && lightboxItem.thumb && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4"
+          onClick={() => setLightboxItem(null)}
+        >
+          <div
+            className="relative w-full max-w-md rounded-2xl bg-white shadow-2xl overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Close button */}
+            <button
+              type="button"
+              onClick={() => setLightboxItem(null)}
+              className="absolute right-3 top-3 z-10 rounded-full bg-black/40 p-1.5 text-white/90 backdrop-blur-sm transition-colors hover:bg-black/60"
+            >
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+              </svg>
+            </button>
+
+            {/* Large image */}
+            <div className="relative aspect-square w-full bg-gray-100">
+              <Image
+                src={lightboxItem.thumb}
+                alt={lightboxItem.name}
+                fill
+                className="object-contain"
+                sizes="(max-width: 448px) 100vw, 448px"
+              />
+            </div>
+
+            {/* Item details */}
+            <div className="px-5 py-4">
+              <h3 className="text-base font-semibold text-gray-900">
+                {lightboxItem.name}
+              </h3>
+              {lightboxItem.itemType && (
+                <p className="mt-0.5 text-xs font-medium text-primary">
+                  {lightboxItem.itemType}
+                </p>
+              )}
+              <p className="mt-2 text-lg font-bold text-gray-900 tabular-nums">
+                {formatCurrency(lightboxItem.price)}
+              </p>
             </div>
           </div>
         </div>
