@@ -27,6 +27,8 @@ interface ShareActionsProps {
   itemDisplayData: ItemDisplayData[];
   shareToken: string;
   projectStatus: string;
+  taxPercent: number;
+  discountPercent: number;
 }
 
 const STATUS_STYLES: Record<string, string> = {
@@ -62,6 +64,8 @@ export function ShareActions({
   itemDisplayData: initialDisplayData,
   shareToken,
   projectStatus,
+  taxPercent,
+  discountPercent,
 }: ShareActionsProps) {
   const [currentStatus, setCurrentStatus] = useState(projectStatus);
   const [visibleItems, setVisibleItems] = useState(initialItems);
@@ -221,7 +225,15 @@ export function ShareActions({
   // Totals from visible items
   const totalSelling = visibleDisplayData.reduce((sum, d) => sum + d.price * d.qty, 0);
   const totalShipping = visibleDisplayData.reduce((sum, d) => sum + d.shipping * d.qty, 0);
-  const grandTotal = totalSelling + totalShipping;
+  const subtotalBeforeDiscount = totalSelling + totalShipping;
+  const discountAmount = discountPercent > 0
+    ? subtotalBeforeDiscount * (discountPercent / 100)
+    : 0;
+  const subtotalAfterDiscount = subtotalBeforeDiscount - discountAmount;
+  const taxAmount = taxPercent > 0
+    ? subtotalAfterDiscount * (taxPercent / 100)
+    : 0;
+  const grandTotal = subtotalAfterDiscount + taxAmount;
 
   // Displayed status
   const displayStatus = submitted && allAccepted ? "accepted" : currentStatus;
@@ -572,18 +584,47 @@ export function ShareActions({
 
       {/* Summary */}
       <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+        {/* Subtotal */}
         <div className="flex items-center justify-between border-b border-gray-100 pb-3">
           <span className="text-sm text-gray-500">Subtotal</span>
           <span className="text-sm tabular-nums text-gray-900">
             {formatCurrency(totalSelling)}
           </span>
         </div>
+
+        {/* Shipping */}
         <div className="flex items-center justify-between border-b border-gray-100 py-3">
           <span className="text-sm text-gray-500">Shipping &amp; Handling</span>
           <span className="text-sm tabular-nums text-gray-900">
             {formatCurrency(totalShipping)}
           </span>
         </div>
+
+        {/* Discount — only shown when > 0 */}
+        {discountPercent > 0 && (
+          <div className="flex items-center justify-between border-b border-gray-100 py-3">
+            <span className="text-sm text-gray-500">
+              Discount ({discountPercent}%)
+            </span>
+            <span className="text-sm tabular-nums text-green-600">
+              −{formatCurrency(discountAmount)}
+            </span>
+          </div>
+        )}
+
+        {/* Tax — only shown when > 0 */}
+        {taxPercent > 0 && (
+          <div className="flex items-center justify-between border-b border-gray-100 py-3">
+            <span className="text-sm text-gray-500">
+              Tax ({taxPercent}%)
+            </span>
+            <span className="text-sm tabular-nums text-gray-900">
+              {formatCurrency(taxAmount)}
+            </span>
+          </div>
+        )}
+
+        {/* Grand Total */}
         <div className="flex items-center justify-between pt-3">
           <span className="text-base font-semibold text-gray-900">Total</span>
           <span className="text-lg font-bold tabular-nums text-gray-900">

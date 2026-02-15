@@ -146,6 +146,8 @@ export default async function ProjectDetailPage({ params }: Props) {
           dateRequired={project.date_required}
           fulfillmentType={project.fulfillment_type}
           notes={project.notes ?? ""}
+          taxPercent={Number(project.tax_percent) || 0}
+          discountPercent={Number(project.discount_percent) || 0}
         />
       )}
 
@@ -194,45 +196,75 @@ export default async function ProjectDetailPage({ params }: Props) {
       {admin && <InlineAddItem projectId={id} isAdmin={admin} />}
 
       {/* Summary */}
-      {items.length > 0 && (
-        <div className={`${cardStyles.base} !p-4 sm:!p-6`}>
-          <h3 className="mb-3 text-xs sm:text-sm font-semibold uppercase text-muted-foreground">
-            Summary
-          </h3>
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
-            <div>
-              <p className="text-[10px] sm:text-xs text-muted-foreground">Total Retail</p>
-              <p className="text-base sm:text-lg font-bold text-foreground">
-                {formatCurrency(totalRetail)}
-              </p>
-            </div>
-            <div>
-              <p className="text-[10px] sm:text-xs text-muted-foreground">Total Shipping</p>
-              <p className="text-base sm:text-lg font-bold text-foreground">
-                {formatCurrency(totalRetailShipping)}
-              </p>
-            </div>
-            {admin && (
-              <>
+      {items.length > 0 && (() => {
+        const retailSubtotal = totalRetail + totalRetailShipping;
+        const projDiscount = Number(project.discount_percent) || 0;
+        const projTax = Number(project.tax_percent) || 0;
+        const discountAmt = projDiscount > 0 ? retailSubtotal * (projDiscount / 100) : 0;
+        const afterDiscount = retailSubtotal - discountAmt;
+        const taxAmt = projTax > 0 ? afterDiscount * (projTax / 100) : 0;
+        const clientTotal = afterDiscount + taxAmt;
+
+        return (
+          <div className={`${cardStyles.base} !p-4 sm:!p-6`}>
+            <h3 className="mb-3 text-xs sm:text-sm font-semibold uppercase text-muted-foreground">
+              Summary
+            </h3>
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
+              <div>
+                <p className="text-[10px] sm:text-xs text-muted-foreground">Total Retail</p>
+                <p className="text-base sm:text-lg font-bold text-foreground">
+                  {formatCurrency(totalRetail)}
+                </p>
+              </div>
+              <div>
+                <p className="text-[10px] sm:text-xs text-muted-foreground">Total Shipping</p>
+                <p className="text-base sm:text-lg font-bold text-foreground">
+                  {formatCurrency(totalRetailShipping)}
+                </p>
+              </div>
+              {projDiscount > 0 && (
                 <div>
-                  <p className="text-[10px] sm:text-xs text-muted-foreground">Total My Cost</p>
+                  <p className="text-[10px] sm:text-xs text-muted-foreground">Discount ({projDiscount}%)</p>
+                  <p className="text-base sm:text-lg font-bold text-green-600">
+                    −{formatCurrency(discountAmt)}
+                  </p>
+                </div>
+              )}
+              {projTax > 0 && (
+                <div>
+                  <p className="text-[10px] sm:text-xs text-muted-foreground">Tax ({projTax}%)</p>
                   <p className="text-base sm:text-lg font-bold text-foreground">
-                    {formatCurrency(totalMyCost + totalMyShipping)}
+                    {formatCurrency(taxAmt)}
                   </p>
                 </div>
-                <div>
-                  <p className="text-[10px] sm:text-xs text-muted-foreground">Est. Profit</p>
-                  <p className="text-base sm:text-lg font-bold text-success">
-                    {formatCurrency(
-                      totalRetail + totalRetailShipping - totalMyCost - totalMyShipping
-                    )}
-                  </p>
-                </div>
-              </>
-            )}
+              )}
+              <div>
+                <p className="text-[10px] sm:text-xs text-muted-foreground">Client Total</p>
+                <p className="text-base sm:text-lg font-bold text-foreground">
+                  {formatCurrency(clientTotal)}
+                </p>
+              </div>
+              {admin && (
+                <>
+                  <div>
+                    <p className="text-[10px] sm:text-xs text-muted-foreground">Total My Cost</p>
+                    <p className="text-base sm:text-lg font-bold text-foreground">
+                      {formatCurrency(totalMyCost + totalMyShipping)}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] sm:text-xs text-muted-foreground">Est. Profit</p>
+                    <p className="text-base sm:text-lg font-bold text-success">
+                      {formatCurrency(clientTotal - totalMyCost - totalMyShipping)}
+                    </p>
+                  </div>
+                </>
+              )}
+            </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* Shipments */}
       {admin && (

@@ -49,7 +49,13 @@ export default async function SharedInvoicePage({ params }: Props) {
   });
 
   const totalItems = items.length;
-  const grandTotal = itemDisplayData.reduce((sum, i) => sum + i.total, 0);
+  const itemsSubtotal = itemDisplayData.reduce((sum, i) => sum + i.total, 0);
+  const discPct = Number(project.discount_percent) || 0;
+  const taxPct = Number(project.tax_percent) || 0;
+  const discountAmt = discPct > 0 ? itemsSubtotal * (discPct / 100) : 0;
+  const afterDiscount = itemsSubtotal - discountAmt;
+  const taxAmt = taxPct > 0 ? afterDiscount * (taxPct / 100) : 0;
+  const grandTotal = afterDiscount + taxAmt;
   const projectNotes = (project.notes ?? "").trim();
 
   return (
@@ -194,6 +200,8 @@ export default async function SharedInvoicePage({ params }: Props) {
           itemDisplayData={itemDisplayData}
           shareToken={token}
           projectStatus={project.status}
+          taxPercent={Number(project.tax_percent) || 0}
+          discountPercent={Number(project.discount_percent) || 0}
         />
       )}
 

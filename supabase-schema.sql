@@ -72,6 +72,8 @@ CREATE TABLE projects (
   date_required DATE,
   fulfillment_type TEXT NOT NULL DEFAULT 'delivery' CHECK (fulfillment_type IN ('pickup', 'delivery')),
   notes TEXT NOT NULL DEFAULT '',
+  tax_percent NUMERIC(6, 3) NOT NULL DEFAULT 0,
+  discount_percent NUMERIC(6, 3) NOT NULL DEFAULT 0,
   share_token UUID UNIQUE,
   created_by UUID REFERENCES profiles(id),
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),

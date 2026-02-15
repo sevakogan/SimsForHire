@@ -109,6 +109,8 @@ export async function updateProject(
     date_required?: string | null;
     fulfillment_type?: FulfillmentType;
     notes?: string;
+    tax_percent?: number;
+    discount_percent?: number;
   }
 ): Promise<{ error: string | null }> {
   const supabase = await createSupabaseServer();

@@ -39,6 +39,8 @@ export interface Project {
   date_required: string | null;
   fulfillment_type: FulfillmentType;
   notes: string;
+  tax_percent: number;
+  discount_percent: number;
   share_token: string | null;
   created_by: string | null;
   created_at: string;
