@@ -226,7 +226,16 @@ export async function getClientSafeItemsByProjectId(
     console.error("[getClientSafeItemsByProjectId] error:", error.message, "projectId:", projectId);
     return [];
   }
-  return (data ?? []) as ClientItem[];
+  const items = (data ?? []) as ClientItem[];
+  console.log(
+    "[getClientSafeItemsByProjectId] projectId:",
+    projectId,
+    "count:",
+    items.length,
+    "images:",
+    items.map((i) => ({ id: i.id, image_url: i.image_url }))
+  );
+  return items;
 }
 
 /**

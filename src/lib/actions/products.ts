@@ -15,7 +15,14 @@ export async function getProducts(): Promise<Product[]> {
     .order("created_at", { ascending: false });
 
   if (error) throw new Error(error.message);
-  return (data ?? []) as Product[];
+  const products = (data ?? []) as Product[];
+  console.log(
+    "[getProducts] count:",
+    products.length,
+    "images:",
+    products.map((p) => ({ id: p.id, name: p.name, image_url: p.image_url }))
+  );
+  return products;
 }
 
 export async function getProductsForClient(): Promise<ClientProduct[]> {
@@ -26,7 +33,14 @@ export async function getProductsForClient(): Promise<ClientProduct[]> {
     .order("name", { ascending: true });
 
   if (error) throw new Error(error.message);
-  return (data ?? []) as ClientProduct[];
+  const products = (data ?? []) as ClientProduct[];
+  console.log(
+    "[getProductsForClient] count:",
+    products.length,
+    "images:",
+    products.map((p) => ({ id: p.id, name: p.name, image_url: p.image_url }))
+  );
+  return products;
 }
 
 export async function getProductById(id: string): Promise<Product | null> {
@@ -61,6 +75,8 @@ export async function createProduct(input: {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return { id: null, error: "Not authenticated" };
+
+  console.log("[createProduct] image_url:", input.image_url, "name:", input.name);
 
   const { data, error } = await supabase
     .from("products")

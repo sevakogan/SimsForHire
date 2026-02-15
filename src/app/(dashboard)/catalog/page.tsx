@@ -28,6 +28,19 @@ export default async function CatalogPage() {
     ? await getProducts()
     : await getProductsForClient();
 
+  console.log(
+    "[CatalogPage] admin:",
+    admin,
+    "product count:",
+    products.length,
+    "sample:",
+    products.slice(0, 3).map((p) => ({
+      id: p.id,
+      name: p.name,
+      image_url: p.image_url,
+    }))
+  );
+
   return (
     <div className="space-y-4 sm:space-y-6">
       <h1 className="text-lg sm:text-2xl font-bold text-foreground">Products</h1>
