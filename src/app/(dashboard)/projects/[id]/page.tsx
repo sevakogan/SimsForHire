@@ -98,7 +98,7 @@ export default async function ProjectDetailPage({ params }: Props) {
           <h1 className="text-lg sm:text-2xl font-bold text-foreground truncate">{project.name}</h1>
           <Badge variant={project.status}>{project.status}</Badge>
         </div>
-        {project.invoice_number && (
+        {!admin && project.invoice_number && (
           <p className="text-xs text-muted-foreground mt-0.5">
             Invoice #{project.invoice_number}
           </p>
@@ -132,6 +132,40 @@ export default async function ProjectDetailPage({ params }: Props) {
                 Address
               </p>
               <p className="text-sm text-foreground truncate">{client.address ?? "--"}</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Invoice number card — admin */}
+      {admin && (
+        <div className={`${cardStyles.base} !p-4 sm:!p-5`}>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-[10px] sm:text-xs font-medium uppercase text-muted-foreground">
+                Invoice Number
+              </p>
+              <p className="text-sm font-semibold text-foreground mt-0.5">
+                {project.invoice_number || <span className="text-muted-foreground/50 font-normal">Not set</span>}
+              </p>
+            </div>
+            {project.date_required && (
+              <div className="text-right">
+                <p className="text-[10px] sm:text-xs font-medium uppercase text-muted-foreground">
+                  Required By
+                </p>
+                <p className="text-sm text-foreground mt-0.5">
+                  {new Date(project.date_required).toLocaleDateString()}
+                </p>
+              </div>
+            )}
+            <div className="text-right">
+              <p className="text-[10px] sm:text-xs font-medium uppercase text-muted-foreground">
+                Fulfillment
+              </p>
+              <p className="text-sm text-foreground mt-0.5 capitalize">
+                {project.fulfillment_type}
+              </p>
             </div>
           </div>
         </div>
