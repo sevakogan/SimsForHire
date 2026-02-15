@@ -98,7 +98,9 @@ export function ShareActions({
   // Image lightbox state — click any thumbnail to enlarge
   const [lightboxItem, setLightboxItem] = useState<ItemDisplayData | null>(null);
 
+  const [hydrated, setHydrated] = useState(false);
   useEffect(() => {
+    setHydrated(true);
     console.log("[ShareActions] hydrated, items:", visibleDisplayData.length, "status:", currentStatus);
   }, []);
 
@@ -268,6 +270,12 @@ export function ShareActions({
 
   return (
     <div className="space-y-4">
+      {/* Temporary debug: shows if React hydrated */}
+      {!hydrated && (
+        <div className="rounded-lg bg-yellow-50 p-2 text-xs text-yellow-700">
+          ⏳ Loading interactive features...
+        </div>
+      )}
       {error && (
         <div className="rounded-lg bg-red-50 p-3 text-sm text-red-600">
           {error}
@@ -317,7 +325,9 @@ export function ShareActions({
                       {display.thumb ? (
                         <button
                           type="button"
-                          onClick={() => {
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
                             console.log("[ShareActions] lightbox click desktop:", display.id, display.thumb);
                             setLightboxItem(display);
                           }}
@@ -463,7 +473,9 @@ export function ShareActions({
                 {display.thumb ? (
                   <button
                     type="button"
-                    onClick={() => {
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
                       console.log("[ShareActions] lightbox click mobile:", display.id, display.thumb);
                       setLightboxItem(display);
                     }}
@@ -710,7 +722,7 @@ export function ShareActions({
       {/* Image lightbox overlay */}
       {lightboxItem && lightboxItem.thumb && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4"
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 px-4"
           onClick={() => setLightboxItem(null)}
         >
           <div
