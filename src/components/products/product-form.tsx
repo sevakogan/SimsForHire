@@ -116,14 +116,9 @@ export function ProductForm({ product, isAdmin }: ProductFormProps) {
           (form.get("seller_merchant") as string) || "",
       };
 
-      console.log("[ProductForm] saving with image_url:", imageUrl);
-      console.log("[ProductForm] images state:", images);
-
       const result = product
         ? await updateProduct(product.id, input)
         : await createProduct(input);
-
-      console.log("[ProductForm] save result:", result);
 
       if (result.error) {
         setError(result.error);

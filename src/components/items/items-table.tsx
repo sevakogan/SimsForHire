@@ -173,6 +173,8 @@ export function ItemsTable({ items, projectId, isAdmin, unreadNoteCount = 0 }: I
   const [localItems, setLocalItems] = useState(items);
   const [dismissedNoteIds, setDismissedNoteIds] = useState<Set<string>>(new Set());
   const [localUnreadCount, setLocalUnreadCount] = useState(unreadNoteCount);
+  const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
+  const [lightboxName, setLightboxName] = useState<string>("");
 
   // Sync localItems when server data changes
   const itemsKey = items.map((i) => `${i.id}-${i.updated_at}`).join(",");
@@ -258,6 +260,10 @@ export function ItemsTable({ items, projectId, isAdmin, unreadNoteCount = 0 }: I
           isAdmin={isAdmin}
           onDelete={handleDelete}
           dismissedNoteIds={dismissedNoteIds}
+          onImageClick={(url, name) => {
+            setLightboxUrl(url);
+            setLightboxName(name);
+          }}
         />
       )}
 
@@ -337,14 +343,25 @@ export function ItemsTable({ items, projectId, isAdmin, unreadNoteCount = 0 }: I
 
                   <div className="shrink-0">
                     {thumb ? (
-                      <Image
-                        src={thumb}
-                        alt=""
-                        width={40}
-                        height={40}
-                        className="h-10 w-10 rounded-lg object-cover"
-                        unoptimized={isExternalImage(thumb)}
-                      />
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setLightboxUrl(thumb);
+                          setLightboxName(item.description || item.item_type || "Item");
+                        }}
+                        className="rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 cursor-pointer"
+                      >
+                        <Image
+                          src={thumb}
+                          alt=""
+                          width={40}
+                          height={40}
+                          className="h-10 w-10 rounded-lg object-cover"
+                          unoptimized={isExternalImage(thumb)}
+                        />
+                      </button>
                     ) : (
                       <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted/40 text-muted-foreground/40">
                         <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
@@ -468,14 +485,25 @@ export function ItemsTable({ items, projectId, isAdmin, unreadNoteCount = 0 }: I
                   <div className="flex items-start gap-3">
                     <div className="shrink-0">
                       {thumb ? (
-                        <Image
-                          src={thumb}
-                          alt=""
-                          width={44}
-                          height={44}
-                          className="h-11 w-11 rounded-lg object-cover"
-                          unoptimized={isExternalImage(thumb)}
-                        />
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setLightboxUrl(thumb);
+                            setLightboxName(item.description || item.item_type || "Item");
+                          }}
+                          className="rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 cursor-pointer"
+                        >
+                          <Image
+                            src={thumb}
+                            alt=""
+                            width={44}
+                            height={44}
+                            className="h-11 w-11 rounded-lg object-cover"
+                            unoptimized={isExternalImage(thumb)}
+                          />
+                        </button>
                       ) : (
                         <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-muted/40 text-muted-foreground/40">
                           <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
@@ -576,6 +604,49 @@ export function ItemsTable({ items, projectId, isAdmin, unreadNoteCount = 0 }: I
           </div>
         </>
       )}
+
+      {/* Image lightbox overlay */}
+      {lightboxUrl && (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 px-4"
+          onClick={() => setLightboxUrl(null)}
+        >
+          <div
+            className="relative w-full max-w-md rounded-2xl bg-white shadow-2xl overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Close button */}
+            <button
+              type="button"
+              onClick={() => setLightboxUrl(null)}
+              className="absolute right-3 top-3 z-10 rounded-full bg-black/40 p-1.5 text-white/90 backdrop-blur-sm transition-colors hover:bg-black/60"
+            >
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+              </svg>
+            </button>
+
+            {/* Large image */}
+            <div className="relative aspect-square w-full bg-gray-100">
+              <Image
+                src={lightboxUrl}
+                alt={lightboxName}
+                fill
+                className="object-contain"
+                sizes="(max-width: 448px) 100vw, 448px"
+                unoptimized={isExternalImage(lightboxUrl)}
+              />
+            </div>
+
+            {/* Item name */}
+            <div className="px-5 py-4">
+              <h3 className="text-base font-semibold text-gray-900">
+                {lightboxName}
+              </h3>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -588,9 +659,10 @@ interface ItemsCardGridProps {
   isAdmin: boolean;
   onDelete: (id: string) => void;
   dismissedNoteIds: Set<string>;
+  onImageClick: (url: string, name: string) => void;
 }
 
-function ItemsCardGrid({ items, projectId, isAdmin, onDelete, dismissedNoteIds }: ItemsCardGridProps) {
+function ItemsCardGrid({ items, projectId, isAdmin, onDelete, dismissedNoteIds, onImageClick }: ItemsCardGridProps) {
   if (items.length === 0) {
     return (
       <div className="rounded-xl border border-dashed border-border p-8 text-center">
@@ -614,7 +686,15 @@ function ItemsCardGrid({ items, projectId, isAdmin, onDelete, dismissedNoteIds }
             className="group block rounded-xl border border-border bg-white shadow-sm transition-all hover:shadow-md hover:border-primary/20 overflow-hidden"
           >
             {/* Image */}
-            <div className="relative aspect-square bg-muted/30">
+            <div
+              className="relative aspect-square bg-muted/30"
+              onClick={thumb ? (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onImageClick(thumb, item.description || item.item_type || "Item");
+              } : undefined}
+              style={thumb ? { cursor: "pointer" } : undefined}
+            >
               {thumb ? (
                 <Image
                   src={thumb}

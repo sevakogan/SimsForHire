@@ -15,14 +15,7 @@ export async function getProducts(): Promise<Product[]> {
     .order("created_at", { ascending: false });
 
   if (error) throw new Error(error.message);
-  const products = (data ?? []) as Product[];
-  console.log(
-    "[getProducts] count:",
-    products.length,
-    "images:",
-    products.map((p) => ({ id: p.id, name: p.name, image_url: p.image_url }))
-  );
-  return products;
+  return (data ?? []) as Product[];
 }
 
 export async function getProductsForClient(): Promise<ClientProduct[]> {
@@ -33,14 +26,7 @@ export async function getProductsForClient(): Promise<ClientProduct[]> {
     .order("name", { ascending: true });
 
   if (error) throw new Error(error.message);
-  const products = (data ?? []) as ClientProduct[];
-  console.log(
-    "[getProductsForClient] count:",
-    products.length,
-    "images:",
-    products.map((p) => ({ id: p.id, name: p.name, image_url: p.image_url }))
-  );
-  return products;
+  return (data ?? []) as ClientProduct[];
 }
 
 export async function getProductById(id: string): Promise<Product | null> {
@@ -75,8 +61,6 @@ export async function createProduct(input: {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return { id: null, error: "Not authenticated" };
-
-  console.log("[createProduct] image_url:", input.image_url, "name:", input.name);
 
   const { data, error } = await supabase
     .from("products")
@@ -120,8 +104,6 @@ export async function updateProduct(
     seller_merchant: string;
   }>
 ): Promise<{ error: string | null }> {
-  console.log("[updateProduct] id:", id, "image_url:", input.image_url);
-
   // Clean undefined values so Supabase doesn't skip them
   const cleanInput: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(input)) {
@@ -129,7 +111,6 @@ export async function updateProduct(
       cleanInput[key] = value;
     }
   }
-  console.log("[updateProduct] cleanInput keys:", Object.keys(cleanInput));
 
   const supabase = await createSupabaseServer();
   const { error } = await supabase
@@ -138,7 +119,6 @@ export async function updateProduct(
     .eq("id", id);
 
   if (error) {
-    console.error("[updateProduct] error:", error.message);
     return { error: error.message };
   }
   revalidatePath("/catalog");

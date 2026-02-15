@@ -20,19 +20,6 @@ export default async function SharedInvoicePage({ params }: Props) {
 
   const items = await getClientSafeItemsByProjectId(project.id);
 
-  console.log(
-    "[ShareInvoicePage] project:",
-    project.id,
-    "item count:",
-    items.length,
-    "item images:",
-    items.map((item) => ({
-      id: item.id,
-      image_url: item.image_url,
-      desc: item.description?.slice(0, 30),
-    }))
-  );
-
   // Pre-compute display data for each item (passed to client component)
   const itemDisplayData = items.map((item) => {
     const qty = item.quantity ?? 1;
@@ -52,11 +39,6 @@ export default async function SharedInvoicePage({ params }: Props) {
       total,
     };
   });
-
-  console.log(
-    "[ShareInvoicePage] itemDisplayData thumbs:",
-    itemDisplayData.map((d) => ({ id: d.id, thumb: d.thumb, name: d.name }))
-  );
 
   return (
     <>

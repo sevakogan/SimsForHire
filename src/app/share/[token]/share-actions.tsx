@@ -98,12 +98,6 @@ export function ShareActions({
   // Image lightbox state — click any thumbnail to enlarge
   const [lightboxItem, setLightboxItem] = useState<ItemDisplayData | null>(null);
 
-  const [hydrated, setHydrated] = useState(false);
-  useEffect(() => {
-    setHydrated(true);
-    console.log("[ShareActions] hydrated, items:", visibleDisplayData.length, "status:", currentStatus);
-  }, []);
-
   const isEditable =
     currentStatus !== "accepted" && currentStatus !== "completed";
 
@@ -270,12 +264,6 @@ export function ShareActions({
 
   return (
     <div className="space-y-4">
-      {/* Temporary debug: shows if React hydrated */}
-      {!hydrated && (
-        <div className="rounded-lg bg-yellow-50 p-2 text-xs text-yellow-700">
-          ⏳ Loading interactive features...
-        </div>
-      )}
       {error && (
         <div className="rounded-lg bg-red-50 p-3 text-sm text-red-600">
           {error}
@@ -328,7 +316,6 @@ export function ShareActions({
                           onClick={(e) => {
                             e.preventDefault();
                             e.stopPropagation();
-                            console.log("[ShareActions] lightbox click desktop:", display.id, display.thumb);
                             setLightboxItem(display);
                           }}
                           className="shrink-0 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 cursor-pointer"
@@ -476,7 +463,6 @@ export function ShareActions({
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
-                      console.log("[ShareActions] lightbox click mobile:", display.id, display.thumb);
                       setLightboxItem(display);
                     }}
                     className="shrink-0 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 cursor-pointer"
