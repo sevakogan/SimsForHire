@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import {
   acceptAllItemsByShareToken,
   submitItemDecisions,
@@ -9,8 +10,20 @@ import {
 } from "@/lib/actions/projects";
 import type { ClientItem, AcceptanceStatus } from "@/types";
 
+interface ItemDisplayData {
+  id: string;
+  thumb: string | null;
+  name: string;
+  itemType: string | null;
+  qty: number;
+  price: number;
+  shipping: number;
+  total: number;
+}
+
 interface ShareActionsProps {
   items: ClientItem[];
+  itemDisplayData: ItemDisplayData[];
   shareToken: string;
   projectStatus: string;
 }
@@ -36,13 +49,22 @@ function StatusBadge({ status }: { status: string }) {
 
 export { StatusBadge };
 
+function formatCurrency(value: number): string {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+  }).format(value);
+}
+
 export function ShareActions({
   items: initialItems,
+  itemDisplayData: initialDisplayData,
   shareToken,
   projectStatus,
 }: ShareActionsProps) {
   const [currentStatus, setCurrentStatus] = useState(projectStatus);
   const [visibleItems, setVisibleItems] = useState(initialItems);
+  const [visibleDisplayData, setVisibleDisplayData] = useState(initialDisplayData);
   const [decisions, setDecisions] = useState<
     Record<string, AcceptanceStatus>
   >(() => {
@@ -75,10 +97,6 @@ export function ShareActions({
   const isEditable =
     currentStatus !== "accepted" && currentStatus !== "completed";
 
-  // Project-level acceptance — only project status matters.
-  // Item-level statuses are reset when admin downgrades, but even if
-  // they weren't, the customer should still see the review screen
-  // when the project is in draft/quote.
   const alreadyAccepted =
     currentStatus === "accepted" || currentStatus === "completed";
 
@@ -186,6 +204,7 @@ export function ShareActions({
         setError(result.error);
       } else {
         setVisibleItems((prev) => prev.filter((i) => i.id !== deleteItemId));
+        setVisibleDisplayData((prev) => prev.filter((d) => d.id !== deleteItemId));
         setDeleteItemId(null);
       }
     } catch {
@@ -194,6 +213,11 @@ export function ShareActions({
       setDeleting(false);
     }
   }
+
+  // Totals from visible items
+  const totalSelling = visibleDisplayData.reduce((sum, d) => sum + d.price * d.qty, 0);
+  const totalShipping = visibleDisplayData.reduce((sum, d) => sum + d.shipping * d.qty, 0);
+  const grandTotal = totalSelling + totalShipping;
 
   // Displayed status
   const displayStatus = submitted && allAccepted ? "accepted" : currentStatus;
@@ -235,132 +259,311 @@ export function ShareActions({
   }
 
   return (
-    <div className="mt-6 space-y-4">
+    <div className="space-y-4">
       {error && (
         <div className="rounded-lg bg-red-50 p-3 text-sm text-red-600">
           {error}
         </div>
       )}
 
-      {/* Per-item decision toggles */}
-      <div className="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
-        <div className="border-b border-gray-100 bg-gray-50/80 px-4 py-3">
-          <h3 className="text-sm font-semibold text-gray-700">Review Items</h3>
-          <p className="text-xs text-gray-500 mt-0.5">
-            Accept or reject each item, leave notes, or remove items you don&apos;t need
-          </p>
-        </div>
-        <div className="divide-y divide-gray-100">
-          {visibleItems.map((item, index) => {
-            const status = decisions[item.id];
-            const hasNote = !!(notes[item.id]?.trim());
-            const rowBg = status === "accepted"
-              ? "bg-green-50/50"
-              : status === "rejected"
-                ? "bg-red-50/50"
-                : index % 2 === 0
-                  ? "bg-white"
-                  : "bg-gray-50/60";
-            return (
-              <div
-                key={item.id}
-                className={`px-4 py-3 transition-colors ${rowBg}`}
-              >
-                <div className="flex items-center justify-between">
-                  <div className="min-w-0 flex-1 mr-3">
-                    <p className="text-sm font-medium text-gray-900 truncate">
-                      {item.description || item.item_type || "Item"}
-                    </p>
-                    {item.item_type && (
-                      <span className="text-[10px] text-gray-500">
-                        {item.item_type}
-                      </span>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-1.5 shrink-0">
-                    {/* Note button */}
-                    {isEditable && (
+      {/* Combined items table — desktop */}
+      <div className="hidden sm:block overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+        <table className="w-full text-sm">
+          <thead className="border-b border-gray-200 bg-gray-50/80">
+            <tr>
+              <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 w-10">
+                #
+              </th>
+              <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+                Item
+              </th>
+              <th className="px-3 py-3 text-center text-xs font-semibold uppercase tracking-wider text-gray-500 w-12">
+                Qty
+              </th>
+              <th className="px-3 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-500 w-24">
+                Price
+              </th>
+              <th className="px-3 py-3 text-center text-xs font-semibold uppercase tracking-wider text-gray-500 w-28">
+                Actions
+              </th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-100">
+            {visibleDisplayData.map((display, index) => {
+              const status = decisions[display.id];
+              const hasNote = !!(notes[display.id]?.trim());
+              const rowBg = status === "accepted"
+                ? "bg-green-50/50"
+                : status === "rejected"
+                  ? "bg-red-50/50"
+                  : index % 2 === 0
+                    ? "bg-white"
+                    : "bg-gray-50/40";
+
+              return (
+                <tr key={display.id} className={`transition-colors ${rowBg}`}>
+                  <td className="px-3 py-2.5 text-gray-400 tabular-nums text-xs">
+                    {index + 1}
+                  </td>
+                  <td className="px-3 py-2.5">
+                    <div className="flex items-center gap-2.5">
+                      {display.thumb ? (
+                        <Image
+                          src={display.thumb}
+                          alt=""
+                          width={36}
+                          height={36}
+                          className="h-9 w-9 rounded-lg object-cover shrink-0"
+                        />
+                      ) : (
+                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gray-100 text-gray-400">
+                          <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0 0 22.5 18.75V5.25A2.25 2.25 0 0 0 20.25 3H3.75A2.25 2.25 0 0 0 1.5 5.25v13.5A2.25 2.25 0 0 0 3.75 21Z" />
+                          </svg>
+                        </div>
+                      )}
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-gray-900 truncate">
+                          {display.name}
+                        </p>
+                        {hasNote && (
+                          <p className="mt-0.5 text-[10px] text-blue-600 truncate max-w-[200px]" title={notes[display.id]}>
+                            &ldquo;{notes[display.id]}&rdquo;
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-3 py-2.5 text-center tabular-nums text-gray-700 text-xs">
+                    {display.qty}
+                  </td>
+                  <td className="px-3 py-2.5 text-right tabular-nums text-gray-900 text-xs font-medium">
+                    {formatCurrency(display.price)}
+                  </td>
+                  <td className="px-3 py-2.5">
+                    <div className="flex items-center justify-center gap-1">
+                      {/* Note */}
+                      {isEditable && (
+                        <button
+                          type="button"
+                          onClick={() => openNotePopup(display.id)}
+                          className={`rounded-md p-1.5 transition-colors ${
+                            hasNote
+                              ? "text-blue-600 bg-blue-50"
+                              : "text-gray-400 hover:text-blue-600 hover:bg-blue-50"
+                          }`}
+                          title={hasNote ? "Edit note" : "Add note"}
+                        >
+                          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.087.16 2.185.283 3.293.369V21l4.076-4.076a1.526 1.526 0 0 1 1.037-.443 48.282 48.282 0 0 0 5.68-.494c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0 0 12 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018Z" />
+                          </svg>
+                        </button>
+                      )}
+
+                      {/* Accept */}
                       <button
                         type="button"
-                        onClick={() => openNotePopup(item.id)}
-                        className={`relative rounded-lg p-1.5 text-xs transition-all ${
-                          hasNote
-                            ? "bg-blue-50 text-blue-600 border border-blue-200"
-                            : "border border-gray-200 text-gray-400 hover:text-blue-600 hover:border-blue-300 hover:bg-blue-50"
+                        onClick={() => toggleItem(display.id, "accepted")}
+                        disabled={submitting}
+                        className={`rounded-md p-1.5 transition-colors ${
+                          status === "accepted"
+                            ? "text-white bg-green-600"
+                            : "text-gray-400 hover:text-green-600 hover:bg-green-50"
                         }`}
-                        title={hasNote ? "Edit note" : "Add note"}
+                        title="Accept"
                       >
-                        <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.087.16 2.185.283 3.293.369V21l4.076-4.076a1.526 1.526 0 0 1 1.037-.443 48.282 48.282 0 0 0 5.68-.494c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0 0 12 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018Z" />
-                        </svg>
-                        {hasNote && (
-                          <span className="absolute -top-1 -right-1 flex h-2 w-2 rounded-full bg-blue-500" />
-                        )}
-                      </button>
-                    )}
-
-                    {/* Accept button */}
-                    <button
-                      type="button"
-                      onClick={() => toggleItem(item.id, "accepted")}
-                      disabled={submitting}
-                      className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-all ${
-                        status === "accepted"
-                          ? "bg-green-600 text-white shadow-sm"
-                          : "border border-gray-200 text-gray-500 hover:border-green-300 hover:text-green-600 hover:bg-green-50"
-                      }`}
-                    >
-                      <span className="flex items-center gap-1">
-                        <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
                         </svg>
-                        Accept
-                      </span>
-                    </button>
+                      </button>
 
-                    {/* Reject button */}
-                    <button
-                      type="button"
-                      onClick={() => toggleItem(item.id, "rejected")}
-                      disabled={submitting}
-                      className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-all ${
-                        status === "rejected"
-                          ? "bg-red-600 text-white shadow-sm"
-                          : "border border-gray-200 text-gray-500 hover:border-red-300 hover:text-red-600 hover:bg-red-50"
-                      }`}
-                    >
-                      <span className="flex items-center gap-1">
-                        <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
-                        </svg>
-                        Reject
-                      </span>
-                    </button>
-
-                    {/* Delete button */}
-                    {isEditable && (
+                      {/* Reject */}
                       <button
                         type="button"
-                        onClick={() => setDeleteItemId(item.id)}
-                        className="rounded-lg p-1.5 border border-gray-200 text-gray-400 hover:text-red-600 hover:border-red-300 hover:bg-red-50 transition-all"
-                        title="Remove item"
+                        onClick={() => toggleItem(display.id, "rejected")}
+                        disabled={submitting}
+                        className={`rounded-md p-1.5 transition-colors ${
+                          status === "rejected"
+                            ? "text-white bg-blue-600"
+                            : "text-gray-400 hover:text-blue-600 hover:bg-blue-50"
+                        }`}
+                        title="Reject"
                       >
-                        <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+                        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
                         </svg>
                       </button>
-                    )}
+
+                      {/* Delete */}
+                      {isEditable && (
+                        <button
+                          type="button"
+                          onClick={() => setDeleteItemId(display.id)}
+                          className="rounded-md p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                          title="Remove item"
+                        >
+                          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+                          </svg>
+                        </button>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Combined items — mobile cards */}
+      <div className="space-y-3 sm:hidden">
+        {visibleDisplayData.map((display, index) => {
+          const status = decisions[display.id];
+          const hasNote = !!(notes[display.id]?.trim());
+          const cardBorder = status === "accepted"
+            ? "border-green-200"
+            : status === "rejected"
+              ? "border-red-200"
+              : "border-gray-200";
+          const cardBg = status === "accepted"
+            ? "bg-green-50/30"
+            : status === "rejected"
+              ? "bg-red-50/30"
+              : index % 2 === 0
+                ? "bg-white"
+                : "bg-gray-50/60";
+
+          return (
+            <div
+              key={display.id}
+              className={`rounded-xl border p-3 shadow-sm ${cardBorder} ${cardBg}`}
+            >
+              <div className="flex items-start gap-2.5">
+                <span className="mt-0.5 text-xs font-medium text-gray-400">
+                  {index + 1}.
+                </span>
+                {display.thumb ? (
+                  <Image
+                    src={display.thumb}
+                    alt=""
+                    width={40}
+                    height={40}
+                    className="h-10 w-10 rounded-lg object-cover shrink-0"
+                  />
+                ) : (
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-gray-100 text-gray-400">
+                    <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0 0 22.5 18.75V5.25A2.25 2.25 0 0 0 20.25 3H3.75A2.25 2.25 0 0 0 1.5 5.25v13.5A2.25 2.25 0 0 0 3.75 21Z" />
+                    </svg>
+                  </div>
+                )}
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium text-gray-900 line-clamp-2">
+                    {display.name}
+                  </p>
+                  <div className="mt-1 flex items-center gap-3 text-xs text-gray-500">
+                    <span>Qty: {display.qty}</span>
+                    <span className="font-medium text-gray-900">{formatCurrency(display.price)}</span>
                   </div>
                 </div>
-                {/* Show note preview */}
-                {hasNote && (
-                  <p className="mt-1.5 text-xs text-blue-600 bg-blue-50 rounded px-2 py-1 italic">
-                    &ldquo;{notes[item.id]}&rdquo;
-                  </p>
+              </div>
+
+              {/* Note preview */}
+              {hasNote && (
+                <p className="mt-2 text-[10px] text-blue-600 bg-blue-50 rounded px-2 py-1 italic">
+                  &ldquo;{notes[display.id]}&rdquo;
+                </p>
+              )}
+
+              {/* Action buttons */}
+              <div className="mt-2.5 flex items-center justify-end gap-1 border-t border-gray-100 pt-2">
+                {isEditable && (
+                  <button
+                    type="button"
+                    onClick={() => openNotePopup(display.id)}
+                    className={`rounded-md p-1.5 transition-colors ${
+                      hasNote
+                        ? "text-blue-600 bg-blue-50"
+                        : "text-gray-400 hover:text-blue-600 hover:bg-blue-50"
+                    }`}
+                    title={hasNote ? "Edit note" : "Add note"}
+                  >
+                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.087.16 2.185.283 3.293.369V21l4.076-4.076a1.526 1.526 0 0 1 1.037-.443 48.282 48.282 0 0 0 5.68-.494c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0 0 12 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018Z" />
+                    </svg>
+                  </button>
+                )}
+
+                <button
+                  type="button"
+                  onClick={() => toggleItem(display.id, "accepted")}
+                  disabled={submitting}
+                  className={`rounded-md p-1.5 transition-colors ${
+                    status === "accepted"
+                      ? "text-white bg-green-600"
+                      : "text-gray-400 hover:text-green-600 hover:bg-green-50"
+                  }`}
+                  title="Accept"
+                >
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+                  </svg>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => toggleItem(display.id, "rejected")}
+                  disabled={submitting}
+                  className={`rounded-md p-1.5 transition-colors ${
+                    status === "rejected"
+                      ? "text-white bg-blue-600"
+                      : "text-gray-400 hover:text-blue-600 hover:bg-blue-50"
+                  }`}
+                  title="Reject"
+                >
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+                  </svg>
+                </button>
+
+                {isEditable && (
+                  <button
+                    type="button"
+                    onClick={() => setDeleteItemId(display.id)}
+                    className="rounded-md p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                    title="Remove item"
+                  >
+                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+                    </svg>
+                  </button>
                 )}
               </div>
-            );
-          })}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Summary */}
+      <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+        <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+          <span className="text-sm text-gray-500">Subtotal</span>
+          <span className="text-sm tabular-nums text-gray-900">
+            {formatCurrency(totalSelling)}
+          </span>
+        </div>
+        <div className="flex items-center justify-between border-b border-gray-100 py-3">
+          <span className="text-sm text-gray-500">Shipping &amp; Handling</span>
+          <span className="text-sm tabular-nums text-gray-900">
+            {formatCurrency(totalShipping)}
+          </span>
+        </div>
+        <div className="flex items-center justify-between pt-3">
+          <span className="text-base font-semibold text-gray-900">Total</span>
+          <span className="text-lg font-bold tabular-nums text-gray-900">
+            {formatCurrency(grandTotal)}
+          </span>
         </div>
       </div>
 

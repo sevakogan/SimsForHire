@@ -1,5 +1,4 @@
 import { notFound } from "next/navigation";
-import Image from "next/image";
 import {
   getProjectByShareToken,
   getClientSafeItemsByProjectId,
@@ -12,13 +11,6 @@ export const dynamic = "force-dynamic";
 
 interface Props {
   params: Promise<{ token: string }>;
-}
-
-function formatCurrency(value: number): string {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-  }).format(value);
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -41,18 +33,25 @@ export default async function SharedInvoicePage({ params }: Props) {
 
   const items = await getClientSafeItemsByProjectId(project.id);
 
-  const totalSelling = items.reduce((sum, i) => {
-    const qty = i.quantity ?? 1;
-    const price = Number(i.price_sold_for ?? i.retail_price);
-    return sum + price * qty;
-  }, 0);
+  // Pre-compute display data for each item (passed to client component)
+  const itemDisplayData = items.map((item) => {
+    const qty = item.quantity ?? 1;
+    const price = Number(item.price_sold_for ?? item.retail_price);
+    const shipping = Number(item.retail_shipping);
+    const total = (price + shipping) * qty;
+    const thumb = firstImage(item.image_url);
 
-  const totalShipping = items.reduce((sum, i) => {
-    const qty = i.quantity ?? 1;
-    return sum + Number(i.retail_shipping) * qty;
-  }, 0);
-
-  const grandTotal = totalSelling + totalShipping;
+    return {
+      id: item.id,
+      thumb,
+      name: item.description || item.item_type || "Item",
+      itemType: item.item_type || null,
+      qty,
+      price,
+      shipping,
+      total,
+    };
+  });
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -95,232 +94,12 @@ export default async function SharedInvoicePage({ params }: Props) {
             <p className="text-sm text-gray-500">No items in this invoice yet.</p>
           </div>
         ) : (
-          <>
-            {/* Desktop table */}
-            <div className="hidden sm:block overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
-              <table className="w-full text-sm">
-                <thead className="border-b border-gray-200 bg-gray-50/80">
-                  <tr>
-                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 w-12">
-                      #
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
-                      Item
-                    </th>
-                    <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-gray-500 w-16">
-                      Qty
-                    </th>
-                    <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-500 w-28">
-                      Price
-                    </th>
-                    <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-500 w-24">
-                      S/H
-                    </th>
-                    <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-500 w-28">
-                      Total
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
-                  {items.map((item, index) => {
-                    const qty = item.quantity ?? 1;
-                    const price = Number(
-                      item.price_sold_for ?? item.retail_price
-                    );
-                    const shipping = Number(item.retail_shipping);
-                    const total = (price + shipping) * qty;
-                    const thumb = firstImage(item.image_url);
-
-                    return (
-                      <tr
-                        key={item.id}
-                        className={`transition-colors ${
-                          index % 2 === 0
-                            ? "bg-white hover:bg-gray-50/50"
-                            : "bg-gray-50/60 hover:bg-gray-100/60"
-                        }`}
-                      >
-                        <td className="px-4 py-3 text-gray-400 tabular-nums">
-                          {index + 1}
-                        </td>
-                        <td className="px-4 py-3">
-                          <div className="flex items-center gap-3">
-                            {thumb ? (
-                              <Image
-                                src={thumb}
-                                alt=""
-                                width={40}
-                                height={40}
-                                className="h-10 w-10 rounded-lg object-cover shrink-0"
-                              />
-                            ) : (
-                              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-gray-100 text-gray-400">
-                                <svg
-                                  className="h-4 w-4"
-                                  fill="none"
-                                  viewBox="0 0 24 24"
-                                  strokeWidth={1.5}
-                                  stroke="currentColor"
-                                >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0 0 22.5 18.75V5.25A2.25 2.25 0 0 0 20.25 3H3.75A2.25 2.25 0 0 0 1.5 5.25v13.5A2.25 2.25 0 0 0 3.75 21Z"
-                                  />
-                                </svg>
-                              </div>
-                            )}
-                            <div className="min-w-0">
-                              <p className="font-medium text-gray-900 truncate">
-                                {item.description || item.item_type || "Item"}
-                              </p>
-                              {item.item_type && (
-                                <span className="inline-block mt-0.5 rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-medium text-gray-500">
-                                  {item.item_type}
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-4 py-3 text-center tabular-nums text-gray-900">
-                          {qty}
-                        </td>
-                        <td className="px-4 py-3 text-right tabular-nums text-gray-900">
-                          {formatCurrency(price)}
-                        </td>
-                        <td className="px-4 py-3 text-right tabular-nums text-gray-500">
-                          {formatCurrency(shipping)}
-                        </td>
-                        <td className="px-4 py-3 text-right tabular-nums font-semibold text-gray-900">
-                          {formatCurrency(total)}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-
-            {/* Mobile card layout */}
-            <div className="space-y-3 sm:hidden">
-              {items.map((item, index) => {
-                const qty = item.quantity ?? 1;
-                const price = Number(item.price_sold_for ?? item.retail_price);
-                const shipping = Number(item.retail_shipping);
-                const total = (price + shipping) * qty;
-                const thumb = firstImage(item.image_url);
-
-                return (
-                  <div
-                    key={item.id}
-                    className={`rounded-xl border border-gray-200 p-4 shadow-sm ${
-                      index % 2 === 0 ? "bg-white" : "bg-gray-50/60"
-                    }`}
-                  >
-                    <div className="flex items-start gap-3">
-                      <span className="mt-0.5 text-xs font-medium text-gray-400">
-                        {index + 1}.
-                      </span>
-                      {thumb ? (
-                        <Image
-                          src={thumb}
-                          alt=""
-                          width={44}
-                          height={44}
-                          className="h-11 w-11 rounded-lg object-cover shrink-0"
-                        />
-                      ) : (
-                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-gray-100 text-gray-400">
-                          <svg
-                            className="h-4 w-4"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            strokeWidth={1.5}
-                            stroke="currentColor"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0 0 22.5 18.75V5.25A2.25 2.25 0 0 0 20.25 3H3.75A2.25 2.25 0 0 0 1.5 5.25v13.5A2.25 2.25 0 0 0 3.75 21Z"
-                            />
-                          </svg>
-                        </div>
-                      )}
-                      <div className="min-w-0 flex-1">
-                        <p className="font-medium text-gray-900 line-clamp-2">
-                          {item.description || item.item_type || "Item"}
-                        </p>
-                        {item.item_type && (
-                          <span className="inline-block mt-0.5 rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-medium text-gray-500">
-                            {item.item_type}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                    <div className="mt-3 grid grid-cols-3 gap-2 text-center border-t border-gray-100 pt-3">
-                      <div>
-                        <p className="text-[9px] font-medium uppercase tracking-wider text-gray-400">
-                          Price
-                        </p>
-                        <p className="text-xs font-medium text-gray-900">
-                          {formatCurrency(price)}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-[9px] font-medium uppercase tracking-wider text-gray-400">
-                          S/H
-                        </p>
-                        <p className="text-xs text-gray-500">
-                          {formatCurrency(shipping)}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-[9px] font-medium uppercase tracking-wider text-gray-400">
-                          Total
-                        </p>
-                        <p className="text-xs font-bold text-gray-900">
-                          {formatCurrency(total)}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* Summary */}
-            <div className="mt-6 rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
-              <div className="flex items-center justify-between border-b border-gray-100 pb-3">
-                <span className="text-sm text-gray-500">Subtotal</span>
-                <span className="text-sm tabular-nums text-gray-900">
-                  {formatCurrency(totalSelling)}
-                </span>
-              </div>
-              <div className="flex items-center justify-between border-b border-gray-100 py-3">
-                <span className="text-sm text-gray-500">
-                  Shipping &amp; Handling
-                </span>
-                <span className="text-sm tabular-nums text-gray-900">
-                  {formatCurrency(totalShipping)}
-                </span>
-              </div>
-              <div className="flex items-center justify-between pt-3">
-                <span className="text-base font-semibold text-gray-900">
-                  Total
-                </span>
-                <span className="text-lg font-bold tabular-nums text-gray-900">
-                  {formatCurrency(grandTotal)}
-                </span>
-              </div>
-            </div>
-
-            {/* Accept/Reject Actions */}
-            <ShareActions
-              items={items}
-              shareToken={token}
-              projectStatus={project.status}
-            />
-          </>
+          <ShareActions
+            items={items}
+            itemDisplayData={itemDisplayData}
+            shareToken={token}
+            projectStatus={project.status}
+          />
         )}
 
         {/* Footer */}
