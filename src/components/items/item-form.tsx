@@ -15,6 +15,7 @@ import {
 import { ImageUpload } from "@/components/items/image-upload";
 import { ProductSearch } from "@/components/products/product-search";
 import { TypeTagPicker } from "@/components/products/type-tag-picker";
+import { scrapeProductUrl } from "@/lib/actions/scrape";
 import type { Item, ProductSearchResult } from "@/types";
 
 interface ItemFormProps {
@@ -59,6 +60,7 @@ function buildInitialFields(item?: Item): FormFields {
 export function ItemForm({ projectId, itemNumber, item, isAdmin }: ItemFormProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [scraping, setScraping] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [imageUrl, setImageUrl] = useState<string | null>(item?.image_url ?? null);
   const [fields, setFields] = useState<FormFields>(() => buildInitialFields(item));
@@ -94,6 +96,46 @@ export function ItemForm({ projectId, itemNumber, item, isAdmin }: ItemFormProps
   function handleProductClear() {
     setSelectedProduct(null);
     setProductId(null);
+  }
+
+  function handleUrlApprove() {
+    const url = fields.item_link.trim();
+    if (!url) return;
+
+    setScraping(true);
+    setError(null);
+
+    scrapeProductUrl(url)
+      .then((result) => {
+        if (result.error) {
+          setError(result.error);
+          return;
+        }
+
+        // Only fill empty fields
+        setFields((prev) => ({
+          ...prev,
+          description: result.title && !prev.description.trim()
+            ? result.title
+            : prev.description,
+        }));
+
+        // Set image if empty
+        if (result.images.length > 0 && !imageUrl) {
+          setImageUrl(result.images[0]);
+        }
+      })
+      .catch(() => {
+        setError("Failed to fetch product info.");
+      })
+      .finally(() => {
+        setScraping(false);
+      });
+  }
+
+  function handleUrlReject() {
+    updateField("item_link", "");
+    setScraping(false);
   }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -217,17 +259,56 @@ export function ItemForm({ projectId, itemNumber, item, isAdmin }: ItemFormProps
           />
         </div>
 
-        <div className={`${pillWrapper} col-span-4 sm:w-32 sm:shrink-0`}>
+        <div className={`${pillWrapper} col-span-4 sm:min-w-[140px] sm:flex-1`}>
           <label htmlFor="item_link" className={pillLabel}>Link</label>
-          <input
-            id="item_link"
-            name="item_link"
-            type="url"
-            value={fields.item_link}
-            onChange={(e) => updateField("item_link", e.target.value)}
-            placeholder="https://…"
-            className={pillInput}
-          />
+          <div className="flex items-center gap-1">
+            <input
+              id="item_link"
+              name="item_link"
+              type="url"
+              value={fields.item_link}
+              onChange={(e) => updateField("item_link", e.target.value)}
+              placeholder="https://…"
+              className={`${pillInput} flex-1`}
+            />
+            {fields.item_link.trim() && (
+              <>
+                {scraping ? (
+                  <div className="shrink-0 rounded-full p-1" title="Fetching…">
+                    <svg className="h-4 w-4 animate-spin text-primary" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                    </svg>
+                  </div>
+                ) : (
+                  <>
+                    <button
+                      type="button"
+                      onClick={handleUrlApprove}
+                      disabled={loading}
+                      className="shrink-0 rounded-full p-1 text-gray-400 transition-colors hover:bg-green-50 hover:text-green-600 disabled:opacity-50"
+                      title="Fetch product info from URL"
+                    >
+                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+                      </svg>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleUrlReject}
+                      disabled={loading}
+                      className="shrink-0 rounded-full p-1 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
+                      title="Clear URL"
+                    >
+                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </>
+                )}
+              </>
+            )}
+          </div>
         </div>
       </div>
 
