@@ -16,25 +16,41 @@ async function getCurrentUserId(): Promise<string | null> {
 
 export interface ProfileWithClient extends Profile {
   client_name?: string;
+  invite_accepted: boolean;
 }
 
 export async function getUsers(): Promise<ProfileWithClient[]> {
   // Use admin client to bypass RLS — this is an admin-only function
   const admin = getAdminSupabase();
 
-  const { data, error } = await admin
-    .from("profiles")
-    .select("*, clients!profiles_client_id_fkey(name)")
-    .order("created_at", { ascending: false });
+  const [profilesResult, authResult] = await Promise.all([
+    admin
+      .from("profiles")
+      .select("*, clients!profiles_client_id_fkey(name)")
+      .order("created_at", { ascending: false }),
+    admin.auth.admin.listUsers({ perPage: 1000 }),
+  ]);
 
-  if (error) throw new Error(error.message);
+  if (profilesResult.error) throw new Error(profilesResult.error.message);
 
-  return (data ?? []).map((row) => {
+  // Build a set of user IDs that have confirmed their email/invite
+  const confirmedIds = new Set<string>();
+  if (authResult.data?.users) {
+    for (const authUser of authResult.data.users) {
+      if (authUser.confirmed_at || authUser.email_confirmed_at) {
+        confirmedIds.add(authUser.id);
+      }
+    }
+  }
+
+  return (profilesResult.data ?? []).map((row) => {
     const { clients, ...profile } = row as Record<string, unknown>;
     const clientData = clients as { name: string } | null;
+    const id = profile.id as string;
     return {
       ...profile,
       client_name: clientData?.name ?? undefined,
+      invite_accepted: confirmedIds.has(id),
     } as ProfileWithClient;
   });
 }

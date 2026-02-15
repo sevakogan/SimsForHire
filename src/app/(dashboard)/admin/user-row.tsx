@@ -146,7 +146,11 @@ export function UserRow({
       {/* Badges */}
       <div className="hidden shrink-0 items-center gap-1.5 sm:flex">
         <Badge variant={user.role}>{user.role}</Badge>
-        <Badge variant={user.status}>{user.status}</Badge>
+        {user.status === "approved" && !user.invite_accepted ? (
+          <Badge variant="invite_pending">invite pending</Badge>
+        ) : (
+          <Badge variant={user.status}>{user.status}</Badge>
+        )}
       </div>
 
       {/* Actions */}
