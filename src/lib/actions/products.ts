@@ -104,13 +104,27 @@ export async function updateProduct(
     seller_merchant: string;
   }>
 ): Promise<{ error: string | null }> {
+  console.log("[updateProduct] id:", id, "image_url:", input.image_url);
+
+  // Clean undefined values so Supabase doesn't skip them
+  const cleanInput: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(input)) {
+    if (value !== undefined) {
+      cleanInput[key] = value;
+    }
+  }
+  console.log("[updateProduct] cleanInput keys:", Object.keys(cleanInput));
+
   const supabase = await createSupabaseServer();
   const { error } = await supabase
     .from("products")
-    .update(input)
+    .update(cleanInput)
     .eq("id", id);
 
-  if (error) return { error: error.message };
+  if (error) {
+    console.error("[updateProduct] error:", error.message);
+    return { error: error.message };
+  }
   revalidatePath("/catalog");
   revalidatePath(`/catalog/${id}`);
   return { error: null };
