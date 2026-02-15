@@ -268,7 +268,7 @@ export function ShareActions({
 
       {/* Combined items table — desktop */}
       <div className="hidden sm:block overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
-        <table className="w-full text-sm">
+        <table className="w-full text-sm table-fixed">
           <thead className="border-b border-gray-200 bg-gray-50/80">
             <tr>
               <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 w-10">
@@ -277,14 +277,13 @@ export function ShareActions({
               <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
                 Item
               </th>
-              <th className="px-3 py-3 text-center text-xs font-semibold uppercase tracking-wider text-gray-500 w-12">
+              <th className="px-3 py-3 text-center text-xs font-semibold uppercase tracking-wider text-gray-500 w-14">
                 Qty
               </th>
               <th className="px-3 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-500 w-24">
                 Price
               </th>
-              <th className="px-3 py-3 text-center text-xs font-semibold uppercase tracking-wider text-gray-500 w-28">
-                Actions
+              <th className="px-3 py-3 text-center text-xs font-semibold uppercase tracking-wider text-gray-500 w-40">
               </th>
             </tr>
           </thead>
@@ -305,7 +304,7 @@ export function ShareActions({
                   <td className="px-3 py-2.5 text-gray-400 tabular-nums text-xs">
                     {index + 1}
                   </td>
-                  <td className="px-3 py-2.5">
+                  <td className="px-3 py-2.5 overflow-hidden">
                     <div className="flex items-center gap-2.5">
                       {display.thumb ? (
                         <Image
@@ -322,12 +321,12 @@ export function ShareActions({
                           </svg>
                         </div>
                       )}
-                      <div className="min-w-0">
+                      <div className="min-w-0 overflow-hidden">
                         <p className="text-sm font-medium text-gray-900 truncate">
                           {display.name}
                         </p>
                         {hasNote && (
-                          <p className="mt-0.5 text-[10px] text-blue-600 truncate max-w-[200px]" title={notes[display.id]}>
+                          <p className="mt-0.5 text-[10px] text-blue-600 truncate" title={notes[display.id]}>
                             &ldquo;{notes[display.id]}&rdquo;
                           </p>
                         )}
