@@ -1,19 +1,19 @@
 "use server";
 
-import { createSupabaseServer } from "@/lib/supabase-server";
 import { getAdminSupabase } from "@/lib/supabase-admin";
-import type { Profile, UserRole } from "@/types";
+import type { Client, Profile, UserRole } from "@/types";
 
 export interface ProfileWithClient extends Profile {
   client_name?: string;
 }
 
 export async function getUsers(): Promise<ProfileWithClient[]> {
-  const supabase = await createSupabaseServer();
+  // Use admin client to bypass RLS — this is an admin-only function
+  const admin = getAdminSupabase();
 
-  const { data, error } = await supabase
+  const { data, error } = await admin
     .from("profiles")
-    .select("*, clients(name)")
+    .select("*, clients!profiles_client_id_fkey(name)")
     .order("created_at", { ascending: false });
 
   if (error) throw new Error(error.message);
@@ -28,11 +28,21 @@ export async function getUsers(): Promise<ProfileWithClient[]> {
   });
 }
 
+export async function getClientsAdmin(): Promise<Client[]> {
+  const admin = getAdminSupabase();
+  const { data, error } = await admin
+    .from("clients")
+    .select("*")
+    .order("created_at", { ascending: false });
+  if (error) throw new Error(error.message);
+  return (data ?? []) as Client[];
+}
+
 export async function approveUser(
   id: string
 ): Promise<{ error: string | null }> {
-  const supabase = await createSupabaseServer();
-  const { error } = await supabase
+  const admin = getAdminSupabase();
+  const { error } = await admin
     .from("profiles")
     .update({ status: "approved" })
     .eq("id", id);
@@ -43,8 +53,8 @@ export async function approveUser(
 export async function denyUser(
   id: string
 ): Promise<{ error: string | null }> {
-  const supabase = await createSupabaseServer();
-  const { error } = await supabase
+  const admin = getAdminSupabase();
+  const { error } = await admin
     .from("profiles")
     .update({ status: "denied" })
     .eq("id", id);
@@ -56,8 +66,8 @@ export async function assignClientToUser(
   userId: string,
   clientId: string
 ): Promise<{ error: string | null }> {
-  const supabase = await createSupabaseServer();
-  const { error } = await supabase
+  const admin = getAdminSupabase();
+  const { error } = await admin
     .from("profiles")
     .update({ client_id: clientId })
     .eq("id", userId);
@@ -69,8 +79,8 @@ export async function updateUserRole(
   userId: string,
   role: UserRole
 ): Promise<{ error: string | null }> {
-  const supabase = await createSupabaseServer();
-  const { error } = await supabase
+  const admin = getAdminSupabase();
+  const { error } = await admin
     .from("profiles")
     .update({ role })
     .eq("id", userId);

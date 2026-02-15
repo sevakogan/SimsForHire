@@ -1,12 +1,26 @@
-import { getUsers } from "@/lib/actions/users";
-import { getClients } from "@/lib/actions/clients";
+import { getUsers, getClientsAdmin } from "@/lib/actions/users";
 import { Badge } from "@/components/ui/badge";
 import { tableStyles } from "@/components/ui/form-styles";
 import { UserActions } from "./user-actions";
 import { InviteUserForm } from "./invite-user-form";
 
 export default async function AdminPage() {
-  const [users, clients] = await Promise.all([getUsers(), getClients()]);
+  let users;
+  let clients;
+
+  try {
+    [users, clients] = await Promise.all([getUsers(), getClientsAdmin()]);
+  } catch (err) {
+    console.error("Admin page load error:", err);
+    return (
+      <div className="space-y-4">
+        <h1 className="text-lg font-bold text-foreground sm:text-2xl">Admin</h1>
+        <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-600">
+          Failed to load admin data. Please try refreshing the page.
+        </div>
+      </div>
+    );
+  }
 
   // Split into company users (admin/collaborator) and client users
   const companyUsers = users.filter(
