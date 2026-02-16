@@ -70,7 +70,12 @@ export function ProjectActions({ project }: Props) {
     if (status === "paid") return false;
     // Can always go back to any previous status
     if (targetIdx < currentIdx) return true;
-    // Can only advance to the immediate next status
+    // Can advance to any future status in the same row
+    // Row 1: draft→accepted, Row 2: paid→completed
+    const inRow1 = STATUS_ROW_1.includes(status) && STATUS_ROW_1.includes(project.status);
+    const inRow2 = STATUS_ROW_2.includes(status) && STATUS_ROW_2.includes(project.status);
+    if (inRow1 || inRow2) return targetIdx > currentIdx;
+    // Cross-row: only allow the immediate next status
     return targetIdx === currentIdx + 1;
   }
 
