@@ -87,11 +87,16 @@ export default async function ProjectDetailPage({ params }: Props) {
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      {/* Header */}
+      {/* Header: status + share on top, name below */}
       <div>
+        {admin && (
+          <div className="flex items-center justify-between mb-2">
+            <ProjectActions project={project} />
+          </div>
+        )}
         <div className="flex items-center gap-2 sm:gap-3">
           <EditableProjectName projectId={project.id} name={project.name} isAdmin={admin} />
-          <Badge variant={project.status}>{project.status}</Badge>
+          {!admin && <Badge variant={project.status}>{project.status}</Badge>}
         </div>
         {!admin && project.invoice_number && (
           <p className="text-xs text-muted-foreground mt-0.5">
@@ -219,9 +224,6 @@ export default async function ProjectDetailPage({ params }: Props) {
           )}
         </div>
       )}
-
-      {/* Admin actions */}
-      {admin && <ProjectActions project={project} />}
 
       {/* Invoice items */}
       <div className="flex items-center gap-2">
