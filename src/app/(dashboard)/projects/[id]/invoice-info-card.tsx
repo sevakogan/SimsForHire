@@ -139,7 +139,6 @@ export function InvoiceInfoCard({
   const invoiceDirty = localInvoice !== savedInvoice;
   const notesDirty = localNotes !== savedNotes;
   const taxDirty = localTax !== savedTax;
-  const dateDirty = localDate !== savedDate;
   const discountPercentDirty = localDiscountPercent !== savedDiscountPercent;
   const discountAmountDirty = localDiscountAmount !== savedDiscountAmount;
 
@@ -192,11 +191,11 @@ export function InvoiceInfoCard({
     setLocalInvoice(savedInvoice);
   }
 
-  function handleDateSave() {
-    saveField("date_required", localDate);
-  }
-  function handleDateCancel() {
-    setLocalDate(savedDate);
+  function handleDateChange(newDate: string) {
+    setLocalDate(newDate);
+    // Auto-save date immediately (fire-and-forget)
+    const payload: Record<string, string | null> = { date_required: newDate || null };
+    updateProject(projectId, payload).then(() => router.refresh());
   }
 
   function handleNotesSave() {
@@ -241,15 +240,23 @@ export function InvoiceInfoCard({
 
   /* ── Immediate-save toggles (no check/x needed) ──────── */
 
+  /** Fire-and-forget save for toggles — update UI instantly, persist in background */
+  function saveFieldBackground(field: SaveableField, value: string | number) {
+    const payload: Record<string, string | number | null> = {};
+    if (field === "discount_type") payload.discount_type = value as string;
+    else if (field === "fulfillment_type") payload.fulfillment_type = value as string;
+    updateProject(projectId, payload).then(() => router.refresh());
+  }
+
   function handleDiscountTypeToggle(type: DiscountType) {
     setLocalDiscountType(type);
-    saveField("discount_type", type);
+    saveFieldBackground("discount_type", type);
     emitDiscountChange({ discountType: type });
   }
 
   function handleFulfillmentToggle(type: FulfillmentType) {
     setLocalFulfillment(type);
-    saveField("fulfillment_type", type);
+    saveFieldBackground("fulfillment_type", type);
   }
 
   /* ── Live-update discount for footer preview ─────────── */
@@ -320,24 +327,18 @@ export function InvoiceInfoCard({
           </div>
         </div>
 
-        {/* Requested By — editable date picker */}
+        {/* Requested By — editable date picker (auto-saves on change) */}
         <div className="bg-white px-3 py-3 min-w-0 flex-1">
           <label className="block text-[10px] font-semibold uppercase tracking-wider text-gray-400 mb-1.5">
             Requested By
           </label>
-          <div className="flex items-center">
-            <input
-              type="date"
-              value={localDate}
-              onChange={(e) => setLocalDate(e.target.value)}
-              onKeyDown={(e) => { if (e.key === "Enter" && dateDirty) handleDateSave(); if (e.key === "Escape") handleDateCancel(); }}
-              disabled={readOnly}
-              className={`${inputBase} w-full ${readOnly ? "opacity-60 cursor-not-allowed" : ""}`}
-            />
-            {dateDirty && !readOnly && (
-              <SaveCancelButtons onSave={handleDateSave} onCancel={handleDateCancel} saving={saving} />
-            )}
-          </div>
+          <input
+            type="date"
+            value={localDate}
+            onChange={(e) => handleDateChange(e.target.value)}
+            disabled={readOnly}
+            className={`${inputBase} w-full ${readOnly ? "opacity-60 cursor-not-allowed" : ""}`}
+          />
         </div>
       </div>
 

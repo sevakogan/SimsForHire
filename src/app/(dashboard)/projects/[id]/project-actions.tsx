@@ -18,13 +18,26 @@ interface Props {
 
 export function ProjectActions({ project }: Props) {
   const router = useRouter();
+  const [optimisticStatus, setOptimisticStatus] = useState<ProjectStatus>(project.status);
   const [loading, setLoading] = useState(false);
   const [shareState, setShareState] = useState<"idle" | "loading" | "copied">("idle");
 
+  // Sync optimistic state when server props change (after refresh)
+  const serverStatus = project.status;
+  if (optimisticStatus !== serverStatus && !loading) {
+    setOptimisticStatus(serverStatus);
+  }
+
   async function handleStatusChange(status: ProjectStatus) {
-    if (status === project.status || loading) return;
+    if (status === optimisticStatus || loading) return;
+    // Optimistic: update UI immediately
+    setOptimisticStatus(status);
     setLoading(true);
-    await updateProject(project.id, { status });
+    const result = await updateProject(project.id, { status });
+    if (result.error) {
+      // Revert on error
+      setOptimisticStatus(serverStatus);
+    }
     router.refresh();
     setLoading(false);
   }
@@ -60,7 +73,7 @@ export function ProjectActions({ project }: Props) {
   // Sequential status flow — strict next-only forward, back to any previous.
   // "paid" is locked (will be enabled via Stripe later).
   // "accepted" is set by customer acceptance, not admin click.
-  const currentIdx = PROJECT_STATUSES.indexOf(project.status);
+  const currentIdx = PROJECT_STATUSES.indexOf(optimisticStatus);
 
   function isStatusClickable(status: ProjectStatus): boolean {
     const targetIdx = PROJECT_STATUSES.indexOf(status);
@@ -78,7 +91,7 @@ export function ProjectActions({ project }: Props) {
 
   function renderStatusButton(status: ProjectStatus) {
     const config = STATUS_CONFIG[status];
-    const isActive = project.status === status;
+    const isActive = optimisticStatus === status;
     const clickable = isStatusClickable(status);
 
     return (
