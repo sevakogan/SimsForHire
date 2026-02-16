@@ -16,6 +16,7 @@ import { ImageUpload } from "@/components/items/image-upload";
 import { ProductSearch } from "@/components/products/product-search";
 import { TypeTagPicker } from "@/components/products/type-tag-picker";
 import { scrapeProductUrl } from "@/lib/actions/scrape";
+import { SellerAutocomplete } from "@/components/ui/seller-autocomplete";
 import type { Item, ProductSearchResult } from "@/types";
 
 interface ItemFormProps {
@@ -318,12 +319,9 @@ export function ItemForm({ projectId, itemNumber, item, isAdmin }: ItemFormProps
       <div className="grid grid-cols-3 gap-2 sm:flex sm:flex-wrap">
         <div className={`${pillWrapper} col-span-3 sm:w-32 sm:shrink-0`}>
           <label htmlFor="seller_merchant" className={pillLabel}>Seller/Merchant</label>
-          <input
-            id="seller_merchant"
-            name="seller_merchant"
-            type="text"
+          <SellerAutocomplete
             value={fields.seller_merchant}
-            onChange={(e) => updateField("seller_merchant", e.target.value)}
+            onChange={(v) => updateField("seller_merchant", v)}
             placeholder="Seller…"
             className={pillInput}
           />

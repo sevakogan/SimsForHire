@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/pill-styles";
 import { MultiImageUpload } from "@/components/items/multi-image-upload";
 import { TypeTagPicker } from "@/components/products/type-tag-picker";
+import { SellerAutocomplete } from "@/components/ui/seller-autocomplete";
 import { parseImages } from "@/lib/parse-images";
 import type { Product } from "@/types";
 
@@ -36,6 +37,7 @@ export function ProductForm({ product, isAdmin, onDone }: ProductFormProps) {
   );
   const [type, setType] = useState(product?.type ?? "");
   const [urlValue, setUrlValue] = useState(product?.manufacturer_website ?? "");
+  const [sellerValue, setSellerValue] = useState(product?.seller_merchant ?? "");
 
   function handleUrlApprove() {
     const form = formRef.current;
@@ -115,8 +117,7 @@ export function ProductForm({ product, isAdmin, onDone }: ProductFormProps) {
         image_url: imageUrl,
         notes: (form.get("notes") as string) || "",
         manufacturer_website: urlValue.trim() || "",
-        seller_merchant:
-          (form.get("seller_merchant") as string) || "",
+        seller_merchant: sellerValue.trim() || "",
       };
 
       const result = product
@@ -207,11 +208,9 @@ export function ProductForm({ product, isAdmin, onDone }: ProductFormProps) {
           <label htmlFor="seller_merchant" className={pillLabel}>
             Seller/Merchant
           </label>
-          <input
-            id="seller_merchant"
-            name="seller_merchant"
-            type="text"
-            defaultValue={product?.seller_merchant ?? ""}
+          <SellerAutocomplete
+            value={sellerValue}
+            onChange={setSellerValue}
             placeholder="Seller…"
             className={pillInput}
           />

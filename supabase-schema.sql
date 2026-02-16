@@ -350,6 +350,27 @@ CREATE POLICY "Admins and collaborators can manage all contact messages"
   USING (auth_role() IN ('admin', 'collaborator'));
 
 -- ============================================================
+-- Sellers — saved seller/merchant names for autocomplete
+-- ============================================================
+CREATE TABLE sellers (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  name TEXT NOT NULL UNIQUE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX idx_sellers_name ON sellers (name);
+
+ALTER TABLE sellers ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Authenticated users can view sellers"
+  ON sellers FOR SELECT
+  USING (auth.uid() IS NOT NULL);
+
+CREATE POLICY "Admins and collaborators can manage sellers"
+  ON sellers FOR ALL
+  USING (auth_role() IN ('admin', 'collaborator'));
+
+-- ============================================================
 -- AFTER FIRST GOOGLE SIGN-IN, promote yourself to admin:
 -- UPDATE profiles SET role = 'admin', status = 'approved' WHERE email = 'YOUR_EMAIL@gmail.com';
 -- ============================================================
