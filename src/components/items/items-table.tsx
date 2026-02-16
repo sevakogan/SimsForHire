@@ -214,215 +214,222 @@ export function ItemsTable({ items, projectId, isAdmin, unreadNoteCount = 0 }: I
       {/* List view */}
       {view === "list" && (
         <>
-          {/* Desktop table layout — no S/H column, Product gets more space */}
-          <div className="hidden sm:block space-y-0">
-            {/* Header row */}
-            <div className="flex items-center gap-2 bg-muted/40 px-1 py-2 rounded-t-xl border border-border/40">
-              <div className="w-5 shrink-0" />
-              <div className="w-10 shrink-0" />
-              <div className="min-w-0 flex-1">
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70">
-                  Product
-                </span>
-              </div>
-              <div className="w-12 shrink-0 text-center">
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70">
-                  Qty
-                </span>
-              </div>
-              <div className="w-20 shrink-0 text-right">
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70">
-                  Retail
-                </span>
-              </div>
-              <div className="w-20 shrink-0 text-right">
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70">
-                  Selling
-                </span>
-              </div>
-              <div className="w-20 shrink-0 text-right">
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70">
-                  Total
-                </span>
-              </div>
-              {isAdmin && (
-                <div className="w-16 shrink-0 text-right">
-                  <span className="text-[10px] font-semibold uppercase tracking-wider text-amber-600/70">
-                    Cost
-                  </span>
-                </div>
-              )}
-              {isAdmin && (
-                <div className="w-16 shrink-0 text-right">
-                  <span className="text-[10px] font-semibold uppercase tracking-wider text-green-600/70">
-                    Profit
-                  </span>
-                </div>
-              )}
-              {isAdmin && <div className="w-7 shrink-0" />}
-            </div>
+          {/* Desktop table layout */}
+          <div className="hidden sm:block overflow-x-auto rounded-xl border border-border/40">
+            <table className="w-full text-sm" style={{ tableLayout: "fixed" }}>
+              <colgroup>
+                <col style={{ width: "24px" }} />
+                <col style={{ width: "48px" }} />
+                <col />
+                <col style={{ width: "56px" }} />
+                <col style={{ width: "80px" }} />
+                <col style={{ width: "88px" }} />
+                <col style={{ width: "88px" }} />
+                {isAdmin && <col style={{ width: "80px" }} />}
+                {isAdmin && <col style={{ width: "80px" }} />}
+                {isAdmin && <col style={{ width: "32px" }} />}
+              </colgroup>
+              <thead>
+                <tr className="bg-muted/40">
+                  <th className="py-2 px-1" />
+                  <th className="py-2 px-1" />
+                  <th className="py-2 px-1 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70">
+                    Product
+                  </th>
+                  <th className="py-2 px-1 text-center text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70">
+                    Qty
+                  </th>
+                  <th className="py-2 px-1 text-right text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70">
+                    Retail
+                  </th>
+                  <th className="py-2 px-1 text-right text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70">
+                    Selling
+                  </th>
+                  <th className="py-2 px-1 text-right text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70">
+                    Total
+                  </th>
+                  {isAdmin && (
+                    <th className="py-2 px-1 text-right text-[10px] font-semibold uppercase tracking-wider text-amber-600/70">
+                      Cost
+                    </th>
+                  )}
+                  {isAdmin && (
+                    <th className="py-2 px-1 text-right text-[10px] font-semibold uppercase tracking-wider text-green-600/70">
+                      Profit
+                    </th>
+                  )}
+                  {isAdmin && <th className="py-2 px-1" />}
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.map((item, index) => {
+                  const qty = item.quantity ?? 1;
+                  const sellingPrice = item.price_sold_for ?? item.retail_price;
+                  const total = sellingPrice * qty;
+                  const thumb = firstImage(item.image_url);
+                  const isEven = index % 2 === 0;
 
-            {filtered.map((item, index) => {
-              const qty = item.quantity ?? 1;
-              const sellingPrice = item.price_sold_for ?? item.retail_price;
-              const total = sellingPrice * qty;
-              const thumb = firstImage(item.image_url);
-              const isEven = index % 2 === 0;
-
-              return (
-                <div
-                  key={item.id}
-                  className={`group flex items-center gap-2 border-b border-x border-border/40 px-1 py-3 transition-colors last:rounded-b-xl ${
-                    isEven ? "bg-white hover:bg-muted/20" : "bg-gray-50/70 hover:bg-gray-100/70"
-                  }`}
-                >
-                  <div className="flex shrink-0 cursor-grab items-center text-muted-foreground/30 transition-colors group-hover:text-muted-foreground/60">
-                    <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
-                      <circle cx="9" cy="6" r="1.5" />
-                      <circle cx="15" cy="6" r="1.5" />
-                      <circle cx="9" cy="12" r="1.5" />
-                      <circle cx="15" cy="12" r="1.5" />
-                      <circle cx="9" cy="18" r="1.5" />
-                      <circle cx="15" cy="18" r="1.5" />
-                    </svg>
-                  </div>
-
-                  <div className="shrink-0">
-                    {thumb ? (
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          setLightboxUrl(thumb);
-                          setLightboxName(item.description || item.item_type || "Item");
-                        }}
-                        className="rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 cursor-pointer"
-                      >
-                        <Image
-                          src={thumb}
-                          alt=""
-                          width={40}
-                          height={40}
-                          className="h-10 w-10 rounded-lg object-cover"
-                          unoptimized={isExternalImage(thumb)}
-                        />
-                      </button>
-                    ) : (
-                      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted/40 text-muted-foreground/40">
-                        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0 0 22.5 18.75V5.25A2.25 2.25 0 0 0 20.25 3H3.75A2.25 2.25 0 0 0 1.5 5.25v13.5A2.25 2.25 0 0 0 3.75 21Z" />
-                        </svg>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Product — flex-1, takes remaining space */}
-                  <div className="min-w-0 flex-1">
-                    <button
-                      type="button"
-                      onClick={() => setEditItem(item as Item)}
-                      className="text-sm font-medium text-foreground underline decoration-border underline-offset-2 transition-colors hover:decoration-primary hover:text-primary truncate block text-left"
+                  return (
+                    <tr
+                      key={item.id}
+                      className={`group transition-colors ${
+                        isEven ? "bg-white hover:bg-muted/20" : "bg-gray-50/70 hover:bg-gray-100/70"
+                      }`}
                     >
-                      {item.description || item.item_type}
-                    </button>
-                    <div className="flex items-center gap-1.5 mt-0.5">
-                      {item.item_type && (() => {
-                        const c = getTypeColor(item.item_type);
-                        return (
-                          <span className={`inline-block rounded-full px-2 py-0.5 text-[10px] font-medium shadow-sm ${c.bg} ${c.text}`}>
-                            {item.item_type}
+                      {/* Drag handle */}
+                      <td className="py-2 px-1 align-middle">
+                        <div className="flex cursor-grab items-center text-muted-foreground/30 transition-colors group-hover:text-muted-foreground/60">
+                          <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
+                            <circle cx="9" cy="6" r="1.5" />
+                            <circle cx="15" cy="6" r="1.5" />
+                            <circle cx="9" cy="12" r="1.5" />
+                            <circle cx="15" cy="12" r="1.5" />
+                            <circle cx="9" cy="18" r="1.5" />
+                            <circle cx="15" cy="18" r="1.5" />
+                          </svg>
+                        </div>
+                      </td>
+
+                      {/* Image */}
+                      <td className="py-2 px-1 align-middle">
+                        {thumb ? (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              setLightboxUrl(thumb);
+                              setLightboxName(item.description || item.item_type || "Item");
+                            }}
+                            className="rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 cursor-pointer"
+                          >
+                            <Image
+                              src={thumb}
+                              alt=""
+                              width={40}
+                              height={40}
+                              className="h-10 w-10 rounded-lg object-cover"
+                              unoptimized={isExternalImage(thumb)}
+                            />
+                          </button>
+                        ) : (
+                          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted/40 text-muted-foreground/40">
+                            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0 0 22.5 18.75V5.25A2.25 2.25 0 0 0 20.25 3H3.75A2.25 2.25 0 0 0 1.5 5.25v13.5A2.25 2.25 0 0 0 3.75 21Z" />
+                            </svg>
+                          </div>
+                        )}
+                      </td>
+
+                      {/* Product */}
+                      <td className="py-2 px-1 align-middle overflow-hidden">
+                        <button
+                          type="button"
+                          onClick={() => setEditItem(item as Item)}
+                          className="text-sm font-medium text-foreground underline decoration-border underline-offset-2 transition-colors hover:decoration-primary hover:text-primary truncate block text-left max-w-full"
+                        >
+                          {item.description || item.item_type}
+                        </button>
+                        <div className="flex items-center gap-1.5 mt-0.5">
+                          {item.item_type && (() => {
+                            const c = getTypeColor(item.item_type);
+                            return (
+                              <span className={`inline-block rounded-full px-2 py-0.5 text-[10px] font-medium shadow-sm ${c.bg} ${c.text}`}>
+                                {item.item_type}
+                              </span>
+                            );
+                          })()}
+                          {isAdmin && item.acceptance_status && item.acceptance_status !== "pending" && (
+                            <AcceptanceBadge status={item.acceptance_status} />
+                          )}
+                        </div>
+                        {isAdmin && item.client_note && (
+                          <ClientNoteInline
+                            note={item.client_note}
+                            itemId={item.id}
+                            isUnread={
+                              !("client_note_read_at" in item && (item as Item).client_note_read_at) && !dismissedNoteIds.has(item.id)
+                            }
+                            onDismiss={handleDismissNote}
+                          />
+                        )}
+                      </td>
+
+                      {/* Qty */}
+                      <td className="py-2 px-1 align-middle">
+                        <InlineNumberInput
+                          value={qty}
+                          onChange={(val) => handleInlineUpdate(item.id, "quantity", val)}
+                          step="1"
+                          min={1}
+                          isInteger
+                        />
+                      </td>
+
+                      {/* Retail */}
+                      <td className="py-2 px-1 align-middle text-right">
+                        <span className="text-xs text-muted-foreground tabular-nums">
+                          {formatCurrency(item.retail_price)}
+                        </span>
+                      </td>
+
+                      {/* Selling Price */}
+                      <td className="py-2 px-1 align-middle">
+                        <InlineNumberInput
+                          value={sellingPrice}
+                          onChange={(val) => handleInlineUpdate(item.id, "price_sold_for", val)}
+                        />
+                      </td>
+
+                      {/* Total */}
+                      <td className="py-2 px-1 align-middle text-right">
+                        <span className="text-sm font-semibold text-foreground tabular-nums">
+                          {formatCurrency(total)}
+                        </span>
+                      </td>
+
+                      {/* Admin cost */}
+                      {isAdmin && "my_cost" in item && (
+                        <td className="py-2 px-1 align-middle text-right">
+                          <span className="text-xs text-amber-600/80 tabular-nums">
+                            {formatCurrency((item as Item).my_cost)}
                           </span>
+                        </td>
+                      )}
+
+                      {/* Admin profit */}
+                      {isAdmin && "my_cost" in item && (() => {
+                        const itemProfit = total - (item as Item).my_cost * qty;
+                        return (
+                          <td className="py-2 px-1 align-middle text-right">
+                            <span className={`text-xs font-medium tabular-nums ${
+                              itemProfit >= 0 ? "text-green-600" : "text-red-500"
+                            }`}>
+                              {formatCurrency(itemProfit)}
+                            </span>
+                          </td>
                         );
                       })()}
-                      {isAdmin && item.acceptance_status && item.acceptance_status !== "pending" && (
-                        <AcceptanceBadge status={item.acceptance_status} />
+
+                      {/* Delete */}
+                      {isAdmin && (
+                        <td className="py-2 px-1 align-middle">
+                          <button
+                            onClick={() => handleDelete(item.id)}
+                            className="rounded-md p-1 text-muted-foreground/40 transition-all hover:bg-destructive/10 hover:text-destructive opacity-0 group-hover:opacity-100"
+                            title="Delete item"
+                          >
+                            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+                            </svg>
+                          </button>
+                        </td>
                       )}
-                    </div>
-                    {isAdmin && item.client_note && (
-                      <ClientNoteInline
-                        note={item.client_note}
-                        itemId={item.id}
-                        isUnread={
-                          !("client_note_read_at" in item && (item as Item).client_note_read_at) && !dismissedNoteIds.has(item.id)
-                        }
-                        onDismiss={handleDismissNote}
-                      />
-                    )}
-                  </div>
-
-                  {/* Qty */}
-                  <div className="w-12 shrink-0">
-                    <InlineNumberInput
-                      value={qty}
-                      onChange={(val) => handleInlineUpdate(item.id, "quantity", val)}
-                      step="1"
-                      min={1}
-                      isInteger
-                    />
-                  </div>
-
-                  {/* Retail */}
-                  <div className="w-20 shrink-0 text-right">
-                    <span className="text-xs text-muted-foreground">
-                      {formatCurrency(item.retail_price)}
-                    </span>
-                  </div>
-
-                  {/* Selling Price */}
-                  <div className="w-20 shrink-0">
-                    <InlineNumberInput
-                      value={sellingPrice}
-                      onChange={(val) => handleInlineUpdate(item.id, "price_sold_for", val)}
-                      prefix="$"
-                    />
-                  </div>
-
-                  {/* Total (selling * qty, no shipping) */}
-                  <div className="w-20 shrink-0 text-right">
-                    <span className="text-sm font-semibold text-foreground">
-                      {formatCurrency(total)}
-                    </span>
-                  </div>
-
-                  {/* Admin cost */}
-                  {isAdmin && "my_cost" in item && (
-                    <div className="w-16 shrink-0 text-right">
-                      <span className="text-xs text-amber-600/80">
-                        {formatCurrency((item as Item).my_cost)}
-                      </span>
-                    </div>
-                  )}
-
-                  {/* Admin profit (total - cost × qty) */}
-                  {isAdmin && "my_cost" in item && (() => {
-                    const itemProfit = total - (item as Item).my_cost * qty;
-                    return (
-                      <div className="w-16 shrink-0 text-right">
-                        <span className={`text-xs font-medium ${
-                          itemProfit >= 0 ? "text-green-600" : "text-red-500"
-                        }`}>
-                          {formatCurrency(itemProfit)}
-                        </span>
-                      </div>
-                    );
-                  })()}
-
-                  {/* Delete */}
-                  {isAdmin && (
-                    <button
-                      onClick={() => handleDelete(item.id)}
-                      className="shrink-0 rounded-md p-1.5 text-muted-foreground/40 transition-all hover:bg-destructive/10 hover:text-destructive opacity-0 group-hover:opacity-100"
-                      title="Delete item"
-                    >
-                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
-                      </svg>
-                    </button>
-                  )}
-                </div>
-              );
-            })}
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
 
           {/* Mobile card layout (list mode on mobile) — no S/H */}
