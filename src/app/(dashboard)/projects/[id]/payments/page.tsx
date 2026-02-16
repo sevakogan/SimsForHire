@@ -102,12 +102,13 @@ export default async function PaymentsPage({ params }: Props) {
         <div className="h-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500" />
 
         <div className="p-5 sm:p-6 space-y-4">
-          {/* Client-facing totals */}
+          {/* Client-facing totals — reordered */}
           <div className="space-y-3">
             <h2 className="text-xs font-semibold uppercase tracking-wider text-gray-400">
               Invoice Totals
             </h2>
 
+            {/* Items Total */}
             <div className="flex items-center justify-between py-2 border-b border-gray-100">
               <div className="flex items-center gap-2">
                 <span className="inline-flex h-2.5 w-2.5 rounded-full bg-indigo-400" />
@@ -118,28 +119,18 @@ export default async function PaymentsPage({ params }: Props) {
               </span>
             </div>
 
+            {/* Services Total (Delivery) */}
             <div className="flex items-center justify-between py-2 border-b border-gray-100">
               <div className="flex items-center gap-2">
                 <span className="inline-flex h-2.5 w-2.5 rounded-full bg-blue-400" />
-                <span className="text-sm text-gray-600">Delivery Total</span>
+                <span className="text-sm text-gray-600">Services Total</span>
               </div>
               <span className="text-sm font-semibold tabular-nums text-gray-900">
                 {formatCurrency(totals.deliveryTotal)}
               </span>
             </div>
 
-            {totals.discountAmount > 0 && (
-              <div className="flex items-center justify-between py-2 border-b border-gray-100">
-                <div className="flex items-center gap-2">
-                  <span className="inline-flex h-2.5 w-2.5 rounded-full bg-emerald-400" />
-                  <span className="text-sm text-emerald-600">{discountLabel}</span>
-                </div>
-                <span className="text-sm font-semibold tabular-nums text-emerald-600">
-                  −{formatCurrency(totals.discountAmount)}
-                </span>
-              </div>
-            )}
-
+            {/* Tax */}
             {totals.taxAmount > 0 && (
               <div className="flex items-center justify-between py-2 border-b border-gray-100">
                 <div className="flex items-center gap-2">
@@ -148,6 +139,19 @@ export default async function PaymentsPage({ params }: Props) {
                 </div>
                 <span className="text-sm font-semibold tabular-nums text-gray-900">
                   {formatCurrency(totals.taxAmount)}
+                </span>
+              </div>
+            )}
+
+            {/* Discount */}
+            {totals.discountAmount > 0 && (
+              <div className="flex items-center justify-between py-2 border-b border-gray-100">
+                <div className="flex items-center gap-2">
+                  <span className="inline-flex h-2.5 w-2.5 rounded-full bg-emerald-400" />
+                  <span className="text-sm text-emerald-600">{discountLabel}</span>
+                </div>
+                <span className="text-sm font-semibold tabular-nums text-emerald-600">
+                  −{formatCurrency(totals.discountAmount)}
                 </span>
               </div>
             )}

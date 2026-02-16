@@ -586,35 +586,23 @@ export function ShareActions({
         })}
       </div>
 
-      {/* Summary */}
+      {/* Summary — reordered: Items → Services → Tax → Discount → Total */}
       <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
-        {/* Subtotal */}
+        {/* Items Total */}
         <div className="flex items-center justify-between border-b border-gray-100 pb-3">
-          <span className="text-sm text-gray-500">Subtotal</span>
+          <span className="text-sm text-gray-500">Items Total</span>
           <span className="text-sm tabular-nums text-gray-900">
             {formatCurrency(totalSelling)}
           </span>
         </div>
 
-        {/* Shipping */}
+        {/* Services (Shipping) */}
         <div className="flex items-center justify-between border-b border-gray-100 py-3">
-          <span className="text-sm text-gray-500">Shipping &amp; Handling</span>
+          <span className="text-sm text-gray-500">Services</span>
           <span className="text-sm tabular-nums text-gray-900">
             {formatCurrency(totalShipping)}
           </span>
         </div>
-
-        {/* Discount — only shown when > 0 */}
-        {discountAmount > 0 && (
-          <div className="flex items-center justify-between border-b border-gray-100 py-3">
-            <span className="text-sm text-gray-500">
-              {discountType === "percent" ? `Discount (${discountPercent}%)` : "Discount"}
-            </span>
-            <span className="text-sm tabular-nums text-green-600">
-              −{formatCurrency(discountAmount)}
-            </span>
-          </div>
-        )}
 
         {/* Tax — only shown when > 0 */}
         {taxPercent > 0 && (
@@ -624,6 +612,18 @@ export function ShareActions({
             </span>
             <span className="text-sm tabular-nums text-gray-900">
               {formatCurrency(taxAmount)}
+            </span>
+          </div>
+        )}
+
+        {/* Discount — only shown when > 0 */}
+        {discountAmount > 0 && (
+          <div className="flex items-center justify-between border-b border-gray-100 py-3">
+            <span className="text-sm text-gray-500">
+              {discountType === "percent" ? `Discount (${discountPercent}%)` : "Discount"}
+            </span>
+            <span className="text-sm tabular-nums text-green-600">
+              −{formatCurrency(discountAmount)}
             </span>
           </div>
         )}

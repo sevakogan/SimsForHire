@@ -57,23 +57,13 @@ export function InvoiceSummaryFooter({
               </span>
             </div>
 
-            {/* Delivery Total */}
+            {/* Services Total (Delivery) */}
             <div className="flex items-center justify-between text-sm">
-              <span className="text-gray-500">Delivery</span>
+              <span className="text-gray-500">Services</span>
               <span className="tabular-nums font-medium text-gray-900">
                 {formatCurrency(totals.deliveryTotal)}
               </span>
             </div>
-
-            {/* Discount */}
-            {totals.discountAmount > 0 && (
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-emerald-600">{discountLabel}</span>
-                <span className="tabular-nums font-medium text-emerald-600">
-                  −{formatCurrency(totals.discountAmount)}
-                </span>
-              </div>
-            )}
 
             {/* Tax */}
             {totals.taxAmount > 0 && (
@@ -81,6 +71,16 @@ export function InvoiceSummaryFooter({
                 <span className="text-gray-500">Tax ({taxPercent}%)</span>
                 <span className="tabular-nums font-medium text-gray-900">
                   {formatCurrency(totals.taxAmount)}
+                </span>
+              </div>
+            )}
+
+            {/* Discount */}
+            {totals.discountAmount > 0 && (
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-emerald-600">{discountLabel}</span>
+                <span className="tabular-nums font-medium text-emerald-600">
+                  −{formatCurrency(totals.discountAmount)}
                 </span>
               </div>
             )}

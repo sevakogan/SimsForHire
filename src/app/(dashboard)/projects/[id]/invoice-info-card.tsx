@@ -4,7 +4,7 @@ import { useState, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { updateProject } from "@/lib/actions/projects";
 import { calculateInvoiceTotals, formatCurrency } from "@/lib/invoice-calculations";
-import type { DiscountType } from "@/types";
+import type { DiscountType, FulfillmentType } from "@/types";
 
 interface InvoiceInfoCardProps {
   projectId: string;
@@ -26,7 +26,8 @@ type SaveableField =
   | "tax_percent"
   | "discount_percent"
   | "discount_type"
-  | "discount_amount";
+  | "discount_amount"
+  | "fulfillment_type";
 
 export function InvoiceInfoCard({
   projectId,
@@ -48,6 +49,9 @@ export function InvoiceInfoCard({
   const [localDiscountType, setLocalDiscountType] = useState<DiscountType>(discountType);
   const [localDiscountPercent, setLocalDiscountPercent] = useState(String(discountPercent || ""));
   const [localDiscountAmount, setLocalDiscountAmount] = useState(String(discountAmount || ""));
+  const [localFulfillment, setLocalFulfillment] = useState<FulfillmentType>(
+    (fulfillmentType as FulfillmentType) || "delivery"
+  );
   const timers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
 
   const saveField = useCallback(
@@ -65,6 +69,8 @@ export function InvoiceInfoCard({
         payload.discount_type = value as string;
       } else if (field === "discount_amount") {
         payload.discount_amount = Number(value) || 0;
+      } else if (field === "fulfillment_type") {
+        payload.fulfillment_type = value as string;
       }
       updateProject(projectId, payload).then(() => router.refresh());
     },
@@ -117,6 +123,11 @@ export function InvoiceInfoCard({
   function handleDiscountTypeToggle(type: DiscountType) {
     setLocalDiscountType(type);
     saveField("discount_type", type);
+  }
+
+  function handleFulfillmentToggle(type: FulfillmentType) {
+    setLocalFulfillment(type);
+    saveField("fulfillment_type", type);
   }
 
   const handleDiscountPercentChange = useCallback(
@@ -198,12 +209,39 @@ export function InvoiceInfoCard({
           </p>
         </div>
 
-        {/* Fulfillment */}
+        {/* Fulfillment Toggle */}
         <div className="p-3 sm:p-4">
           <p className={labelClass}>Fulfillment</p>
-          <p className="text-sm font-medium text-gray-900 mt-2.5 px-1 capitalize">
-            {fulfillmentType}
-          </p>
+          <div className="mt-1.5 inline-flex rounded-lg border border-gray-200 overflow-hidden shadow-sm">
+            <button
+              type="button"
+              onClick={() => handleFulfillmentToggle("delivery")}
+              className={`flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold transition-all ${
+                localFulfillment === "delivery"
+                  ? "bg-blue-500 text-white shadow-inner"
+                  : "bg-white text-gray-500 hover:bg-gray-50"
+              }`}
+            >
+              <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 18.75a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 0 1-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 0 0-3.213-9.193 2.056 2.056 0 0 0-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 0 0-10.026 0 1.106 1.106 0 0 0-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12" />
+              </svg>
+              Delivery
+            </button>
+            <button
+              type="button"
+              onClick={() => handleFulfillmentToggle("pickup")}
+              className={`flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold transition-all border-l border-gray-200 ${
+                localFulfillment === "pickup"
+                  ? "bg-amber-500 text-white shadow-inner"
+                  : "bg-white text-gray-500 hover:bg-gray-50"
+              }`}
+            >
+              <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 10.5V6a3.75 3.75 0 1 0-7.5 0v4.5m11.356-1.993 1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 0 1-1.12-1.243l1.264-12A1.125 1.125 0 0 1 5.513 7.5h12.974c.576 0 1.059.435 1.119 1.007ZM8.625 10.5a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm7.5 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
+              </svg>
+              Pickup
+            </button>
+          </div>
         </div>
 
         {/* Tax */}
@@ -312,7 +350,7 @@ export function InvoiceInfoCard({
         />
       </div>
 
-      {/* Totals preview */}
+      {/* Totals preview — reordered: Items → Services → Tax → Discount → Total */}
       <div className="border-t border-gray-100 bg-gradient-to-r from-gray-50 to-slate-50 px-4 sm:px-5 py-3.5">
         <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs">
           <div className="flex items-center gap-1.5">
@@ -324,26 +362,26 @@ export function InvoiceInfoCard({
           </div>
           <div className="flex items-center gap-1.5">
             <span className="inline-flex h-2 w-2 rounded-full bg-blue-400" />
-            <span className="text-gray-500">Delivery</span>
+            <span className="text-gray-500">Services</span>
             <span className="font-bold tabular-nums text-gray-900">
               {formatCurrency(totals.deliveryTotal)}
             </span>
           </div>
-          {totals.discountAmount > 0 && (
-            <div className="flex items-center gap-1.5">
-              <span className="inline-flex h-2 w-2 rounded-full bg-emerald-400" />
-              <span className="text-gray-500">Discount</span>
-              <span className="font-bold tabular-nums text-emerald-600">
-                −{formatCurrency(totals.discountAmount)}
-              </span>
-            </div>
-          )}
           {totals.taxAmount > 0 && (
             <div className="flex items-center gap-1.5">
               <span className="inline-flex h-2 w-2 rounded-full bg-amber-400" />
               <span className="text-gray-500">Tax</span>
               <span className="font-bold tabular-nums text-gray-900">
                 {formatCurrency(totals.taxAmount)}
+              </span>
+            </div>
+          )}
+          {totals.discountAmount > 0 && (
+            <div className="flex items-center gap-1.5">
+              <span className="inline-flex h-2 w-2 rounded-full bg-emerald-400" />
+              <span className="text-gray-500">Discount</span>
+              <span className="font-bold tabular-nums text-emerald-600">
+                −{formatCurrency(totals.discountAmount)}
               </span>
             </div>
           )}
