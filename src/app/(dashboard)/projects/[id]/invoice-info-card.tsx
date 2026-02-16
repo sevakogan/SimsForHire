@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { updateProject } from "@/lib/actions/projects";
 import { calculateInvoiceTotals, formatCurrency } from "@/lib/invoice-calculations";
@@ -32,67 +32,6 @@ interface InvoiceInfoCardProps {
   onDiscountChange?: (state: DiscountState) => void;
   /** When true, all fields are locked except invoice notes */
   readOnly?: boolean;
-}
-
-type SaveableField =
-  | "invoice_number"
-  | "notes"
-  | "tax_percent"
-  | "discount_percent"
-  | "discount_type"
-  | "discount_amount"
-  | "fulfillment_type"
-  | "date_required";
-
-/* ── Tiny save / cancel icons ──────────────────────────── */
-
-function CheckIcon({ className = "h-3.5 w-3.5" }: { className?: string }) {
-  return (
-    <svg className={className} fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
-    </svg>
-  );
-}
-
-function XIcon({ className = "h-3.5 w-3.5" }: { className?: string }) {
-  return (
-    <svg className={className} fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
-    </svg>
-  );
-}
-
-function SaveCancelButtons({
-  onSave,
-  onCancel,
-  saving,
-}: {
-  onSave: () => void;
-  onCancel: () => void;
-  saving?: boolean;
-}) {
-  return (
-    <span className="inline-flex items-center gap-0.5 ml-1 animate-fade-in">
-      <button
-        type="button"
-        onClick={onSave}
-        disabled={saving}
-        className="rounded-md p-1 text-green-600 hover:bg-green-50 transition-colors disabled:opacity-50"
-        title="Save"
-      >
-        <CheckIcon />
-      </button>
-      <button
-        type="button"
-        onClick={onCancel}
-        disabled={saving}
-        className="rounded-md p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors disabled:opacity-50"
-        title="Cancel"
-      >
-        <XIcon />
-      </button>
-    </span>
-  );
 }
 
 export function InvoiceInfoCard({
@@ -133,130 +72,95 @@ export function InvoiceInfoCard({
   const [localFulfillment, setLocalFulfillment] = useState<FulfillmentType>(
     (fulfillmentType as FulfillmentType) || "delivery"
   );
-  const [saving, setSaving] = useState(false);
-
-  // Dirty checks
-  const invoiceDirty = localInvoice !== savedInvoice;
-  const notesDirty = localNotes !== savedNotes;
-  const taxDirty = localTax !== savedTax;
-  const discountPercentDirty = localDiscountPercent !== savedDiscountPercent;
-  const discountAmountDirty = localDiscountAmount !== savedDiscountAmount;
-
-  const saveField = useCallback(
-    async (field: SaveableField, value: string | number) => {
-      const payload: Record<string, string | number | null> = {};
-      if (field === "invoice_number") {
-        payload.invoice_number = (value as string) || null;
-      } else if (field === "notes") {
-        payload.notes = value as string;
-      } else if (field === "tax_percent") {
-        payload.tax_percent = Number(value) || 0;
-      } else if (field === "discount_percent") {
-        payload.discount_percent = Number(value) || 0;
-      } else if (field === "discount_type") {
-        payload.discount_type = value as string;
-      } else if (field === "discount_amount") {
-        payload.discount_amount = Number(value) || 0;
-      } else if (field === "fulfillment_type") {
-        payload.fulfillment_type = value as string;
-      } else if (field === "date_required") {
-        payload.date_required = (value as string) || null;
-      }
-      setSaving(true);
-      await updateProject(projectId, payload);
-      router.refresh();
-      setSaving(false);
-    },
-    [projectId, router]
-  );
+  // Refs to track latest local values for blur saves
+  const localInvoiceRef = useRef(localInvoice);
+  localInvoiceRef.current = localInvoice;
+  const localNotesRef = useRef(localNotes);
+  localNotesRef.current = localNotes;
+  const localTaxRef = useRef(localTax);
+  localTaxRef.current = localTax;
+  const localDiscountPercentRef = useRef(localDiscountPercent);
+  localDiscountPercentRef.current = localDiscountPercent;
+  const localDiscountAmountRef = useRef(localDiscountAmount);
+  localDiscountAmountRef.current = localDiscountAmount;
 
   // Emit discount state changes to parent for live footer sync
   function emitDiscountChange(overrides: Partial<DiscountState> = {}) {
     onDiscountChange?.({
       discountType: overrides.discountType ?? localDiscountType,
-      discountPercent: overrides.discountPercent ?? (parseFloat(localDiscountPercent) || 0),
-      discountAmount: overrides.discountAmount ?? (parseFloat(localDiscountAmount) || 0),
-      taxPercent: overrides.taxPercent ?? (parseFloat(localTax) || 0),
+      discountPercent: overrides.discountPercent ?? (parseFloat(localDiscountPercentRef.current) || 0),
+      discountAmount: overrides.discountAmount ?? (parseFloat(localDiscountAmountRef.current) || 0),
+      taxPercent: overrides.taxPercent ?? (parseFloat(localTaxRef.current) || 0),
     });
   }
 
-  /* ── Save/Cancel handlers ────────────────────────────── */
+  /** Fire-and-forget save — update UI instantly, persist in background */
+  const saveBackground = useCallback(
+    (payload: Record<string, string | number | null>) => {
+      updateProject(projectId, payload).then(() => router.refresh());
+    },
+    [projectId, router]
+  );
 
-  function handleInvoiceSave() {
-    const trimmed = localInvoice.trim();
+  /* ── Blur auto-save handlers ───────────────────────────── */
+
+  function handleInvoiceBlur() {
+    const trimmed = localInvoiceRef.current.trim();
     setLocalInvoice(trimmed);
-    saveField("invoice_number", trimmed);
-  }
-  function handleInvoiceCancel() {
-    setLocalInvoice(savedInvoice);
+    if (trimmed !== savedInvoice) {
+      saveBackground({ invoice_number: trimmed || null });
+    }
   }
 
   function handleDateChange(newDate: string) {
     setLocalDate(newDate);
-    // Auto-save date immediately (fire-and-forget)
-    const payload: Record<string, string | null> = { date_required: newDate || null };
-    updateProject(projectId, payload).then(() => router.refresh());
+    saveBackground({ date_required: newDate || null });
   }
 
-  function handleNotesSave() {
-    saveField("notes", localNotes);
-  }
-  function handleNotesCancel() {
-    setLocalNotes(savedNotes);
+  function handleNotesBlur() {
+    if (localNotesRef.current !== savedNotes) {
+      saveBackground({ notes: localNotesRef.current });
+    }
   }
 
-  function handleTaxSave() {
-    const num = parseFloat(localTax) || 0;
+  function handleTaxBlur() {
+    const num = parseFloat(localTaxRef.current) || 0;
     setLocalTax(String(num || ""));
-    saveField("tax_percent", num);
     emitDiscountChange({ taxPercent: num });
-  }
-  function handleTaxCancel() {
-    setLocalTax(savedTax);
-    emitDiscountChange({ taxPercent: parseFloat(savedTax) || 0 });
+    if (String(num || "") !== savedTax) {
+      saveBackground({ tax_percent: num });
+    }
   }
 
-  function handleDiscountPercentSave() {
-    const num = parseFloat(localDiscountPercent) || 0;
+  function handleDiscountPercentBlur() {
+    const num = parseFloat(localDiscountPercentRef.current) || 0;
     setLocalDiscountPercent(String(num || ""));
-    saveField("discount_percent", num);
     emitDiscountChange({ discountPercent: num });
-  }
-  function handleDiscountPercentCancel() {
-    setLocalDiscountPercent(savedDiscountPercent);
-    emitDiscountChange({ discountPercent: parseFloat(savedDiscountPercent) || 0 });
+    if (String(num || "") !== savedDiscountPercent) {
+      saveBackground({ discount_percent: num });
+    }
   }
 
-  function handleDiscountAmountSave() {
-    const num = parseFloat(localDiscountAmount) || 0;
+  function handleDiscountAmountBlur() {
+    const num = parseFloat(localDiscountAmountRef.current) || 0;
     setLocalDiscountAmount(String(num || ""));
-    saveField("discount_amount", num);
     emitDiscountChange({ discountAmount: num });
-  }
-  function handleDiscountAmountCancel() {
-    setLocalDiscountAmount(savedDiscountAmount);
-    emitDiscountChange({ discountAmount: parseFloat(savedDiscountAmount) || 0 });
+    if (String(num || "") !== savedDiscountAmount) {
+      saveBackground({ discount_amount: num });
+    }
   }
 
-  /* ── Immediate-save toggles (no check/x needed) ──────── */
-
-  /** Fire-and-forget save for toggles — update UI instantly, persist in background */
-  function saveFieldBackground(field: SaveableField, value: string | number) {
-    const payload: Record<string, string | number | null> = {};
-    if (field === "discount_type") payload.discount_type = value as string;
-    else if (field === "fulfillment_type") payload.fulfillment_type = value as string;
-    updateProject(projectId, payload).then(() => router.refresh());
-  }
+  /* ── Immediate-save toggles ────────────────────────────── */
 
   function handleDiscountTypeToggle(type: DiscountType) {
     setLocalDiscountType(type);
-    saveFieldBackground("discount_type", type);
+    saveBackground({ discount_type: type });
     emitDiscountChange({ discountType: type });
   }
 
   function handleFulfillmentToggle(type: FulfillmentType) {
     setLocalFulfillment(type);
-    saveFieldBackground("fulfillment_type", type);
+    saveBackground({ fulfillment_type: type });
   }
 
   /* ── Live-update discount for footer preview ─────────── */
@@ -311,20 +215,16 @@ export function InvoiceInfoCard({
           <label className="block text-[10px] font-semibold uppercase tracking-wider text-gray-400 mb-1.5">
             Invoice #
           </label>
-          <div className="flex items-center">
-            <input
-              type="text"
-              value={localInvoice}
-              onChange={(e) => setLocalInvoice(e.target.value)}
-              onKeyDown={(e) => { if (e.key === "Enter" && invoiceDirty) handleInvoiceSave(); if (e.key === "Escape") handleInvoiceCancel(); }}
-              placeholder="—"
-              disabled={readOnly}
-              className={`${inputBase} w-full ${readOnly ? "opacity-60 cursor-not-allowed" : ""}`}
-            />
-            {invoiceDirty && !readOnly && (
-              <SaveCancelButtons onSave={handleInvoiceSave} onCancel={handleInvoiceCancel} saving={saving} />
-            )}
-          </div>
+          <input
+            type="text"
+            value={localInvoice}
+            onChange={(e) => setLocalInvoice(e.target.value)}
+            onBlur={handleInvoiceBlur}
+            onKeyDown={(e) => { if (e.key === "Enter") e.currentTarget.blur(); }}
+            placeholder="—"
+            disabled={readOnly}
+            className={`${inputBase} w-full ${readOnly ? "opacity-60 cursor-not-allowed" : ""}`}
+          />
         </div>
 
         {/* Requested By — editable date picker (auto-saves on change) */}
@@ -444,7 +344,8 @@ export function InvoiceInfoCard({
                   type="number"
                   value={localDiscountPercent}
                   onChange={handleDiscountPercentInput}
-                  onKeyDown={(e) => { if (e.key === "Enter" && discountPercentDirty) handleDiscountPercentSave(); if (e.key === "Escape") handleDiscountPercentCancel(); }}
+                  onBlur={handleDiscountPercentBlur}
+                  onKeyDown={(e) => { if (e.key === "Enter") e.currentTarget.blur(); }}
                   placeholder="0"
                   min={0}
                   max={100}
@@ -453,9 +354,6 @@ export function InvoiceInfoCard({
                   className={`${inputBase} w-20 !border-emerald-200 focus:!border-emerald-400 focus:!ring-emerald-400/20 ${readOnly ? "opacity-60 cursor-not-allowed" : ""}`}
                 />
                 <span className="text-xs font-medium text-emerald-600">%</span>
-                {discountPercentDirty && !readOnly && (
-                  <SaveCancelButtons onSave={handleDiscountPercentSave} onCancel={handleDiscountPercentCancel} saving={saving} />
-                )}
               </div>
             ) : (
               <div className="flex items-center gap-1">
@@ -464,16 +362,14 @@ export function InvoiceInfoCard({
                   type="number"
                   value={localDiscountAmount}
                   onChange={handleDiscountAmountInput}
-                  onKeyDown={(e) => { if (e.key === "Enter" && discountAmountDirty) handleDiscountAmountSave(); if (e.key === "Escape") handleDiscountAmountCancel(); }}
+                  onBlur={handleDiscountAmountBlur}
+                  onKeyDown={(e) => { if (e.key === "Enter") e.currentTarget.blur(); }}
                   placeholder="0.00"
                   min={0}
                   step="0.01"
                   disabled={readOnly}
                   className={`${inputBase} w-24 !border-emerald-200 focus:!border-emerald-400 focus:!ring-emerald-400/20 ${readOnly ? "opacity-60 cursor-not-allowed" : ""}`}
                 />
-                {discountAmountDirty && !readOnly && (
-                  <SaveCancelButtons onSave={handleDiscountAmountSave} onCancel={handleDiscountAmountCancel} saving={saving} />
-                )}
               </div>
             )}
 
@@ -497,7 +393,8 @@ export function InvoiceInfoCard({
               type="number"
               value={localTax}
               onChange={handleTaxInput}
-              onKeyDown={(e) => { if (e.key === "Enter" && taxDirty) handleTaxSave(); if (e.key === "Escape") handleTaxCancel(); }}
+              onBlur={handleTaxBlur}
+              onKeyDown={(e) => { if (e.key === "Enter") e.currentTarget.blur(); }}
               placeholder="0"
               min={0}
               max={100}
@@ -506,26 +403,19 @@ export function InvoiceInfoCard({
               className={`${inputBase} w-16 ${readOnly ? "opacity-60 cursor-not-allowed" : ""}`}
             />
             <span className="text-xs font-medium text-gray-400">%</span>
-            {taxDirty && !readOnly && (
-              <SaveCancelButtons onSave={handleTaxSave} onCancel={handleTaxCancel} saving={saving} />
-            )}
           </div>
         </div>
       </div>
 
       {/* Notes */}
       <div className="border-t border-gray-100 px-4 py-3">
-        <div className="flex items-center justify-between mb-1.5">
-          <label className="block text-[10px] font-semibold uppercase tracking-wider text-gray-400">
-            Invoice Notes
-          </label>
-          {notesDirty && (
-            <SaveCancelButtons onSave={handleNotesSave} onCancel={handleNotesCancel} saving={saving} />
-          )}
-        </div>
+        <label className="block text-[10px] font-semibold uppercase tracking-wider text-gray-400 mb-1.5">
+          Invoice Notes
+        </label>
         <textarea
           value={localNotes}
           onChange={(e) => setLocalNotes(e.target.value)}
+          onBlur={handleNotesBlur}
           placeholder="Add notes visible to the customer..."
           rows={2}
           className="w-full rounded-lg border border-gray-200 bg-white py-2 px-3 text-sm text-gray-900 placeholder:text-gray-400 hover:border-gray-300 focus:border-indigo-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-400/20 resize-y transition-all"
