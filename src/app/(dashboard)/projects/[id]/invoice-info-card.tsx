@@ -1,7 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useRef, useTransition } from "react";
 import { updateProject } from "@/lib/actions/projects";
 import { calculateInvoiceTotals, formatCurrency } from "@/lib/invoice-calculations";
 import type { DiscountType, FulfillmentType } from "@/types";
@@ -48,7 +47,7 @@ export function InvoiceInfoCard({
   onDiscountChange,
   readOnly = false,
 }: InvoiceInfoCardProps) {
-  const router = useRouter();
+  const [, startTransition] = useTransition();
 
   // "Saved" values — the server-side truth
   const savedInvoice = invoiceNumber ?? "";
@@ -93,13 +92,20 @@ export function InvoiceInfoCard({
   }
 
   /**
-   * Persist a field via server action, then refresh.
-   * We intentionally avoid startTransition here because router.refresh()
-   * inside a transition can abort the in-flight server action fetch.
+   * Persist a field via server action.
+   * Uses startTransition so React batches the server action call with the
+   * revalidation triggered by revalidatePath inside the action itself.
+   * We do NOT call router.refresh() — revalidatePath already invalidates
+   * the cache, and an explicit refresh creates a competing fetch that can
+   * abort the in-flight server action via AbortController.
    */
-  async function persist(field: string, value: string | number | null) {
-    await updateProject(projectId, { [field]: value });
-    router.refresh();
+  function persist(field: string, value: string | number | null) {
+    startTransition(async () => {
+      const result = await updateProject(projectId, { [field]: value });
+      if (result.error) {
+        console.error(`[InvoiceInfoCard] Failed to save ${field}:`, result.error);
+      }
+    });
   }
 
   /* ── Blur auto-save handlers ───────────────────────────── */

@@ -70,31 +70,48 @@ export function NotificationBell() {
 
   // Fetch notifications on mount
   useEffect(() => {
+    let cancelled = false;
     async function load() {
       setLoading(true);
-      const [notes, count] = await Promise.all([
-        getUnreadNotifications(MAX_DROPDOWN_ITEMS),
-        getTotalUnreadCount(),
-      ]);
-      setNotifications(notes);
-      setTotalCount(count);
-      setLoading(false);
+      try {
+        const [notes, count] = await Promise.all([
+          getUnreadNotifications(MAX_DROPDOWN_ITEMS),
+          getTotalUnreadCount(),
+        ]);
+        if (!cancelled) {
+          setNotifications(notes);
+          setTotalCount(count);
+          setLoading(false);
+        }
+      } catch (err) {
+        // Ignore abort errors from navigation / concurrent renders
+        if (!cancelled) setLoading(false);
+      }
     }
     load();
+    return () => { cancelled = true; };
   }, []);
 
   // Refetch when dropdown opens
   useEffect(() => {
     if (!open) return;
+    let cancelled = false;
     async function refresh() {
-      const [notes, count] = await Promise.all([
-        getUnreadNotifications(MAX_DROPDOWN_ITEMS),
-        getTotalUnreadCount(),
-      ]);
-      setNotifications(notes);
-      setTotalCount(count);
+      try {
+        const [notes, count] = await Promise.all([
+          getUnreadNotifications(MAX_DROPDOWN_ITEMS),
+          getTotalUnreadCount(),
+        ]);
+        if (!cancelled) {
+          setNotifications(notes);
+          setTotalCount(count);
+        }
+      } catch {
+        // Ignore abort errors
+      }
     }
     refresh();
+    return () => { cancelled = true; };
   }, [open]);
 
   // Close on outside click
