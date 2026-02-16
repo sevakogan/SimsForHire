@@ -184,7 +184,9 @@ export function InvoiceInfoCard({
   /* ── Save/Cancel handlers ────────────────────────────── */
 
   function handleInvoiceSave() {
-    saveField("invoice_number", localInvoice.trim());
+    const trimmed = localInvoice.trim();
+    setLocalInvoice(trimmed);
+    saveField("invoice_number", trimmed);
   }
   function handleInvoiceCancel() {
     setLocalInvoice(savedInvoice);
@@ -206,6 +208,7 @@ export function InvoiceInfoCard({
 
   function handleTaxSave() {
     const num = parseFloat(localTax) || 0;
+    setLocalTax(String(num || ""));
     saveField("tax_percent", num);
     emitDiscountChange({ taxPercent: num });
   }
@@ -216,6 +219,7 @@ export function InvoiceInfoCard({
 
   function handleDiscountPercentSave() {
     const num = parseFloat(localDiscountPercent) || 0;
+    setLocalDiscountPercent(String(num || ""));
     saveField("discount_percent", num);
     emitDiscountChange({ discountPercent: num });
   }
@@ -226,6 +230,7 @@ export function InvoiceInfoCard({
 
   function handleDiscountAmountSave() {
     const num = parseFloat(localDiscountAmount) || 0;
+    setLocalDiscountAmount(String(num || ""));
     saveField("discount_amount", num);
     emitDiscountChange({ discountAmount: num });
   }
