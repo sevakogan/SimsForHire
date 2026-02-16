@@ -13,8 +13,22 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "SimsForHire",
-  description: "Online store management platform",
+  title: {
+    default: "SimsForHire",
+    template: "%s | SimsForHire",
+  },
+  description: "Premium sourcing & white-glove delivery. Your trusted partner for quality products at the best prices.",
+  openGraph: {
+    title: "SimsForHire",
+    description: "Premium sourcing & white-glove delivery. Your trusted partner for quality products at the best prices.",
+    siteName: "SimsForHire",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "SimsForHire",
+    description: "Premium sourcing & white-glove delivery. Your trusted partner for quality products at the best prices.",
+  },
 };
 
 export default function RootLayout({

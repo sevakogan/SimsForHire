@@ -13,13 +13,34 @@ interface Props {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { token } = await params;
-  const { project, client } = await getProjectByShareToken(token);
+  const [{ project, client }, company] = await Promise.all([
+    getProjectByShareToken(token),
+    getCompanyInfo(),
+  ]);
 
   if (!project) return { title: "Not Found" };
 
+  const companyName = company.name || "SimsForHire";
+  const tagline = company.tagline || "Premium sourcing & white-glove delivery";
+  const title = `${project.name} — ${client?.name ?? "Portal"}`;
+  const description = `${companyName}: ${tagline}. View your project portal for ${project.name}.`;
+
   return {
-    title: `${project.name} — ${client?.name ?? "Portal"}`,
-    description: `Client portal for ${project.name}`,
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      siteName: companyName,
+      type: "website",
+      images: [`/api/og/${token}`],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: [`/api/og/${token}`],
+    },
   };
 }
 
