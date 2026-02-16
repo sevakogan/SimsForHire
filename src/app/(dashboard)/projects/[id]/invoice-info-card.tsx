@@ -107,9 +107,7 @@ export function InvoiceInfoCard({
   function handleInvoiceBlur() {
     const trimmed = localInvoiceRef.current.trim();
     setLocalInvoice(trimmed);
-    if (trimmed !== savedInvoice) {
-      saveBackground({ invoice_number: trimmed || null });
-    }
+    saveBackground({ invoice_number: trimmed || null });
   }
 
   function handleDateChange(newDate: string) {
@@ -118,36 +116,28 @@ export function InvoiceInfoCard({
   }
 
   function handleNotesBlur() {
-    if (localNotesRef.current !== savedNotes) {
-      saveBackground({ notes: localNotesRef.current });
-    }
+    saveBackground({ notes: localNotesRef.current });
   }
 
   function handleTaxBlur() {
     const num = parseFloat(localTaxRef.current) || 0;
     setLocalTax(String(num || ""));
     emitDiscountChange({ taxPercent: num });
-    if (String(num || "") !== savedTax) {
-      saveBackground({ tax_percent: num });
-    }
+    saveBackground({ tax_percent: num });
   }
 
   function handleDiscountPercentBlur() {
     const num = parseFloat(localDiscountPercentRef.current) || 0;
     setLocalDiscountPercent(String(num || ""));
     emitDiscountChange({ discountPercent: num });
-    if (String(num || "") !== savedDiscountPercent) {
-      saveBackground({ discount_percent: num });
-    }
+    saveBackground({ discount_percent: num });
   }
 
   function handleDiscountAmountBlur() {
     const num = parseFloat(localDiscountAmountRef.current) || 0;
     setLocalDiscountAmount(String(num || ""));
     emitDiscountChange({ discountAmount: num });
-    if (String(num || "") !== savedDiscountAmount) {
-      saveBackground({ discount_amount: num });
-    }
+    saveBackground({ discount_amount: num });
   }
 
   /* ── Immediate-save toggles ────────────────────────────── */
