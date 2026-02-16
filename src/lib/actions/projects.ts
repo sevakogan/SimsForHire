@@ -164,6 +164,109 @@ export async function deleteProject(
   return { error: null };
 }
 
+/**
+ * Duplicate a project and all its items.
+ * The copy starts as "draft" with a new invoice number and "(Copy)" suffix.
+ */
+export async function duplicateProject(
+  id: string
+): Promise<{ id: string | null; error: string | null }> {
+  const supabase = await createSupabaseServer();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) return { id: null, error: "Not authenticated" };
+
+  // Fetch the original project
+  const { data: original, error: fetchErr } = await supabase
+    .from("projects")
+    .select("*")
+    .eq("id", id)
+    .single();
+
+  if (fetchErr || !original) return { id: null, error: fetchErr?.message ?? "Project not found" };
+
+  // Auto-generate next invoice number
+  const year = new Date().getFullYear();
+  const yearPrefix = `${year}_`;
+  const { data: rows } = await supabase
+    .from("projects")
+    .select("invoice_number")
+    .not("invoice_number", "is", null)
+    .like("invoice_number", `${yearPrefix}%`)
+    .order("invoice_number", { ascending: false })
+    .limit(1);
+
+  let nextSeq = 1;
+  if (rows && rows.length > 0 && rows[0].invoice_number) {
+    const parts = rows[0].invoice_number.split("_");
+    const lastSeq = parseInt(parts[1], 10);
+    if (!isNaN(lastSeq)) nextSeq = lastSeq + 1;
+  }
+  const nextNumber = `${yearPrefix}${String(nextSeq).padStart(2, "0")}`;
+
+  // Create the new project
+  const { data: newProject, error: insertErr } = await supabase
+    .from("projects")
+    .insert({
+      client_id: original.client_id,
+      name: `${original.name} (Copy)`,
+      status: "draft" as ProjectStatus,
+      invoice_number: nextNumber,
+      fulfillment_type: original.fulfillment_type,
+      notes: original.notes,
+      tax_percent: original.tax_percent,
+      discount_percent: original.discount_percent,
+      discount_type: original.discount_type,
+      discount_amount: original.discount_amount,
+      date_required: original.date_required,
+      created_by: user.id,
+    })
+    .select("id")
+    .single();
+
+  if (insertErr || !newProject) return { id: null, error: insertErr?.message ?? "Failed to create copy" };
+
+  // Copy all items from the original project
+  const { data: items } = await supabase
+    .from("items")
+    .select("*")
+    .eq("project_id", id)
+    .order("item_number", { ascending: true });
+
+  if (items && items.length > 0) {
+    const copies = items.map((item) => ({
+      project_id: newProject.id,
+      item_number: item.item_number,
+      item_type: item.item_type,
+      category: item.category,
+      description: item.description,
+      item_link: item.item_link,
+      retail_price: item.retail_price,
+      retail_shipping: item.retail_shipping,
+      discount_percent: item.discount_percent,
+      my_cost: item.my_cost,
+      my_shipping: item.my_shipping,
+      price_sold_for: item.price_sold_for,
+      quantity: item.quantity,
+      image_url: item.image_url,
+      notes: item.notes,
+      model_number: item.model_number,
+      seller_merchant: item.seller_merchant,
+      product_id: item.product_id,
+      acceptance_status: "pending" as AcceptanceStatus,
+    }));
+
+    await supabase.from("items").insert(copies);
+  }
+
+  revalidatePath("/projects", "layout");
+  revalidatePath("/dashboard");
+  return { id: newProject.id, error: null };
+}
+
 export async function generateShareToken(
   projectId: string
 ): Promise<{ token: string | null; error: string | null }> {
