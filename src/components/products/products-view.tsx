@@ -15,7 +15,7 @@ interface ProductsViewProps {
 }
 
 export function ProductsView({ products, isAdmin }: ProductsViewProps) {
-  const [view, setView] = useState<ViewMode>("cards");
+  const [view, setView] = useState<ViewMode>("list");
   const [typeFilter, setTypeFilter] = useState("");
 
   const extraTypes = useMemo(() => {

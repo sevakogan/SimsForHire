@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { PRESET_PRODUCT_TYPES } from "@/lib/constants/product-types";
+import { PRESET_PRODUCT_TYPES, getTypeColor } from "@/lib/constants/product-types";
 
 const PRESET_TAGS = PRESET_PRODUCT_TYPES;
 
@@ -44,20 +44,23 @@ export function TypeTagPicker({ value, onChange }: TypeTagPickerProps) {
 
   return (
     <div className="flex flex-wrap items-center gap-1.5">
-      {PRESET_TAGS.map((tag) => (
-        <button
-          key={tag}
-          type="button"
-          onClick={() => handleSelectTag(tag)}
-          className={`rounded-full px-2.5 py-0.5 text-[11px] font-medium transition-all ${
-            value === tag
-              ? "bg-primary text-white shadow-sm"
-              : "bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground"
-          }`}
-        >
-          {tag}
-        </button>
-      ))}
+      {PRESET_TAGS.map((tag) => {
+        const colors = getTypeColor(tag);
+        return (
+          <button
+            key={tag}
+            type="button"
+            onClick={() => handleSelectTag(tag)}
+            className={`rounded-full px-2.5 py-0.5 text-[11px] font-medium transition-all shadow-sm ${
+              value === tag
+                ? `${colors.activeBg} ${colors.activeText}`
+                : `${colors.bg} ${colors.text} hover:opacity-80`
+            }`}
+          >
+            {tag}
+          </button>
+        );
+      })}
 
       {/* Custom tag — show if selected and not a preset */}
       {isCustom && (

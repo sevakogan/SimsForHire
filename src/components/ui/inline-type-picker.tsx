@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
-import { PRESET_PRODUCT_TYPES } from "@/lib/constants/product-types";
+import { PRESET_PRODUCT_TYPES, getTypeColor } from "@/lib/constants/product-types";
 
 interface InlineTypePickerProps {
   value: string;
@@ -77,15 +77,17 @@ export function InlineTypePicker({ value, onSave }: InlineTypePickerProps) {
   const isCustom =
     value && !PRESET_PRODUCT_TYPES.includes(value as (typeof PRESET_PRODUCT_TYPES)[number]);
 
+  const triggerColors = value ? getTypeColor(value) : null;
+
   return (
     <>
       <button
         ref={triggerRef}
         type="button"
         onClick={() => setOpen((prev) => !prev)}
-        className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium transition-all ${
-          value
-            ? "bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground"
+        className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium transition-all shadow-sm ${
+          triggerColors
+            ? `${triggerColors.bg} ${triggerColors.text} hover:opacity-80`
             : "text-muted-foreground/40 hover:text-muted-foreground"
         }`}
       >
@@ -99,20 +101,23 @@ export function InlineTypePicker({ value, onSave }: InlineTypePickerProps) {
           style={{ top: position.top, left: position.left, minWidth: 240 }}
         >
           <div className="flex flex-wrap gap-1.5">
-            {PRESET_PRODUCT_TYPES.map((tag) => (
-              <button
-                key={tag}
-                type="button"
-                onClick={() => handleSelect(tag)}
-                className={`rounded-full px-2.5 py-0.5 text-[11px] font-medium transition-all ${
-                  value === tag
-                    ? "bg-primary text-white shadow-sm"
-                    : "bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground"
-                }`}
-              >
-                {tag}
-              </button>
-            ))}
+            {PRESET_PRODUCT_TYPES.map((tag) => {
+              const colors = getTypeColor(tag);
+              return (
+                <button
+                  key={tag}
+                  type="button"
+                  onClick={() => handleSelect(tag)}
+                  className={`rounded-full px-2.5 py-0.5 text-[11px] font-medium transition-all shadow-sm ${
+                    value === tag
+                      ? `${colors.activeBg} ${colors.activeText}`
+                      : `${colors.bg} ${colors.text} hover:opacity-80`
+                  }`}
+                >
+                  {tag}
+                </button>
+              );
+            })}
 
             {/* Show custom value as selected pill if it's not a preset */}
             {isCustom && (

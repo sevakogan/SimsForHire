@@ -11,6 +11,7 @@ import { InlineTextInput } from "@/components/ui/inline-text-input";
 import { InlineNumberInput } from "@/components/ui/inline-number-input";
 import { InlineTypePicker } from "@/components/ui/inline-type-picker";
 import { ProductForm } from "@/components/products/product-form";
+import { getTypeColor } from "@/lib/constants/product-types";
 import type { Product, ClientProduct } from "@/types";
 
 interface ProductsTableProps {
@@ -136,6 +137,28 @@ export function ProductsTable({ products, isAdmin }: ProductsTableProps) {
         ...prev,
         [productId]: { ...prev[productId], [field]: value },
       }));
+    },
+    []
+  );
+
+  // Save a field immediately (bypass pending edits — used for type picker)
+  const handleImmediateSave = useCallback(
+    (productId: string, field: string, value: string | number) => {
+      setLocalProducts((prev) =>
+        prev.map((p) => (p.id === productId ? { ...p, [field]: value } : p))
+      );
+      // Also clear this field from pending edits if it was staged
+      setPendingEdits((prev) => {
+        const rowEdits = prev[productId];
+        if (!rowEdits) return prev;
+        const { [field]: _, ...rest } = rowEdits;
+        if (Object.keys(rest).length === 0) {
+          const { [productId]: __, ...remaining } = prev;
+          return remaining;
+        }
+        return { ...prev, [productId]: rest };
+      });
+      updateProduct(productId, { [field]: value });
     },
     []
   );
@@ -281,14 +304,14 @@ export function ProductsTable({ products, isAdmin }: ProductsTableProps) {
                   key={product.id}
                   className={`${tableStyles.row} ${isDirty ? "bg-amber-50/50" : ""}`}
                 >
-                  {/* Image — guarded link to detail page */}
+                  {/* Image — has image: navigate to detail; no image: open edit popup */}
                   <td className={tdCompact}>
-                    <button
-                      type="button"
-                      onClick={() => guardedNavigate(`/catalog/${product.id}`)}
-                      className="block"
-                    >
-                      {thumb ? (
+                    {thumb ? (
+                      <button
+                        type="button"
+                        onClick={() => guardedNavigate(`/catalog/${product.id}`)}
+                        className="block"
+                      >
                         <Image
                           src={thumb}
                           alt=""
@@ -297,12 +320,19 @@ export function ProductsTable({ products, isAdmin }: ProductsTableProps) {
                           className="h-9 w-9 rounded object-cover"
                           unoptimized={isExternalImage(thumb)}
                         />
-                      ) : (
-                        <div className="flex h-9 w-9 items-center justify-center rounded bg-muted text-xs text-muted-foreground">
-                          --
-                        </div>
-                      )}
-                    </button>
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => isAdmin && setEditProduct(product as Product)}
+                        className="flex h-9 w-9 items-center justify-center rounded bg-muted text-muted-foreground/40 hover:bg-muted/80 hover:text-muted-foreground transition-colors cursor-pointer"
+                        title="Add image"
+                      >
+                        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0 0 22.5 18.75V5.25A2.25 2.25 0 0 0 20.25 3H3.75A2.25 2.25 0 0 0 1.5 5.25v13.5A2.25 2.25 0 0 0 3.75 21Z" />
+                        </svg>
+                      </button>
+                    )}
                   </td>
 
                   {/* Type — 2nd column after Image */}
@@ -310,14 +340,17 @@ export function ProductsTable({ products, isAdmin }: ProductsTableProps) {
                     {isAdmin ? (
                       <InlineTypePicker
                         value={String(displayVal("type") ?? "")}
-                        onSave={(v) => handleFieldChange(product.id, "type", v)}
+                        onSave={(v) => handleImmediateSave(product.id, "type", v)}
                       />
                     ) : (
-                      product.type ? (
-                        <span className="inline-block rounded-full bg-muted/60 px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
-                          {product.type}
-                        </span>
-                      ) : "--"
+                      product.type ? (() => {
+                        const c = getTypeColor(product.type);
+                        return (
+                          <span className={`inline-block rounded-full px-2 py-0.5 text-[11px] font-medium shadow-sm ${c.bg} ${c.text}`}>
+                            {product.type}
+                          </span>
+                        );
+                      })() : "--"
                     )}
                   </td>
 
@@ -489,7 +522,24 @@ export function ProductsTable({ products, isAdmin }: ProductsTableProps) {
                       unoptimized={isExternalImage(thumb)}
                     />
                   ) : (
-                    <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-muted/40 text-muted-foreground/40">
+                    <div
+                      role="button"
+                      tabIndex={0}
+                      onClick={(e) => {
+                        if (isAdmin) {
+                          e.stopPropagation();
+                          setEditProduct(product as Product);
+                        }
+                      }}
+                      onKeyDown={(e) => {
+                        if (isAdmin && (e.key === "Enter" || e.key === " ")) {
+                          e.stopPropagation();
+                          setEditProduct(product as Product);
+                        }
+                      }}
+                      className="flex h-11 w-11 items-center justify-center rounded-lg bg-muted/40 text-muted-foreground/40 hover:bg-muted/60 hover:text-muted-foreground transition-colors"
+                      title="Add image"
+                    >
                       <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0 0 22.5 18.75V5.25A2.25 2.25 0 0 0 20.25 3H3.75A2.25 2.25 0 0 0 1.5 5.25v13.5A2.25 2.25 0 0 0 3.75 21Z" />
                       </svg>
@@ -500,11 +550,14 @@ export function ProductsTable({ products, isAdmin }: ProductsTableProps) {
                   <p className="text-sm font-medium text-foreground truncate">
                     {product.name}
                   </p>
-                  {product.type && (
-                    <span className="inline-block rounded-full bg-muted/60 px-2 py-0.5 text-[10px] font-medium text-muted-foreground mt-0.5">
-                      {product.type}
-                    </span>
-                  )}
+                  {product.type && (() => {
+                    const c = getTypeColor(product.type);
+                    return (
+                      <span className={`inline-block rounded-full px-2 py-0.5 text-[10px] font-medium shadow-sm mt-0.5 ${c.bg} ${c.text}`}>
+                        {product.type}
+                      </span>
+                    );
+                  })()}
                 </div>
                 {isAdmin && (
                   <button
