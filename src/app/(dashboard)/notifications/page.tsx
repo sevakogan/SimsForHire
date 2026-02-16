@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { createSupabaseServer } from "@/lib/supabase-server";
-import { getUnreadNotifications, getTotalUnreadNoteCount } from "@/lib/actions/items";
+import { getUnreadNotifications, getTotalUnreadCount } from "@/lib/actions/notifications";
 import type { Profile } from "@/types";
 import { isAdminRole } from "@/types";
 import { NotificationList } from "./notification-list";
@@ -26,7 +26,7 @@ export default async function NotificationsPage() {
 
   const [notifications, totalCount] = await Promise.all([
     getUnreadNotifications(100),
-    getTotalUnreadNoteCount(),
+    getTotalUnreadCount(),
   ]);
 
   return (

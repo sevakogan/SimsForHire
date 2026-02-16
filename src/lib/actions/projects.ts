@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createSupabaseServer } from "@/lib/supabase-server";
 import { getAdminSupabase } from "@/lib/supabase-admin";
+import { createNotification } from "@/lib/actions/notifications";
 import type { Project, ProjectStatus, FulfillmentType, DiscountType, ClientItem, AcceptanceStatus } from "@/types";
 
 export async function getProjects(filters?: {
@@ -387,6 +388,15 @@ export async function acceptAllItemsByShareToken(
     .eq("project_id", project.id);
 
   if (itemsError) return { error: itemsError.message };
+
+  // Notify admin
+  await createNotification({
+    projectId: project.id,
+    type: "items_accepted",
+    title: "All items accepted",
+    body: "Customer accepted all items on the invoice.",
+  });
+
   revalidatePath("/projects", "layout");
   return { error: null };
 }
@@ -424,6 +434,16 @@ export async function submitItemDecisions(
     if (error) return { error: error.message };
   }
 
+  // Notify admin with summary
+  const accepted = decisions.filter((d) => d.status === "accepted").length;
+  const rejected = decisions.filter((d) => d.status === "rejected").length;
+  await createNotification({
+    projectId: project.id,
+    type: "items_decided",
+    title: "Items reviewed by customer",
+    body: `${accepted} accepted, ${rejected} rejected out of ${decisions.length} items.`,
+  });
+
   revalidatePath("/projects", "layout");
   return { error: null };
 }
@@ -459,6 +479,17 @@ export async function saveClientNote(
     .eq("project_id", project.id);
 
   if (error) return { error: error.message };
+
+  // Notify admin (only for non-empty notes)
+  if (note && note.trim()) {
+    await createNotification({
+      projectId: project.id,
+      type: "client_note",
+      title: "New client note",
+      body: note.trim().length > 120 ? note.trim().slice(0, 120) + "…" : note.trim(),
+    });
+  }
+
   revalidatePath("/projects", "layout");
   return { error: null };
 }
@@ -486,6 +517,14 @@ export async function deleteItemByShareToken(
     return { error: "This invoice is no longer editable" };
   }
 
+  // Fetch item description before deleting for the notification
+  const { data: item } = await supabase
+    .from("items")
+    .select("description")
+    .eq("id", itemId)
+    .eq("project_id", project.id)
+    .single();
+
   const { error } = await supabase
     .from("items")
     .delete()
@@ -493,6 +532,15 @@ export async function deleteItemByShareToken(
     .eq("project_id", project.id);
 
   if (error) return { error: error.message };
+
+  // Notify admin
+  await createNotification({
+    projectId: project.id,
+    type: "item_deleted",
+    title: "Item removed by customer",
+    body: item?.description ? `"${item.description}" was deleted.` : "An item was deleted from the invoice.",
+  });
+
   revalidatePath("/projects", "layout");
   return { error: null };
 }

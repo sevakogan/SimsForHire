@@ -1,6 +1,7 @@
 "use server";
 
 import { getAdminSupabase } from "@/lib/supabase-admin";
+import { createNotification } from "@/lib/actions/notifications";
 import type { ContactMessage } from "@/types";
 
 /**
@@ -56,6 +57,15 @@ export async function submitContactMessage(
   });
 
   if (error) return { error: error.message };
+
+  // Notify admin
+  await createNotification({
+    projectId: project.id,
+    type: "contact_message",
+    title: `Message from ${senderName.trim()}`,
+    body: message.trim().length > 120 ? message.trim().slice(0, 120) + "…" : message.trim(),
+  });
+
   return { error: null };
 }
 
