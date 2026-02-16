@@ -202,15 +202,15 @@ export function ProductsTable({ products, isAdmin }: ProductsTableProps) {
 
   return (
     <>
-      {/* Desktop table */}
+      {/* Desktop table — horizontally scrollable */}
       <div className={`${tableStyles.wrapper} hidden sm:block`}>
-        <table className={tableStyles.table}>
+        <table className={`${tableStyles.table} min-w-[1050px]`}>
           <thead className={tableStyles.thead}>
             <tr>
               <th className={`${tableStyles.th} w-[60px]`}>Image</th>
+              <SortableTh field="type" className="w-[100px]">Type</SortableTh>
               <SortableTh field="model_number" className="w-[110px]">Model #</SortableTh>
               <SortableTh field="name">Name</SortableTh>
-              <SortableTh field="type" className="w-[100px]">Type</SortableTh>
               <SortableTh field="retail_price" className="w-[100px]">Retail</SortableTh>
               <SortableTh field="sales_price" className="w-[100px]">Sales</SortableTh>
               {isAdmin && <SortableTh field="cost" className="w-[100px]">Dealer</SortableTh>}
@@ -255,6 +255,22 @@ export function ProductsTable({ products, isAdmin }: ProductsTableProps) {
                     </Link>
                   </td>
 
+                  {/* Type — 2nd column after Image */}
+                  <td className={tableStyles.td}>
+                    {isAdmin ? (
+                      <InlineTypePicker
+                        value={String(displayVal("type") ?? "")}
+                        onSave={(v) => handleFieldChange(product.id, "type", v)}
+                      />
+                    ) : (
+                      product.type ? (
+                        <span className="inline-block rounded-full bg-muted/60 px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+                          {product.type}
+                        </span>
+                      ) : "--"
+                    )}
+                  </td>
+
                   {/* Model # */}
                   <td className={tableStyles.td}>
                     {isAdmin ? (
@@ -279,22 +295,6 @@ export function ProductsTable({ products, isAdmin }: ProductsTableProps) {
                       />
                     ) : (
                       product.name
-                    )}
-                  </td>
-
-                  {/* Type */}
-                  <td className={tableStyles.td}>
-                    {isAdmin ? (
-                      <InlineTypePicker
-                        value={String(displayVal("type") ?? "")}
-                        onSave={(v) => handleFieldChange(product.id, "type", v)}
-                      />
-                    ) : (
-                      product.type ? (
-                        <span className="inline-block rounded-full bg-muted/60 px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
-                          {product.type}
-                        </span>
-                      ) : "--"
                     )}
                   </td>
 
