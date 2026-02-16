@@ -18,6 +18,9 @@ interface InvoiceInfoCardProps {
   discountAmount: number;
   itemsTotal: number;
   deliveryTotal: number;
+  /** Admin cost data for profit display */
+  myCost?: number;
+  myShipping?: number;
 }
 
 type SaveableField =
@@ -41,6 +44,8 @@ export function InvoiceInfoCard({
   discountAmount,
   itemsTotal,
   deliveryTotal,
+  myCost,
+  myShipping,
 }: InvoiceInfoCardProps) {
   const router = useRouter();
   const [localInvoice, setLocalInvoice] = useState(invoiceNumber ?? "");
@@ -350,7 +355,7 @@ export function InvoiceInfoCard({
         />
       </div>
 
-      {/* Totals preview — reordered: Items → Services → Tax → Discount → Total */}
+      {/* Totals preview — Items → Services → Tax → Discount → Total → Profit */}
       <div className="border-t border-gray-100 bg-gradient-to-r from-gray-50 to-slate-50 px-4 sm:px-5 py-3.5">
         <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs">
           <div className="flex items-center gap-1.5">
@@ -385,12 +390,26 @@ export function InvoiceInfoCard({
               </span>
             </div>
           )}
-          <div className="ml-auto flex items-center gap-2 pl-3 border-l border-gray-200">
+          <div className="flex items-center gap-2 pl-3 border-l border-gray-200">
             <span className="text-gray-500 font-medium">Total</span>
             <span className="font-black tabular-nums text-gray-900 text-base">
               {formatCurrency(totals.grandTotal)}
             </span>
           </div>
+          {myCost !== undefined && (
+            <div className="flex items-center gap-2 pl-3 border-l border-dashed border-gray-300">
+              <span className="text-gray-400 font-medium">Profit</span>
+              {(() => {
+                const totalMyCostCalc = (myCost ?? 0) + (myShipping ?? 0);
+                const profit = totals.grandTotal - totalMyCostCalc;
+                return (
+                  <span className={`font-black tabular-nums text-base ${profit >= 0 ? "text-emerald-600" : "text-red-500"}`}>
+                    {formatCurrency(profit)}
+                  </span>
+                );
+              })()}
+            </div>
+          )}
         </div>
       </div>
     </div>

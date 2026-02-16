@@ -173,6 +173,8 @@ export default async function ProjectDetailPage({ params }: Props) {
               discountAmount={Number(project.discount_amount) || 0}
               itemsTotal={totalRetail}
               deliveryTotal={totalRetailShipping}
+              myCost={totalMyCost}
+              myShipping={totalMyShipping}
             />
           </div>
         </div>
