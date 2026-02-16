@@ -292,10 +292,10 @@ export function InvoiceInfoCard({
       {/* Accent bar */}
       <div className="h-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500" />
 
-      {/* Row 1: Invoice # | Required By | Fulfillment */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-px bg-gray-100">
+      {/* Row 1: Invoice # | Requested By | Fulfillment */}
+      <div className="flex gap-px bg-gray-100">
         {/* Invoice # */}
-        <div className="bg-white px-4 py-3.5">
+        <div className="bg-white px-3 py-3 min-w-0 flex-1">
           <label className="block text-[10px] font-semibold uppercase tracking-wider text-gray-400 mb-1.5">
             Invoice #
           </label>
@@ -316,7 +316,7 @@ export function InvoiceInfoCard({
         </div>
 
         {/* Requested By — editable date picker */}
-        <div className="bg-white px-4 py-3.5">
+        <div className="bg-white px-3 py-3 min-w-0 flex-1">
           <label className="block text-[10px] font-semibold uppercase tracking-wider text-gray-400 mb-1.5">
             Requested By
           </label>
@@ -336,11 +336,11 @@ export function InvoiceInfoCard({
         </div>
 
         {/* Fulfillment */}
-        <div className="bg-white px-4 py-3.5 col-span-2 sm:col-span-1 min-w-0">
+        <div className="bg-white px-3 py-3 shrink-0">
           <label className="block text-[10px] font-semibold uppercase tracking-wider text-gray-400 mb-1.5">
             Fulfillment
           </label>
-          <div className={`flex flex-wrap gap-1.5 ${readOnly ? "opacity-60" : ""}`}>
+          <div className={`flex gap-1.5 ${readOnly ? "opacity-60" : ""}`}>
             <button
               type="button"
               onClick={() => handleFulfillmentToggle("delivery")}
