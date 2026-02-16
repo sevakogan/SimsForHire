@@ -247,3 +247,67 @@ export async function markAllNotesReadInProject(
   if (error) return { error: error.message };
   return { error: null };
 }
+
+/* ── Notification helpers ───────────────────────────── */
+
+export interface UnreadNotification {
+  itemId: string;
+  projectId: string;
+  projectName: string;
+  clientName: string;
+  itemDescription: string;
+  clientNote: string;
+  createdAt: string;
+}
+
+/**
+ * Get all unread client notes with project/client context for the notification bell.
+ * Returns up to `limit` items, ordered by most recent first.
+ */
+export async function getUnreadNotifications(
+  limit = 10
+): Promise<UnreadNotification[]> {
+  const supabase = await createSupabaseServer();
+  const { data, error } = await supabase
+    .from("items")
+    .select(
+      "id, project_id, description, client_note, updated_at, projects!inner(name, clients!inner(name))"
+    )
+    .not("client_note", "is", null)
+    .neq("client_note", "")
+    .is("client_note_read_at", null)
+    .order("updated_at", { ascending: false })
+    .limit(limit);
+
+  if (error || !data) return [];
+
+  return data.map((row: Record<string, unknown>) => {
+    const project = row.projects as Record<string, unknown> | null;
+    const client = project?.clients as Record<string, unknown> | null;
+    return {
+      itemId: row.id as string,
+      projectId: row.project_id as string,
+      projectName: (project?.name as string) ?? "Project",
+      clientName: (client?.name as string) ?? "Client",
+      itemDescription: (row.description as string) ?? "",
+      clientNote: row.client_note as string,
+      createdAt: row.updated_at as string,
+    };
+  });
+}
+
+/**
+ * Get total count of all unread client notes across all projects.
+ */
+export async function getTotalUnreadNoteCount(): Promise<number> {
+  const supabase = await createSupabaseServer();
+  const { count, error } = await supabase
+    .from("items")
+    .select("id", { count: "exact", head: true })
+    .not("client_note", "is", null)
+    .neq("client_note", "")
+    .is("client_note_read_at", null);
+
+  if (error) return 0;
+  return count ?? 0;
+}

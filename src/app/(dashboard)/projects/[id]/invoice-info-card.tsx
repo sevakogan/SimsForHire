@@ -315,10 +315,10 @@ export function InvoiceInfoCard({
           </div>
         </div>
 
-        {/* Required By — editable date picker */}
+        {/* Requested By — editable date picker */}
         <div className="bg-white px-4 py-3.5">
           <label className="block text-[10px] font-semibold uppercase tracking-wider text-gray-400 mb-1.5">
-            Required By
+            Requested By
           </label>
           <div className="flex items-center">
             <input
@@ -336,16 +336,16 @@ export function InvoiceInfoCard({
         </div>
 
         {/* Fulfillment */}
-        <div className="bg-white px-4 py-3.5 col-span-2 sm:col-span-1">
+        <div className="bg-white px-4 py-3.5 col-span-2 sm:col-span-1 min-w-0">
           <label className="block text-[10px] font-semibold uppercase tracking-wider text-gray-400 mb-1.5">
             Fulfillment
           </label>
-          <div className={`flex gap-2 ${readOnly ? "opacity-60" : ""}`}>
+          <div className={`flex flex-wrap gap-1.5 ${readOnly ? "opacity-60" : ""}`}>
             <button
               type="button"
               onClick={() => handleFulfillmentToggle("delivery")}
               disabled={readOnly}
-              className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition-all ${readOnly ? "cursor-not-allowed" : ""} ${
+              className={`flex items-center gap-1 rounded-full px-2.5 py-1.5 text-xs font-semibold transition-all whitespace-nowrap ${readOnly ? "cursor-not-allowed" : ""} ${
                 localFulfillment === "delivery"
                   ? "bg-blue-500 text-white shadow-sm"
                   : "bg-gray-100 text-gray-400 hover:bg-gray-200 hover:text-gray-600"
@@ -360,7 +360,7 @@ export function InvoiceInfoCard({
               type="button"
               onClick={() => handleFulfillmentToggle("pickup")}
               disabled={readOnly}
-              className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition-all ${readOnly ? "cursor-not-allowed" : ""} ${
+              className={`flex items-center gap-1 rounded-full px-2.5 py-1.5 text-xs font-semibold transition-all whitespace-nowrap ${readOnly ? "cursor-not-allowed" : ""} ${
                 localFulfillment === "pickup"
                   ? "bg-amber-500 text-white shadow-sm"
                   : "bg-gray-100 text-gray-400 hover:bg-gray-200 hover:text-gray-600"

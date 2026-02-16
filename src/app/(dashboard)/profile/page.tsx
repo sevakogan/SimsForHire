@@ -2,7 +2,10 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { createSupabaseServer } from "@/lib/supabase-server";
 import { cardStyles } from "@/components/ui/form-styles";
+import { getCompanyInfo } from "@/lib/actions/company-info";
+import { CompanyInfoForm } from "@/components/company/company-info-form";
 import type { Profile } from "@/types";
+import { isAdminRole } from "@/types";
 import { ProfileForm } from "./profile-form";
 
 export default async function ProfilePage() {
@@ -23,14 +26,18 @@ export default async function ProfilePage() {
   if (!profile) redirect("/login");
 
   const typedProfile = profile as Profile;
+  const isAdmin = isAdminRole(typedProfile.role);
 
   // Detect if user signed up with email/password (has an email identity)
   const hasPassword = user.app_metadata?.providers?.includes("email") ?? false;
 
+  // Fetch company info for admin users
+  const companyInfo = isAdmin ? await getCompanyInfo() : null;
+
   return (
     <div className="mx-auto max-w-lg space-y-5">
       <h1 className="text-lg font-bold text-foreground sm:text-xl">
-        My Profile
+        Profile
       </h1>
 
       <div className={cardStyles.base}>
@@ -55,6 +62,19 @@ export default async function ProfilePage() {
           />
         </div>
       </div>
+
+      {/* Company Info — admin only, below personal info with divider */}
+      {isAdmin && companyInfo && (
+        <>
+          <div className="border-t border-border" />
+          <div>
+            <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              Company Info
+            </h2>
+            <CompanyInfoForm info={companyInfo} />
+          </div>
+        </>
+      )}
 
       {/* Quick links */}
       <div className={`${cardStyles.base} !p-4`}>
