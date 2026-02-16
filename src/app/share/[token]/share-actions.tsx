@@ -297,10 +297,10 @@ export function ShareActions({
               <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
                 Item
               </th>
-              <th className="px-3 py-3 text-center text-xs font-semibold uppercase tracking-wider text-gray-500 w-14">
+              <th className="px-3 py-3 text-center text-xs font-semibold uppercase tracking-wider text-gray-500 w-12">
                 Qty
               </th>
-              <th className="px-3 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-500 w-24">
+              <th className="px-3 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-500 w-20">
                 Price
               </th>
               <th className="px-3 py-3 text-center text-xs font-semibold uppercase tracking-wider text-gray-500 w-40">

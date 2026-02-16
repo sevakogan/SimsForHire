@@ -64,13 +64,13 @@ export function ProjectSidebar({
   children,
 }: ProjectSidebarProps) {
   const pathname = usePathname();
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(true);
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  // Load collapsed state from localStorage
+  // Load collapsed state from localStorage (default: collapsed)
   useEffect(() => {
     const saved = localStorage.getItem(COLLAPSED_KEY);
-    if (saved === "true") setCollapsed(true);
+    if (saved === "false") setCollapsed(false);
   }, []);
 
   // Close mobile drawer on route change

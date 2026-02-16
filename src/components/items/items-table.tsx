@@ -209,10 +209,10 @@ export function ItemsTable({ items, projectId, isAdmin, unreadNoteCount = 0 }: I
       {/* List view */}
       {view === "list" && (
         <>
-          {/* Desktop table layout */}
+          {/* Desktop table layout — no S/H column, Product gets more space */}
           <div className="hidden sm:block space-y-0">
             {/* Header row */}
-            <div className="flex items-center gap-3 bg-muted/40 px-1 py-2 rounded-t-xl border border-border/40">
+            <div className="flex items-center gap-2 bg-muted/40 px-1 py-2 rounded-t-xl border border-border/40">
               <div className="w-5 shrink-0" />
               <div className="w-10 shrink-0" />
               <div className="min-w-0 flex-1">
@@ -220,52 +220,47 @@ export function ItemsTable({ items, projectId, isAdmin, unreadNoteCount = 0 }: I
                   Product
                 </span>
               </div>
-              <div className="w-14 shrink-0 text-center">
+              <div className="w-12 shrink-0 text-center">
                 <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70">
                   Qty
                 </span>
               </div>
-              <div className="w-24 shrink-0 text-right">
+              <div className="w-20 shrink-0 text-right">
                 <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70">
                   Retail
                 </span>
               </div>
-              <div className="w-24 shrink-0 text-right">
+              <div className="w-20 shrink-0 text-right">
                 <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70">
-                  Selling Price
+                  Selling
                 </span>
               </div>
               <div className="w-20 shrink-0 text-right">
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70">
-                  S/H
-                </span>
-              </div>
-              <div className="w-24 shrink-0 text-right">
                 <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70">
                   Total
                 </span>
               </div>
               {isAdmin && (
-                <div className="w-20 shrink-0 text-right">
+                <div className="w-16 shrink-0 text-right">
                   <span className="text-[10px] font-semibold uppercase tracking-wider text-amber-600/70">
                     Cost
                   </span>
                 </div>
               )}
-              {isAdmin && <div className="w-8 shrink-0" />}
+              {isAdmin && <div className="w-7 shrink-0" />}
             </div>
 
             {filtered.map((item, index) => {
               const qty = item.quantity ?? 1;
               const sellingPrice = item.price_sold_for ?? item.retail_price;
-              const total = (sellingPrice + item.retail_shipping) * qty;
+              const total = sellingPrice * qty;
               const thumb = firstImage(item.image_url);
               const isEven = index % 2 === 0;
 
               return (
                 <div
                   key={item.id}
-                  className={`group flex items-center gap-3 border-b border-x border-border/40 px-1 py-3 transition-colors last:rounded-b-xl ${
+                  className={`group flex items-center gap-2 border-b border-x border-border/40 px-1 py-3 transition-colors last:rounded-b-xl ${
                     isEven ? "bg-white hover:bg-muted/20" : "bg-gray-50/70 hover:bg-gray-100/70"
                   }`}
                 >
@@ -310,6 +305,7 @@ export function ItemsTable({ items, projectId, isAdmin, unreadNoteCount = 0 }: I
                     )}
                   </div>
 
+                  {/* Product — flex-1, takes remaining space */}
                   <div className="min-w-0 flex-1">
                     <Link
                       href={`/projects/${projectId}/items/${item.id}`}
@@ -339,8 +335,8 @@ export function ItemsTable({ items, projectId, isAdmin, unreadNoteCount = 0 }: I
                     )}
                   </div>
 
-                  {/* Editable Qty */}
-                  <div className="w-14 shrink-0">
+                  {/* Qty */}
+                  <div className="w-12 shrink-0">
                     <InlineNumberInput
                       value={qty}
                       onChange={(val) => handleInlineUpdate(item.id, "quantity", val)}
@@ -350,14 +346,15 @@ export function ItemsTable({ items, projectId, isAdmin, unreadNoteCount = 0 }: I
                     />
                   </div>
 
-                  <div className="w-24 shrink-0 text-right">
-                    <span className="text-sm text-muted-foreground">
+                  {/* Retail */}
+                  <div className="w-20 shrink-0 text-right">
+                    <span className="text-xs text-muted-foreground">
                       {formatCurrency(item.retail_price)}
                     </span>
                   </div>
 
-                  {/* Editable Selling Price */}
-                  <div className="w-24 shrink-0">
+                  {/* Selling Price */}
+                  <div className="w-20 shrink-0">
                     <InlineNumberInput
                       value={sellingPrice}
                       onChange={(val) => handleInlineUpdate(item.id, "price_sold_for", val)}
@@ -365,29 +362,23 @@ export function ItemsTable({ items, projectId, isAdmin, unreadNoteCount = 0 }: I
                     />
                   </div>
 
-                  {/* Editable S/H */}
-                  <div className="w-20 shrink-0">
-                    <InlineNumberInput
-                      value={item.retail_shipping}
-                      onChange={(val) => handleInlineUpdate(item.id, "retail_shipping", val)}
-                      prefix="$"
-                    />
-                  </div>
-
-                  <div className="w-24 shrink-0 text-right">
+                  {/* Total (selling * qty, no shipping) */}
+                  <div className="w-20 shrink-0 text-right">
                     <span className="text-sm font-semibold text-foreground">
                       {formatCurrency(total)}
                     </span>
                   </div>
 
+                  {/* Admin cost */}
                   {isAdmin && "my_cost" in item && (
-                    <div className="w-20 shrink-0 text-right">
+                    <div className="w-16 shrink-0 text-right">
                       <span className="text-xs text-amber-600/80">
                         {formatCurrency((item as Item).my_cost)}
                       </span>
                     </div>
                   )}
 
+                  {/* Delete */}
                   {isAdmin && (
                     <button
                       onClick={() => handleDelete(item.id)}
@@ -404,12 +395,12 @@ export function ItemsTable({ items, projectId, isAdmin, unreadNoteCount = 0 }: I
             })}
           </div>
 
-          {/* Mobile card layout (list mode on mobile) */}
+          {/* Mobile card layout (list mode on mobile) — no S/H */}
           <div className="space-y-2 sm:hidden">
             {filtered.map((item, index) => {
               const qty = item.quantity ?? 1;
               const sellingPrice = item.price_sold_for ?? item.retail_price;
-              const total = (sellingPrice + item.retail_shipping) * qty;
+              const total = sellingPrice * qty;
               const thumb = firstImage(item.image_url);
               const isEven = index % 2 === 0;
 
@@ -492,8 +483,8 @@ export function ItemsTable({ items, projectId, isAdmin, unreadNoteCount = 0 }: I
                     )}
                   </div>
 
-                  {/* Editable price grid */}
-                  <div className="mt-2.5 grid grid-cols-4 gap-2">
+                  {/* Editable price grid — 3 cols, no S/H */}
+                  <div className="mt-2.5 grid grid-cols-3 gap-2">
                     <div>
                       <p className="text-[9px] font-medium uppercase tracking-wider text-muted-foreground/60 mb-0.5">Qty</p>
                       <InlineNumberInput
@@ -513,14 +504,6 @@ export function ItemsTable({ items, projectId, isAdmin, unreadNoteCount = 0 }: I
                       <InlineNumberInput
                         value={sellingPrice}
                         onChange={(val) => handleInlineUpdate(item.id, "price_sold_for", val)}
-                        prefix="$"
-                      />
-                    </div>
-                    <div>
-                      <p className="text-[9px] font-medium uppercase tracking-wider text-muted-foreground/60 mb-0.5">S/H</p>
-                      <InlineNumberInput
-                        value={item.retail_shipping}
-                        onChange={(val) => handleInlineUpdate(item.id, "retail_shipping", val)}
                         prefix="$"
                       />
                     </div>
@@ -616,7 +599,7 @@ function ItemsCardGrid({ items, projectId, isAdmin, onDelete, dismissedNoteIds, 
         const thumb = firstImage(item.image_url);
         const qty = item.quantity ?? 1;
         const sellingPrice = item.price_sold_for ?? item.retail_price;
-        const total = (sellingPrice + item.retail_shipping) * qty;
+        const total = sellingPrice * qty;
 
         return (
           <Link
