@@ -17,7 +17,11 @@ const STATUS_FILTERS: { label: string; value: ProjectStatus | "" }[] = [
   { label: "All", value: "" },
   { label: "Draft", value: "draft" },
   { label: "Quote", value: "quote" },
+  { label: "Submitted", value: "submitted" },
   { label: "Accepted", value: "accepted" },
+  { label: "Paid", value: "paid" },
+  { label: "Shipped", value: "shipped" },
+  { label: "Received", value: "received" },
   { label: "Completed", value: "completed" },
 ];
 
@@ -195,12 +199,20 @@ function ProjectGridCard({
 
 function statusColor(status: ProjectStatus): string {
   switch (status) {
-    case "accepted":
-      return "bg-green-400";
-    case "completed":
-      return "bg-purple-400";
     case "quote":
       return "bg-blue-400";
+    case "submitted":
+      return "bg-indigo-400";
+    case "accepted":
+      return "bg-green-400";
+    case "paid":
+      return "bg-emerald-400";
+    case "shipped":
+      return "bg-amber-400";
+    case "received":
+      return "bg-orange-400";
+    case "completed":
+      return "bg-purple-400";
     default:
       return "bg-slate-300";
   }

@@ -123,16 +123,18 @@ export async function updateProject(
 ): Promise<{ error: string | null }> {
   const supabase = await createSupabaseServer();
 
-  // If status is being downgraded from accepted/completed, reset all item
-  // acceptance statuses so the customer sees a fresh review screen.
-  if (input.status && input.status !== "accepted" && input.status !== "completed") {
+  // If status is being downgraded from accepted+ to pre-accepted, reset all
+  // item acceptance statuses so the customer sees a fresh review screen.
+  const POST_ACCEPTANCE: string[] = ["accepted", "paid", "shipped", "received", "completed"];
+  const PRE_ACCEPTANCE: string[] = ["draft", "quote", "submitted"];
+  if (input.status && PRE_ACCEPTANCE.includes(input.status)) {
     const { data: current } = await supabase
       .from("projects")
       .select("status")
       .eq("id", id)
       .single();
 
-    if (current && (current.status === "accepted" || current.status === "completed")) {
+    if (current && POST_ACCEPTANCE.includes(current.status)) {
       await supabase
         .from("items")
         .update({ acceptance_status: "pending" })
@@ -342,7 +344,7 @@ export async function saveClientNote(
     .single();
 
   if (!project) return { error: "Invalid share link" };
-  if (project.status === "accepted" || project.status === "completed") {
+  if (["accepted", "paid", "shipped", "received", "completed"].includes(project.status)) {
     return { error: "This invoice is no longer editable" };
   }
 
@@ -377,7 +379,7 @@ export async function deleteItemByShareToken(
     .single();
 
   if (!project) return { error: "Invalid share link" };
-  if (project.status === "accepted" || project.status === "completed") {
+  if (["accepted", "paid", "shipped", "received", "completed"].includes(project.status)) {
     return { error: "This invoice is no longer editable" };
   }
 

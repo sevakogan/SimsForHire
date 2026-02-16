@@ -11,6 +11,12 @@ import {
 } from "@/lib/actions/projects";
 import { calculateInvoiceTotals, formatCurrency as fmtCurrency } from "@/lib/invoice-calculations";
 import type { ClientItem, AcceptanceStatus, DiscountType } from "@/types";
+import {
+  STATUS_ROW_1,
+  STATUS_ROW_2,
+  STATUS_CONFIG,
+} from "@/lib/constants/project-statuses";
+import type { ProjectStatus } from "@/types";
 
 interface ItemDisplayData {
   id: string;
@@ -34,22 +40,34 @@ interface ShareActionsProps {
   discountAmount: number;
 }
 
-const STATUS_STYLES: Record<string, string> = {
-  draft: "bg-gray-100 text-gray-600",
-  quote: "bg-blue-100 text-blue-700",
-  accepted: "bg-green-100 text-green-700",
-  completed: "bg-purple-100 text-purple-700",
-};
-
+/** Read-only 2-row status display for the customer share page */
 function StatusBadge({ status }: { status: string }) {
-  const style = STATUS_STYLES[status] ?? "bg-gray-100 text-gray-600";
+  function renderPill(s: ProjectStatus) {
+    const config = STATUS_CONFIG[s];
+    const isActive = status === s;
+    return (
+      <span
+        key={s}
+        className={`inline-flex items-center justify-center rounded-lg px-3 py-1.5 text-xs font-medium border ${
+          isActive
+            ? `${config.activeBg} ${config.activeText} border-transparent shadow-sm`
+            : `${config.bg} ${config.text} ${config.border} opacity-60`
+        }`}
+      >
+        {config.label}
+      </span>
+    );
+  }
+
   return (
-    <span
-      id="share-status-badge"
-      className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium capitalize ${style}`}
-    >
-      {status}
-    </span>
+    <div id="share-status-badge" className="flex flex-col gap-1.5">
+      <div className="flex items-center gap-1.5">
+        {STATUS_ROW_1.map(renderPill)}
+      </div>
+      <div className="flex items-center gap-1.5">
+        {STATUS_ROW_2.map(renderPill)}
+      </div>
+    </div>
   );
 }
 
@@ -108,7 +126,7 @@ export function ShareActions({
     currentStatus !== "accepted" && currentStatus !== "completed";
 
   const alreadyAccepted =
-    currentStatus === "accepted" || currentStatus === "completed";
+    ["accepted", "paid", "shipped", "received", "completed"].includes(currentStatus);
 
   const activeDecisions = Object.fromEntries(
     Object.entries(decisions).filter(([id]) =>
@@ -256,7 +274,7 @@ export function ShareActions({
 
     return (
       <>
-        <StatusBadgeUpdater status={displayStatus} />
+        {/* StatusBadge in the header already shows current status */}
         <div className="mt-6 rounded-xl border border-gray-200 bg-white p-6 shadow-sm text-center">
           <div
             className={`mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full ${
@@ -812,16 +830,3 @@ export function ShareActions({
   );
 }
 
-/** Updates the server-rendered header badge via DOM */
-function StatusBadgeUpdater({ status }: { status: string }) {
-  useEffect(() => {
-    const badge = document.getElementById("share-status-badge");
-    if (badge) {
-      const style = STATUS_STYLES[status] ?? "bg-gray-100 text-gray-600";
-      badge.className = `inline-flex items-center rounded-full px-3 py-1 text-xs font-medium capitalize ${style}`;
-      badge.textContent = status;
-    }
-  }, [status]);
-
-  return null;
-}

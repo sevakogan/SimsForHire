@@ -4,9 +4,12 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { updateProject, generateShareToken } from "@/lib/actions/projects";
 import { buttonStyles } from "@/components/ui/form-styles";
+import {
+  STATUS_ROW_1,
+  STATUS_ROW_2,
+  STATUS_CONFIG,
+} from "@/lib/constants/project-statuses";
 import type { Project, ProjectStatus } from "@/types";
-
-const statusOptions: ProjectStatus[] = ["draft", "quote", "accepted", "completed"];
 
 interface Props {
   project: Project;
@@ -18,6 +21,7 @@ export function ProjectActions({ project }: Props) {
   const [shareState, setShareState] = useState<"idle" | "loading" | "copied">("idle");
 
   async function handleStatusChange(status: ProjectStatus) {
+    if (status === project.status || loading) return;
     setLoading(true);
     await updateProject(project.id, { status });
     router.refresh();
@@ -28,7 +32,6 @@ export function ProjectActions({ project }: Props) {
     setShareState("loading");
 
     try {
-      // If token already exists, use it directly
       if (project.share_token) {
         const url = `${window.location.origin}/share/${project.share_token}`;
         await navigator.clipboard.writeText(url);
@@ -37,7 +40,6 @@ export function ProjectActions({ project }: Props) {
         return;
       }
 
-      // Generate new token
       const result = await generateShareToken(project.id);
       if (result.error || !result.token) {
         setShareState("idle");
@@ -54,25 +56,37 @@ export function ProjectActions({ project }: Props) {
     }
   }
 
+  function renderStatusButton(status: ProjectStatus) {
+    const config = STATUS_CONFIG[status];
+    const isActive = project.status === status;
+
+    return (
+      <button
+        key={status}
+        type="button"
+        onClick={() => handleStatusChange(status)}
+        disabled={loading || isActive}
+        className={`inline-flex items-center justify-center rounded-lg px-3 py-1.5 text-xs font-medium transition-all border ${
+          isActive
+            ? `${config.activeBg} ${config.activeText} border-transparent shadow-sm`
+            : `${config.bg} ${config.text} ${config.border} hover:shadow-sm hover:brightness-95`
+        } disabled:cursor-default`}
+      >
+        {config.label}
+      </button>
+    );
+  }
+
   return (
-    <div className="flex items-center justify-between gap-3 w-full">
-      {/* Status pills — left */}
-      <div className="flex items-center gap-1.5 sm:gap-2">
-        {statusOptions.map((status) => (
-          <button
-            key={status}
-            type="button"
-            onClick={() => handleStatusChange(status)}
-            disabled={loading || project.status === status}
-            className={`${buttonStyles.small} ${
-              project.status === status
-                ? "bg-primary text-white"
-                : "border border-border text-muted-foreground hover:bg-muted"
-            } rounded-full text-[11px] sm:text-xs`}
-          >
-            {status}
-          </button>
-        ))}
+    <div className="flex items-start justify-between gap-4 w-full">
+      {/* Status pills — 2 rows, left */}
+      <div className="flex flex-col gap-1.5">
+        <div className="flex items-center gap-1.5">
+          {STATUS_ROW_1.map(renderStatusButton)}
+        </div>
+        <div className="flex items-center gap-1.5">
+          {STATUS_ROW_2.map(renderStatusButton)}
+        </div>
       </div>
 
       {/* Share button — right */}
