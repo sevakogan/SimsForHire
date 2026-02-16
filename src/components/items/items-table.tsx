@@ -248,6 +248,13 @@ export function ItemsTable({ items, projectId, isAdmin, unreadNoteCount = 0 }: I
                   </span>
                 </div>
               )}
+              {isAdmin && (
+                <div className="w-16 shrink-0 text-right">
+                  <span className="text-[10px] font-semibold uppercase tracking-wider text-green-600/70">
+                    Profit
+                  </span>
+                </div>
+              )}
               {isAdmin && <div className="w-7 shrink-0" />}
             </div>
 
@@ -378,6 +385,19 @@ export function ItemsTable({ items, projectId, isAdmin, unreadNoteCount = 0 }: I
                     <div className="w-16 shrink-0 text-right">
                       <span className="text-xs text-amber-600/80">
                         {formatCurrency((item as Item).my_cost)}
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Admin profit (total - cost) */}
+                  {isAdmin && "my_cost" in item && (
+                    <div className="w-16 shrink-0 text-right">
+                      <span className={`text-xs font-medium ${
+                        total - (item as Item).my_cost >= 0
+                          ? "text-green-600"
+                          : "text-red-500"
+                      }`}>
+                        {formatCurrency(total - (item as Item).my_cost)}
                       </span>
                     </div>
                   )}
@@ -525,6 +545,18 @@ export function ItemsTable({ items, projectId, isAdmin, unreadNoteCount = 0 }: I
                     <div className="flex items-center justify-between">
                       <span className="text-[9px] font-medium uppercase tracking-wider text-amber-600/60">Cost</span>
                       <span className="text-xs text-amber-600/80">{formatCurrency((item as Item).my_cost)}</span>
+                    </div>
+                  )}
+                  {isAdmin && "my_cost" in item && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-[9px] font-medium uppercase tracking-wider text-green-600/60">Profit</span>
+                      <span className={`text-xs font-medium ${
+                        total - (item as Item).my_cost >= 0
+                          ? "text-green-600"
+                          : "text-red-500"
+                      }`}>
+                        {formatCurrency(total - (item as Item).my_cost)}
+                      </span>
                     </div>
                   )}
                 </div>
@@ -699,6 +731,15 @@ function ItemsCardGrid({ items, projectId, isAdmin, onDelete, dismissedNoteIds, 
               {isAdmin && "my_cost" in item && (
                 <p className="text-[10px] text-amber-600">
                   Cost: {formatCurrency((item as Item).my_cost)}
+                </p>
+              )}
+              {isAdmin && "my_cost" in item && (
+                <p className={`text-[10px] font-medium ${
+                  total - (item as Item).my_cost >= 0
+                    ? "text-green-600"
+                    : "text-red-500"
+                }`}>
+                  Profit: {formatCurrency(total - (item as Item).my_cost)}
                 </p>
               )}
 

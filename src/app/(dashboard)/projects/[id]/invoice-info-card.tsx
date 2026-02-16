@@ -175,56 +175,65 @@ export function InvoiceInfoCard({
     taxPercent: parseFloat(localTax) || 0,
   });
 
-  const inlineInput =
-    "w-full rounded-lg border border-gray-200 bg-white/80 py-1.5 px-2.5 text-sm font-medium text-gray-900 placeholder:text-gray-400 hover:border-gray-300 focus:border-indigo-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-400/20 transition-all";
+  const profit = myCost !== undefined
+    ? totals.grandTotal - ((myCost ?? 0) + (myShipping ?? 0))
+    : undefined;
 
-  const labelClass =
-    "text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-gray-400";
+  const inputBase =
+    "rounded-lg border border-gray-200 bg-white py-1.5 px-2.5 text-sm font-medium text-gray-900 tabular-nums placeholder:text-gray-400 hover:border-gray-300 focus:border-indigo-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-400/20 transition-all";
 
   return (
-    <div className="rounded-2xl border border-gray-200/80 bg-gradient-to-br from-slate-50 via-white to-indigo-50/30 shadow-sm overflow-hidden">
-      {/* Header accent bar */}
+    <div className="rounded-2xl border border-gray-200/80 bg-white shadow-sm overflow-hidden">
+      {/* Accent bar */}
       <div className="h-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500" />
 
-      {/* Top row: Invoice details */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 divide-x divide-gray-100">
-        {/* Invoice Number */}
-        <div className="p-3 sm:p-4">
-          <p className={labelClass}>Invoice #</p>
+      {/* Fields grid — consistent cell height */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-px bg-gray-100">
+        {/* Invoice # */}
+        <div className="bg-white px-4 py-3.5">
+          <label className="block text-[10px] font-semibold uppercase tracking-wider text-gray-400 mb-1.5">
+            Invoice #
+          </label>
           <input
             type="text"
             value={localInvoice}
             onChange={handleInvoiceChange}
-            placeholder="Not set"
-            className={`${inlineInput} mt-1.5`}
+            placeholder="—"
+            className={`${inputBase} w-full`}
           />
         </div>
 
         {/* Required By */}
-        <div className="p-3 sm:p-4">
-          <p className={labelClass}>Required By</p>
-          <p className="text-sm font-medium text-gray-900 mt-2.5 px-1">
-            {dateRequired
-              ? new Date(dateRequired).toLocaleDateString("en-US", {
-                  month: "short",
-                  day: "numeric",
-                  year: "numeric",
-                })
-              : "—"}
-          </p>
+        <div className="bg-white px-4 py-3.5">
+          <label className="block text-[10px] font-semibold uppercase tracking-wider text-gray-400 mb-1.5">
+            Required By
+          </label>
+          <div className="flex h-[34px] items-center">
+            <span className="text-sm font-medium text-gray-900">
+              {dateRequired
+                ? new Date(dateRequired).toLocaleDateString("en-US", {
+                    month: "short",
+                    day: "numeric",
+                    year: "numeric",
+                  })
+                : "—"}
+            </span>
+          </div>
         </div>
 
-        {/* Fulfillment Toggle */}
-        <div className="p-3 sm:p-4">
-          <p className={labelClass}>Fulfillment</p>
-          <div className="mt-1.5 inline-flex rounded-lg border border-gray-200 overflow-hidden shadow-sm">
+        {/* Fulfillment */}
+        <div className="bg-white px-4 py-3.5">
+          <label className="block text-[10px] font-semibold uppercase tracking-wider text-gray-400 mb-1.5">
+            Fulfillment
+          </label>
+          <div className="inline-flex h-[34px] rounded-lg border border-gray-200 overflow-hidden">
             <button
               type="button"
               onClick={() => handleFulfillmentToggle("delivery")}
-              className={`flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold transition-all ${
+              className={`flex items-center gap-1 px-2.5 text-xs font-semibold transition-all ${
                 localFulfillment === "delivery"
-                  ? "bg-blue-500 text-white shadow-inner"
-                  : "bg-white text-gray-500 hover:bg-gray-50"
+                  ? "bg-blue-500 text-white"
+                  : "bg-white text-gray-400 hover:bg-gray-50 hover:text-gray-600"
               }`}
             >
               <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
@@ -235,10 +244,10 @@ export function InvoiceInfoCard({
             <button
               type="button"
               onClick={() => handleFulfillmentToggle("pickup")}
-              className={`flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold transition-all border-l border-gray-200 ${
+              className={`flex items-center gap-1 px-2.5 text-xs font-semibold transition-all border-l border-gray-200 ${
                 localFulfillment === "pickup"
-                  ? "bg-amber-500 text-white shadow-inner"
-                  : "bg-white text-gray-500 hover:bg-gray-50"
+                  ? "bg-amber-500 text-white"
+                  : "bg-white text-gray-400 hover:bg-gray-50 hover:text-gray-600"
               }`}
             >
               <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
@@ -250,9 +259,11 @@ export function InvoiceInfoCard({
         </div>
 
         {/* Tax */}
-        <div className="p-3 sm:p-4">
-          <p className={labelClass}>Tax</p>
-          <div className="flex items-center gap-1 mt-1.5">
+        <div className="bg-white px-4 py-3.5">
+          <label className="block text-[10px] font-semibold uppercase tracking-wider text-gray-400 mb-1.5">
+            Tax
+          </label>
+          <div className="flex items-center gap-1.5">
             <input
               type="number"
               value={localTax}
@@ -261,7 +272,7 @@ export function InvoiceInfoCard({
               min={0}
               max={100}
               step="0.1"
-              className={`${inlineInput} max-w-[80px] tabular-nums`}
+              className={`${inputBase} w-20`}
             />
             <span className="text-xs font-medium text-gray-400">%</span>
           </div>
@@ -269,27 +280,25 @@ export function InvoiceInfoCard({
       </div>
 
       {/* Discount row */}
-      <div className="border-t border-gray-100 bg-gradient-to-r from-emerald-50/40 to-transparent p-3 sm:p-4">
-        <div className="flex items-center gap-3 flex-wrap">
-          <div className="flex items-center gap-2 shrink-0">
-            <div className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-100">
-              <svg className="h-3.5 w-3.5 text-emerald-600" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9.568 3H5.25A2.25 2.25 0 0 0 3 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 0 0 5.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 0 0 9.568 3Z" />
-                <path strokeLinecap="round" strokeLinejoin="round" d="M6 6h.008v.008H6V6Z" />
-              </svg>
-            </div>
-            <p className={`${labelClass} !text-emerald-700`}>Discount</p>
-          </div>
+      <div className="border-t border-gray-100 px-4 py-3">
+        <div className="flex items-center gap-3">
+          <svg className="h-4 w-4 text-emerald-500 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9.568 3H5.25A2.25 2.25 0 0 0 3 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 0 0 5.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 0 0 9.568 3Z" />
+            <path strokeLinecap="round" strokeLinejoin="round" d="M6 6h.008v.008H6V6Z" />
+          </svg>
+          <span className="text-[10px] font-semibold uppercase tracking-wider text-emerald-700 shrink-0">
+            Discount
+          </span>
 
-          {/* Toggle: % or $ */}
-          <div className="inline-flex rounded-lg border border-gray-200 overflow-hidden shadow-sm">
+          {/* % / $ toggle */}
+          <div className="inline-flex rounded-lg border border-gray-200 overflow-hidden">
             <button
               type="button"
               onClick={() => handleDiscountTypeToggle("percent")}
-              className={`px-3 py-1.5 text-xs font-semibold transition-all ${
+              className={`px-2.5 py-1 text-xs font-semibold transition-all ${
                 localDiscountType === "percent"
-                  ? "bg-emerald-500 text-white shadow-inner"
-                  : "bg-white text-gray-500 hover:bg-gray-50"
+                  ? "bg-emerald-500 text-white"
+                  : "bg-white text-gray-400 hover:bg-gray-50 hover:text-gray-600"
               }`}
             >
               %
@@ -297,17 +306,17 @@ export function InvoiceInfoCard({
             <button
               type="button"
               onClick={() => handleDiscountTypeToggle("amount")}
-              className={`px-3 py-1.5 text-xs font-semibold transition-all border-l border-gray-200 ${
+              className={`px-2.5 py-1 text-xs font-semibold transition-all border-l border-gray-200 ${
                 localDiscountType === "amount"
-                  ? "bg-emerald-500 text-white shadow-inner"
-                  : "bg-white text-gray-500 hover:bg-gray-50"
+                  ? "bg-emerald-500 text-white"
+                  : "bg-white text-gray-400 hover:bg-gray-50 hover:text-gray-600"
               }`}
             >
               $
             </button>
           </div>
 
-          {/* Discount input */}
+          {/* Value input */}
           {localDiscountType === "percent" ? (
             <div className="flex items-center gap-1">
               <input
@@ -318,7 +327,7 @@ export function InvoiceInfoCard({
                 min={0}
                 max={100}
                 step="0.1"
-                className={`${inlineInput} max-w-[80px] tabular-nums !border-emerald-200 focus:!border-emerald-400 focus:!ring-emerald-400/20`}
+                className={`${inputBase} w-20 !border-emerald-200 focus:!border-emerald-400 focus:!ring-emerald-400/20`}
               />
               <span className="text-xs font-medium text-emerald-600">%</span>
             </div>
@@ -332,84 +341,83 @@ export function InvoiceInfoCard({
                 placeholder="0.00"
                 min={0}
                 step="0.01"
-                className={`${inlineInput} max-w-[100px] tabular-nums !border-emerald-200 focus:!border-emerald-400 focus:!ring-emerald-400/20`}
+                className={`${inputBase} w-24 !border-emerald-200 focus:!border-emerald-400 focus:!ring-emerald-400/20`}
               />
             </div>
           )}
 
-          <span className="text-[10px] text-gray-400 ml-auto hidden sm:inline italic">
-            Applied to items only
+          <span className="text-[10px] text-gray-400 ml-auto hidden sm:inline">
+            Items only
           </span>
         </div>
       </div>
 
       {/* Notes */}
-      <div className="border-t border-gray-100 p-3 sm:p-4">
-        <p className={`${labelClass} mb-1.5`}>Invoice Notes</p>
+      <div className="border-t border-gray-100 px-4 py-3">
+        <label className="block text-[10px] font-semibold uppercase tracking-wider text-gray-400 mb-1.5">
+          Invoice Notes
+        </label>
         <textarea
           value={localNotes}
           onChange={handleNotesChange}
           placeholder="Add notes visible to the customer..."
           rows={2}
-          className="w-full rounded-lg border border-gray-200 bg-white/80 py-2 px-3 text-sm text-gray-900 placeholder:text-gray-400 hover:border-gray-300 focus:border-indigo-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-400/20 resize-y transition-all"
+          className="w-full rounded-lg border border-gray-200 bg-white py-2 px-3 text-sm text-gray-900 placeholder:text-gray-400 hover:border-gray-300 focus:border-indigo-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-400/20 resize-y transition-all"
         />
       </div>
 
-      {/* Totals preview — Items → Services → Tax → Discount → Total → Profit */}
-      <div className="border-t border-gray-100 bg-gradient-to-r from-gray-50 to-slate-50 px-4 sm:px-5 py-3.5">
-        <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs">
-          <div className="flex items-center gap-1.5">
-            <span className="inline-flex h-2 w-2 rounded-full bg-indigo-400" />
-            <span className="text-gray-500">Items</span>
-            <span className="font-bold tabular-nums text-gray-900">
-              {formatCurrency(totals.itemsTotal)}
+      {/* Summary bar */}
+      <div className="border-t border-gray-200 bg-gray-50 px-4 py-3">
+        <div className="flex items-center justify-between gap-4">
+          {/* Left: line items */}
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs">
+            <span className="text-gray-400">
+              Items{" "}
+              <span className="font-semibold tabular-nums text-gray-700">
+                {formatCurrency(totals.itemsTotal)}
+              </span>
             </span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <span className="inline-flex h-2 w-2 rounded-full bg-blue-400" />
-            <span className="text-gray-500">Services</span>
-            <span className="font-bold tabular-nums text-gray-900">
-              {formatCurrency(totals.deliveryTotal)}
+            <span className="text-gray-400">
+              Services{" "}
+              <span className="font-semibold tabular-nums text-gray-700">
+                {formatCurrency(totals.deliveryTotal)}
+              </span>
             </span>
+            {totals.taxAmount > 0 && (
+              <span className="text-gray-400">
+                Tax{" "}
+                <span className="font-semibold tabular-nums text-gray-700">
+                  {formatCurrency(totals.taxAmount)}
+                </span>
+              </span>
+            )}
+            {totals.discountAmount > 0 && (
+              <span className="text-gray-400">
+                Discount{" "}
+                <span className="font-semibold tabular-nums text-emerald-600">
+                  −{formatCurrency(totals.discountAmount)}
+                </span>
+              </span>
+            )}
           </div>
-          {totals.taxAmount > 0 && (
-            <div className="flex items-center gap-1.5">
-              <span className="inline-flex h-2 w-2 rounded-full bg-amber-400" />
-              <span className="text-gray-500">Tax</span>
-              <span className="font-bold tabular-nums text-gray-900">
-                {formatCurrency(totals.taxAmount)}
+
+          {/* Right: Total + Profit */}
+          <div className="flex items-center gap-4 shrink-0">
+            <div className="flex items-baseline gap-1.5 pl-4 border-l border-gray-200">
+              <span className="text-xs font-medium text-gray-500">Total</span>
+              <span className="text-base font-black tabular-nums text-gray-900">
+                {formatCurrency(totals.grandTotal)}
               </span>
             </div>
-          )}
-          {totals.discountAmount > 0 && (
-            <div className="flex items-center gap-1.5">
-              <span className="inline-flex h-2 w-2 rounded-full bg-emerald-400" />
-              <span className="text-gray-500">Discount</span>
-              <span className="font-bold tabular-nums text-emerald-600">
-                −{formatCurrency(totals.discountAmount)}
-              </span>
-            </div>
-          )}
-          <div className="flex items-center gap-2 pl-3 border-l border-gray-200">
-            <span className="text-gray-500 font-medium">Total</span>
-            <span className="font-black tabular-nums text-gray-900 text-base">
-              {formatCurrency(totals.grandTotal)}
-            </span>
+            {profit !== undefined && (
+              <div className="flex items-baseline gap-1.5 pl-4 border-l border-gray-200">
+                <span className="text-xs font-medium text-gray-400">Profit</span>
+                <span className={`text-base font-black tabular-nums ${profit >= 0 ? "text-emerald-600" : "text-red-500"}`}>
+                  {formatCurrency(profit)}
+                </span>
+              </div>
+            )}
           </div>
-          {myCost !== undefined && (
-            <div className="flex items-center gap-2 pl-3 border-l border-dashed border-gray-300">
-              <span className="text-gray-400 font-medium">Profit</span>
-              {(() => {
-                const totalMyCostCalc = (myCost ?? 0) + (myShipping ?? 0);
-                const profit = totals.grandTotal - totalMyCostCalc;
-                return (
-                  <span className={`font-black tabular-nums text-base ${profit >= 0 ? "text-emerald-600" : "text-red-500"}`}>
-                    {formatCurrency(profit)}
-                  </span>
-                );
-              })()}
-            </div>
-          )}
         </div>
       </div>
     </div>
