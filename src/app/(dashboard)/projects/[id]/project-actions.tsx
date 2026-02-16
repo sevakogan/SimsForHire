@@ -57,27 +57,38 @@ export function ProjectActions({ project }: Props) {
     }
   }
 
-  // Row 2 statuses after "paid" are locked until "paid" has been reached
+  // Sequential status flow — can go back to any previous, forward only to next.
+  // "paid" is locked (will be enabled via Stripe later).
+  // "accepted" is set by customer acceptance, not admin click.
   const currentIdx = PROJECT_STATUSES.indexOf(project.status);
-  const paidIdx = PROJECT_STATUSES.indexOf("paid");
-  const hasPaid = currentIdx >= paidIdx;
+
+  function isStatusClickable(status: ProjectStatus): boolean {
+    const targetIdx = PROJECT_STATUSES.indexOf(status);
+    // Already active — not clickable
+    if (targetIdx === currentIdx) return false;
+    // "paid" is always locked for now (Stripe integration later)
+    if (status === "paid") return false;
+    // Can always go back to any previous status
+    if (targetIdx < currentIdx) return true;
+    // Can only advance to the immediate next status
+    return targetIdx === currentIdx + 1;
+  }
 
   function renderStatusButton(status: ProjectStatus) {
     const config = STATUS_CONFIG[status];
     const isActive = project.status === status;
-    // Shipped, Received, Completed are locked until Paid is reached
-    const isLockedRow2 = status !== "paid" && STATUS_ROW_2.includes(status) && !hasPaid;
+    const clickable = isStatusClickable(status);
 
     return (
       <button
         key={status}
         type="button"
         onClick={() => handleStatusChange(status)}
-        disabled={loading || isActive || isLockedRow2}
+        disabled={loading || !clickable}
         className={`inline-flex items-center justify-center rounded-lg px-3 py-1.5 text-xs font-medium transition-all border ${
           isActive
             ? `${config.activeBg} ${config.activeText} border-transparent shadow-sm`
-            : isLockedRow2
+            : !clickable
               ? `${config.bg} ${config.border} text-gray-300 cursor-not-allowed`
               : `${config.bg} ${config.text} ${config.border} hover:shadow-sm hover:brightness-95`
         } disabled:cursor-default`}
