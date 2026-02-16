@@ -104,25 +104,47 @@ export function PortalSidebar({
 
   const sidebarContent = (
     <>
-      {/* Business card */}
-      <div className={`border-b border-gray-200 px-4 py-5 ${collapsed ? "px-2 py-4" : ""}`}>
+      {/* Business card + collapse toggle */}
+      <div className={`border-b border-gray-200 ${collapsed ? "px-2 py-3" : "px-4 py-5"}`}>
         {collapsed ? (
-          <div className="flex items-center justify-center">
+          <div className="flex flex-col items-center gap-2">
             <span className="text-sm font-bold text-primary">{companyName[0]}</span>
+            <button
+              type="button"
+              onClick={toggleCollapsed}
+              className="hidden sm:flex items-center justify-center rounded-md p-1 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
+              title="Expand sidebar"
+            >
+              <svg className="h-3.5 w-3.5 rotate-180" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
+              </svg>
+            </button>
           </div>
         ) : (
-          <>
-            <h1 className="text-base font-bold text-gray-900">{companyName}</h1>
-            <p className="mt-1.5 text-sm font-medium text-gray-700 truncate">
-              {clientName}
-            </p>
-            <p className="mt-0.5 text-xs text-gray-500 truncate">
-              {projectName}
-              {invoiceNumber && (
-                <span className="text-gray-400"> &middot; #{invoiceNumber}</span>
-              )}
-            </p>
-          </>
+          <div className="flex items-start justify-between gap-2">
+            <div className="min-w-0">
+              <h1 className="text-base font-bold text-gray-900">{companyName}</h1>
+              <p className="mt-1.5 text-sm font-medium text-gray-700 truncate">
+                {clientName}
+              </p>
+              <p className="mt-0.5 text-xs text-gray-500 truncate">
+                {projectName}
+                {invoiceNumber && (
+                  <span className="text-gray-400"> &middot; #{invoiceNumber}</span>
+                )}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={toggleCollapsed}
+              className="hidden sm:flex shrink-0 mt-0.5 items-center justify-center rounded-md p-1 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
+              title="Collapse sidebar"
+            >
+              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
+              </svg>
+            </button>
+          </div>
         )}
       </div>
 
@@ -147,26 +169,6 @@ export function PortalSidebar({
           );
         })}
       </nav>
-
-      {/* Collapse toggle — desktop only */}
-      <div className="hidden border-t border-gray-200 p-2 sm:block">
-        <button
-          type="button"
-          onClick={toggleCollapsed}
-          className="flex w-full items-center justify-center rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
-          title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-        >
-          <svg
-            className={`h-4 w-4 transition-transform ${collapsed ? "rotate-180" : ""}`}
-            fill="none"
-            viewBox="0 0 24 24"
-            strokeWidth={1.5}
-            stroke="currentColor"
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
-          </svg>
-        </button>
-      </div>
     </>
   );
 

@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
-import { TagFilterPills } from "@/components/items/tag-sidebar";
+import { useEffect } from "react";
 import { ItemsTable } from "@/components/items/items-table";
+import { useTagFilter } from "@/components/items/tag-filter-context";
 import type { Item, ClientItem } from "@/types";
 
 interface ItemsWithSidebarProps {
@@ -20,23 +20,22 @@ export function ItemsWithSidebar({
   unreadNoteCount,
   readOnly,
 }: ItemsWithSidebarProps) {
-  const [tagFilter, setTagFilter] = useState("");
+  const { tagFilter, setTagFilter, registerItems } = useTagFilter();
+
+  // Register items with the context so the sidebar can show tag pills
+  useEffect(() => {
+    registerItems(items);
+  }, [items, registerItems]);
 
   return (
-    <div className="space-y-3">
-      {/* Items table */}
-      <ItemsTable
-        items={items}
-        projectId={projectId}
-        isAdmin={isAdmin}
-        unreadNoteCount={unreadNoteCount}
-        readOnly={readOnly}
-        tagFilter={tagFilter}
-        onTagFilterChange={setTagFilter}
-      />
-
-      {/* Tag filter pills — below the table */}
-      <TagFilterPills items={items} value={tagFilter} onChange={setTagFilter} />
-    </div>
+    <ItemsTable
+      items={items}
+      projectId={projectId}
+      isAdmin={isAdmin}
+      unreadNoteCount={unreadNoteCount}
+      readOnly={readOnly}
+      tagFilter={tagFilter}
+      onTagFilterChange={setTagFilter}
+    />
   );
 }

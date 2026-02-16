@@ -93,16 +93,38 @@ export function CustomizationsSidebar({
 
   const sidebarContent = (
     <>
-      {/* Header */}
-      <div className={`border-b border-gray-200 px-4 py-5 ${collapsed ? "px-2 py-4" : ""}`}>
+      {/* Header + collapse toggle */}
+      <div className={`border-b border-gray-200 ${collapsed ? "px-2 py-3" : "px-4 py-5"}`}>
         {collapsed ? (
-          <div className="flex items-center justify-center">
+          <div className="flex flex-col items-center gap-2">
             <svg className="h-5 w-5 text-primary" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 1 1-3 0m3 0a1.5 1.5 0 1 0-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-9.75 0h9.75" />
             </svg>
+            <button
+              type="button"
+              onClick={toggleCollapsed}
+              className="hidden sm:flex items-center justify-center rounded-md p-1 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
+              title="Expand sidebar"
+            >
+              <svg className="h-3.5 w-3.5 rotate-180" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
+              </svg>
+            </button>
           </div>
         ) : (
-          <h1 className="text-base font-bold text-gray-900">Customizations</h1>
+          <div className="flex items-start justify-between gap-2">
+            <h1 className="text-base font-bold text-gray-900">Customizations</h1>
+            <button
+              type="button"
+              onClick={toggleCollapsed}
+              className="hidden sm:flex shrink-0 mt-0.5 items-center justify-center rounded-md p-1 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
+              title="Collapse sidebar"
+            >
+              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
+              </svg>
+            </button>
+          </div>
         )}
       </div>
 
@@ -142,26 +164,6 @@ export function CustomizationsSidebar({
           </svg>
           {!collapsed && <span>Dashboard</span>}
         </Link>
-      </div>
-
-      {/* Collapse toggle — desktop only */}
-      <div className="hidden border-t border-gray-200 p-2 sm:block">
-        <button
-          type="button"
-          onClick={toggleCollapsed}
-          className="flex w-full items-center justify-center rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
-          title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-        >
-          <svg
-            className={`h-4 w-4 transition-transform ${collapsed ? "rotate-180" : ""}`}
-            fill="none"
-            viewBox="0 0 24 24"
-            strokeWidth={1.5}
-            stroke="currentColor"
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
-          </svg>
-        </button>
       </div>
     </>
   );

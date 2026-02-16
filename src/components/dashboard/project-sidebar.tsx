@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { COMPANY_INFO } from "@/lib/constants/company-info";
+import { useTagFilterSafe } from "@/components/items/tag-filter-context";
+import { getTypeColor } from "@/lib/constants/product-types";
 
 interface ProjectSidebarProps {
   projectId: string;
@@ -87,6 +89,7 @@ export function ProjectSidebar({
   }
 
   const navItems = getNavItems(projectId);
+  const tagCtx = useTagFilterSafe();
 
   function isActive(item: NavItem): boolean {
     if (item.exact) return pathname === item.href;
@@ -95,30 +98,52 @@ export function ProjectSidebar({
 
   const sidebarContent = (
     <>
-      {/* Business card */}
-      <div className={`border-b border-gray-200 px-4 py-5 ${collapsed ? "px-2 py-4" : ""}`}>
+      {/* Business card + collapse toggle */}
+      <div className={`border-b border-gray-200 ${collapsed ? "px-2 py-3" : "px-4 py-5"}`}>
         {collapsed ? (
-          <div className="flex items-center justify-center">
+          <div className="flex flex-col items-center gap-2">
             <span className="text-sm font-bold text-primary">{COMPANY_INFO.name[0]}</span>
+            <button
+              type="button"
+              onClick={toggleCollapsed}
+              className="hidden sm:flex items-center justify-center rounded-md p-1 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
+              title="Expand sidebar"
+            >
+              <svg className="h-3.5 w-3.5 rotate-180" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
+              </svg>
+            </button>
           </div>
         ) : (
-          <>
-            <h1 className="text-base font-bold text-gray-900">{COMPANY_INFO.name}</h1>
-            <p className="mt-1.5 text-sm font-medium text-gray-700 truncate">
-              {clientName}
-            </p>
-            <p className="mt-0.5 text-xs text-gray-500 truncate">
-              {projectName}
-              {invoiceNumber && (
-                <span className="text-gray-400"> &middot; #{invoiceNumber}</span>
-              )}
-            </p>
-          </>
+          <div className="flex items-start justify-between gap-2">
+            <div className="min-w-0">
+              <h1 className="text-base font-bold text-gray-900">{COMPANY_INFO.name}</h1>
+              <p className="mt-1.5 text-sm font-medium text-gray-700 truncate">
+                {clientName}
+              </p>
+              <p className="mt-0.5 text-xs text-gray-500 truncate">
+                {projectName}
+                {invoiceNumber && (
+                  <span className="text-gray-400"> &middot; #{invoiceNumber}</span>
+                )}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={toggleCollapsed}
+              className="hidden sm:flex shrink-0 mt-0.5 items-center justify-center rounded-md p-1 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
+              title="Collapse sidebar"
+            >
+              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
+              </svg>
+            </button>
+          </div>
         )}
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 space-y-0.5 px-2 py-3">
+      <nav className="space-y-0.5 px-2 py-3">
         {navItems.map((item) => {
           const active = isActive(item);
           return (
@@ -139,8 +164,70 @@ export function ProjectSidebar({
         })}
       </nav>
 
+      {/* Tag filter pills */}
+      {tagCtx && tagCtx.tags.length > 0 && (
+        <div className={`border-t border-gray-200 px-2 py-3 ${collapsed ? "px-1" : ""}`}>
+          {!collapsed && (
+            <p className="mb-2 px-1 text-[10px] font-medium uppercase tracking-wider text-gray-400">
+              Tags
+            </p>
+          )}
+          <div className={collapsed ? "space-y-1" : "flex flex-wrap gap-1.5 px-1"}>
+            <button
+              type="button"
+              onClick={() => tagCtx.setTagFilter("")}
+              className={`${collapsed ? "flex w-full items-center justify-center rounded-md p-1.5" : "rounded-full px-2.5 py-0.5"} text-[11px] font-medium transition-all ${
+                tagCtx.tagFilter === ""
+                  ? "bg-primary text-white shadow-sm"
+                  : "bg-muted/60 text-muted-foreground hover:bg-muted"
+              }`}
+              title={collapsed ? `All (${tagCtx.totalItems})` : undefined}
+            >
+              {collapsed ? (
+                <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6A2.25 2.25 0 0 1 6 3.75h2.25A2.25 2.25 0 0 1 10.5 6v2.25a2.25 2.25 0 0 1-2.25 2.25H6a2.25 2.25 0 0 1-2.25-2.25V6ZM3.75 15.75A2.25 2.25 0 0 1 6 13.5h2.25a2.25 2.25 0 0 1 2.25 2.25V18a2.25 2.25 0 0 1-2.25 2.25H6A2.25 2.25 0 0 1 3.75 18v-2.25ZM13.5 6a2.25 2.25 0 0 1 2.25-2.25H18A2.25 2.25 0 0 1 20.25 6v2.25A2.25 2.25 0 0 1 18 10.5h-2.25a2.25 2.25 0 0 1-2.25-2.25V6ZM13.5 15.75a2.25 2.25 0 0 1 2.25-2.25H18a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 18 20.25h-2.25a2.25 2.25 0 0 1-2.25-2.25v-2.25Z" />
+                </svg>
+              ) : (
+                <>All ({tagCtx.totalItems})</>
+              )}
+            </button>
+            {tagCtx.tags.map(([tag, count]) => {
+              const colors = getTypeColor(tag);
+              const isActive = tagCtx.tagFilter === tag;
+              return (
+                <button
+                  key={tag}
+                  type="button"
+                  onClick={() => tagCtx.setTagFilter(isActive ? "" : tag)}
+                  className={`${collapsed ? "flex w-full items-center justify-center rounded-md p-1.5" : "rounded-full px-2.5 py-0.5"} text-[11px] font-medium transition-all ${
+                    isActive
+                      ? `${colors.activeBg} ${colors.activeText} shadow-sm`
+                      : `${colors.bg} ${colors.text} hover:opacity-80`
+                  }`}
+                  title={collapsed ? `${tag} (${count})` : undefined}
+                >
+                  {collapsed ? (
+                    <span className="text-[10px]">{tag.charAt(0).toUpperCase()}</span>
+                  ) : (
+                    <>
+                      {tag}
+                      <span className={`ml-1 text-[10px] ${isActive ? "opacity-80" : "opacity-60"}`}>
+                        {count}
+                      </span>
+                    </>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Spacer to push back link to bottom */}
+      <div className="flex-1" />
+
       {/* Back to projects link */}
-      <div className={`border-t border-gray-200 px-2 py-2 ${collapsed ? "" : ""}`}>
+      <div className="border-t border-gray-200 px-2 py-2">
         <Link
           href="/projects"
           className={`flex items-center gap-3 rounded-lg px-3 py-2 text-xs font-medium text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 ${
@@ -153,26 +240,6 @@ export function ProjectSidebar({
           </svg>
           {!collapsed && <span>All Projects</span>}
         </Link>
-      </div>
-
-      {/* Collapse toggle — desktop only */}
-      <div className="hidden border-t border-gray-200 p-2 sm:block">
-        <button
-          type="button"
-          onClick={toggleCollapsed}
-          className="flex w-full items-center justify-center rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
-          title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-        >
-          <svg
-            className={`h-4 w-4 transition-transform ${collapsed ? "rotate-180" : ""}`}
-            fill="none"
-            viewBox="0 0 24 24"
-            strokeWidth={1.5}
-            stroke="currentColor"
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
-          </svg>
-        </button>
       </div>
     </>
   );

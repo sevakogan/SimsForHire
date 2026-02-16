@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { getProjectById } from "@/lib/actions/projects";
 import { getClientById } from "@/lib/actions/clients";
 import { ProjectSidebar } from "@/components/dashboard/project-sidebar";
+import { TagFilterProvider } from "@/components/items/tag-filter-context";
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -19,14 +20,16 @@ export default async function ProjectLayout({ params, children }: Props) {
   return (
     /* Break out of the parent max-w container so the sidebar can span full width */
     <div className="-mx-4 -my-4 sm:-mx-6 sm:-my-6">
-      <ProjectSidebar
-        projectId={id}
-        clientName={client?.name ?? "Client"}
-        projectName={project.name}
-        invoiceNumber={project.invoice_number}
-      >
-        {children}
-      </ProjectSidebar>
+      <TagFilterProvider>
+        <ProjectSidebar
+          projectId={id}
+          clientName={client?.name ?? "Client"}
+          projectName={project.name}
+          invoiceNumber={project.invoice_number}
+        >
+          {children}
+        </ProjectSidebar>
+      </TagFilterProvider>
     </div>
   );
 }
