@@ -8,6 +8,7 @@ import {
   STATUS_ROW_1,
   STATUS_ROW_2,
   STATUS_CONFIG,
+  PROJECT_STATUSES,
 } from "@/lib/constants/project-statuses";
 import type { Project, ProjectStatus } from "@/types";
 
@@ -56,20 +57,29 @@ export function ProjectActions({ project }: Props) {
     }
   }
 
+  // Row 2 statuses after "paid" are locked until "paid" has been reached
+  const currentIdx = PROJECT_STATUSES.indexOf(project.status);
+  const paidIdx = PROJECT_STATUSES.indexOf("paid");
+  const hasPaid = currentIdx >= paidIdx;
+
   function renderStatusButton(status: ProjectStatus) {
     const config = STATUS_CONFIG[status];
     const isActive = project.status === status;
+    // Shipped, Received, Completed are locked until Paid is reached
+    const isLockedRow2 = status !== "paid" && STATUS_ROW_2.includes(status) && !hasPaid;
 
     return (
       <button
         key={status}
         type="button"
         onClick={() => handleStatusChange(status)}
-        disabled={loading || isActive}
+        disabled={loading || isActive || isLockedRow2}
         className={`inline-flex items-center justify-center rounded-lg px-3 py-1.5 text-xs font-medium transition-all border ${
           isActive
             ? `${config.activeBg} ${config.activeText} border-transparent shadow-sm`
-            : `${config.bg} ${config.text} ${config.border} hover:shadow-sm hover:brightness-95`
+            : isLockedRow2
+              ? `${config.bg} ${config.border} text-gray-300 cursor-not-allowed`
+              : `${config.bg} ${config.text} ${config.border} hover:shadow-sm hover:brightness-95`
         } disabled:cursor-default`}
       >
         {config.label}
