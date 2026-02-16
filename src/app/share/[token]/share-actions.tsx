@@ -9,7 +9,8 @@ import {
   saveClientNote,
   deleteItemByShareToken,
 } from "@/lib/actions/projects";
-import type { ClientItem, AcceptanceStatus } from "@/types";
+import { calculateInvoiceTotals, formatCurrency as fmtCurrency } from "@/lib/invoice-calculations";
+import type { ClientItem, AcceptanceStatus, DiscountType } from "@/types";
 
 interface ItemDisplayData {
   id: string;
@@ -29,6 +30,8 @@ interface ShareActionsProps {
   projectStatus: string;
   taxPercent: number;
   discountPercent: number;
+  discountType: DiscountType;
+  discountAmount: number;
 }
 
 const STATUS_STYLES: Record<string, string> = {
@@ -53,10 +56,7 @@ function StatusBadge({ status }: { status: string }) {
 export { StatusBadge };
 
 function formatCurrency(value: number): string {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-  }).format(value);
+  return fmtCurrency(value);
 }
 
 export function ShareActions({
@@ -66,6 +66,8 @@ export function ShareActions({
   projectStatus,
   taxPercent,
   discountPercent,
+  discountType,
+  discountAmount: discountAmountProp,
 }: ShareActionsProps) {
   const [currentStatus, setCurrentStatus] = useState(projectStatus);
   const [visibleItems, setVisibleItems] = useState(initialItems);
@@ -222,18 +224,20 @@ export function ShareActions({
     }
   }
 
-  // Totals from visible items
+  // Totals from visible items — discount/tax on items only
   const totalSelling = visibleDisplayData.reduce((sum, d) => sum + d.price * d.qty, 0);
   const totalShipping = visibleDisplayData.reduce((sum, d) => sum + d.shipping * d.qty, 0);
-  const subtotalBeforeDiscount = totalSelling + totalShipping;
-  const discountAmount = discountPercent > 0
-    ? subtotalBeforeDiscount * (discountPercent / 100)
-    : 0;
-  const subtotalAfterDiscount = subtotalBeforeDiscount - discountAmount;
-  const taxAmount = taxPercent > 0
-    ? subtotalAfterDiscount * (taxPercent / 100)
-    : 0;
-  const grandTotal = subtotalAfterDiscount + taxAmount;
+  const invoiceTotals = calculateInvoiceTotals({
+    itemsTotal: totalSelling,
+    deliveryTotal: totalShipping,
+    discountType,
+    discountPercent,
+    discountValue: discountAmountProp,
+    taxPercent,
+  });
+  const discountAmount = invoiceTotals.discountAmount;
+  const taxAmount = invoiceTotals.taxAmount;
+  const grandTotal = invoiceTotals.grandTotal;
 
   // Displayed status
   const displayStatus = submitted && allAccepted ? "accepted" : currentStatus;
@@ -601,10 +605,10 @@ export function ShareActions({
         </div>
 
         {/* Discount — only shown when > 0 */}
-        {discountPercent > 0 && (
+        {discountAmount > 0 && (
           <div className="flex items-center justify-between border-b border-gray-100 py-3">
             <span className="text-sm text-gray-500">
-              Discount ({discountPercent}%)
+              {discountType === "percent" ? `Discount (${discountPercent}%)` : "Discount"}
             </span>
             <span className="text-sm tabular-nums text-green-600">
               −{formatCurrency(discountAmount)}

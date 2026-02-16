@@ -7,20 +7,14 @@ import { Badge } from "@/components/ui/badge";
 import { buttonStyles, cardStyles } from "@/components/ui/form-styles";
 import { ItemsTable } from "@/components/items/items-table";
 import { InlineAddItem } from "@/components/items/inline-add-item";
+import { InvoiceSummaryFooter } from "@/components/invoice/invoice-summary-footer";
 import { ProjectActions } from "./project-actions";
 import { InvoiceInfoCard } from "./invoice-info-card";
-import type { Profile, Item } from "@/types";
+import type { Profile, Item, DiscountType } from "@/types";
 import { isAdminRole } from "@/types";
 
 interface Props {
   params: Promise<{ id: string }>;
-}
-
-function formatCurrency(value: number): string {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-  }).format(value);
 }
 
 export default async function ProjectDetailPage({ params }: Props) {
@@ -74,6 +68,8 @@ export default async function ProjectDetailPage({ params }: Props) {
       0
     );
   }
+
+  const projDiscountType = (project.discount_type ?? "percent") as DiscountType;
 
   return (
     <div className="space-y-4 sm:space-y-6">
@@ -132,6 +128,10 @@ export default async function ProjectDetailPage({ params }: Props) {
           notes={project.notes ?? ""}
           taxPercent={Number(project.tax_percent) || 0}
           discountPercent={Number(project.discount_percent) || 0}
+          discountType={projDiscountType}
+          discountAmount={Number(project.discount_amount) || 0}
+          itemsTotal={totalRetail}
+          deliveryTotal={totalRetailShipping}
         />
       )}
 
@@ -179,76 +179,19 @@ export default async function ProjectDetailPage({ params }: Props) {
       {/* Inline add item bar */}
       {admin && <InlineAddItem projectId={id} isAdmin={admin} />}
 
-      {/* Summary */}
-      {items.length > 0 && (() => {
-        const retailSubtotal = totalRetail + totalRetailShipping;
-        const projDiscount = Number(project.discount_percent) || 0;
-        const projTax = Number(project.tax_percent) || 0;
-        const discountAmt = projDiscount > 0 ? retailSubtotal * (projDiscount / 100) : 0;
-        const afterDiscount = retailSubtotal - discountAmt;
-        const taxAmt = projTax > 0 ? afterDiscount * (projTax / 100) : 0;
-        const clientTotal = afterDiscount + taxAmt;
-
-        return (
-          <div className={`${cardStyles.base} !p-4 sm:!p-6`}>
-            <h3 className="mb-3 text-xs sm:text-sm font-semibold uppercase text-muted-foreground">
-              Summary
-            </h3>
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
-              <div>
-                <p className="text-[10px] sm:text-xs text-muted-foreground">Total Retail</p>
-                <p className="text-base sm:text-lg font-bold text-foreground">
-                  {formatCurrency(totalRetail)}
-                </p>
-              </div>
-              <div>
-                <p className="text-[10px] sm:text-xs text-muted-foreground">Total Shipping</p>
-                <p className="text-base sm:text-lg font-bold text-foreground">
-                  {formatCurrency(totalRetailShipping)}
-                </p>
-              </div>
-              {projDiscount > 0 && (
-                <div>
-                  <p className="text-[10px] sm:text-xs text-muted-foreground">Discount ({projDiscount}%)</p>
-                  <p className="text-base sm:text-lg font-bold text-green-600">
-                    −{formatCurrency(discountAmt)}
-                  </p>
-                </div>
-              )}
-              {projTax > 0 && (
-                <div>
-                  <p className="text-[10px] sm:text-xs text-muted-foreground">Tax ({projTax}%)</p>
-                  <p className="text-base sm:text-lg font-bold text-foreground">
-                    {formatCurrency(taxAmt)}
-                  </p>
-                </div>
-              )}
-              <div>
-                <p className="text-[10px] sm:text-xs text-muted-foreground">Client Total</p>
-                <p className="text-base sm:text-lg font-bold text-foreground">
-                  {formatCurrency(clientTotal)}
-                </p>
-              </div>
-              {admin && (
-                <>
-                  <div>
-                    <p className="text-[10px] sm:text-xs text-muted-foreground">Total My Cost</p>
-                    <p className="text-base sm:text-lg font-bold text-foreground">
-                      {formatCurrency(totalMyCost + totalMyShipping)}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-[10px] sm:text-xs text-muted-foreground">Est. Profit</p>
-                    <p className="text-base sm:text-lg font-bold text-success">
-                      {formatCurrency(clientTotal - totalMyCost - totalMyShipping)}
-                    </p>
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
-        );
-      })()}
+      {/* Invoice Summary Footer — right-aligned 25% column */}
+      {items.length > 0 && (
+        <InvoiceSummaryFooter
+          itemsTotal={totalRetail}
+          deliveryTotal={totalRetailShipping}
+          discountType={projDiscountType}
+          discountPercent={Number(project.discount_percent) || 0}
+          discountAmount={Number(project.discount_amount) || 0}
+          taxPercent={Number(project.tax_percent) || 0}
+          myCost={admin ? totalMyCost : undefined}
+          myShipping={admin ? totalMyShipping : undefined}
+        />
+      )}
     </div>
   );
 }

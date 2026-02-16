@@ -2,6 +2,7 @@ export type UserRole = "admin" | "collaborator" | "client";
 export type UserStatus = "pending" | "approved" | "denied";
 export type ProjectStatus = "draft" | "quote" | "accepted" | "completed";
 export type FulfillmentType = "pickup" | "delivery";
+export type DiscountType = "percent" | "amount";
 export type AcceptanceStatus = "pending" | "accepted" | "rejected";
 
 export interface Profile {
@@ -41,6 +42,8 @@ export interface Project {
   notes: string;
   tax_percent: number;
   discount_percent: number;
+  discount_type: DiscountType;
+  discount_amount: number;
   share_token: string | null;
   created_by: string | null;
   created_at: string;

@@ -4,20 +4,15 @@ import {
   getClientSafeItemsByProjectId,
 } from "@/lib/actions/projects";
 import { firstImage } from "@/lib/parse-images";
+import { calculateInvoiceTotals, formatCurrency } from "@/lib/invoice-calculations";
 import { COMPANY_INFO } from "@/lib/constants/company-info";
 import { ShareActions, StatusBadge } from "./share-actions";
+import type { DiscountType } from "@/types";
 
 export const dynamic = "force-dynamic";
 
 interface Props {
   params: Promise<{ token: string }>;
-}
-
-function formatCurrency(value: number): string {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-  }).format(value);
 }
 
 export default async function SharedInvoicePage({ params }: Props) {
@@ -49,13 +44,24 @@ export default async function SharedInvoicePage({ params }: Props) {
   });
 
   const totalItems = items.length;
-  const itemsSubtotal = itemDisplayData.reduce((sum, i) => sum + i.total, 0);
+
+  // Use shared calculation util — discount/tax on items only
+  const itemsTotal = itemDisplayData.reduce((sum, i) => sum + i.price * i.qty, 0);
+  const deliveryTotal = itemDisplayData.reduce((sum, i) => sum + i.shipping * i.qty, 0);
+  const discountType = (project.discount_type ?? "percent") as DiscountType;
   const discPct = Number(project.discount_percent) || 0;
+  const discAmt = Number(project.discount_amount) || 0;
   const taxPct = Number(project.tax_percent) || 0;
-  const discountAmt = discPct > 0 ? itemsSubtotal * (discPct / 100) : 0;
-  const afterDiscount = itemsSubtotal - discountAmt;
-  const taxAmt = taxPct > 0 ? afterDiscount * (taxPct / 100) : 0;
-  const grandTotal = afterDiscount + taxAmt;
+
+  const totals = calculateInvoiceTotals({
+    itemsTotal,
+    deliveryTotal,
+    discountType,
+    discountPercent: discPct,
+    discountValue: discAmt,
+    taxPercent: taxPct,
+  });
+
   const projectNotes = (project.notes ?? "").trim();
 
   return (
@@ -166,7 +172,7 @@ export default async function SharedInvoicePage({ params }: Props) {
                   Total
                 </p>
                 <p className="mt-0.5 text-sm font-semibold text-gray-900">
-                  {formatCurrency(grandTotal)}
+                  {formatCurrency(totals.grandTotal)}
                 </p>
               </div>
             )}
@@ -200,8 +206,10 @@ export default async function SharedInvoicePage({ params }: Props) {
           itemDisplayData={itemDisplayData}
           shareToken={token}
           projectStatus={project.status}
-          taxPercent={Number(project.tax_percent) || 0}
-          discountPercent={Number(project.discount_percent) || 0}
+          taxPercent={taxPct}
+          discountPercent={discPct}
+          discountType={discountType}
+          discountAmount={discAmt}
         />
       )}
 

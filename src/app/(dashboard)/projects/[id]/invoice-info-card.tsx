@@ -3,6 +3,8 @@
 import { useState, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { updateProject } from "@/lib/actions/projects";
+import { calculateInvoiceTotals, formatCurrency } from "@/lib/invoice-calculations";
+import type { DiscountType } from "@/types";
 
 interface InvoiceInfoCardProps {
   projectId: string;
@@ -12,9 +14,19 @@ interface InvoiceInfoCardProps {
   notes: string;
   taxPercent: number;
   discountPercent: number;
+  discountType: DiscountType;
+  discountAmount: number;
+  itemsTotal: number;
+  deliveryTotal: number;
 }
 
-type FieldName = "invoice_number" | "notes" | "tax_percent" | "discount_percent";
+type SaveableField =
+  | "invoice_number"
+  | "notes"
+  | "tax_percent"
+  | "discount_percent"
+  | "discount_type"
+  | "discount_amount";
 
 export function InvoiceInfoCard({
   projectId,
@@ -24,16 +36,22 @@ export function InvoiceInfoCard({
   notes,
   taxPercent,
   discountPercent,
+  discountType,
+  discountAmount,
+  itemsTotal,
+  deliveryTotal,
 }: InvoiceInfoCardProps) {
   const router = useRouter();
   const [localInvoice, setLocalInvoice] = useState(invoiceNumber ?? "");
   const [localNotes, setLocalNotes] = useState(notes);
   const [localTax, setLocalTax] = useState(String(taxPercent || ""));
-  const [localDiscount, setLocalDiscount] = useState(String(discountPercent || ""));
+  const [localDiscountType, setLocalDiscountType] = useState<DiscountType>(discountType);
+  const [localDiscountPercent, setLocalDiscountPercent] = useState(String(discountPercent || ""));
+  const [localDiscountAmount, setLocalDiscountAmount] = useState(String(discountAmount || ""));
   const timers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
 
   const saveField = useCallback(
-    (field: FieldName, value: string | number) => {
+    (field: SaveableField, value: string | number) => {
       const payload: Record<string, string | number | null> = {};
       if (field === "invoice_number") {
         payload.invoice_number = (value as string) || null;
@@ -43,13 +61,17 @@ export function InvoiceInfoCard({
         payload.tax_percent = Number(value) || 0;
       } else if (field === "discount_percent") {
         payload.discount_percent = Number(value) || 0;
+      } else if (field === "discount_type") {
+        payload.discount_type = value as string;
+      } else if (field === "discount_amount") {
+        payload.discount_amount = Number(value) || 0;
       }
       updateProject(projectId, payload).then(() => router.refresh());
     },
     [projectId, router]
   );
 
-  function debouncedSave(field: FieldName, value: string | number) {
+  function debouncedSave(field: SaveableField, value: string | number) {
     if (timers.current[field]) clearTimeout(timers.current[field]);
     timers.current[field] = setTimeout(() => {
       saveField(field, value);
@@ -92,10 +114,15 @@ export function InvoiceInfoCard({
     [saveField]
   );
 
-  const handleDiscountChange = useCallback(
+  function handleDiscountTypeToggle(type: DiscountType) {
+    setLocalDiscountType(type);
+    saveField("discount_type", type);
+  }
+
+  const handleDiscountPercentChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const val = e.target.value;
-      setLocalDiscount(val);
+      setLocalDiscountPercent(val);
       const num = parseFloat(val);
       if (!isNaN(num) && num >= 0 && num <= 100) {
         debouncedSave("discount_percent", num);
@@ -107,52 +134,82 @@ export function InvoiceInfoCard({
     [saveField]
   );
 
+  const handleDiscountAmountChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const val = e.target.value;
+      setLocalDiscountAmount(val);
+      const num = parseFloat(val);
+      if (!isNaN(num) && num >= 0) {
+        debouncedSave("discount_amount", num);
+      } else if (val === "") {
+        debouncedSave("discount_amount", 0);
+      }
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [saveField]
+  );
+
+  // Calculate totals for display
+  const totals = calculateInvoiceTotals({
+    itemsTotal,
+    deliveryTotal,
+    discountType: localDiscountType,
+    discountPercent: parseFloat(localDiscountPercent) || 0,
+    discountValue: parseFloat(localDiscountAmount) || 0,
+    taxPercent: parseFloat(localTax) || 0,
+  });
+
   const inlineInput =
-    "mt-0.5 w-full rounded-md border border-transparent bg-transparent py-0.5 px-1.5 text-sm font-semibold text-foreground placeholder:text-muted-foreground/40 hover:border-border/60 focus:border-primary/40 focus:bg-white focus:outline-none focus:ring-1 focus:ring-primary/40";
+    "w-full rounded-lg border border-gray-200 bg-white/80 py-1.5 px-2.5 text-sm font-medium text-gray-900 placeholder:text-gray-400 hover:border-gray-300 focus:border-indigo-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-400/20 transition-all";
+
+  const labelClass =
+    "text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-gray-400";
 
   return (
-    <div className="rounded-xl border border-border bg-white p-4 shadow-sm sm:p-5 space-y-4">
-      {/* Top row: Invoice #, Required By, Fulfillment */}
-      <div className="flex items-center justify-between gap-4">
-        <div className="min-w-0">
-          <p className="text-[10px] sm:text-xs font-medium uppercase text-muted-foreground">
-            Invoice Number
-          </p>
+    <div className="rounded-2xl border border-gray-200/80 bg-gradient-to-br from-slate-50 via-white to-indigo-50/30 shadow-sm overflow-hidden">
+      {/* Header accent bar */}
+      <div className="h-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500" />
+
+      {/* Top row: Invoice details */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 divide-x divide-gray-100">
+        {/* Invoice Number */}
+        <div className="p-3 sm:p-4">
+          <p className={labelClass}>Invoice #</p>
           <input
             type="text"
             value={localInvoice}
             onChange={handleInvoiceChange}
             placeholder="Not set"
-            className={`${inlineInput} max-w-[160px]`}
+            className={`${inlineInput} mt-1.5`}
           />
         </div>
-        {dateRequired && (
-          <div className="text-right shrink-0">
-            <p className="text-[10px] sm:text-xs font-medium uppercase text-muted-foreground">
-              Required By
-            </p>
-            <p className="text-sm text-foreground mt-0.5">
-              {new Date(dateRequired).toLocaleDateString()}
-            </p>
-          </div>
-        )}
-        <div className="text-right shrink-0">
-          <p className="text-[10px] sm:text-xs font-medium uppercase text-muted-foreground">
-            Fulfillment
+
+        {/* Required By */}
+        <div className="p-3 sm:p-4">
+          <p className={labelClass}>Required By</p>
+          <p className="text-sm font-medium text-gray-900 mt-2.5 px-1">
+            {dateRequired
+              ? new Date(dateRequired).toLocaleDateString("en-US", {
+                  month: "short",
+                  day: "numeric",
+                  year: "numeric",
+                })
+              : "—"}
           </p>
-          <p className="text-sm text-foreground mt-0.5 capitalize">
+        </div>
+
+        {/* Fulfillment */}
+        <div className="p-3 sm:p-4">
+          <p className={labelClass}>Fulfillment</p>
+          <p className="text-sm font-medium text-gray-900 mt-2.5 px-1 capitalize">
             {fulfillmentType}
           </p>
         </div>
-      </div>
 
-      {/* Tax & Discount row */}
-      <div className="flex items-center gap-4">
-        <div className="min-w-0">
-          <p className="text-[10px] sm:text-xs font-medium uppercase text-muted-foreground">
-            Tax %
-          </p>
-          <div className="flex items-center gap-1 mt-0.5">
+        {/* Tax */}
+        <div className="p-3 sm:p-4">
+          <p className={labelClass}>Tax</p>
+          <div className="flex items-center gap-1 mt-1.5">
             <input
               type="number"
               value={localTax}
@@ -163,41 +220,140 @@ export function InvoiceInfoCard({
               step="0.1"
               className={`${inlineInput} max-w-[80px] tabular-nums`}
             />
-            <span className="text-xs text-muted-foreground">%</span>
-          </div>
-        </div>
-        <div className="min-w-0">
-          <p className="text-[10px] sm:text-xs font-medium uppercase text-muted-foreground">
-            Discount %
-          </p>
-          <div className="flex items-center gap-1 mt-0.5">
-            <input
-              type="number"
-              value={localDiscount}
-              onChange={handleDiscountChange}
-              placeholder="0"
-              min={0}
-              max={100}
-              step="0.1"
-              className={`${inlineInput} max-w-[80px] tabular-nums`}
-            />
-            <span className="text-xs text-muted-foreground">%</span>
+            <span className="text-xs font-medium text-gray-400">%</span>
           </div>
         </div>
       </div>
 
-      {/* Notes textarea */}
-      <div>
-        <p className="text-[10px] sm:text-xs font-medium uppercase text-muted-foreground mb-1">
-          Invoice Notes
-        </p>
+      {/* Discount row */}
+      <div className="border-t border-gray-100 bg-gradient-to-r from-emerald-50/40 to-transparent p-3 sm:p-4">
+        <div className="flex items-center gap-3 flex-wrap">
+          <div className="flex items-center gap-2 shrink-0">
+            <div className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-100">
+              <svg className="h-3.5 w-3.5 text-emerald-600" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9.568 3H5.25A2.25 2.25 0 0 0 3 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 0 0 5.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 0 0 9.568 3Z" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 6h.008v.008H6V6Z" />
+              </svg>
+            </div>
+            <p className={`${labelClass} !text-emerald-700`}>Discount</p>
+          </div>
+
+          {/* Toggle: % or $ */}
+          <div className="inline-flex rounded-lg border border-gray-200 overflow-hidden shadow-sm">
+            <button
+              type="button"
+              onClick={() => handleDiscountTypeToggle("percent")}
+              className={`px-3 py-1.5 text-xs font-semibold transition-all ${
+                localDiscountType === "percent"
+                  ? "bg-emerald-500 text-white shadow-inner"
+                  : "bg-white text-gray-500 hover:bg-gray-50"
+              }`}
+            >
+              %
+            </button>
+            <button
+              type="button"
+              onClick={() => handleDiscountTypeToggle("amount")}
+              className={`px-3 py-1.5 text-xs font-semibold transition-all border-l border-gray-200 ${
+                localDiscountType === "amount"
+                  ? "bg-emerald-500 text-white shadow-inner"
+                  : "bg-white text-gray-500 hover:bg-gray-50"
+              }`}
+            >
+              $
+            </button>
+          </div>
+
+          {/* Discount input */}
+          {localDiscountType === "percent" ? (
+            <div className="flex items-center gap-1">
+              <input
+                type="number"
+                value={localDiscountPercent}
+                onChange={handleDiscountPercentChange}
+                placeholder="0"
+                min={0}
+                max={100}
+                step="0.1"
+                className={`${inlineInput} max-w-[80px] tabular-nums !border-emerald-200 focus:!border-emerald-400 focus:!ring-emerald-400/20`}
+              />
+              <span className="text-xs font-medium text-emerald-600">%</span>
+            </div>
+          ) : (
+            <div className="flex items-center gap-1">
+              <span className="text-xs font-medium text-emerald-600">$</span>
+              <input
+                type="number"
+                value={localDiscountAmount}
+                onChange={handleDiscountAmountChange}
+                placeholder="0.00"
+                min={0}
+                step="0.01"
+                className={`${inlineInput} max-w-[100px] tabular-nums !border-emerald-200 focus:!border-emerald-400 focus:!ring-emerald-400/20`}
+              />
+            </div>
+          )}
+
+          <span className="text-[10px] text-gray-400 ml-auto hidden sm:inline italic">
+            Applied to items only
+          </span>
+        </div>
+      </div>
+
+      {/* Notes */}
+      <div className="border-t border-gray-100 p-3 sm:p-4">
+        <p className={`${labelClass} mb-1.5`}>Invoice Notes</p>
         <textarea
           value={localNotes}
           onChange={handleNotesChange}
           placeholder="Add notes visible to the customer..."
           rows={2}
-          className="w-full rounded-md border border-border/40 bg-transparent py-2 px-2.5 text-sm text-foreground placeholder:text-muted-foreground/40 hover:border-border focus:border-primary/40 focus:bg-white focus:outline-none focus:ring-1 focus:ring-primary/40 resize-y"
+          className="w-full rounded-lg border border-gray-200 bg-white/80 py-2 px-3 text-sm text-gray-900 placeholder:text-gray-400 hover:border-gray-300 focus:border-indigo-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-400/20 resize-y transition-all"
         />
+      </div>
+
+      {/* Totals preview */}
+      <div className="border-t border-gray-100 bg-gradient-to-r from-gray-50 to-slate-50 px-4 sm:px-5 py-3.5">
+        <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs">
+          <div className="flex items-center gap-1.5">
+            <span className="inline-flex h-2 w-2 rounded-full bg-indigo-400" />
+            <span className="text-gray-500">Items</span>
+            <span className="font-bold tabular-nums text-gray-900">
+              {formatCurrency(totals.itemsTotal)}
+            </span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="inline-flex h-2 w-2 rounded-full bg-blue-400" />
+            <span className="text-gray-500">Delivery</span>
+            <span className="font-bold tabular-nums text-gray-900">
+              {formatCurrency(totals.deliveryTotal)}
+            </span>
+          </div>
+          {totals.discountAmount > 0 && (
+            <div className="flex items-center gap-1.5">
+              <span className="inline-flex h-2 w-2 rounded-full bg-emerald-400" />
+              <span className="text-gray-500">Discount</span>
+              <span className="font-bold tabular-nums text-emerald-600">
+                −{formatCurrency(totals.discountAmount)}
+              </span>
+            </div>
+          )}
+          {totals.taxAmount > 0 && (
+            <div className="flex items-center gap-1.5">
+              <span className="inline-flex h-2 w-2 rounded-full bg-amber-400" />
+              <span className="text-gray-500">Tax</span>
+              <span className="font-bold tabular-nums text-gray-900">
+                {formatCurrency(totals.taxAmount)}
+              </span>
+            </div>
+          )}
+          <div className="ml-auto flex items-center gap-2 pl-3 border-l border-gray-200">
+            <span className="text-gray-500 font-medium">Total</span>
+            <span className="font-black tabular-nums text-gray-900 text-base">
+              {formatCurrency(totals.grandTotal)}
+            </span>
+          </div>
+        </div>
       </div>
     </div>
   );

@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createSupabaseServer } from "@/lib/supabase-server";
 import { getAdminSupabase } from "@/lib/supabase-admin";
-import type { Project, ProjectStatus, FulfillmentType, ClientItem, AcceptanceStatus } from "@/types";
+import type { Project, ProjectStatus, FulfillmentType, DiscountType, ClientItem, AcceptanceStatus } from "@/types";
 
 export async function getProjects(filters?: {
   clientId?: string;
@@ -67,18 +67,24 @@ export async function createProject(input: {
 
   if (!user) return { id: null, error: "Not authenticated" };
 
-  // Auto-generate next invoice number (max existing + 1)
-  const { data: maxRow } = await supabase
+  // Auto-generate next invoice number in YYYY_NN format
+  const year = new Date().getFullYear();
+  const yearPrefix = `${year}_`;
+  const { data: rows } = await supabase
     .from("projects")
     .select("invoice_number")
     .not("invoice_number", "is", null)
+    .like("invoice_number", `${yearPrefix}%`)
     .order("invoice_number", { ascending: false })
-    .limit(1)
-    .single();
+    .limit(1);
 
-  const nextNumber = maxRow?.invoice_number
-    ? String(Number(maxRow.invoice_number) + 1)
-    : "1001";
+  let nextSeq = 1;
+  if (rows && rows.length > 0 && rows[0].invoice_number) {
+    const parts = rows[0].invoice_number.split("_");
+    const lastSeq = parseInt(parts[1], 10);
+    if (!isNaN(lastSeq)) nextSeq = lastSeq + 1;
+  }
+  const nextNumber = `${yearPrefix}${String(nextSeq).padStart(2, "0")}`;
 
   const { data, error } = await supabase
     .from("projects")
@@ -111,6 +117,8 @@ export async function updateProject(
     notes?: string;
     tax_percent?: number;
     discount_percent?: number;
+    discount_type?: DiscountType;
+    discount_amount?: number;
   }
 ): Promise<{ error: string | null }> {
   const supabase = await createSupabaseServer();
