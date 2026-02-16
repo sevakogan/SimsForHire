@@ -10,6 +10,7 @@ import { InlineAddItem } from "@/components/items/inline-add-item";
 import { InvoiceSummaryFooter } from "@/components/invoice/invoice-summary-footer";
 import { ProjectActions } from "./project-actions";
 import { InvoiceInfoCard } from "./invoice-info-card";
+import { EditableProjectName } from "./editable-project-name";
 import type { Profile, Item, DiscountType } from "@/types";
 import { isAdminRole } from "@/types";
 
@@ -89,7 +90,7 @@ export default async function ProjectDetailPage({ params }: Props) {
       {/* Header */}
       <div>
         <div className="flex items-center gap-2 sm:gap-3">
-          <h1 className="text-lg sm:text-2xl font-bold text-foreground truncate">{project.name}</h1>
+          <EditableProjectName projectId={project.id} name={project.name} isAdmin={admin} />
           <Badge variant={project.status}>{project.status}</Badge>
         </div>
         {!admin && project.invoice_number && (
