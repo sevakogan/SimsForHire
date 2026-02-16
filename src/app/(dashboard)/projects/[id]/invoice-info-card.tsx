@@ -1,7 +1,6 @@
 "use client";
 
-import { useState, useRef, useTransition } from "react";
-import { updateProject } from "@/lib/actions/projects";
+import { useState, useRef } from "react";
 import { calculateInvoiceTotals, formatCurrency } from "@/lib/invoice-calculations";
 import type { DiscountType, FulfillmentType } from "@/types";
 
@@ -47,8 +46,6 @@ export function InvoiceInfoCard({
   onDiscountChange,
   readOnly = false,
 }: InvoiceInfoCardProps) {
-  const [, startTransition] = useTransition();
-
   // "Saved" values — the server-side truth
   const savedInvoice = invoiceNumber ?? "";
   const savedNotes = notes;
@@ -92,19 +89,24 @@ export function InvoiceInfoCard({
   }
 
   /**
-   * Persist a field via server action.
-   * Uses startTransition so React batches the server action call with the
-   * revalidation triggered by revalidatePath inside the action itself.
-   * We do NOT call router.refresh() — revalidatePath already invalidates
-   * the cache, and an explicit refresh creates a competing fetch that can
-   * abort the in-flight server action via AbortController.
+   * Persist a field via a plain PATCH fetch to our API route.
+   * This bypasses React server actions entirely, avoiding the
+   * AbortController / startTransition issues that silently abort
+   * in-flight requests on this page.
    */
   function persist(field: string, value: string | number | null) {
-    startTransition(async () => {
-      const result = await updateProject(projectId, { [field]: value });
-      if (result.error) {
-        console.error(`[InvoiceInfoCard] Failed to save ${field}:`, result.error);
+    fetch(`/api/projects/${projectId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ [field]: value }),
+    }).then((res) => {
+      if (!res.ok) {
+        res.json().then((data) => {
+          console.error(`[InvoiceInfoCard] Failed to save ${field}:`, data.error);
+        });
       }
+    }).catch((err) => {
+      console.error(`[InvoiceInfoCard] Network error saving ${field}:`, err);
     });
   }
 
