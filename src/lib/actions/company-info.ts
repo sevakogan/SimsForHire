@@ -13,6 +13,7 @@ export interface CompanyInfo {
   address: string;
   ein: string;
   logo_url: string | null;
+  logo_scale: number;
   updated_at: string;
 }
 
@@ -33,6 +34,7 @@ const FALLBACK: CompanyInfo = {
   address: "123 Main Street, Suite 100\nAnytown, USA 12345",
   ein: "",
   logo_url: "/logo.png",
+  logo_scale: 100,
   updated_at: "",
 };
 

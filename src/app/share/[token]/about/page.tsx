@@ -30,7 +30,11 @@ export default async function AboutPage({ params }: Props) {
               alt={company.name}
               width={56}
               height={56}
-              className="shrink-0 h-14 w-14 rounded-xl bg-primary/10 object-contain"
+              className="shrink-0 rounded-xl bg-primary/10 object-contain"
+              style={{
+                width: `${56 * (company.logo_scale / 100)}px`,
+                height: `${56 * (company.logo_scale / 100)}px`,
+              }}
               unoptimized
             />
           )}

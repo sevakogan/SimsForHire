@@ -22,6 +22,7 @@ export function CompanyInfoForm({ info }: CompanyInfoFormProps) {
   const [address, setAddress] = useState(info.address);
   const [ein, setEin] = useState(info.ein);
   const [logoUrl, setLogoUrl] = useState(info.logo_url ?? "");
+  const [logoScale, setLogoScale] = useState(info.logo_scale ?? 100);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -65,6 +66,7 @@ export function CompanyInfoForm({ info }: CompanyInfoFormProps) {
       address: address.trim(),
       ein: ein.trim(),
       logo_url: logoUrl.trim() || null,
+      logo_scale: logoScale,
     });
 
     setSaving(false);
@@ -95,60 +97,150 @@ export function CompanyInfoForm({ info }: CompanyInfoFormProps) {
         </div>
       )}
 
-      {/* Logo upload */}
+      {/* Logo upload + editor */}
       <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
         <label className="mb-3 block text-sm font-semibold text-gray-900">
           Company Logo
         </label>
-        <div className="flex items-center gap-4">
-          {logoUrl ? (
-            <div className="relative h-20 w-20 shrink-0 rounded-xl border border-gray-200 bg-gray-50 overflow-hidden">
-              <Image
-                src={logoUrl}
-                alt="Logo"
-                fill
-                className="object-contain p-1"
-                unoptimized={isExternalImage(logoUrl)}
-              />
+
+        {logoUrl ? (
+          <div className="space-y-4">
+            {/* Preview with checkered background */}
+            <div className="flex items-center justify-center rounded-xl border border-gray-200 bg-[length:20px_20px] bg-[image:linear-gradient(45deg,#f3f4f6_25%,transparent_25%),linear-gradient(-45deg,#f3f4f6_25%,transparent_25%),linear-gradient(45deg,transparent_75%,#f3f4f6_75%),linear-gradient(-45deg,transparent_75%,#f3f4f6_75%)] bg-[position:0_0,0_10px,10px_-10px,-10px_0] p-6 min-h-[140px]">
+              <div
+                className="transition-transform duration-150"
+                style={{ transform: `scale(${logoScale / 100})` }}
+              >
+                <Image
+                  src={logoUrl}
+                  alt="Logo preview"
+                  width={120}
+                  height={120}
+                  className="object-contain"
+                  unoptimized={isExternalImage(logoUrl)}
+                />
+              </div>
             </div>
-          ) : (
+
+            {/* Resize slider */}
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-medium text-gray-600">Size</span>
+                <span className="text-xs tabular-nums text-gray-400">{logoScale}%</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => setLogoScale(Math.max(20, logoScale - 10))}
+                  className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 transition-colors"
+                >
+                  <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14" />
+                  </svg>
+                </button>
+                <input
+                  type="range"
+                  min={20}
+                  max={200}
+                  step={5}
+                  value={logoScale}
+                  onChange={(e) => setLogoScale(Number(e.target.value))}
+                  className="flex-1 h-1.5 accent-primary cursor-pointer"
+                />
+                <button
+                  type="button"
+                  onClick={() => setLogoScale(Math.min(200, logoScale + 10))}
+                  className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 transition-colors"
+                >
+                  <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            {/* Actions row */}
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => fileRef.current?.click()}
+                disabled={uploading}
+                className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 shadow-sm transition-colors hover:bg-gray-50 disabled:opacity-50"
+              >
+                {uploading ? (
+                  <>
+                    <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-gray-300 border-t-primary" />
+                    Uploading...
+                  </>
+                ) : (
+                  <>
+                    <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5" />
+                    </svg>
+                    Replace
+                  </>
+                )}
+              </button>
+              <button
+                type="button"
+                onClick={() => setLogoScale(100)}
+                disabled={logoScale === 100}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm font-medium text-gray-500 shadow-sm transition-colors hover:bg-gray-50 disabled:opacity-30"
+              >
+                Reset Size
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setLogoUrl("");
+                  setLogoScale(100);
+                }}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-red-200 bg-white px-3 py-1.5 text-sm font-medium text-red-500 shadow-sm transition-colors hover:bg-red-50"
+              >
+                Remove
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="flex items-center gap-4">
             <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-xl border-2 border-dashed border-gray-200 bg-gray-50">
               <svg className="h-8 w-8 text-gray-300" fill="none" viewBox="0 0 24 24" strokeWidth={1} stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0 0 22.5 18.75V5.25A2.25 2.25 0 0 0 20.25 3H3.75A2.25 2.25 0 0 0 1.5 5.25v13.5A2.25 2.25 0 0 0 3.75 21Z" />
               </svg>
             </div>
-          )}
-          <div className="space-y-2">
-            <button
-              type="button"
-              onClick={() => fileRef.current?.click()}
-              disabled={uploading}
-              className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 shadow-sm transition-colors hover:bg-gray-50 disabled:opacity-50"
-            >
-              {uploading ? (
-                <>
-                  <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-gray-300 border-t-primary" />
-                  Uploading...
-                </>
-              ) : (
-                <>
-                  <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5" />
-                  </svg>
-                  Upload Logo
-                </>
-              )}
-            </button>
-            <p className="text-xs text-gray-400">PNG, JPG or WebP. Max 2MB.</p>
+            <div className="space-y-2">
+              <button
+                type="button"
+                onClick={() => fileRef.current?.click()}
+                disabled={uploading}
+                className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 shadow-sm transition-colors hover:bg-gray-50 disabled:opacity-50"
+              >
+                {uploading ? (
+                  <>
+                    <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-gray-300 border-t-primary" />
+                    Uploading...
+                  </>
+                ) : (
+                  <>
+                    <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5" />
+                    </svg>
+                    Upload Logo
+                  </>
+                )}
+              </button>
+              <p className="text-xs text-gray-400">PNG, JPG or WebP. Max 2MB.</p>
+            </div>
           </div>
-          <input
-            ref={fileRef}
-            type="file"
-            accept="image/*"
-            onChange={handleLogoUpload}
-            className="hidden"
-          />
-        </div>
+        )}
+
+        <input
+          ref={fileRef}
+          type="file"
+          accept="image/*"
+          onChange={handleLogoUpload}
+          className="hidden"
+        />
       </div>
 
       {/* Info fields */}

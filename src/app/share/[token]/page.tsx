@@ -92,7 +92,11 @@ export default async function SharedInvoicePage({ params }: Props) {
                 alt={company.name}
                 width={48}
                 height={48}
-                className="shrink-0 h-12 w-12 rounded-lg bg-primary/10 object-contain"
+                className="shrink-0 rounded-lg bg-primary/10 object-contain"
+                style={{
+                  width: `${48 * (company.logo_scale / 100)}px`,
+                  height: `${48 * (company.logo_scale / 100)}px`,
+                }}
               />
             )}
             <div className="min-w-0">
