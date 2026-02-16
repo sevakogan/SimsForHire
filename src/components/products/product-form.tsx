@@ -20,9 +20,11 @@ import type { Product } from "@/types";
 interface ProductFormProps {
   product?: Product;
   isAdmin: boolean;
+  /** Optional callback when form is submitted — if provided, replaces the default router.push("/catalog") */
+  onDone?: () => void;
 }
 
-export function ProductForm({ product, isAdmin }: ProductFormProps) {
+export function ProductForm({ product, isAdmin, onDone }: ProductFormProps) {
   const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
   const [loading, setLoading] = useState(false);
@@ -126,8 +128,12 @@ export function ProductForm({ product, isAdmin }: ProductFormProps) {
         return;
       }
 
-      router.push("/catalog");
-      router.refresh();
+      if (onDone) {
+        onDone();
+      } else {
+        router.push("/catalog");
+        router.refresh();
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to save");
     } finally {
@@ -353,7 +359,7 @@ export function ProductForm({ product, isAdmin }: ProductFormProps) {
       <div className="flex items-center justify-end gap-2 pt-1">
         <button
           type="button"
-          onClick={() => router.back()}
+          onClick={() => onDone ? onDone() : router.back()}
           className={`${buttonStyles.small} border border-border text-muted-foreground hover:bg-muted hover:text-foreground`}
         >
           Cancel

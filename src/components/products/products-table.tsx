@@ -10,6 +10,7 @@ import { firstImage, isExternalImage } from "@/lib/parse-images";
 import { InlineTextInput } from "@/components/ui/inline-text-input";
 import { InlineNumberInput } from "@/components/ui/inline-number-input";
 import { InlineTypePicker } from "@/components/ui/inline-type-picker";
+import { ProductForm } from "@/components/products/product-form";
 import type { Product, ClientProduct } from "@/types";
 
 interface ProductsTableProps {
@@ -71,6 +72,7 @@ export function ProductsTable({ products, isAdmin }: ProductsTableProps) {
   const [sortField, setSortField] = useState<SortField | null>(null);
   const [sortDir, setSortDir] = useState<SortDir>("asc");
   const [pendingEdits, setPendingEdits] = useState<PendingEdits>({});
+  const [editProduct, setEditProduct] = useState<Product | null>(null);
 
   // Sync local state when server data changes (revalidation)
   const serverKey = useMemo(
@@ -208,12 +210,11 @@ export function ProductsTable({ products, isAdmin }: ProductsTableProps) {
     <>
       {/* Desktop table — horizontally scrollable */}
       <div className={`${tableStyles.wrapper} hidden sm:block`}>
-        <table className={`${tableStyles.table} min-w-[900px]`}>
+        <table className={`${tableStyles.table} min-w-[800px]`}>
           <thead className={tableStyles.thead}>
             <tr>
               <th className={`${tdCompact} ${thBase} w-[50px]`}>Image</th>
               <SortableTh field="type" className="w-[90px]">Type</SortableTh>
-              <SortableTh field="model_number" className="w-[100px]">Model #</SortableTh>
               <SortableTh field="name">Name</SortableTh>
               <SortableTh field="retail_price" className="w-[80px]">Retail</SortableTh>
               <SortableTh field="sales_price" className="w-[80px]">Sales</SortableTh>
@@ -276,19 +277,6 @@ export function ProductsTable({ products, isAdmin }: ProductsTableProps) {
                           {product.type}
                         </span>
                       ) : "--"
-                    )}
-                  </td>
-
-                  {/* Model # */}
-                  <td className={tdCompact}>
-                    {isAdmin ? (
-                      <InlineTextInput
-                        value={String(displayVal("model_number") ?? "")}
-                        onChange={(v) => handleFieldChange(product.id, "model_number", v)}
-                        placeholder="--"
-                      />
-                    ) : (
-                      product.model_number || "--"
                     )}
                   </td>
 
@@ -407,15 +395,15 @@ export function ProductsTable({ products, isAdmin }: ProductsTableProps) {
                         </div>
                       ) : (
                         <div className="flex gap-1">
-                          <Link
-                            href={`/catalog/${product.id}`}
+                          <button
+                            onClick={() => setEditProduct(product as Product)}
                             className="rounded-md p-1.5 text-muted-foreground/60 transition-all hover:bg-primary/10 hover:text-primary"
-                            title="Detail page"
+                            title="Edit product"
                           >
                             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
                               <path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
                             </svg>
-                          </Link>
+                          </button>
                           <button
                             onClick={() => handleDelete(product.id)}
                             className="rounded-md p-1.5 text-muted-foreground/40 transition-all hover:bg-destructive/10 hover:text-destructive"
@@ -470,16 +458,11 @@ export function ProductsTable({ products, isAdmin }: ProductsTableProps) {
                   <p className="text-sm font-medium text-foreground truncate">
                     {product.name}
                   </p>
-                  <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
-                    {product.model_number && (
-                      <span className="text-xs text-muted-foreground">{product.model_number}</span>
-                    )}
-                    {product.type && (
-                      <span className="inline-block rounded-full bg-muted/60 px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
-                        {product.type}
-                      </span>
-                    )}
-                  </div>
+                  {product.type && (
+                    <span className="inline-block rounded-full bg-muted/60 px-2 py-0.5 text-[10px] font-medium text-muted-foreground mt-0.5">
+                      {product.type}
+                    </span>
+                  )}
                 </div>
                 {isAdmin && (
                   <button
@@ -525,6 +508,41 @@ export function ProductsTable({ products, isAdmin }: ProductsTableProps) {
           );
         })}
       </div>
+
+      {/* Edit product modal */}
+      {editProduct && (
+        <div
+          className="fixed inset-0 z-50 flex items-start justify-center bg-black/40 px-4 pt-[5vh] overflow-y-auto"
+          onClick={() => setEditProduct(null)}
+        >
+          <div
+            className="relative w-full max-w-2xl rounded-2xl bg-white p-6 shadow-2xl mb-10"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Close button */}
+            <button
+              type="button"
+              onClick={() => setEditProduct(null)}
+              className="absolute right-4 top-4 rounded-full p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors"
+            >
+              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+              </svg>
+            </button>
+
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">Edit Product</h2>
+
+            <ProductForm
+              product={editProduct}
+              isAdmin={isAdmin}
+              onDone={() => {
+                setEditProduct(null);
+                router.refresh();
+              }}
+            />
+          </div>
+        </div>
+      )}
     </>
   );
 }
