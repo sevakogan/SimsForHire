@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { tableStyles, buttonStyles } from "@/components/ui/form-styles";
@@ -73,6 +73,19 @@ export function ProductsTable({ products, isAdmin }: ProductsTableProps) {
   const [sortDir, setSortDir] = useState<SortDir>("asc");
   const [pendingEdits, setPendingEdits] = useState<PendingEdits>({});
   const [editProduct, setEditProduct] = useState<Product | null>(null);
+  // Unsaved changes navigation guard
+  const [navGuardTarget, setNavGuardTarget] = useState<string | null>(null);
+  const hasPendingEdits = Object.keys(pendingEdits).length > 0;
+
+  // Browser tab close / refresh guard
+  useEffect(() => {
+    if (!hasPendingEdits) return;
+    const handler = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+    };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [hasPendingEdits]);
 
   // Sync local state when server data changes (revalidation)
   const serverKey = useMemo(
@@ -160,6 +173,30 @@ export function ProductsTable({ products, isAdmin }: ProductsTableProps) {
     []
   );
 
+  // Save ALL pending edits across all rows
+  const handleSaveAll = useCallback(() => {
+    const entries = Object.entries(pendingEdits);
+    for (const [productId, edits] of entries) {
+      setLocalProducts((prev) =>
+        prev.map((p) => (p.id === productId ? { ...p, ...edits } : p))
+      );
+      updateProduct(productId, edits);
+    }
+    setPendingEdits({});
+  }, [pendingEdits]);
+
+  // Navigation guard: intercept link clicks when there are unsaved changes
+  const guardedNavigate = useCallback(
+    (href: string) => {
+      if (hasPendingEdits) {
+        setNavGuardTarget(href);
+      } else {
+        router.push(href);
+      }
+    },
+    [hasPendingEdits, router]
+  );
+
   async function handleDelete(id: string) {
     if (!confirm("Delete this product from the catalog?")) return;
     setLocalProducts((prev) => prev.filter((p) => p.id !== id));
@@ -218,7 +255,7 @@ export function ProductsTable({ products, isAdmin }: ProductsTableProps) {
               <SortableTh field="name">Name</SortableTh>
               <SortableTh field="retail_price" className="w-[80px]">Retail</SortableTh>
               <SortableTh field="sales_price" className="w-[80px]">Sales</SortableTh>
-              {isAdmin && <SortableTh field="cost" className="w-[80px]">Dealer</SortableTh>}
+              {isAdmin && <SortableTh field="cost" className="w-[80px]">Cost</SortableTh>}
               <SortableTh field="shipping" className="w-[75px]">S/H</SortableTh>
               <th className={`${tdCompact} ${thBase} w-[40px]`} title="Website">
                 <svg className="h-3.5 w-3.5 mx-auto text-muted-foreground/50" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
@@ -244,9 +281,13 @@ export function ProductsTable({ products, isAdmin }: ProductsTableProps) {
                   key={product.id}
                   className={`${tableStyles.row} ${isDirty ? "bg-amber-50/50" : ""}`}
                 >
-                  {/* Image — links to detail page */}
+                  {/* Image — guarded link to detail page */}
                   <td className={tdCompact}>
-                    <Link href={`/catalog/${product.id}`}>
+                    <button
+                      type="button"
+                      onClick={() => guardedNavigate(`/catalog/${product.id}`)}
+                      className="block"
+                    >
                       {thumb ? (
                         <Image
                           src={thumb}
@@ -261,7 +302,7 @@ export function ProductsTable({ products, isAdmin }: ProductsTableProps) {
                           --
                         </div>
                       )}
-                    </Link>
+                    </button>
                   </td>
 
                   {/* Type — 2nd column after Image */}
@@ -424,15 +465,16 @@ export function ProductsTable({ products, isAdmin }: ProductsTableProps) {
         </table>
       </div>
 
-      {/* Mobile card list — still links to detail page */}
+      {/* Mobile card list — guarded navigation */}
       <div className="space-y-2 sm:hidden">
         {sortedProducts.map((product) => {
           const thumb = firstImage(product.image_url);
           return (
-            <Link
+            <button
+              type="button"
               key={product.id}
-              href={`/catalog/${product.id}`}
-              className="block rounded-xl border border-border/40 bg-white p-3"
+              onClick={() => guardedNavigate(`/catalog/${product.id}`)}
+              className="block w-full text-left rounded-xl border border-border/40 bg-white p-3"
             >
               {/* Top: image + name + type */}
               <div className="flex items-start gap-3">
@@ -500,14 +542,72 @@ export function ProductsTable({ products, isAdmin }: ProductsTableProps) {
               {/* Admin cost */}
               {isAdmin && "cost" in product && (
                 <div className="mt-2 flex items-center justify-between border-t border-border/30 pt-2">
-                  <span className="text-[9px] font-medium uppercase tracking-wider text-amber-600/60">Dealer</span>
+                  <span className="text-[9px] font-medium uppercase tracking-wider text-amber-600/60">Cost</span>
                   <span className="text-xs text-amber-600/80">{formatCurrency((product as Product).cost)}</span>
                 </div>
               )}
-            </Link>
+            </button>
           );
         })}
       </div>
+
+      {/* Unsaved changes navigation guard modal */}
+      {navGuardTarget && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4"
+          onClick={() => setNavGuardTarget(null)}
+        >
+          <div
+            className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-amber-100">
+              <svg className="h-6 w-6 text-amber-600" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
+              </svg>
+            </div>
+            <h3 className="text-center text-base font-semibold text-gray-900">
+              Unsaved Changes
+            </h3>
+            <p className="mt-1 text-center text-sm text-gray-500">
+              You have unsaved changes. Would you like to save all?
+            </p>
+            <div className="mt-5 flex gap-2">
+              <button
+                type="button"
+                onClick={() => setNavGuardTarget(null)}
+                className="flex-1 rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setPendingEdits({});
+                  const target = navGuardTarget;
+                  setNavGuardTarget(null);
+                  router.push(target);
+                }}
+                className="flex-1 rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors"
+              >
+                Skip
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  handleSaveAll();
+                  const target = navGuardTarget;
+                  setNavGuardTarget(null);
+                  router.push(target);
+                }}
+                className="flex-1 rounded-lg bg-primary px-3 py-2 text-sm font-medium text-white hover:bg-primary-hover transition-colors"
+              >
+                Save All
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Edit product modal */}
       {editProduct && (
