@@ -22,6 +22,7 @@ export function InlineNumberInput({
   isInteger = false,
 }: InlineNumberInputProps) {
   const [localValue, setLocalValue] = useState(String(value));
+  const [isFocused, setIsFocused] = useState(false);
   const prevValueRef = useRef(value);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -33,9 +34,19 @@ export function InlineNumberInput({
     }
   }, [value]);
 
+  // Allow digits, decimal point, and minus sign only
   const handleChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const raw = e.target.value;
+      // Allow empty string for mid-edit, or valid numeric patterns
+      if (raw === "" || raw === "-" || raw === "." || raw === "-.") {
+        setLocalValue(raw);
+        return;
+      }
+      // Only allow valid numeric characters
+      if (isInteger && !/^-?\d*$/.test(raw)) return;
+      if (!isInteger && !/^-?\d*\.?\d*$/.test(raw)) return;
+
       setLocalValue(raw);
       const parsed = isInteger ? parseInt(raw, 10) : parseFloat(raw);
       if (!isNaN(parsed) && parsed >= min) {
@@ -46,12 +57,21 @@ export function InlineNumberInput({
   );
 
   const handleBlur = useCallback(() => {
+    setIsFocused(false);
     const parsed = isInteger ? parseInt(localValue, 10) : parseFloat(localValue);
     if (isNaN(parsed) || parsed < min) {
       // Revert display to current prop value
       setLocalValue(String(value));
     }
   }, [localValue, value, min, isInteger]);
+
+  const handleFocus = useCallback(() => {
+    setIsFocused(true);
+    // Select all text on focus for easy replacement
+    requestAnimationFrame(() => {
+      inputRef.current?.select();
+    });
+  }, []);
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
@@ -67,20 +87,24 @@ export function InlineNumberInput({
   return (
     <div className={`relative ${className}`}>
       {prefix && (
-        <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-muted-foreground pointer-events-none">
+        <span
+          className={`absolute left-2 top-1/2 -translate-y-1/2 text-xs pointer-events-none transition-colors ${
+            isFocused ? "text-primary" : "text-muted-foreground/60"
+          }`}
+        >
           {prefix}
         </span>
       )}
       <input
         ref={inputRef}
-        type="number"
-        step={step}
-        min={min}
+        type="text"
+        inputMode={isInteger ? "numeric" : "decimal"}
         value={localValue}
         onChange={handleChange}
         onBlur={handleBlur}
+        onFocus={handleFocus}
         onKeyDown={handleKeyDown}
-        className={`w-full rounded-md border border-border/60 bg-white py-1 text-sm text-foreground text-right focus:outline-none focus:ring-1 focus:ring-primary/40 focus:border-primary/40 ${
+        className={`w-full rounded-md border border-transparent bg-transparent py-1 text-sm text-foreground text-right transition-all hover:border-border/60 hover:bg-white focus:border-primary/40 focus:bg-white focus:outline-none focus:ring-1 focus:ring-primary/40 ${
           prefix ? "pl-5 pr-2" : "px-2"
         }`}
       />
