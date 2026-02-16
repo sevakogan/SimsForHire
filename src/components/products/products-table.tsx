@@ -188,10 +188,14 @@ export function ProductsTable({ products, isAdmin }: ProductsTableProps) {
     );
   }
 
+  // Compact cell styles for denser table
+  const tdCompact = "px-2 py-2 text-sm text-foreground";
+  const thBase = "text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground";
+
   function SortableTh({ field, children, className = "" }: { field: SortField; children: React.ReactNode; className?: string }) {
     return (
       <th
-        className={`${tableStyles.th} cursor-pointer select-none hover:text-foreground transition-colors ${className}`}
+        className={`${tdCompact} ${thBase} cursor-pointer select-none hover:text-foreground transition-colors ${className}`}
         onClick={() => handleSort(field)}
       >
         {children}
@@ -204,19 +208,23 @@ export function ProductsTable({ products, isAdmin }: ProductsTableProps) {
     <>
       {/* Desktop table — horizontally scrollable */}
       <div className={`${tableStyles.wrapper} hidden sm:block`}>
-        <table className={`${tableStyles.table} min-w-[1050px]`}>
+        <table className={`${tableStyles.table} min-w-[900px]`}>
           <thead className={tableStyles.thead}>
             <tr>
-              <th className={`${tableStyles.th} w-[60px]`}>Image</th>
-              <SortableTh field="type" className="w-[100px]">Type</SortableTh>
-              <SortableTh field="model_number" className="w-[110px]">Model #</SortableTh>
+              <th className={`${tdCompact} ${thBase} w-[50px]`}>Image</th>
+              <SortableTh field="type" className="w-[90px]">Type</SortableTh>
+              <SortableTh field="model_number" className="w-[100px]">Model #</SortableTh>
               <SortableTh field="name">Name</SortableTh>
-              <SortableTh field="retail_price" className="w-[100px]">Retail</SortableTh>
-              <SortableTh field="sales_price" className="w-[100px]">Sales</SortableTh>
-              {isAdmin && <SortableTh field="cost" className="w-[100px]">Dealer</SortableTh>}
-              <SortableTh field="shipping" className="w-[90px]">S/H</SortableTh>
-              <th className={`${tableStyles.th} w-[130px]`}>Website</th>
-              {isAdmin && <th className={`${tableStyles.th} w-[80px]`}>Actions</th>}
+              <SortableTh field="retail_price" className="w-[80px]">Retail</SortableTh>
+              <SortableTh field="sales_price" className="w-[80px]">Sales</SortableTh>
+              {isAdmin && <SortableTh field="cost" className="w-[80px]">Dealer</SortableTh>}
+              <SortableTh field="shipping" className="w-[75px]">S/H</SortableTh>
+              <th className={`${tdCompact} ${thBase} w-[40px]`} title="Website">
+                <svg className="h-3.5 w-3.5 mx-auto text-muted-foreground/50" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.5 0 0 1 1.242 7.244l-4.5 4.5a4.5 4.5 0 0 1-6.364-6.364l1.757-1.757m9.86-2.338a4.5 4.5 0 0 0-1.242-7.244l-4.5-4.5a4.5 4.5 0 0 0-6.364 6.364L4.757 8.25" />
+                </svg>
+              </th>
+              {isAdmin && <th className={`${tdCompact} ${thBase} w-[70px]`}>Actions</th>}
             </tr>
           </thead>
           <tbody className={tableStyles.tbody}>
@@ -236,19 +244,19 @@ export function ProductsTable({ products, isAdmin }: ProductsTableProps) {
                   className={`${tableStyles.row} ${isDirty ? "bg-amber-50/50" : ""}`}
                 >
                   {/* Image — links to detail page */}
-                  <td className={tableStyles.td}>
+                  <td className={tdCompact}>
                     <Link href={`/catalog/${product.id}`}>
                       {thumb ? (
                         <Image
                           src={thumb}
                           alt=""
-                          width={40}
-                          height={40}
-                          className="rounded object-cover"
+                          width={36}
+                          height={36}
+                          className="h-9 w-9 rounded object-cover"
                           unoptimized={isExternalImage(thumb)}
                         />
                       ) : (
-                        <div className="flex h-10 w-10 items-center justify-center rounded bg-muted text-xs text-muted-foreground">
+                        <div className="flex h-9 w-9 items-center justify-center rounded bg-muted text-xs text-muted-foreground">
                           --
                         </div>
                       )}
@@ -256,7 +264,7 @@ export function ProductsTable({ products, isAdmin }: ProductsTableProps) {
                   </td>
 
                   {/* Type — 2nd column after Image */}
-                  <td className={tableStyles.td}>
+                  <td className={tdCompact}>
                     {isAdmin ? (
                       <InlineTypePicker
                         value={String(displayVal("type") ?? "")}
@@ -272,7 +280,7 @@ export function ProductsTable({ products, isAdmin }: ProductsTableProps) {
                   </td>
 
                   {/* Model # */}
-                  <td className={tableStyles.td}>
+                  <td className={tdCompact}>
                     {isAdmin ? (
                       <InlineTextInput
                         value={String(displayVal("model_number") ?? "")}
@@ -285,7 +293,7 @@ export function ProductsTable({ products, isAdmin }: ProductsTableProps) {
                   </td>
 
                   {/* Name */}
-                  <td className={tableStyles.td}>
+                  <td className={tdCompact}>
                     {isAdmin ? (
                       <InlineTextInput
                         value={String(displayVal("name") ?? "")}
@@ -299,7 +307,7 @@ export function ProductsTable({ products, isAdmin }: ProductsTableProps) {
                   </td>
 
                   {/* Retail */}
-                  <td className={tableStyles.td}>
+                  <td className={tdCompact}>
                     {isAdmin ? (
                       <InlineNumberInput
                         value={Number(displayVal("retail_price") ?? 0)}
@@ -307,12 +315,12 @@ export function ProductsTable({ products, isAdmin }: ProductsTableProps) {
                         prefix="$"
                       />
                     ) : (
-                      formatCurrency(product.retail_price)
+                      <span className="text-xs">{formatCurrency(product.retail_price)}</span>
                     )}
                   </td>
 
                   {/* Sales */}
-                  <td className={tableStyles.td}>
+                  <td className={tdCompact}>
                     {isAdmin ? (
                       <InlineNumberInput
                         value={Number(displayVal("sales_price") ?? 0)}
@@ -320,13 +328,13 @@ export function ProductsTable({ products, isAdmin }: ProductsTableProps) {
                         prefix="$"
                       />
                     ) : (
-                      formatCurrency(product.sales_price)
+                      <span className="text-xs">{formatCurrency(product.sales_price)}</span>
                     )}
                   </td>
 
                   {/* Dealer (admin only) */}
                   {isAdmin && (
-                    <td className={tableStyles.td}>
+                    <td className={tdCompact}>
                       <InlineNumberInput
                         value={Number(displayVal("cost") ?? 0)}
                         onChange={(v) => handleFieldChange(product.id, "cost", v)}
@@ -336,7 +344,7 @@ export function ProductsTable({ products, isAdmin }: ProductsTableProps) {
                   )}
 
                   {/* S/H */}
-                  <td className={tableStyles.td}>
+                  <td className={tdCompact}>
                     {isAdmin ? (
                       <InlineNumberInput
                         value={Number(displayVal("shipping") ?? 0)}
@@ -344,35 +352,36 @@ export function ProductsTable({ products, isAdmin }: ProductsTableProps) {
                         prefix="$"
                       />
                     ) : (
-                      formatCurrency(product.shipping)
+                      <span className="text-xs">{formatCurrency(product.shipping)}</span>
                     )}
                   </td>
 
-                  {/* Website */}
-                  <td className={tableStyles.td}>
-                    {isAdmin ? (
-                      <InlineTextInput
-                        value={String(displayVal("manufacturer_website") ?? "")}
-                        onChange={(v) => handleFieldChange(product.id, "manufacturer_website", v)}
-                        placeholder="--"
-                      />
-                    ) : product.manufacturer_website ? (
-                      <a
-                        href={product.manufacturer_website}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-xs text-primary hover:underline"
-                      >
-                        Link
-                      </a>
-                    ) : (
-                      "--"
-                    )}
+                  {/* Website — icon link */}
+                  <td className={`${tdCompact} text-center`}>
+                    {(() => {
+                      const url = String(displayVal("manufacturer_website") ?? "");
+                      return url ? (
+                        <a
+                          href={url.startsWith("http") ? url : `https://${url}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center justify-center rounded-md p-1 text-primary/60 hover:text-primary hover:bg-primary/10 transition-colors"
+                          title={url}
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
+                          </svg>
+                        </a>
+                      ) : (
+                        <span className="text-muted-foreground/30">--</span>
+                      );
+                    })()}
                   </td>
 
                   {/* Actions (admin only) */}
                   {isAdmin && (
-                    <td className={tableStyles.td}>
+                    <td className={tdCompact}>
                       {isDirty ? (
                         <div className="flex gap-1">
                           {/* Confirm */}
