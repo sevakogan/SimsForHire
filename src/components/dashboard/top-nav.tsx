@@ -97,6 +97,24 @@ export function TopNav() {
                 </Link>
               );
             })}
+            {/* Customizations tab — always visible */}
+            {(() => {
+              const isCustomizationsActive = pathname.startsWith("/customizations");
+              const customizationsLabel = isAdmin ? "Customizations" : "Products";
+              const customizationsHref = isAdmin ? "/customizations" : "/customizations/products";
+              return (
+                <Link
+                  href={customizationsHref}
+                  className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                    isCustomizationsActive
+                      ? "bg-primary/10 text-primary"
+                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                  }`}
+                >
+                  {customizationsLabel}
+                </Link>
+              );
+            })()}
           </nav>
         </div>
 
