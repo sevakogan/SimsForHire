@@ -36,7 +36,7 @@ export default async function TypesPage() {
   return (
     <div className="space-y-6 sm:space-y-8">
       <h1 className="text-lg font-bold text-foreground sm:text-2xl">
-        Product Types
+        Product Tags
       </h1>
       <TypesManager types={types} />
     </div>

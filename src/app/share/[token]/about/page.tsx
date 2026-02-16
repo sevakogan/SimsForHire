@@ -1,29 +1,93 @@
-export default function AboutPage() {
+import { notFound } from "next/navigation";
+import { getProjectByShareToken } from "@/lib/actions/projects";
+import { getCompanyInfo } from "@/lib/actions/company-info";
+import { ContactForm } from "@/components/portal/contact-form";
+import Image from "next/image";
+
+export const dynamic = "force-dynamic";
+
+interface Props {
+  params: Promise<{ token: string }>;
+}
+
+export default async function AboutPage({ params }: Props) {
+  const { token } = await params;
+  const [{ project, client }, company] = await Promise.all([
+    getProjectByShareToken(token),
+    getCompanyInfo(),
+  ]);
+
+  if (!project) notFound();
+
   return (
     <>
-      {/* Hero */}
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900 sm:text-3xl">
-          SimsForHire
-        </h1>
-        <p className="mt-2 text-sm text-gray-600">
-          Your trusted partner for sourcing quality products at the best prices.
-        </p>
-      </div>
+      {/* Company Info Header */}
+      <div className="mb-8 rounded-2xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6">
+        <div className="flex items-start gap-4">
+          {company.logo_url && (
+            <Image
+              src={company.logo_url}
+              alt={company.name}
+              width={56}
+              height={56}
+              className="shrink-0 h-14 w-14 rounded-xl bg-primary/10 object-contain"
+              unoptimized
+            />
+          )}
+          <div className="min-w-0">
+            <h1 className="text-xl font-bold text-gray-900 sm:text-2xl">
+              {company.name}
+            </h1>
+            {company.tagline && (
+              <p className="mt-1 text-sm text-gray-600">{company.tagline}</p>
+            )}
+          </div>
+        </div>
 
-      {/* What We Do */}
-      <section className="mb-8">
-        <h2 className="mb-3 text-base font-semibold text-gray-900">
-          What We Do
-        </h2>
-        <p className="text-sm leading-relaxed text-gray-600">
-          We specialize in finding, sourcing, and delivering the products you
-          need. Whether it&apos;s furniture, electronics, appliances, or
-          specialty items, we leverage our network of suppliers and deep
-          industry knowledge to get you the best deals — often well below
-          retail price.
-        </p>
-      </section>
+        {/* Contact details grid */}
+        <div className="mt-4 grid gap-3 sm:grid-cols-2">
+          {company.address && (
+            <div className="flex items-start gap-2.5">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-purple-50">
+                <svg className="h-4 w-4 text-purple-500" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
+                </svg>
+              </div>
+              <p className="text-sm text-gray-600 whitespace-pre-line leading-relaxed">
+                {company.address}
+              </p>
+            </div>
+          )}
+
+          <div className="space-y-2.5">
+            {company.phone && (
+              <div className="flex items-center gap-2.5">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-green-50">
+                  <svg className="h-4 w-4 text-green-500" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 0 0 2.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 0 1-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 0 0-1.091-.852H4.5A2.25 2.25 0 0 0 2.25 4.5v2.25Z" />
+                  </svg>
+                </div>
+                <a href={`tel:${company.phone}`} className="text-sm text-gray-600 hover:text-primary transition-colors">
+                  {company.phone}
+                </a>
+              </div>
+            )}
+            {company.email && (
+              <div className="flex items-center gap-2.5">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-50">
+                  <svg className="h-4 w-4 text-blue-500" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75" />
+                  </svg>
+                </div>
+                <a href={`mailto:${company.email}`} className="text-sm text-gray-600 hover:text-primary transition-colors">
+                  {company.email}
+                </a>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
 
       {/* How It Works */}
       <section className="mb-8">
@@ -83,7 +147,7 @@ export default function AboutPage() {
       </section>
 
       {/* Why Choose Us */}
-      <section>
+      <section className="mb-8">
         <h2 className="mb-4 text-base font-semibold text-gray-900">
           Why Choose Us
         </h2>
@@ -114,6 +178,23 @@ export default function AboutPage() {
               <p className="mt-1 text-xs text-gray-500">{desc}</p>
             </div>
           ))}
+        </div>
+      </section>
+
+      {/* Contact Form — merged from the old Contact Us page */}
+      <section>
+        <h2 className="mb-4 text-base font-semibold text-gray-900">
+          Contact Us
+        </h2>
+        <p className="mb-4 text-xs text-gray-500">
+          Have a question or need help? Send us a message.
+        </p>
+        <div className="mx-auto max-w-lg">
+          <ContactForm
+            shareToken={token}
+            defaultName={client?.name ?? ""}
+            defaultEmail={client?.email ?? ""}
+          />
         </div>
       </section>
     </>

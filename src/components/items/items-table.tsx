@@ -22,6 +22,10 @@ interface ItemsTableProps {
   unreadNoteCount?: number;
   /** When true, items cannot be edited, deleted, or added */
   readOnly?: boolean;
+  /** External tag filter value — when provided, the internal TypeFilterPills are hidden */
+  tagFilter?: string;
+  /** Callback for external tag filter changes */
+  onTagFilterChange?: (value: string) => void;
 }
 
 function AcceptanceBadge({ status }: { status: AcceptanceStatus }) {
@@ -100,9 +104,12 @@ function formatCurrency(value: number): string {
 
 /* ─── Main Component ─── */
 
-export function ItemsTable({ items, projectId, isAdmin, unreadNoteCount = 0, readOnly = false }: ItemsTableProps) {
+export function ItemsTable({ items, projectId, isAdmin, unreadNoteCount = 0, readOnly = false, tagFilter: externalTagFilter, onTagFilterChange }: ItemsTableProps) {
   const router = useRouter();
-  const [typeFilter, setTypeFilter] = useState("");
+  const [internalTypeFilter, setInternalTypeFilter] = useState("");
+  const typeFilter = externalTagFilter ?? internalTypeFilter;
+  const setTypeFilter = onTagFilterChange ?? setInternalTypeFilter;
+  const hasExternalFilter = externalTagFilter !== undefined;
   const [view, setView] = useState<ViewMode>("list");
   const [localItems, setLocalItems] = useState(items);
   const [dismissedNoteIds, setDismissedNoteIds] = useState<Set<string>>(new Set());
@@ -189,11 +196,13 @@ export function ItemsTable({ items, projectId, isAdmin, unreadNoteCount = 0, rea
     <div className="space-y-3">
       {/* Filter pills + view toggle row */}
       <div className="flex items-start justify-between gap-3">
-        <TypeFilterPills
-          value={typeFilter}
-          onChange={setTypeFilter}
-          extraTypes={extraTypes}
-        />
+        {!hasExternalFilter && (
+          <TypeFilterPills
+            value={typeFilter}
+            onChange={setTypeFilter}
+            extraTypes={extraTypes}
+          />
+        )}
         <ViewToggle value={view} onChange={setView} />
       </div>
 

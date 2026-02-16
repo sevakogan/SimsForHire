@@ -5,7 +5,7 @@ import { getClientById } from "@/lib/actions/clients";
 import { createSupabaseServer } from "@/lib/supabase-server";
 import { Badge } from "@/components/ui/badge";
 import { buttonStyles } from "@/components/ui/form-styles";
-import { ItemsTable } from "@/components/items/items-table";
+import { ItemsWithSidebar } from "./items-with-sidebar";
 import { InlineAddItem } from "@/components/items/inline-add-item";
 import { ProjectActions } from "./project-actions";
 import { InvoiceDiscountProvider, InvoiceSection, LiveInvoiceFooter } from "./invoice-section";
@@ -245,7 +245,7 @@ export default async function ProjectDetailPage({ params }: Props) {
         )}
       </div>
 
-      <ItemsTable items={items} projectId={id} isAdmin={admin} unreadNoteCount={noteCount} readOnly={editLocked} />
+      <ItemsWithSidebar items={items} projectId={id} isAdmin={admin} unreadNoteCount={noteCount} readOnly={editLocked} />
 
       {/* Inline add item bar — hidden when invoice is locked */}
       {admin && !editLocked && <InlineAddItem projectId={id} isAdmin={admin} />}

@@ -157,7 +157,7 @@ export function ProductForm({ product, isAdmin, category = "product", basePath =
 
       {/* Row 1: Type tag picker */}
       <div>
-        <p className={`${pillLabel} mb-1.5`}>Type</p>
+        <p className={`${pillLabel} mb-1.5`}>Tag</p>
         <TypeTagPicker value={type} onChange={setType} />
       </div>
 

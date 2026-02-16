@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { getProjectByShareToken } from "@/lib/actions/projects";
+import { getCompanyInfo } from "@/lib/actions/company-info";
 import { PortalSidebar } from "@/components/portal/portal-sidebar";
 import type { Metadata } from "next";
 
@@ -24,7 +25,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function ShareLayout({ params, children }: Props) {
   const { token } = await params;
-  const { project, client } = await getProjectByShareToken(token);
+  const [{ project, client }, company] = await Promise.all([
+    getProjectByShareToken(token),
+    getCompanyInfo(),
+  ]);
 
   if (!project) notFound();
 
@@ -34,6 +38,7 @@ export default async function ShareLayout({ params, children }: Props) {
       clientName={client?.name ?? "Client"}
       projectName={project.name}
       invoiceNumber={project.invoice_number ?? null}
+      companyName={company.name}
     >
       {children}
     </PortalSidebar>

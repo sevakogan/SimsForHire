@@ -223,7 +223,7 @@ export function ItemForm({ projectId, itemNumber, item, isAdmin, onDone }: ItemF
 
       {/* Row 1: Type tag picker */}
       <div>
-        <p className={`${pillLabel} mb-1.5`}>Type</p>
+        <p className={`${pillLabel} mb-1.5`}>Tag</p>
         <TypeTagPicker
           value={fields.item_type}
           onChange={(val) => updateField("item_type", val)}

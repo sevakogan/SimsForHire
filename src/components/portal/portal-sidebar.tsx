@@ -3,13 +3,12 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { COMPANY_INFO } from "@/lib/constants/company-info";
-
 interface PortalSidebarProps {
   token: string;
   clientName: string;
   projectName: string;
   invoiceNumber: string | null;
+  companyName: string;
   children: React.ReactNode;
 }
 
@@ -62,15 +61,6 @@ function getNavItems(token: string): NavItem[] {
         </svg>
       ),
     },
-    {
-      label: "Contact Us",
-      href: `${base}/contact`,
-      icon: (
-        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75" />
-        </svg>
-      ),
-    },
   ];
 }
 
@@ -79,6 +69,7 @@ export function PortalSidebar({
   clientName,
   projectName,
   invoiceNumber,
+  companyName,
   children,
 }: PortalSidebarProps) {
   const pathname = usePathname();
@@ -117,11 +108,11 @@ export function PortalSidebar({
       <div className={`border-b border-gray-200 px-4 py-5 ${collapsed ? "px-2 py-4" : ""}`}>
         {collapsed ? (
           <div className="flex items-center justify-center">
-            <span className="text-sm font-bold text-primary">{COMPANY_INFO.name[0]}</span>
+            <span className="text-sm font-bold text-primary">{companyName[0]}</span>
           </div>
         ) : (
           <>
-            <h1 className="text-base font-bold text-gray-900">{COMPANY_INFO.name}</h1>
+            <h1 className="text-base font-bold text-gray-900">{companyName}</h1>
             <p className="mt-1.5 text-sm font-medium text-gray-700 truncate">
               {clientName}
             </p>
@@ -202,7 +193,7 @@ export function PortalSidebar({
           </svg>
         </button>
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-bold text-gray-900 truncate">{COMPANY_INFO.name}</p>
+          <p className="text-sm font-bold text-gray-900 truncate">{companyName}</p>
           <p className="text-xs text-gray-500 truncate">{clientName}</p>
         </div>
       </div>

@@ -94,7 +94,7 @@ export function TypeTagPicker({ value, onChange }: TypeTagPickerProps) {
                 setCustomValue("");
               }
             }}
-            placeholder="Custom type…"
+            placeholder="Custom tag…"
             className="w-20 rounded-full border border-border bg-white px-2.5 py-0.5 text-[11px] text-foreground placeholder:text-muted-foreground/50 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/20"
           />
           <button
@@ -112,7 +112,7 @@ export function TypeTagPicker({ value, onChange }: TypeTagPickerProps) {
           type="button"
           onClick={() => setShowCustomInput(true)}
           className="flex h-5 w-5 items-center justify-center rounded-full border border-dashed border-border/60 text-muted-foreground/50 transition-all hover:border-primary/40 hover:text-primary"
-          title="Add custom type"
+          title="Add custom tag"
         >
           <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />

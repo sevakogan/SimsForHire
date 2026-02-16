@@ -86,7 +86,7 @@ export function TypesManager({ types: initialTypes }: TypesManagerProps) {
 
   const handleDelete = useCallback(
     async (id: string) => {
-      if (!confirm("Delete this type?")) return;
+      if (!confirm("Delete this tag?")) return;
 
       setError(null);
       setTypes((prev) => prev.filter((t) => t.id !== id));
@@ -115,10 +115,10 @@ export function TypesManager({ types: initialTypes }: TypesManagerProps) {
     <div className="space-y-4">
       <div>
         <h2 className="text-sm font-semibold text-foreground mb-3">
-          Product Types
+          Product Tags
         </h2>
         <p className="text-xs text-muted-foreground mb-4">
-          Manage product type categories with custom colors. These appear as
+          Manage product tag categories with custom colors. These appear as
           filter pills and tags throughout the app.
         </p>
       </div>
@@ -141,7 +141,7 @@ export function TypesManager({ types: initialTypes }: TypesManagerProps) {
               handleAdd();
             }
           }}
-          placeholder="Add new type…"
+          placeholder="Add new tag…"
           className="flex-1 rounded-lg border border-border bg-white px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/50 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/20"
         />
         <ColorPicker value={newColor} onChange={setNewColor} />
@@ -159,7 +159,7 @@ export function TypesManager({ types: initialTypes }: TypesManagerProps) {
       {types.length === 0 ? (
         <div className="rounded-xl border border-dashed border-border p-6 text-center">
           <p className="text-sm text-muted-foreground">
-            No types yet. Add one above to get started.
+            No tags yet. Add one above to get started.
           </p>
         </div>
       ) : (
