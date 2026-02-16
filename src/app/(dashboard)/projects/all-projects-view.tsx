@@ -44,11 +44,9 @@ export function AllProjectsView({ projects, noteCounts }: AllProjectsViewProps) 
 
   async function handleDuplicate(projectId: string) {
     setActionLoading(projectId);
-    const result = await duplicateProject(projectId);
+    await duplicateProject(projectId);
     setActionLoading(null);
-    if (result.id) {
-      router.push(`/projects/${result.id}`);
-    }
+    router.refresh();
   }
 
   async function handleDelete(projectId: string) {
