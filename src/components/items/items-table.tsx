@@ -389,18 +389,19 @@ export function ItemsTable({ items, projectId, isAdmin, unreadNoteCount = 0 }: I
                     </div>
                   )}
 
-                  {/* Admin profit (total - cost) */}
-                  {isAdmin && "my_cost" in item && (
-                    <div className="w-16 shrink-0 text-right">
-                      <span className={`text-xs font-medium ${
-                        total - (item as Item).my_cost >= 0
-                          ? "text-green-600"
-                          : "text-red-500"
-                      }`}>
-                        {formatCurrency(total - (item as Item).my_cost)}
-                      </span>
-                    </div>
-                  )}
+                  {/* Admin profit (total - cost × qty) */}
+                  {isAdmin && "my_cost" in item && (() => {
+                    const itemProfit = total - (item as Item).my_cost * qty;
+                    return (
+                      <div className="w-16 shrink-0 text-right">
+                        <span className={`text-xs font-medium ${
+                          itemProfit >= 0 ? "text-green-600" : "text-red-500"
+                        }`}>
+                          {formatCurrency(itemProfit)}
+                        </span>
+                      </div>
+                    );
+                  })()}
 
                   {/* Delete */}
                   {isAdmin && (
@@ -547,18 +548,19 @@ export function ItemsTable({ items, projectId, isAdmin, unreadNoteCount = 0 }: I
                       <span className="text-xs text-amber-600/80">{formatCurrency((item as Item).my_cost)}</span>
                     </div>
                   )}
-                  {isAdmin && "my_cost" in item && (
-                    <div className="flex items-center justify-between">
-                      <span className="text-[9px] font-medium uppercase tracking-wider text-green-600/60">Profit</span>
-                      <span className={`text-xs font-medium ${
-                        total - (item as Item).my_cost >= 0
-                          ? "text-green-600"
-                          : "text-red-500"
-                      }`}>
-                        {formatCurrency(total - (item as Item).my_cost)}
-                      </span>
-                    </div>
-                  )}
+                  {isAdmin && "my_cost" in item && (() => {
+                    const itemProfit = total - (item as Item).my_cost * qty;
+                    return (
+                      <div className="flex items-center justify-between">
+                        <span className="text-[9px] font-medium uppercase tracking-wider text-green-600/60">Profit</span>
+                        <span className={`text-xs font-medium ${
+                          itemProfit >= 0 ? "text-green-600" : "text-red-500"
+                        }`}>
+                          {formatCurrency(itemProfit)}
+                        </span>
+                      </div>
+                    );
+                  })()}
                 </div>
               );
             })}
@@ -733,15 +735,16 @@ function ItemsCardGrid({ items, projectId, isAdmin, onDelete, dismissedNoteIds, 
                   Cost: {formatCurrency((item as Item).my_cost)}
                 </p>
               )}
-              {isAdmin && "my_cost" in item && (
-                <p className={`text-[10px] font-medium ${
-                  total - (item as Item).my_cost >= 0
-                    ? "text-green-600"
-                    : "text-red-500"
-                }`}>
-                  Profit: {formatCurrency(total - (item as Item).my_cost)}
-                </p>
-              )}
+              {isAdmin && "my_cost" in item && (() => {
+                const itemProfit = total - (item as Item).my_cost * qty;
+                return (
+                  <p className={`text-[10px] font-medium ${
+                    itemProfit >= 0 ? "text-green-600" : "text-red-500"
+                  }`}>
+                    Profit: {formatCurrency(itemProfit)}
+                  </p>
+                );
+              })()}
 
               {/* Admin delete */}
               {isAdmin && (
