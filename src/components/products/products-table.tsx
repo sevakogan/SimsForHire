@@ -275,10 +275,10 @@ export function ProductsTable({ products, isAdmin }: ProductsTableProps) {
             <tr>
               <th className={`${tdCompact} ${thBase} w-[50px]`}>Image</th>
               <SortableTh field="type" className="w-[90px]">Type</SortableTh>
-              <SortableTh field="name">Name</SortableTh>
-              <SortableTh field="retail_price" className="w-[80px]">Retail</SortableTh>
-              <SortableTh field="sales_price" className="w-[80px]">Sales</SortableTh>
-              {isAdmin && <SortableTh field="cost" className="w-[80px]">Cost</SortableTh>}
+              <SortableTh field="name" className="max-w-[180px]">Name</SortableTh>
+              <SortableTh field="retail_price" className="w-[90px]">Retail</SortableTh>
+              <SortableTh field="sales_price" className="w-[90px]">Sales</SortableTh>
+              {isAdmin && <SortableTh field="cost" className="w-[90px]">Cost</SortableTh>}
               <SortableTh field="shipping" className="w-[75px]">S/H</SortableTh>
               <th className={`${tdCompact} ${thBase} w-[40px]`} title="Website">
                 <svg className="h-3.5 w-3.5 mx-auto text-muted-foreground/50" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
@@ -355,16 +355,17 @@ export function ProductsTable({ products, isAdmin }: ProductsTableProps) {
                   </td>
 
                   {/* Name */}
-                  <td className={tdCompact}>
+                  <td className={`${tdCompact} max-w-[180px]`}>
                     {isAdmin ? (
                       <InlineTextInput
                         value={String(displayVal("name") ?? "")}
                         onChange={(v) => handleFieldChange(product.id, "name", v)}
                         required
                         placeholder="Product name"
+                        className="truncate"
                       />
                     ) : (
-                      product.name
+                      <span className="truncate block">{product.name}</span>
                     )}
                   </td>
 

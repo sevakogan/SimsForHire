@@ -6,6 +6,7 @@ import type { ProductSearchResult } from "@/types";
 import Image from "next/image";
 import { isExternalImage } from "@/lib/parse-images";
 import { pillWrapper, pillLabel, pillInput } from "@/components/ui/pill-styles";
+import { getTypeColor } from "@/lib/constants/product-types";
 
 interface ProductSearchProps {
   onSelect: (product: ProductSearchResult) => void;
@@ -111,10 +112,19 @@ export function ProductSearch({
           <p className="text-sm font-medium text-foreground truncate">
             {selectedProduct.name}
           </p>
-          <p className="text-xs text-muted-foreground">
-            {selectedProduct.model_number && `${selectedProduct.model_number} · `}
-            {selectedProduct.type}
-          </p>
+          <div className="flex items-center gap-1.5 mt-0.5">
+            {selectedProduct.model_number && (
+              <span className="text-xs text-muted-foreground">{selectedProduct.model_number}</span>
+            )}
+            {selectedProduct.type && (() => {
+              const c = getTypeColor(selectedProduct.type);
+              return (
+                <span className={`inline-block rounded-full px-2 py-0.5 text-[10px] font-medium shadow-sm ${c.bg} ${c.text}`}>
+                  {selectedProduct.type}
+                </span>
+              );
+            })()}
+          </div>
         </div>
         <button
           type="button"
@@ -177,11 +187,22 @@ export function ProductSearch({
                 <p className="text-sm font-medium text-foreground truncate">
                   {product.name}
                 </p>
-                <p className="text-xs text-muted-foreground truncate">
-                  {product.model_number && `${product.model_number} · `}
-                  {product.type}
-                  {product.description && ` · ${product.description}`}
-                </p>
+                <div className="flex items-center gap-1.5">
+                  {product.model_number && (
+                    <span className="text-xs text-muted-foreground">{product.model_number}</span>
+                  )}
+                  {product.type && (() => {
+                    const c = getTypeColor(product.type);
+                    return (
+                      <span className={`inline-block rounded-full px-1.5 py-0.5 text-[10px] font-medium shadow-sm ${c.bg} ${c.text}`}>
+                        {product.type}
+                      </span>
+                    );
+                  })()}
+                  {product.description && (
+                    <span className="text-xs text-muted-foreground truncate">{product.description}</span>
+                  )}
+                </div>
               </div>
               <span className="shrink-0 text-sm font-medium text-foreground">
                 {formatCurrency(product.sales_price)}

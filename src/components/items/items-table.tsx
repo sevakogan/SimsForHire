@@ -10,6 +10,7 @@ import { TypeFilterPills } from "@/components/products/type-filter-pills";
 import { ViewToggle } from "@/components/ui/view-toggle";
 import type { ViewMode } from "@/components/ui/view-toggle";
 import { InlineNumberInput } from "@/components/ui/inline-number-input";
+import { getTypeColor } from "@/lib/constants/product-types";
 import type { Item, ClientItem, AcceptanceStatus } from "@/types";
 
 interface ItemsTableProps {
@@ -314,11 +315,14 @@ export function ItemsTable({ items, projectId, isAdmin, unreadNoteCount = 0 }: I
                       {item.description || item.item_type}
                     </Link>
                     <div className="flex items-center gap-1.5 mt-0.5">
-                      {item.item_type && (
-                        <span className="inline-block rounded-full bg-muted/60 px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
-                          {item.item_type}
-                        </span>
-                      )}
+                      {item.item_type && (() => {
+                        const c = getTypeColor(item.item_type);
+                        return (
+                          <span className={`inline-block rounded-full px-2 py-0.5 text-[10px] font-medium shadow-sm ${c.bg} ${c.text}`}>
+                            {item.item_type}
+                          </span>
+                        );
+                      })()}
                       {isAdmin && item.acceptance_status && item.acceptance_status !== "pending" && (
                         <AcceptanceBadge status={item.acceptance_status} />
                       )}
@@ -450,11 +454,14 @@ export function ItemsTable({ items, projectId, isAdmin, unreadNoteCount = 0 }: I
                         {item.description || item.item_type}
                       </Link>
                       <div className="flex items-center gap-1.5 mt-0.5">
-                        {item.item_type && (
-                          <span className="inline-block rounded-full bg-muted/60 px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
-                            {item.item_type}
-                          </span>
-                        )}
+                        {item.item_type && (() => {
+                          const c = getTypeColor(item.item_type);
+                          return (
+                            <span className={`inline-block rounded-full px-2 py-0.5 text-[10px] font-medium shadow-sm ${c.bg} ${c.text}`}>
+                              {item.item_type}
+                            </span>
+                          );
+                        })()}
                         {isAdmin && item.acceptance_status && item.acceptance_status !== "pending" && (
                           <AcceptanceBadge status={item.acceptance_status} />
                         )}
@@ -669,11 +676,14 @@ function ItemsCardGrid({ items, projectId, isAdmin, onDelete, dismissedNoteIds, 
               <p className="text-xs font-semibold text-foreground truncate">
                 {item.description || item.item_type || "Item"}
               </p>
-              {item.item_type && (
-                <p className="text-[10px] text-muted-foreground truncate">
-                  {item.item_type}
-                </p>
-              )}
+              {item.item_type && (() => {
+                const c = getTypeColor(item.item_type);
+                return (
+                  <span className={`inline-block rounded-full px-2 py-0.5 text-[10px] font-medium shadow-sm mt-0.5 ${c.bg} ${c.text}`}>
+                    {item.item_type}
+                  </span>
+                );
+              })()}
 
               <div className="mt-1 flex items-baseline gap-1">
                 <span className="text-xs font-bold text-foreground">
