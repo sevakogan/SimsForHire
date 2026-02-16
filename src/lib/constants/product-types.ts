@@ -1,12 +1,12 @@
 export const PRESET_PRODUCT_TYPES = [
-  "Base",
-  "Wheels",
-  "Pedals",
   "Accessories",
+  "Base",
   "Monitors",
-  "PC Related",
-  "Seats",
   "Motion",
+  "PC Related",
+  "Pedals",
+  "Seats",
+  "Wheels",
 ] as const;
 
 export type PresetProductType = (typeof PRESET_PRODUCT_TYPES)[number];
