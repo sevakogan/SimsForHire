@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useTransition } from "react";
+import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { updateProject } from "@/lib/actions/projects";
 import { calculateInvoiceTotals, formatCurrency } from "@/lib/invoice-calculations";
@@ -49,7 +49,6 @@ export function InvoiceInfoCard({
   readOnly = false,
 }: InvoiceInfoCardProps) {
   const router = useRouter();
-  const [, startTransition] = useTransition();
 
   // "Saved" values — the server-side truth
   const savedInvoice = invoiceNumber ?? "";
@@ -94,15 +93,13 @@ export function InvoiceInfoCard({
   }
 
   /**
-   * Persist a field via server action inside startTransition.
-   * This is the correct Next.js pattern — ensures the action runs
-   * through React's server-action channel and refreshes data after.
+   * Persist a field via server action, then refresh.
+   * We intentionally avoid startTransition here because router.refresh()
+   * inside a transition can abort the in-flight server action fetch.
    */
-  function persist(field: string, value: string | number | null) {
-    startTransition(async () => {
-      await updateProject(projectId, { [field]: value });
-      router.refresh();
-    });
+  async function persist(field: string, value: string | number | null) {
+    await updateProject(projectId, { [field]: value });
+    router.refresh();
   }
 
   /* ── Blur auto-save handlers ───────────────────────────── */
