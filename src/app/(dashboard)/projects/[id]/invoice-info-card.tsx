@@ -6,6 +6,13 @@ import { updateProject } from "@/lib/actions/projects";
 import { calculateInvoiceTotals, formatCurrency } from "@/lib/invoice-calculations";
 import type { DiscountType, FulfillmentType } from "@/types";
 
+export interface DiscountState {
+  discountType: DiscountType;
+  discountPercent: number;
+  discountAmount: number;
+  taxPercent: number;
+}
+
 interface InvoiceInfoCardProps {
   projectId: string;
   invoiceNumber: string | null;
@@ -21,6 +28,8 @@ interface InvoiceInfoCardProps {
   /** Admin cost data for profit display */
   myCost?: number;
   myShipping?: number;
+  /** Callback when discount/tax values change locally (before server save) */
+  onDiscountChange?: (state: DiscountState) => void;
 }
 
 type SaveableField =
@@ -46,6 +55,7 @@ export function InvoiceInfoCard({
   deliveryTotal,
   myCost,
   myShipping,
+  onDiscountChange,
 }: InvoiceInfoCardProps) {
   const router = useRouter();
   const [localInvoice, setLocalInvoice] = useState(invoiceNumber ?? "");
@@ -117,17 +127,30 @@ export function InvoiceInfoCard({
       const num = parseFloat(val);
       if (!isNaN(num) && num >= 0 && num <= 100) {
         debouncedSave("tax_percent", num);
+        emitDiscountChange({ taxPercent: num });
       } else if (val === "") {
         debouncedSave("tax_percent", 0);
+        emitDiscountChange({ taxPercent: 0 });
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [saveField]
   );
 
+  // Emit discount state changes to parent for live footer sync
+  function emitDiscountChange(overrides: Partial<DiscountState> = {}) {
+    onDiscountChange?.({
+      discountType: overrides.discountType ?? localDiscountType,
+      discountPercent: overrides.discountPercent ?? (parseFloat(localDiscountPercent) || 0),
+      discountAmount: overrides.discountAmount ?? (parseFloat(localDiscountAmount) || 0),
+      taxPercent: overrides.taxPercent ?? (parseFloat(localTax) || 0),
+    });
+  }
+
   function handleDiscountTypeToggle(type: DiscountType) {
     setLocalDiscountType(type);
     saveField("discount_type", type);
+    emitDiscountChange({ discountType: type });
   }
 
   function handleFulfillmentToggle(type: FulfillmentType) {
@@ -142,8 +165,10 @@ export function InvoiceInfoCard({
       const num = parseFloat(val);
       if (!isNaN(num) && num >= 0 && num <= 100) {
         debouncedSave("discount_percent", num);
+        emitDiscountChange({ discountPercent: num });
       } else if (val === "") {
         debouncedSave("discount_percent", 0);
+        emitDiscountChange({ discountPercent: 0 });
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -157,8 +182,10 @@ export function InvoiceInfoCard({
       const num = parseFloat(val);
       if (!isNaN(num) && num >= 0) {
         debouncedSave("discount_amount", num);
+        emitDiscountChange({ discountAmount: num });
       } else if (val === "") {
         debouncedSave("discount_amount", 0);
+        emitDiscountChange({ discountAmount: 0 });
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps

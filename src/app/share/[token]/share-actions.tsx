@@ -123,10 +123,10 @@ export function ShareActions({
   const [lightboxItem, setLightboxItem] = useState<ItemDisplayData | null>(null);
 
   const isEditable =
-    !["accepted", "paid", "shipped", "received", "completed"].includes(currentStatus);
+    !["accepted", "paid", "preparing", "shipped", "received", "completed"].includes(currentStatus);
 
   const alreadyAccepted =
-    ["accepted", "paid", "shipped", "received", "completed"].includes(currentStatus);
+    ["accepted", "paid", "preparing", "shipped", "received", "completed"].includes(currentStatus);
 
   const activeDecisions = Object.fromEntries(
     Object.entries(decisions).filter(([id]) =>

@@ -7,9 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { buttonStyles } from "@/components/ui/form-styles";
 import { ItemsTable } from "@/components/items/items-table";
 import { InlineAddItem } from "@/components/items/inline-add-item";
-import { InvoiceSummaryFooter } from "@/components/invoice/invoice-summary-footer";
 import { ProjectActions } from "./project-actions";
-import { InvoiceInfoCard } from "./invoice-info-card";
+import { InvoiceDiscountProvider, InvoiceSection, LiveInvoiceFooter } from "./invoice-section";
 import { EditableProjectName } from "./editable-project-name";
 import type { Profile, Item, DiscountType } from "@/types";
 import { isAdminRole } from "@/types";
@@ -86,6 +85,12 @@ export default async function ProjectDetailPage({ params }: Props) {
   const projDiscountType = (project.discount_type ?? "percent") as DiscountType;
 
   return (
+    <InvoiceDiscountProvider
+      discountType={projDiscountType}
+      discountPercent={Number(project.discount_percent) || 0}
+      discountAmount={Number(project.discount_amount) || 0}
+      taxPercent={Number(project.tax_percent) || 0}
+    >
     <div className="space-y-4 sm:space-y-6">
       {/* Header: status + share on top, name below */}
       <div>
@@ -180,7 +185,7 @@ export default async function ProjectDetailPage({ params }: Props) {
 
           {/* Invoice info card — 70% width */}
           <div className={`w-full ${client ? "lg:w-[70%]" : ""}`}>
-            <InvoiceInfoCard
+            <InvoiceSection
               projectId={project.id}
               invoiceNumber={project.invoice_number}
               dateRequired={project.date_required}
@@ -240,9 +245,9 @@ export default async function ProjectDetailPage({ params }: Props) {
       {/* Inline add item bar */}
       {admin && <InlineAddItem projectId={id} isAdmin={admin} />}
 
-      {/* Invoice Summary Footer — right-aligned 25% column */}
+      {/* Invoice Summary Footer — live-synced with discount changes */}
       {items.length > 0 && (
-        <InvoiceSummaryFooter
+        <LiveInvoiceFooter
           itemsTotal={totalRetail}
           deliveryTotal={totalServices}
           discountType={projDiscountType}
@@ -254,5 +259,6 @@ export default async function ProjectDetailPage({ params }: Props) {
         />
       )}
     </div>
+    </InvoiceDiscountProvider>
   );
 }

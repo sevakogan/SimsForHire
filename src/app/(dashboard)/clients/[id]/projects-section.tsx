@@ -90,13 +90,10 @@ function ProjectCardCompact({
     >
       {/* Top color bar */}
       <div className={`h-1.5 ${
-        project.status === "accepted" ? "bg-green-400"
-          : project.status === "paid" ? "bg-emerald-400"
-          : project.status === "shipped" ? "bg-amber-400"
-          : project.status === "received" ? "bg-orange-400"
-          : project.status === "completed" ? "bg-purple-400"
-          : project.status === "submitted" ? "bg-indigo-400"
-          : project.status === "quote" ? "bg-blue-400"
+        project.status === "accepted" || project.status === "paid" ? "bg-green-400"
+          : project.status === "preparing" || project.status === "shipped" || project.status === "received" ? "bg-sky-400"
+          : project.status === "completed" ? "bg-green-400"
+          : project.status === "submitted" || project.status === "quote" ? "bg-gray-400"
           : "bg-slate-300"
       }`} />
 

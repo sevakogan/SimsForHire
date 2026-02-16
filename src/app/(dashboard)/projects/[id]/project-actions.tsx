@@ -57,7 +57,7 @@ export function ProjectActions({ project }: Props) {
     }
   }
 
-  // Sequential status flow — can go back to any previous, forward only to next.
+  // Sequential status flow — strict next-only forward, back to any previous.
   // "paid" is locked (will be enabled via Stripe later).
   // "accepted" is set by customer acceptance, not admin click.
   const currentIdx = PROJECT_STATUSES.indexOf(project.status);
@@ -68,14 +68,11 @@ export function ProjectActions({ project }: Props) {
     if (targetIdx === currentIdx) return false;
     // "paid" is always locked for now (Stripe integration later)
     if (status === "paid") return false;
+    // "accepted" is set by customer, not admin
+    if (status === "accepted") return false;
     // Can always go back to any previous status
     if (targetIdx < currentIdx) return true;
-    // Can advance to any future status in the same row
-    // Row 1: draft→accepted, Row 2: paid→completed
-    const inRow1 = STATUS_ROW_1.includes(status) && STATUS_ROW_1.includes(project.status);
-    const inRow2 = STATUS_ROW_2.includes(status) && STATUS_ROW_2.includes(project.status);
-    if (inRow1 || inRow2) return targetIdx > currentIdx;
-    // Cross-row: only allow the immediate next status
+    // Forward: only the immediate next status
     return targetIdx === currentIdx + 1;
   }
 

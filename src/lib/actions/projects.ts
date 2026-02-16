@@ -125,7 +125,7 @@ export async function updateProject(
 
   // If status is being downgraded from accepted+ to pre-accepted, reset all
   // item acceptance statuses so the customer sees a fresh review screen.
-  const POST_ACCEPTANCE: string[] = ["accepted", "paid", "shipped", "received", "completed"];
+  const POST_ACCEPTANCE: string[] = ["accepted", "paid", "preparing", "shipped", "received", "completed"];
   const PRE_ACCEPTANCE: string[] = ["draft", "quote", "submitted"];
   if (input.status && PRE_ACCEPTANCE.includes(input.status)) {
     const { data: current } = await supabase
@@ -447,7 +447,7 @@ export async function saveClientNote(
     .single();
 
   if (!project) return { error: "Invalid share link" };
-  if (["accepted", "paid", "shipped", "received", "completed"].includes(project.status)) {
+  if (["accepted", "paid", "preparing", "shipped", "received", "completed"].includes(project.status)) {
     return { error: "This invoice is no longer editable" };
   }
 
@@ -482,7 +482,7 @@ export async function deleteItemByShareToken(
     .single();
 
   if (!project) return { error: "Invalid share link" };
-  if (["accepted", "paid", "shipped", "received", "completed"].includes(project.status)) {
+  if (["accepted", "paid", "preparing", "shipped", "received", "completed"].includes(project.status)) {
     return { error: "This invoice is no longer editable" };
   }
 

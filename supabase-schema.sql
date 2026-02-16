@@ -66,7 +66,7 @@ CREATE TABLE projects (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   client_id UUID NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
   name TEXT NOT NULL,
-  status TEXT NOT NULL DEFAULT 'draft' CHECK (status IN ('draft', 'quote', 'accepted', 'completed')),
+  status TEXT NOT NULL DEFAULT 'draft' CHECK (status IN ('draft', 'quote', 'submitted', 'accepted', 'paid', 'preparing', 'shipped', 'received', 'completed')),
   invoice_number TEXT,
   invoice_link TEXT,
   invoice_link_2 TEXT,

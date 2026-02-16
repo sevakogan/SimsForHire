@@ -1,3 +1,5 @@
+"use client";
+
 import { calculateInvoiceTotals, formatCurrency } from "@/lib/invoice-calculations";
 import type { DiscountType } from "@/types";
 

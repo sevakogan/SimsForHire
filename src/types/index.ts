@@ -1,6 +1,6 @@
 export type UserRole = "admin" | "collaborator" | "client";
 export type UserStatus = "pending" | "approved" | "denied";
-export type ProjectStatus = "draft" | "quote" | "submitted" | "accepted" | "paid" | "shipped" | "received" | "completed";
+export type ProjectStatus = "draft" | "quote" | "submitted" | "accepted" | "paid" | "preparing" | "shipped" | "received" | "completed";
 export type FulfillmentType = "pickup" | "delivery";
 export type DiscountType = "percent" | "amount";
 export type AcceptanceStatus = "pending" | "accepted" | "rejected";
