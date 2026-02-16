@@ -47,14 +47,27 @@ export default async function ProjectDetailPage({ params }: Props) {
     admin ? getUnreadNoteCount(id) : Promise.resolve(0),
   ]);
 
+  // Split retail totals by category: products vs services
   const totalRetail = items.reduce(
-    (sum, i) => sum + Number(i.retail_price) * (i.quantity ?? 1),
+    (sum, i) => {
+      const cat = (i as Item).category ?? "product";
+      return cat === "service" ? sum : sum + Number(i.retail_price) * (i.quantity ?? 1);
+    },
+    0
+  );
+  const totalServiceRetail = items.reduce(
+    (sum, i) => {
+      const cat = (i as Item).category ?? "product";
+      return cat === "service" ? sum + Number(i.retail_price) * (i.quantity ?? 1) : sum;
+    },
     0
   );
   const totalRetailShipping = items.reduce(
     (sum, i) => sum + Number(i.retail_shipping) * (i.quantity ?? 1),
     0
   );
+  // Services total = service-category item prices + all shipping
+  const totalServices = totalServiceRetail + totalRetailShipping;
 
   let totalMyCost = 0;
   let totalMyShipping = 0;
@@ -172,7 +185,7 @@ export default async function ProjectDetailPage({ params }: Props) {
               discountType={projDiscountType}
               discountAmount={Number(project.discount_amount) || 0}
               itemsTotal={totalRetail}
-              deliveryTotal={totalRetailShipping}
+              deliveryTotal={totalServices}
               myCost={totalMyCost}
               myShipping={totalMyShipping}
             />
@@ -228,7 +241,7 @@ export default async function ProjectDetailPage({ params }: Props) {
       {items.length > 0 && (
         <InvoiceSummaryFooter
           itemsTotal={totalRetail}
-          deliveryTotal={totalRetailShipping}
+          deliveryTotal={totalServices}
           discountType={projDiscountType}
           discountPercent={Number(project.discount_percent) || 0}
           discountAmount={Number(project.discount_amount) || 0}

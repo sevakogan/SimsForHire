@@ -55,6 +55,7 @@ export interface Item {
   project_id: string;
   item_number: number;
   item_type: string;
+  category: ProductCategory;
   description: string;
   item_link: string | null;
   retail_price: number;
@@ -107,6 +108,7 @@ export interface ProductSearchResult {
   model_number: string;
   name: string;
   type: string;
+  category: ProductCategory;
   description: string;
   retail_price: number;
   cost?: number;

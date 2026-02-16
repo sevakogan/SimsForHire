@@ -2,10 +2,10 @@
 
 import { revalidatePath } from "next/cache";
 import { createSupabaseServer } from "@/lib/supabase-server";
-import type { Item, ClientItem } from "@/types";
+import type { Item, ClientItem, ProductCategory } from "@/types";
 
 const CLIENT_SAFE_COLUMNS =
-  "id, project_id, item_number, item_type, description, item_link, retail_price, retail_shipping, discount_percent, price_sold_for, quantity, image_url, notes, model_number, seller_merchant, acceptance_status, client_note, created_at, updated_at";
+  "id, project_id, item_number, item_type, category, description, item_link, retail_price, retail_shipping, discount_percent, price_sold_for, quantity, image_url, notes, model_number, seller_merchant, acceptance_status, client_note, created_at, updated_at";
 
 export async function getItems(projectId: string): Promise<Item[]> {
   const supabase = await createSupabaseServer();
@@ -64,6 +64,7 @@ export async function createItem(input: {
   project_id: string;
   item_number: number;
   item_type: string;
+  category?: ProductCategory;
   description: string;
   item_link?: string | null;
   retail_price: number;
@@ -87,6 +88,7 @@ export async function createItem(input: {
       project_id: input.project_id,
       item_number: input.item_number,
       item_type: input.item_type,
+      category: input.category ?? "product",
       description: input.description,
       item_link: input.item_link ?? null,
       retail_price: input.retail_price,

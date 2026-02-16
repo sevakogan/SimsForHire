@@ -239,7 +239,7 @@ export async function getClientSafeItemsByProjectId(
   const supabase = getAdminSupabase();
 
   const CLIENT_SAFE_COLUMNS =
-    "id, project_id, item_number, item_type, description, item_link, retail_price, retail_shipping, discount_percent, price_sold_for, quantity, image_url, notes, model_number, seller_merchant, acceptance_status, client_note, created_at, updated_at";
+    "id, project_id, item_number, item_type, category, description, item_link, retail_price, retail_shipping, discount_percent, price_sold_for, quantity, image_url, notes, model_number, seller_merchant, acceptance_status, client_note, created_at, updated_at";
 
   const { data, error } = await supabase
     .from("items")

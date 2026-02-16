@@ -46,8 +46,17 @@ export default async function SharedInvoicePage({ params }: Props) {
   const totalItems = items.length;
 
   // Use shared calculation util — discount/tax on items only
-  const itemsTotal = itemDisplayData.reduce((sum, i) => sum + i.price * i.qty, 0);
-  const deliveryTotal = itemDisplayData.reduce((sum, i) => sum + i.shipping * i.qty, 0);
+  // Split by category: service items go to services total, product items to items total
+  const itemsTotal = items.reduce((sum, item, idx) => {
+    const cat = (item as { category?: string }).category ?? "product";
+    return cat === "service" ? sum : sum + itemDisplayData[idx].price * itemDisplayData[idx].qty;
+  }, 0);
+  const serviceRetailTotal = items.reduce((sum, item, idx) => {
+    const cat = (item as { category?: string }).category ?? "product";
+    return cat === "service" ? sum + itemDisplayData[idx].price * itemDisplayData[idx].qty : sum;
+  }, 0);
+  const shippingTotal = itemDisplayData.reduce((sum, i) => sum + i.shipping * i.qty, 0);
+  const deliveryTotal = serviceRetailTotal + shippingTotal;
   const discountType = (project.discount_type ?? "percent") as DiscountType;
   const discPct = Number(project.discount_percent) || 0;
   const discAmt = Number(project.discount_amount) || 0;

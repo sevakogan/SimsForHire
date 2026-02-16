@@ -17,7 +17,7 @@ import { ProductSearch } from "@/components/products/product-search";
 import { TypeTagPicker } from "@/components/products/type-tag-picker";
 import { scrapeProductUrl } from "@/lib/actions/scrape";
 import { SellerAutocomplete } from "@/components/ui/seller-autocomplete";
-import type { Item, ProductSearchResult } from "@/types";
+import type { Item, ProductSearchResult, ProductCategory } from "@/types";
 
 interface ItemFormProps {
   projectId: string;
@@ -71,6 +71,7 @@ export function ItemForm({ projectId, itemNumber, item, isAdmin, onDone }: ItemF
   const [fields, setFields] = useState<FormFields>(() => buildInitialFields(item));
   const [selectedProduct, setSelectedProduct] = useState<ProductSearchResult | null>(null);
   const [productId, setProductId] = useState<string | null>(item?.product_id ?? null);
+  const [category, setCategory] = useState<ProductCategory>(item?.category ?? "product");
 
   function updateField(name: keyof FormFields, value: string) {
     setFields((prev) => ({ ...prev, [name]: value }));
@@ -79,6 +80,7 @@ export function ItemForm({ projectId, itemNumber, item, isAdmin, onDone }: ItemF
   function handleProductSelect(product: ProductSearchResult) {
     setSelectedProduct(product);
     setProductId(product.id);
+    setCategory(product.category ?? "product");
 
     setFields((prev) => ({
       ...prev,
@@ -101,6 +103,7 @@ export function ItemForm({ projectId, itemNumber, item, isAdmin, onDone }: ItemF
   function handleProductClear() {
     setSelectedProduct(null);
     setProductId(null);
+    setCategory("product");
   }
 
   function handleUrlApprove() {
@@ -161,6 +164,7 @@ export function ItemForm({ projectId, itemNumber, item, isAdmin, onDone }: ItemF
       const updatePayload: Record<string, unknown> = {
         model_number: fields.model_number || "",
         item_type: fields.item_type,
+        category,
         description: fields.description,
         item_link: fields.item_link || null,
         retail_price: isNaN(parsedRetail) ? 0 : parsedRetail,

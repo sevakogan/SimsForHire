@@ -97,6 +97,7 @@ CREATE TABLE items (
   project_id UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
   item_number INT NOT NULL,
   item_type TEXT NOT NULL DEFAULT '',
+  category TEXT NOT NULL DEFAULT 'product',
   description TEXT NOT NULL DEFAULT '',
   item_link TEXT,
   retail_price NUMERIC(12, 2) NOT NULL DEFAULT 0,
@@ -116,6 +117,7 @@ CREATE TABLE items (
 
 CREATE INDEX idx_items_project_id ON items (project_id);
 CREATE INDEX idx_items_project_number ON items (project_id, item_number);
+CREATE INDEX idx_items_category ON items (category);
 
 CREATE TRIGGER set_items_updated_at
   BEFORE UPDATE ON items FOR EACH ROW EXECUTE FUNCTION update_updated_at();

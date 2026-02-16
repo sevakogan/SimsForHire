@@ -2,7 +2,16 @@
 
 import { revalidatePath } from "next/cache";
 import { createSupabaseServer } from "@/lib/supabase-server";
+import { createSeller } from "@/lib/actions/sellers";
 import type { Product, ClientProduct, ProductCategory, ProductSearchResult } from "@/types";
+
+/** Auto-create seller in the sellers table if it doesn't already exist */
+async function ensureSellerExists(name: string | undefined) {
+  const trimmed = (name ?? "").trim();
+  if (!trimmed) return;
+  // createSeller handles duplicates gracefully (23505 unique constraint)
+  await createSeller(trimmed);
+}
 
 const CLIENT_SAFE_COLUMNS =
   "id, model_number, name, type, category, description, retail_price, sales_price, shipping, image_url, notes, manufacturer_website, seller_merchant, created_at, updated_at";
@@ -99,6 +108,10 @@ export async function createProduct(input: {
   if (error) {
     return { id: null, error: error.message };
   }
+
+  // Auto-create seller if it doesn't exist yet
+  await ensureSellerExists(input.seller_merchant);
+
   revalidatePath("/customizations/products");
   revalidatePath("/customizations/services");
   return { id: data.id, error: null };
@@ -137,6 +150,11 @@ export async function updateProduct(
 
   if (error) {
     return { error: error.message };
+  }
+
+  // Auto-create seller if name changed and doesn't exist yet
+  if ("seller_merchant" in cleanInput) {
+    await ensureSellerExists(cleanInput.seller_merchant as string);
   }
 
   // Sync image_url to all linked items when product image changes
@@ -179,7 +197,7 @@ export async function searchProducts(
 
   const { data, error } = await supabase
     .from("products")
-    .select("id, model_number, name, type, description, retail_price, cost, sales_price, shipping, image_url, seller_merchant")
+    .select("id, model_number, name, type, category, description, retail_price, cost, sales_price, shipping, image_url, seller_merchant")
     .or(
       `name.ilike.%${searchTerm}%,model_number.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%`
     )

@@ -20,14 +20,26 @@ export default async function PaymentsPage({ params }: Props) {
 
   const items = await getClientSafeItemsByProjectId(project.id);
 
+  // Split by category: service items go to services total, product items to items total
   const itemsTotal = items.reduce(
-    (sum, i) => sum + Number(i.price_sold_for ?? i.retail_price) * (i.quantity ?? 1),
+    (sum, i) => {
+      const cat = (i as { category?: string }).category ?? "product";
+      return cat === "service" ? sum : sum + Number(i.price_sold_for ?? i.retail_price) * (i.quantity ?? 1);
+    },
     0
   );
-  const deliveryTotal = items.reduce(
+  const serviceRetailTotal = items.reduce(
+    (sum, i) => {
+      const cat = (i as { category?: string }).category ?? "product";
+      return cat === "service" ? sum + Number(i.price_sold_for ?? i.retail_price) * (i.quantity ?? 1) : sum;
+    },
+    0
+  );
+  const shippingTotal = items.reduce(
     (sum, i) => sum + Number(i.retail_shipping) * (i.quantity ?? 1),
     0
   );
+  const deliveryTotal = serviceRetailTotal + shippingTotal;
 
   const discountType = (project.discount_type ?? "percent") as DiscountType;
   const discountPercent = Number(project.discount_percent) || 0;

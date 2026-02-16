@@ -224,12 +224,20 @@ export function ShareActions({
     }
   }
 
-  // Totals from visible items — discount/tax on items only
-  const totalSelling = visibleDisplayData.reduce((sum, d) => sum + d.price * d.qty, 0);
+  // Totals from visible items — split by category
+  const totalSelling = visibleItems.reduce((sum, item, idx) => {
+    const cat = (item as { category?: string }).category ?? "product";
+    return cat === "service" ? sum : sum + visibleDisplayData[idx].price * visibleDisplayData[idx].qty;
+  }, 0);
+  const totalServiceSelling = visibleItems.reduce((sum, item, idx) => {
+    const cat = (item as { category?: string }).category ?? "product";
+    return cat === "service" ? sum + visibleDisplayData[idx].price * visibleDisplayData[idx].qty : sum;
+  }, 0);
   const totalShipping = visibleDisplayData.reduce((sum, d) => sum + d.shipping * d.qty, 0);
+  const totalServices = totalServiceSelling + totalShipping;
   const invoiceTotals = calculateInvoiceTotals({
     itemsTotal: totalSelling,
-    deliveryTotal: totalShipping,
+    deliveryTotal: totalServices,
     discountType,
     discountPercent,
     discountValue: discountAmountProp,
@@ -596,11 +604,11 @@ export function ShareActions({
           </span>
         </div>
 
-        {/* Services (Shipping) */}
+        {/* Services */}
         <div className="flex items-center justify-between border-b border-gray-100 py-3">
           <span className="text-sm text-gray-500">Services</span>
           <span className="text-sm tabular-nums text-gray-900">
-            {formatCurrency(totalShipping)}
+            {formatCurrency(totalServices)}
           </span>
         </div>
 
