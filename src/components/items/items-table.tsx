@@ -2,7 +2,6 @@
 
 import { useState, useMemo, useRef, useCallback } from "react";
 import Image from "next/image";
-import Link from "next/link";
 import { deleteItem, updateItem, markNoteRead } from "@/lib/actions/items";
 import { useRouter } from "next/navigation";
 import { firstImage, isExternalImage } from "@/lib/parse-images";
@@ -11,6 +10,9 @@ import { ViewToggle } from "@/components/ui/view-toggle";
 import type { ViewMode } from "@/components/ui/view-toggle";
 import { InlineNumberInput } from "@/components/ui/inline-number-input";
 import { getTypeColor } from "@/lib/constants/product-types";
+import { ItemForm } from "@/components/items/item-form";
+import { ClientNoteBanner } from "@/components/items/client-note-banner";
+import { cardStyles } from "@/components/ui/form-styles";
 import type { Item, ClientItem, AcceptanceStatus } from "@/types";
 
 interface ItemsTableProps {
@@ -105,6 +107,7 @@ export function ItemsTable({ items, projectId, isAdmin, unreadNoteCount = 0 }: I
   const [localUnreadCount, setLocalUnreadCount] = useState(unreadNoteCount);
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
   const [lightboxName, setLightboxName] = useState<string>("");
+  const [editItem, setEditItem] = useState<Item | null>(null);
 
   // Sync localItems when server data changes
   const itemsKey = items.map((i) => `${i.id}-${i.updated_at}`).join(",");
@@ -199,6 +202,7 @@ export function ItemsTable({ items, projectId, isAdmin, unreadNoteCount = 0 }: I
           projectId={projectId}
           isAdmin={isAdmin}
           onDelete={handleDelete}
+          onEdit={setEditItem}
           dismissedNoteIds={dismissedNoteIds}
           onImageClick={(url, name) => {
             setLightboxUrl(url);
@@ -315,12 +319,13 @@ export function ItemsTable({ items, projectId, isAdmin, unreadNoteCount = 0 }: I
 
                   {/* Product — flex-1, takes remaining space */}
                   <div className="min-w-0 flex-1">
-                    <Link
-                      href={`/projects/${projectId}/items/${item.id}`}
-                      className="text-sm font-medium text-foreground underline decoration-border underline-offset-2 transition-colors hover:decoration-primary hover:text-primary truncate block"
+                    <button
+                      type="button"
+                      onClick={() => setEditItem(item as Item)}
+                      className="text-sm font-medium text-foreground underline decoration-border underline-offset-2 transition-colors hover:decoration-primary hover:text-primary truncate block text-left"
                     >
                       {item.description || item.item_type}
-                    </Link>
+                    </button>
                     <div className="flex items-center gap-1.5 mt-0.5">
                       {item.item_type && (() => {
                         const c = getTypeColor(item.item_type);
@@ -468,12 +473,13 @@ export function ItemsTable({ items, projectId, isAdmin, unreadNoteCount = 0 }: I
                       )}
                     </div>
                     <div className="min-w-0 flex-1">
-                      <Link
-                        href={`/projects/${projectId}/items/${item.id}`}
-                        className="text-sm font-medium text-foreground underline decoration-border underline-offset-2 transition-colors hover:decoration-primary hover:text-primary line-clamp-2"
+                      <button
+                        type="button"
+                        onClick={() => setEditItem(item as Item)}
+                        className="text-sm font-medium text-foreground underline decoration-border underline-offset-2 transition-colors hover:decoration-primary hover:text-primary line-clamp-2 text-left"
                       >
                         {item.description || item.item_type}
-                      </Link>
+                      </button>
                       <div className="flex items-center gap-1.5 mt-0.5">
                         {item.item_type && (() => {
                           const c = getTypeColor(item.item_type);
@@ -568,6 +574,58 @@ export function ItemsTable({ items, projectId, isAdmin, unreadNoteCount = 0 }: I
         </>
       )}
 
+      {/* Edit item modal */}
+      {editItem && (
+        <div
+          className="fixed inset-0 z-50 flex items-start justify-center bg-black/40 px-4 pt-[5vh] overflow-y-auto"
+          onClick={() => setEditItem(null)}
+        >
+          <div
+            className="relative w-full max-w-2xl rounded-2xl bg-white p-6 shadow-2xl mb-10"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Close button */}
+            <button
+              type="button"
+              onClick={() => setEditItem(null)}
+              className="absolute right-4 top-4 rounded-full p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors z-10"
+            >
+              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+              </svg>
+            </button>
+
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">
+              {editItem.description || editItem.item_type || "Edit Item"}
+            </h2>
+
+            {/* Client note banner */}
+            {isAdmin && editItem.client_note && (
+              <div className="mb-4">
+                <ClientNoteBanner
+                  itemId={editItem.id}
+                  note={editItem.client_note}
+                  isUnread={!editItem.client_note_read_at}
+                />
+              </div>
+            )}
+
+            <div className={cardStyles.compact}>
+              <ItemForm
+                projectId={projectId}
+                itemNumber={editItem.item_number}
+                item={editItem}
+                isAdmin={isAdmin}
+                onDone={() => {
+                  setEditItem(null);
+                  router.refresh();
+                }}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Image lightbox overlay */}
       {lightboxUrl && (
         <div
@@ -621,11 +679,12 @@ interface ItemsCardGridProps {
   projectId: string;
   isAdmin: boolean;
   onDelete: (id: string) => void;
+  onEdit: (item: Item) => void;
   dismissedNoteIds: Set<string>;
   onImageClick: (url: string, name: string) => void;
 }
 
-function ItemsCardGrid({ items, projectId, isAdmin, onDelete, dismissedNoteIds, onImageClick }: ItemsCardGridProps) {
+function ItemsCardGrid({ items, projectId, isAdmin, onDelete, onEdit, dismissedNoteIds, onImageClick }: ItemsCardGridProps) {
   if (items.length === 0) {
     return (
       <div className="rounded-xl border border-dashed border-border p-8 text-center">
@@ -643,16 +702,16 @@ function ItemsCardGrid({ items, projectId, isAdmin, onDelete, dismissedNoteIds, 
         const total = sellingPrice * qty;
 
         return (
-          <Link
+          <button
             key={item.id}
-            href={`/projects/${projectId}/items/${item.id}`}
-            className="group block rounded-xl border border-border bg-white shadow-sm transition-all hover:shadow-md hover:border-primary/20 overflow-hidden"
+            type="button"
+            onClick={() => onEdit(item as Item)}
+            className="group block rounded-xl border border-border bg-white shadow-sm transition-all hover:shadow-md hover:border-primary/20 overflow-hidden text-left w-full"
           >
             {/* Image */}
             <div
               className="relative aspect-square bg-muted/30"
               onClick={thumb ? (e) => {
-                e.preventDefault();
                 e.stopPropagation();
                 onImageClick(thumb, item.description || item.item_type || "Item");
               } : undefined}
@@ -751,7 +810,6 @@ function ItemsCardGrid({ items, projectId, isAdmin, onDelete, dismissedNoteIds, 
                 <div className="mt-1">
                   <button
                     onClick={(e) => {
-                      e.preventDefault();
                       e.stopPropagation();
                       onDelete(item.id);
                     }}
@@ -762,7 +820,7 @@ function ItemsCardGrid({ items, projectId, isAdmin, onDelete, dismissedNoteIds, 
                 </div>
               )}
             </div>
-          </Link>
+          </button>
         );
       })}
     </div>

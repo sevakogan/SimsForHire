@@ -24,6 +24,8 @@ interface ItemFormProps {
   itemNumber: number;
   item?: Item;
   isAdmin: boolean;
+  /** When provided, called instead of router.back() on save/cancel */
+  onDone?: () => void;
 }
 
 interface FormFields {
@@ -58,8 +60,9 @@ function buildInitialFields(item?: Item): FormFields {
   };
 }
 
-export function ItemForm({ projectId, itemNumber, item, isAdmin }: ItemFormProps) {
+export function ItemForm({ projectId, itemNumber, item, isAdmin, onDone }: ItemFormProps) {
   const router = useRouter();
+  const close = onDone ?? (() => router.back());
   const [loading, setLoading] = useState(false);
   const [scraping, setScraping] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -188,7 +191,7 @@ export function ItemForm({ projectId, itemNumber, item, isAdmin }: ItemFormProps
         return;
       }
 
-      router.back();
+      close();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to save");
     } finally {
@@ -431,7 +434,7 @@ export function ItemForm({ projectId, itemNumber, item, isAdmin }: ItemFormProps
       <div className="flex items-center justify-end gap-2 pt-1">
         <button
           type="button"
-          onClick={() => router.back()}
+          onClick={close}
           className={`${buttonStyles.small} border border-border text-muted-foreground hover:bg-muted hover:text-foreground`}
         >
           Cancel
