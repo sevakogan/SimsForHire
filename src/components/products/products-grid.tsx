@@ -46,7 +46,7 @@ export function ProductsGrid({ products, isAdmin }: ProductsGridProps) {
         return (
         <Link
           key={product.id}
-          href={`/catalog/${product.id}`}
+          href={`/customizations/products/${product.id}`}
           className="group block rounded-xl border border-border bg-white shadow-sm transition-all hover:shadow-md hover:border-primary/20 overflow-hidden"
         >
           {/* Image */}

@@ -85,7 +85,7 @@ export async function createProduct(input: {
   if (error) {
     return { id: null, error: error.message };
   }
-  revalidatePath("/catalog");
+  revalidatePath("/customizations/products");
   return { id: data.id, error: null };
 }
 
@@ -134,8 +134,8 @@ export async function updateProduct(
     revalidatePath("/projects", "layout");
   }
 
-  revalidatePath("/catalog");
-  revalidatePath(`/catalog/${id}`);
+  revalidatePath("/customizations/products");
+  revalidatePath(`/customizations/products/${id}`);
   return { error: null };
 }
 
@@ -146,7 +146,7 @@ export async function deleteProduct(
   const { error } = await supabase.from("products").delete().eq("id", id);
 
   if (error) return { error: error.message };
-  revalidatePath("/catalog");
+  revalidatePath("/customizations/products");
   return { error: null };
 }
 

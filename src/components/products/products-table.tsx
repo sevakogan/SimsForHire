@@ -240,7 +240,7 @@ export function ProductsTable({ products, isAdmin }: ProductsTableProps) {
         </p>
         {isAdmin && (
           <Link
-            href="/catalog/new"
+            href="/customizations/products/new"
             className={`${buttonStyles.primary} mt-4 inline-flex`}
           >
             Add First Product
@@ -309,7 +309,7 @@ export function ProductsTable({ products, isAdmin }: ProductsTableProps) {
                     {thumb ? (
                       <button
                         type="button"
-                        onClick={() => guardedNavigate(`/catalog/${product.id}`)}
+                        onClick={() => guardedNavigate(`/customizations/products/${product.id}`)}
                         className="block"
                       >
                         <Image
@@ -507,7 +507,7 @@ export function ProductsTable({ products, isAdmin }: ProductsTableProps) {
             <button
               type="button"
               key={product.id}
-              onClick={() => guardedNavigate(`/catalog/${product.id}`)}
+              onClick={() => guardedNavigate(`/customizations/products/${product.id}`)}
               className="block w-full text-left rounded-xl border border-border/40 bg-white p-3"
             >
               {/* Top: image + name + type */}

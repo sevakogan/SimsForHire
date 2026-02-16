@@ -21,7 +21,7 @@ import type { Product } from "@/types";
 interface ProductFormProps {
   product?: Product;
   isAdmin: boolean;
-  /** Optional callback when form is submitted — if provided, replaces the default router.push("/catalog") */
+  /** Optional callback when form is submitted — if provided, replaces the default navigation */
   onDone?: () => void;
 }
 
@@ -132,7 +132,7 @@ export function ProductForm({ product, isAdmin, onDone }: ProductFormProps) {
       if (onDone) {
         onDone();
       } else {
-        router.push("/catalog");
+        router.push("/customizations/products");
         router.refresh();
       }
     } catch (err) {

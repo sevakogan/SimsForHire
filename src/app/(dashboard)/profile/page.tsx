@@ -62,7 +62,7 @@ export default async function ProfilePage() {
           Tools
         </h2>
         <Link
-          href="/catalog"
+          href="/customizations/products"
           className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-muted"
         >
           <svg className="h-5 w-5 text-muted-foreground" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">

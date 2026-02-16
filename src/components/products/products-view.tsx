@@ -47,7 +47,7 @@ export function ProductsView({ products, isAdmin }: ProductsViewProps) {
         {/* Add button */}
         {isAdmin && (
           <Link
-            href="/catalog/new"
+            href="/customizations/products/new"
             className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-white shadow-sm transition-all hover:bg-primary-hover"
             title="Add product"
           >

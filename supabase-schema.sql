@@ -371,6 +371,29 @@ CREATE POLICY "Admins and collaborators can manage sellers"
   USING (auth_role() IN ('admin', 'collaborator'));
 
 -- ============================================================
+-- Product Types — managed product type categories with colors
+-- ============================================================
+CREATE TABLE product_types (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  name TEXT NOT NULL UNIQUE,
+  color_key TEXT NOT NULL DEFAULT 'gray',
+  sort_order INTEGER NOT NULL DEFAULT 0,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX idx_product_types_name ON product_types (name);
+
+ALTER TABLE product_types ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Authenticated users can view product types"
+  ON product_types FOR SELECT
+  USING (auth.uid() IS NOT NULL);
+
+CREATE POLICY "Admins and collaborators can manage product types"
+  ON product_types FOR ALL
+  USING (auth_role() IN ('admin', 'collaborator'));
+
+-- ============================================================
 -- AFTER FIRST GOOGLE SIGN-IN, promote yourself to admin:
 -- UPDATE profiles SET role = 'admin', status = 'approved' WHERE email = 'YOUR_EMAIL@gmail.com';
 -- ============================================================
