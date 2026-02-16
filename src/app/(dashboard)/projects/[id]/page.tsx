@@ -1,9 +1,7 @@
 import { notFound } from "next/navigation";
-import Link from "next/link";
 import { getProjectById } from "@/lib/actions/projects";
 import { getItems, getItemsForClient, getUnreadNoteCount } from "@/lib/actions/items";
 import { getClientById } from "@/lib/actions/clients";
-import { getShipmentsByProjectId } from "@/lib/actions/shipments";
 import { createSupabaseServer } from "@/lib/supabase-server";
 import { Badge } from "@/components/ui/badge";
 import { buttonStyles, cardStyles } from "@/components/ui/form-styles";
@@ -11,7 +9,6 @@ import { ItemsTable } from "@/components/items/items-table";
 import { InlineAddItem } from "@/components/items/inline-add-item";
 import { ProjectActions } from "./project-actions";
 import { InvoiceInfoCard } from "./invoice-info-card";
-import { ShipmentsSection } from "./shipments-section";
 import type { Profile, Item } from "@/types";
 import { isAdminRole } from "@/types";
 
@@ -51,10 +48,9 @@ export default async function ProjectDetailPage({ params }: Props) {
   if (!project) notFound();
 
   const client = await getClientById(project.client_id);
-  const [items, noteCount, shipments] = await Promise.all([
+  const [items, noteCount] = await Promise.all([
     admin ? getItems(id) : getItemsForClient(id),
     admin ? getUnreadNoteCount(id) : Promise.resolve(0),
-    admin ? getShipmentsByProjectId(id) : Promise.resolve([]),
   ]);
 
   const totalRetail = items.reduce(
@@ -81,20 +77,8 @@ export default async function ProjectDetailPage({ params }: Props) {
 
   return (
     <div className="space-y-4 sm:space-y-6">
+      {/* Header */}
       <div>
-        <div className="flex items-center gap-1.5 text-xs sm:text-sm text-muted-foreground">
-          <Link href="/dashboard" className="hover:text-foreground transition-colors">
-            Dashboard
-          </Link>
-          {admin && client && (
-            <>
-              <span className="text-muted-foreground/40">›</span>
-              <Link href={`/clients/${client.id}`} className="hover:text-foreground transition-colors">
-                {client.name}
-              </Link>
-            </>
-          )}
-        </div>
         <div className="flex items-center gap-2 sm:gap-3">
           <h1 className="text-lg sm:text-2xl font-bold text-foreground truncate">{project.name}</h1>
           <Badge variant={project.status}>{project.status}</Badge>
@@ -265,11 +249,6 @@ export default async function ProjectDetailPage({ params }: Props) {
           </div>
         );
       })()}
-
-      {/* Shipments */}
-      {admin && (
-        <ShipmentsSection projectId={id} shipments={shipments} />
-      )}
     </div>
   );
 }
