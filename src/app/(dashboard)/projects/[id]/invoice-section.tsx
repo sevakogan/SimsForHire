@@ -66,6 +66,8 @@ interface InvoiceSectionProps {
   deliveryTotal: number;
   myCost?: number;
   myShipping?: number;
+  /** When true, all fields locked except invoice notes */
+  readOnly?: boolean;
 }
 
 export function InvoiceSection(props: InvoiceSectionProps) {
@@ -75,6 +77,7 @@ export function InvoiceSection(props: InvoiceSectionProps) {
     <InvoiceInfoCard
       {...props}
       onDiscountChange={setter ?? undefined}
+      readOnly={props.readOnly}
     />
   );
 }

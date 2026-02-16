@@ -10,6 +10,7 @@ import { InlineAddItem } from "@/components/items/inline-add-item";
 import { ProjectActions } from "./project-actions";
 import { InvoiceDiscountProvider, InvoiceSection, LiveInvoiceFooter } from "./invoice-section";
 import { EditableProjectName } from "./editable-project-name";
+import { isEditLocked } from "@/lib/constants/project-statuses";
 import type { Profile, Item, DiscountType } from "@/types";
 import { isAdminRole } from "@/types";
 
@@ -40,6 +41,9 @@ export default async function ProjectDetailPage({ params }: Props) {
 
   const project = await getProjectById(id);
   if (!project) notFound();
+
+  // Lock editing once submitted (customer is viewing the invoice)
+  const editLocked = admin && isEditLocked(project.status);
 
   const client = await getClientById(project.client_id);
   const [items, noteCount] = await Promise.all([
@@ -100,7 +104,7 @@ export default async function ProjectDetailPage({ params }: Props) {
           </div>
         )}
         <div className="flex items-center gap-2 sm:gap-3">
-          <EditableProjectName projectId={project.id} name={project.name} isAdmin={admin} />
+          <EditableProjectName projectId={project.id} name={project.name} isAdmin={admin} readOnly={editLocked} />
           {!admin && <Badge variant={project.status}>{project.status}</Badge>}
         </div>
         {!admin && project.invoice_number && (
@@ -199,6 +203,7 @@ export default async function ProjectDetailPage({ params }: Props) {
               deliveryTotal={totalServices}
               myCost={totalMyCost}
               myShipping={totalMyShipping}
+              readOnly={editLocked}
             />
           </div>
         </div>
@@ -240,10 +245,10 @@ export default async function ProjectDetailPage({ params }: Props) {
         )}
       </div>
 
-      <ItemsTable items={items} projectId={id} isAdmin={admin} unreadNoteCount={noteCount} />
+      <ItemsTable items={items} projectId={id} isAdmin={admin} unreadNoteCount={noteCount} readOnly={editLocked} />
 
-      {/* Inline add item bar */}
-      {admin && <InlineAddItem projectId={id} isAdmin={admin} />}
+      {/* Inline add item bar — hidden when invoice is locked */}
+      {admin && !editLocked && <InlineAddItem projectId={id} isAdmin={admin} />}
 
       {/* Invoice Summary Footer — live-synced with discount changes */}
       {items.length > 0 && (

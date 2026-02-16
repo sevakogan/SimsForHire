@@ -20,6 +20,8 @@ interface ItemsTableProps {
   projectId: string;
   isAdmin: boolean;
   unreadNoteCount?: number;
+  /** When true, items cannot be edited, deleted, or added */
+  readOnly?: boolean;
 }
 
 function AcceptanceBadge({ status }: { status: AcceptanceStatus }) {
@@ -98,7 +100,7 @@ function formatCurrency(value: number): string {
 
 /* ─── Main Component ─── */
 
-export function ItemsTable({ items, projectId, isAdmin, unreadNoteCount = 0 }: ItemsTableProps) {
+export function ItemsTable({ items, projectId, isAdmin, unreadNoteCount = 0, readOnly = false }: ItemsTableProps) {
   const router = useRouter();
   const [typeFilter, setTypeFilter] = useState("");
   const [view, setView] = useState<ViewMode>("list");
@@ -201,8 +203,9 @@ export function ItemsTable({ items, projectId, isAdmin, unreadNoteCount = 0 }: I
           items={filtered}
           projectId={projectId}
           isAdmin={isAdmin}
+          readOnly={readOnly}
           onDelete={handleDelete}
-          onEdit={setEditItem}
+          onEdit={readOnly ? undefined : setEditItem}
           dismissedNoteIds={dismissedNoteIds}
           onImageClick={(url, name) => {
             setLightboxUrl(url);
@@ -323,13 +326,19 @@ export function ItemsTable({ items, projectId, isAdmin, unreadNoteCount = 0 }: I
 
                       {/* Product */}
                       <td className="py-2 px-1 align-middle overflow-hidden">
-                        <button
-                          type="button"
-                          onClick={() => setEditItem(item as Item)}
-                          className="text-sm font-medium text-foreground underline decoration-border underline-offset-2 transition-colors hover:decoration-primary hover:text-primary truncate block text-left max-w-full"
-                        >
-                          {item.description || item.item_type}
-                        </button>
+                        {readOnly ? (
+                          <span className="text-sm font-medium text-foreground truncate block text-left max-w-full">
+                            {item.description || item.item_type}
+                          </span>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => setEditItem(item as Item)}
+                            className="text-sm font-medium text-foreground underline decoration-border underline-offset-2 transition-colors hover:decoration-primary hover:text-primary truncate block text-left max-w-full"
+                          >
+                            {item.description || item.item_type}
+                          </button>
+                        )}
                         <div className="flex items-center gap-1.5 mt-0.5">
                           {item.item_type && (() => {
                             const c = getTypeColor(item.item_type);
@@ -357,13 +366,17 @@ export function ItemsTable({ items, projectId, isAdmin, unreadNoteCount = 0 }: I
 
                       {/* Qty */}
                       <td className="py-2 px-1 align-middle">
-                        <InlineNumberInput
-                          value={qty}
-                          onChange={(val) => handleInlineUpdate(item.id, "quantity", val)}
-                          step="1"
-                          min={1}
-                          isInteger
-                        />
+                        {readOnly ? (
+                          <span className="text-sm text-center block tabular-nums text-foreground">{qty}</span>
+                        ) : (
+                          <InlineNumberInput
+                            value={qty}
+                            onChange={(val) => handleInlineUpdate(item.id, "quantity", val)}
+                            step="1"
+                            min={1}
+                            isInteger
+                          />
+                        )}
                       </td>
 
                       {/* Retail */}
@@ -375,10 +388,14 @@ export function ItemsTable({ items, projectId, isAdmin, unreadNoteCount = 0 }: I
 
                       {/* Selling Price */}
                       <td className="py-2 px-1 align-middle">
-                        <InlineNumberInput
-                          value={sellingPrice}
-                          onChange={(val) => handleInlineUpdate(item.id, "price_sold_for", val)}
-                        />
+                        {readOnly ? (
+                          <span className="text-sm text-right block tabular-nums text-foreground">{formatCurrency(sellingPrice)}</span>
+                        ) : (
+                          <InlineNumberInput
+                            value={sellingPrice}
+                            onChange={(val) => handleInlineUpdate(item.id, "price_sold_for", val)}
+                          />
+                        )}
                       </td>
 
                       {/* Total */}
@@ -412,7 +429,7 @@ export function ItemsTable({ items, projectId, isAdmin, unreadNoteCount = 0 }: I
                       })()}
 
                       {/* Delete */}
-                      {isAdmin && (
+                      {isAdmin && !readOnly && (
                         <td className="py-2 px-1 align-middle">
                           <button
                             onClick={() => handleDelete(item.id)}
@@ -425,6 +442,7 @@ export function ItemsTable({ items, projectId, isAdmin, unreadNoteCount = 0 }: I
                           </button>
                         </td>
                       )}
+                      {isAdmin && readOnly && <td className="py-2 px-1" />}
                     </tr>
                   );
                 })}
@@ -480,13 +498,19 @@ export function ItemsTable({ items, projectId, isAdmin, unreadNoteCount = 0 }: I
                       )}
                     </div>
                     <div className="min-w-0 flex-1">
-                      <button
-                        type="button"
-                        onClick={() => setEditItem(item as Item)}
-                        className="text-sm font-medium text-foreground underline decoration-border underline-offset-2 transition-colors hover:decoration-primary hover:text-primary line-clamp-2 text-left"
-                      >
-                        {item.description || item.item_type}
-                      </button>
+                      {readOnly ? (
+                        <span className="text-sm font-medium text-foreground line-clamp-2 text-left">
+                          {item.description || item.item_type}
+                        </span>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => setEditItem(item as Item)}
+                          className="text-sm font-medium text-foreground underline decoration-border underline-offset-2 transition-colors hover:decoration-primary hover:text-primary line-clamp-2 text-left"
+                        >
+                          {item.description || item.item_type}
+                        </button>
+                      )}
                       <div className="flex items-center gap-1.5 mt-0.5">
                         {item.item_type && (() => {
                           const c = getTypeColor(item.item_type);
@@ -511,7 +535,7 @@ export function ItemsTable({ items, projectId, isAdmin, unreadNoteCount = 0 }: I
                         />
                       )}
                     </div>
-                    {isAdmin && (
+                    {isAdmin && !readOnly && (
                       <button
                         onClick={() => handleDelete(item.id)}
                         className="shrink-0 rounded-md p-1.5 text-muted-foreground/40 transition-all hover:bg-destructive/10 hover:text-destructive"
@@ -528,13 +552,17 @@ export function ItemsTable({ items, projectId, isAdmin, unreadNoteCount = 0 }: I
                   <div className="mt-2.5 grid grid-cols-3 gap-2">
                     <div>
                       <p className="text-[9px] font-medium uppercase tracking-wider text-muted-foreground/60 mb-0.5">Qty</p>
-                      <InlineNumberInput
-                        value={qty}
-                        onChange={(val) => handleInlineUpdate(item.id, "quantity", val)}
-                        step="1"
-                        min={1}
-                        isInteger
-                      />
+                      {readOnly ? (
+                        <p className="text-xs text-foreground py-1 text-center">{qty}</p>
+                      ) : (
+                        <InlineNumberInput
+                          value={qty}
+                          onChange={(val) => handleInlineUpdate(item.id, "quantity", val)}
+                          step="1"
+                          min={1}
+                          isInteger
+                        />
+                      )}
                     </div>
                     <div>
                       <p className="text-[9px] font-medium uppercase tracking-wider text-muted-foreground/60 mb-0.5">Retail</p>
@@ -542,11 +570,15 @@ export function ItemsTable({ items, projectId, isAdmin, unreadNoteCount = 0 }: I
                     </div>
                     <div>
                       <p className="text-[9px] font-medium uppercase tracking-wider text-muted-foreground/60 mb-0.5">Selling</p>
-                      <InlineNumberInput
-                        value={sellingPrice}
-                        onChange={(val) => handleInlineUpdate(item.id, "price_sold_for", val)}
-                        prefix="$"
-                      />
+                      {readOnly ? (
+                        <p className="text-xs text-foreground text-right py-1">{formatCurrency(sellingPrice)}</p>
+                      ) : (
+                        <InlineNumberInput
+                          value={sellingPrice}
+                          onChange={(val) => handleInlineUpdate(item.id, "price_sold_for", val)}
+                          prefix="$"
+                        />
+                      )}
                     </div>
                   </div>
 
@@ -685,13 +717,14 @@ interface ItemsCardGridProps {
   items: (Item | ClientItem)[];
   projectId: string;
   isAdmin: boolean;
+  readOnly?: boolean;
   onDelete: (id: string) => void;
-  onEdit: (item: Item) => void;
+  onEdit?: (item: Item) => void;
   dismissedNoteIds: Set<string>;
   onImageClick: (url: string, name: string) => void;
 }
 
-function ItemsCardGrid({ items, projectId, isAdmin, onDelete, onEdit, dismissedNoteIds, onImageClick }: ItemsCardGridProps) {
+function ItemsCardGrid({ items, projectId, isAdmin, readOnly = false, onDelete, onEdit, dismissedNoteIds, onImageClick }: ItemsCardGridProps) {
   if (items.length === 0) {
     return (
       <div className="rounded-xl border border-dashed border-border p-8 text-center">
@@ -712,8 +745,9 @@ function ItemsCardGrid({ items, projectId, isAdmin, onDelete, onEdit, dismissedN
           <button
             key={item.id}
             type="button"
-            onClick={() => onEdit(item as Item)}
-            className="group block rounded-xl border border-border bg-white shadow-sm transition-all hover:shadow-md hover:border-primary/20 overflow-hidden text-left w-full"
+            onClick={() => onEdit?.(item as Item)}
+            disabled={readOnly}
+            className={`group block rounded-xl border border-border bg-white shadow-sm transition-all overflow-hidden text-left w-full ${readOnly ? "cursor-default" : "hover:shadow-md hover:border-primary/20"}`}
           >
             {/* Image */}
             <div
@@ -813,7 +847,7 @@ function ItemsCardGrid({ items, projectId, isAdmin, onDelete, onEdit, dismissedN
               })()}
 
               {/* Admin delete */}
-              {isAdmin && (
+              {isAdmin && !readOnly && (
                 <div className="mt-1">
                   <button
                     onClick={(e) => {

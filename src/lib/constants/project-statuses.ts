@@ -66,3 +66,21 @@ export const STATUS_CONFIG: Record<ProjectStatus, StatusConfig> = {
 export function getStatusConfig(status: string): StatusConfig {
   return STATUS_CONFIG[status as ProjectStatus] ?? STATUS_CONFIG.draft;
 }
+
+/**
+ * Statuses at "submitted" or beyond lock all editing on the project page
+ * except invoice notes. The customer is viewing the invoice at this point.
+ */
+const EDIT_LOCKED_STATUSES: ReadonlySet<ProjectStatus> = new Set([
+  "submitted",
+  "accepted",
+  "paid",
+  "preparing",
+  "shipped",
+  "received",
+  "completed",
+]);
+
+export function isEditLocked(status: string): boolean {
+  return EDIT_LOCKED_STATUSES.has(status as ProjectStatus);
+}

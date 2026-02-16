@@ -8,12 +8,14 @@ interface EditableProjectNameProps {
   projectId: string;
   name: string;
   isAdmin: boolean;
+  readOnly?: boolean;
 }
 
 export function EditableProjectName({
   projectId,
   name,
   isAdmin,
+  readOnly = false,
 }: EditableProjectNameProps) {
   const router = useRouter();
   const [isEditing, setIsEditing] = useState(false);
@@ -78,8 +80,8 @@ export function EditableProjectName({
     [saveName, localName, name]
   );
 
-  // Non-admin: plain text, no editing
-  if (!isAdmin) {
+  // Non-admin or readOnly: plain text, no editing
+  if (!isAdmin || readOnly) {
     return (
       <h1 className="text-lg sm:text-2xl font-bold text-foreground truncate">
         {name}
