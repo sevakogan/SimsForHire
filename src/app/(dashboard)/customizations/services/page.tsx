@@ -4,7 +4,7 @@ import { ProductsView } from "@/components/products/products-view";
 import type { Profile } from "@/types";
 import { isAdminRole } from "@/types";
 
-export default async function CustomizationsProductsPage() {
+export default async function CustomizationsServicesPage() {
   const supabase = await createSupabaseServer();
 
   const {
@@ -24,14 +24,18 @@ export default async function CustomizationsProductsPage() {
   const typedProfile = profile as Profile;
   const admin = isAdminRole(typedProfile.role);
 
-  const products = admin
-    ? await getProducts("product")
-    : await getProductsForClient("product");
+  const services = admin
+    ? await getProducts("service")
+    : await getProductsForClient("service");
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      <h1 className="text-lg sm:text-2xl font-bold text-foreground">Products</h1>
-      <ProductsView products={products} isAdmin={admin} />
+      <h1 className="text-lg sm:text-2xl font-bold text-foreground">Services</h1>
+      <ProductsView
+        products={services}
+        isAdmin={admin}
+        basePath="/customizations/services"
+      />
     </div>
   );
 }

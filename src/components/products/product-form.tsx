@@ -16,16 +16,20 @@ import { MultiImageUpload } from "@/components/items/multi-image-upload";
 import { TypeTagPicker } from "@/components/products/type-tag-picker";
 import { SellerAutocomplete } from "@/components/ui/seller-autocomplete";
 import { parseImages } from "@/lib/parse-images";
-import type { Product } from "@/types";
+import type { Product, ProductCategory } from "@/types";
 
 interface ProductFormProps {
   product?: Product;
   isAdmin: boolean;
+  /** Category for new products (default: "product") */
+  category?: ProductCategory;
+  /** Base path for navigation after save (default: /customizations/products) */
+  basePath?: string;
   /** Optional callback when form is submitted — if provided, replaces the default navigation */
   onDone?: () => void;
 }
 
-export function ProductForm({ product, isAdmin, onDone }: ProductFormProps) {
+export function ProductForm({ product, isAdmin, category = "product", basePath = "/customizations/products", onDone }: ProductFormProps) {
   const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
   const [loading, setLoading] = useState(false);
@@ -109,6 +113,7 @@ export function ProductForm({ product, isAdmin, onDone }: ProductFormProps) {
         model_number: (form.get("model_number") as string) || "",
         name: (form.get("name") as string) || "",
         type,
+        category: product?.category ?? category,
         description: (form.get("description") as string) || (form.get("name") as string) || "",
         retail_price: parseFloat(form.get("retail_price") as string) || 0,
         cost: parseFloat(form.get("cost") as string) || 0,
@@ -132,7 +137,7 @@ export function ProductForm({ product, isAdmin, onDone }: ProductFormProps) {
       if (onDone) {
         onDone();
       } else {
-        router.push("/customizations/products");
+        router.push(basePath);
         router.refresh();
       }
     } catch (err) {

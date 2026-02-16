@@ -17,6 +17,7 @@ import type { Product, ClientProduct } from "@/types";
 interface ProductsTableProps {
   products: (Product | ClientProduct)[];
   isAdmin: boolean;
+  basePath?: string;
 }
 
 /* ─── Sorting ─── */
@@ -67,7 +68,7 @@ type PendingEdits = Record<string, Record<string, string | number>>;
 
 /* ─── Main Component ─── */
 
-export function ProductsTable({ products, isAdmin }: ProductsTableProps) {
+export function ProductsTable({ products, isAdmin, basePath = "/customizations/products" }: ProductsTableProps) {
   const router = useRouter();
   const [localProducts, setLocalProducts] = useState(products);
   const [sortField, setSortField] = useState<SortField | null>(null);
@@ -240,7 +241,7 @@ export function ProductsTable({ products, isAdmin }: ProductsTableProps) {
         </p>
         {isAdmin && (
           <Link
-            href="/customizations/products/new"
+            href={`${basePath}/new`}
             className={`${buttonStyles.primary} mt-4 inline-flex`}
           >
             Add First Product
@@ -309,7 +310,7 @@ export function ProductsTable({ products, isAdmin }: ProductsTableProps) {
                     {thumb ? (
                       <button
                         type="button"
-                        onClick={() => guardedNavigate(`/customizations/products/${product.id}`)}
+                        onClick={() => guardedNavigate(`${basePath}/${product.id}`)}
                         className="block"
                       >
                         <Image
@@ -507,7 +508,7 @@ export function ProductsTable({ products, isAdmin }: ProductsTableProps) {
             <button
               type="button"
               key={product.id}
-              onClick={() => guardedNavigate(`/customizations/products/${product.id}`)}
+              onClick={() => guardedNavigate(`${basePath}/${product.id}`)}
               className="block w-full text-left rounded-xl border border-border/40 bg-white p-3"
             >
               {/* Top: image + name + type */}

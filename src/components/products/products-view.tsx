@@ -12,9 +12,11 @@ import type { Product, ClientProduct } from "@/types";
 interface ProductsViewProps {
   products: (Product | ClientProduct)[];
   isAdmin: boolean;
+  /** Base path for links (default: /customizations/products) */
+  basePath?: string;
 }
 
-export function ProductsView({ products, isAdmin }: ProductsViewProps) {
+export function ProductsView({ products, isAdmin, basePath = "/customizations/products" }: ProductsViewProps) {
   const [view, setView] = useState<ViewMode>("list");
   const [typeFilter, setTypeFilter] = useState("");
 
@@ -47,9 +49,9 @@ export function ProductsView({ products, isAdmin }: ProductsViewProps) {
         {/* Add button */}
         {isAdmin && (
           <Link
-            href="/customizations/products/new"
+            href={`${basePath}/new`}
             className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-white shadow-sm transition-all hover:bg-primary-hover"
-            title="Add product"
+            title="Add new"
           >
             <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
@@ -62,9 +64,9 @@ export function ProductsView({ products, isAdmin }: ProductsViewProps) {
 
       {/* Products display */}
       {view === "cards" ? (
-        <ProductsGrid products={filtered} isAdmin={isAdmin} />
+        <ProductsGrid products={filtered} isAdmin={isAdmin} basePath={basePath} />
       ) : (
-        <ProductsTable products={filtered} isAdmin={isAdmin} />
+        <ProductsTable products={filtered} isAdmin={isAdmin} basePath={basePath} />
       )}
     </div>
   );

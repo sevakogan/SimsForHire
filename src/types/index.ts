@@ -78,11 +78,14 @@ export interface Item {
 
 export type ClientItem = Omit<Item, "my_cost" | "my_shipping">;
 
+export type ProductCategory = "product" | "service";
+
 export interface Product {
   id: string;
   model_number: string;
   name: string;
   type: string;
+  category: ProductCategory;
   description: string;
   retail_price: number;
   cost: number;

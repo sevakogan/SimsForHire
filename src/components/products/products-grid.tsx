@@ -11,6 +11,7 @@ import type { Product, ClientProduct } from "@/types";
 interface ProductsGridProps {
   products: (Product | ClientProduct)[];
   isAdmin: boolean;
+  basePath?: string;
 }
 
 function formatCurrency(value: number): string {
@@ -20,7 +21,7 @@ function formatCurrency(value: number): string {
   }).format(value);
 }
 
-export function ProductsGrid({ products, isAdmin }: ProductsGridProps) {
+export function ProductsGrid({ products, isAdmin, basePath = "/customizations/products" }: ProductsGridProps) {
   const router = useRouter();
 
   async function handleDelete(id: string) {
@@ -46,7 +47,7 @@ export function ProductsGrid({ products, isAdmin }: ProductsGridProps) {
         return (
         <Link
           key={product.id}
-          href={`/customizations/products/${product.id}`}
+          href={`${basePath}/${product.id}`}
           className="group block rounded-xl border border-border bg-white shadow-sm transition-all hover:shadow-md hover:border-primary/20 overflow-hidden"
         >
           {/* Image */}

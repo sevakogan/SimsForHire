@@ -2,29 +2,39 @@
 
 import { revalidatePath } from "next/cache";
 import { createSupabaseServer } from "@/lib/supabase-server";
-import type { Product, ClientProduct, ProductSearchResult } from "@/types";
+import type { Product, ClientProduct, ProductCategory, ProductSearchResult } from "@/types";
 
 const CLIENT_SAFE_COLUMNS =
-  "id, model_number, name, type, description, retail_price, sales_price, shipping, image_url, notes, manufacturer_website, seller_merchant, created_at, updated_at";
+  "id, model_number, name, type, category, description, retail_price, sales_price, shipping, image_url, notes, manufacturer_website, seller_merchant, created_at, updated_at";
 
-export async function getProducts(): Promise<Product[]> {
+export async function getProducts(category?: ProductCategory): Promise<Product[]> {
   const supabase = await createSupabaseServer();
-  const { data, error } = await supabase
+  let query = supabase
     .from("products")
     .select("*")
     .order("created_at", { ascending: false });
 
+  if (category) {
+    query = query.eq("category", category);
+  }
+
+  const { data, error } = await query;
   if (error) throw new Error(error.message);
   return (data ?? []) as Product[];
 }
 
-export async function getProductsForClient(): Promise<ClientProduct[]> {
+export async function getProductsForClient(category?: ProductCategory): Promise<ClientProduct[]> {
   const supabase = await createSupabaseServer();
-  const { data, error } = await supabase
+  let query = supabase
     .from("products")
     .select(CLIENT_SAFE_COLUMNS)
     .order("name", { ascending: true });
 
+  if (category) {
+    query = query.eq("category", category);
+  }
+
+  const { data, error } = await query;
   if (error) throw new Error(error.message);
   return (data ?? []) as ClientProduct[];
 }
@@ -45,6 +55,7 @@ export async function createProduct(input: {
   model_number: string;
   name: string;
   type: string;
+  category?: ProductCategory;
   description: string;
   retail_price: number;
   cost: number;
@@ -62,12 +73,15 @@ export async function createProduct(input: {
   } = await supabase.auth.getUser();
   if (!user) return { id: null, error: "Not authenticated" };
 
+  const category = input.category ?? "product";
+
   const { data, error } = await supabase
     .from("products")
     .insert({
       model_number: input.model_number,
       name: input.name,
       type: input.type,
+      category,
       description: input.description,
       retail_price: input.retail_price,
       cost: input.cost,
@@ -86,6 +100,7 @@ export async function createProduct(input: {
     return { id: null, error: error.message };
   }
   revalidatePath("/customizations/products");
+  revalidatePath("/customizations/services");
   return { id: data.id, error: null };
 }
 
@@ -135,7 +150,9 @@ export async function updateProduct(
   }
 
   revalidatePath("/customizations/products");
+  revalidatePath("/customizations/services");
   revalidatePath(`/customizations/products/${id}`);
+  revalidatePath(`/customizations/services/${id}`);
   return { error: null };
 }
 
@@ -147,6 +164,7 @@ export async function deleteProduct(
 
   if (error) return { error: error.message };
   revalidatePath("/customizations/products");
+  revalidatePath("/customizations/services");
   return { error: null };
 }
 

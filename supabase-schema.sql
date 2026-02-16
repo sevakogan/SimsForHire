@@ -262,6 +262,7 @@ CREATE TABLE products (
   model_number TEXT NOT NULL DEFAULT '',
   name TEXT NOT NULL DEFAULT '',
   type TEXT NOT NULL DEFAULT '',
+  category TEXT NOT NULL DEFAULT 'product',
   description TEXT NOT NULL DEFAULT '',
   retail_price NUMERIC(12, 2) NOT NULL DEFAULT 0,
   cost NUMERIC(12, 2) NOT NULL DEFAULT 0,
@@ -279,6 +280,7 @@ CREATE TABLE products (
 CREATE INDEX idx_products_name ON products (name);
 CREATE INDEX idx_products_model ON products (model_number);
 CREATE INDEX idx_products_type ON products (type);
+CREATE INDEX idx_products_category ON products (category);
 
 CREATE TRIGGER set_products_updated_at
   BEFORE UPDATE ON products FOR EACH ROW EXECUTE FUNCTION update_updated_at();

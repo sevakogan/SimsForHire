@@ -189,7 +189,7 @@ export function TopNav() {
                       </svg>
                     }
                     label="Customizations"
-                    description="Types, merchants & products"
+                    description="Types, merchants, products & services"
                   />
                 ) : (
                   <DropdownLink
