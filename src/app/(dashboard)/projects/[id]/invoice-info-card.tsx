@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useRef } from "react";
+import { useState, useRef, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { updateProject } from "@/lib/actions/projects";
 import { calculateInvoiceTotals, formatCurrency } from "@/lib/invoice-calculations";
@@ -25,12 +25,9 @@ interface InvoiceInfoCardProps {
   discountAmount: number;
   itemsTotal: number;
   deliveryTotal: number;
-  /** Admin cost data for profit display */
   myCost?: number;
   myShipping?: number;
-  /** Callback when discount/tax values change locally (before server save) */
   onDiscountChange?: (state: DiscountState) => void;
-  /** When true, all fields are locked except invoice notes */
   readOnly?: boolean;
 }
 
@@ -52,14 +49,15 @@ export function InvoiceInfoCard({
   readOnly = false,
 }: InvoiceInfoCardProps) {
   const router = useRouter();
+  const [, startTransition] = useTransition();
 
   // "Saved" values — the server-side truth
   const savedInvoice = invoiceNumber ?? "";
   const savedNotes = notes;
   const savedTax = String(taxPercent || "");
+  const savedDate = dateRequired ? dateRequired.slice(0, 10) : "";
   const savedDiscountPercent = String(discountPercent || "");
   const savedDiscountAmount = String(discountAmount || "");
-  const savedDate = dateRequired ? dateRequired.slice(0, 10) : "";
 
   // Local editing state
   const [localInvoice, setLocalInvoice] = useState(savedInvoice);
@@ -72,85 +70,90 @@ export function InvoiceInfoCard({
   const [localFulfillment, setLocalFulfillment] = useState<FulfillmentType>(
     (fulfillmentType as FulfillmentType) || "delivery"
   );
-  // Refs to track latest local values for blur saves
-  const localInvoiceRef = useRef(localInvoice);
-  localInvoiceRef.current = localInvoice;
-  const localNotesRef = useRef(localNotes);
-  localNotesRef.current = localNotes;
-  const localTaxRef = useRef(localTax);
-  localTaxRef.current = localTax;
-  const localDiscountPercentRef = useRef(localDiscountPercent);
-  localDiscountPercentRef.current = localDiscountPercent;
-  const localDiscountAmountRef = useRef(localDiscountAmount);
-  localDiscountAmountRef.current = localDiscountAmount;
+
+  // Refs for blur handlers to read latest values
+  const invoiceRef = useRef(localInvoice);
+  invoiceRef.current = localInvoice;
+  const notesRef = useRef(localNotes);
+  notesRef.current = localNotes;
+  const taxRef = useRef(localTax);
+  taxRef.current = localTax;
+  const discountPctRef = useRef(localDiscountPercent);
+  discountPctRef.current = localDiscountPercent;
+  const discountAmtRef = useRef(localDiscountAmount);
+  discountAmtRef.current = localDiscountAmount;
 
   // Emit discount state changes to parent for live footer sync
   function emitDiscountChange(overrides: Partial<DiscountState> = {}) {
     onDiscountChange?.({
       discountType: overrides.discountType ?? localDiscountType,
-      discountPercent: overrides.discountPercent ?? (parseFloat(localDiscountPercentRef.current) || 0),
-      discountAmount: overrides.discountAmount ?? (parseFloat(localDiscountAmountRef.current) || 0),
-      taxPercent: overrides.taxPercent ?? (parseFloat(localTaxRef.current) || 0),
+      discountPercent: overrides.discountPercent ?? (parseFloat(discountPctRef.current) || 0),
+      discountAmount: overrides.discountAmount ?? (parseFloat(discountAmtRef.current) || 0),
+      taxPercent: overrides.taxPercent ?? (parseFloat(taxRef.current) || 0),
     });
   }
 
-  /** Fire-and-forget save — update UI instantly, persist in background */
-  const saveBackground = useCallback(
-    (payload: Record<string, string | number | null>) => {
-      updateProject(projectId, payload).then(() => router.refresh());
-    },
-    [projectId, router]
-  );
+  /**
+   * Persist a field via server action inside startTransition.
+   * This is the correct Next.js pattern — ensures the action runs
+   * through React's server-action channel and refreshes data after.
+   */
+  function persist(field: string, value: string | number | null) {
+    startTransition(async () => {
+      await updateProject(projectId, { [field]: value });
+      router.refresh();
+    });
+  }
 
   /* ── Blur auto-save handlers ───────────────────────────── */
 
   function handleInvoiceBlur() {
-    const trimmed = localInvoiceRef.current.trim();
+    const trimmed = invoiceRef.current.trim();
     setLocalInvoice(trimmed);
-    saveBackground({ invoice_number: trimmed || null });
+    persist("invoice_number", trimmed || null);
   }
 
   function handleDateChange(newDate: string) {
     setLocalDate(newDate);
-    saveBackground({ date_required: newDate || null });
+    persist("date_required", newDate || null);
   }
 
   function handleNotesBlur() {
-    saveBackground({ notes: localNotesRef.current });
+    persist("notes", notesRef.current);
   }
 
   function handleTaxBlur() {
-    const num = parseFloat(localTaxRef.current) || 0;
+    const num = parseFloat(taxRef.current) || 0;
     setLocalTax(String(num || ""));
     emitDiscountChange({ taxPercent: num });
-    saveBackground({ tax_percent: num });
+    persist("tax_percent", num);
   }
 
   function handleDiscountPercentBlur() {
-    const num = parseFloat(localDiscountPercentRef.current) || 0;
+    const num = parseFloat(discountPctRef.current) || 0;
     setLocalDiscountPercent(String(num || ""));
     emitDiscountChange({ discountPercent: num });
-    saveBackground({ discount_percent: num });
+    persist("discount_percent", num);
   }
 
   function handleDiscountAmountBlur() {
-    const num = parseFloat(localDiscountAmountRef.current) || 0;
+    const num = parseFloat(discountAmtRef.current) || 0;
     setLocalDiscountAmount(String(num || ""));
     emitDiscountChange({ discountAmount: num });
-    saveBackground({ discount_amount: num });
+    persist("discount_amount", num);
   }
 
   /* ── Immediate-save toggles ────────────────────────────── */
 
   function handleDiscountTypeToggle(type: DiscountType) {
     setLocalDiscountType(type);
-    saveBackground({ discount_type: type });
     emitDiscountChange({ discountType: type });
+    persist("discount_type", type);
   }
 
   function handleFulfillmentToggle(type: FulfillmentType) {
     setLocalFulfillment(type);
-    saveBackground({ fulfillment_type: type });
+    persist("fulfillment_type", type);
   }
 
   /* ── Live-update discount for footer preview ─────────── */
@@ -217,7 +220,7 @@ export function InvoiceInfoCard({
           />
         </div>
 
-        {/* Requested By — editable date picker (auto-saves on change) */}
+        {/* Requested By — auto-saves on change */}
         <div className="bg-white px-3 py-3 min-w-0 flex-1">
           <label className="block text-[10px] font-semibold uppercase tracking-wider text-gray-400 mb-1.5">
             Requested By
@@ -286,7 +289,7 @@ export function InvoiceInfoCard({
         </div>
       </div>
 
-      {/* Row 2: Discount (left) + Tax (right) */}
+      {/* Row 3: Discount (left) + Tax (right) */}
       <div className="border-t border-gray-100 px-4 py-3">
         <div className="flex items-center gap-3 flex-wrap">
           {/* Discount section — left */}
@@ -363,7 +366,7 @@ export function InvoiceInfoCard({
               </div>
             )}
 
-            {/* Info icon with tooltip — "Applies to items only" */}
+            {/* Info icon with tooltip */}
             <div className="relative group hidden sm:block">
               <svg className="h-3.5 w-3.5 text-gray-300 cursor-help" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" d="m11.25 11.25.041-.02a.75.75 0 0 1 1.063.852l-.708 2.836a.75.75 0 0 0 1.063.853l.041-.021M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9-3.75h.008v.008H12V8.25Z" />

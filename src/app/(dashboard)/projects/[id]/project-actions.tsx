@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { updateProject, generateShareToken } from "@/lib/actions/projects";
 import { buttonStyles } from "@/components/ui/form-styles";
@@ -18,28 +18,27 @@ interface Props {
 
 export function ProjectActions({ project }: Props) {
   const router = useRouter();
+  const [isPending, startTransition] = useTransition();
   const [optimisticStatus, setOptimisticStatus] = useState<ProjectStatus>(project.status);
-  const [loading, setLoading] = useState(false);
   const [shareState, setShareState] = useState<"idle" | "loading" | "copied">("idle");
 
   // Sync optimistic state when server props change (after refresh)
   const serverStatus = project.status;
-  if (optimisticStatus !== serverStatus && !loading) {
+  if (optimisticStatus !== serverStatus && !isPending) {
     setOptimisticStatus(serverStatus);
   }
 
-  async function handleStatusChange(status: ProjectStatus) {
-    if (status === optimisticStatus || loading) return;
+  function handleStatusChange(status: ProjectStatus) {
+    if (status === optimisticStatus || isPending) return;
     // Optimistic: update UI immediately
     setOptimisticStatus(status);
-    setLoading(true);
-    const result = await updateProject(project.id, { status });
-    if (result.error) {
-      // Revert on error
-      setOptimisticStatus(serverStatus);
-    }
-    router.refresh();
-    setLoading(false);
+    startTransition(async () => {
+      const result = await updateProject(project.id, { status });
+      if (result.error) {
+        setOptimisticStatus(serverStatus);
+      }
+      router.refresh();
+    });
   }
 
   async function handleShareLink() {
@@ -99,7 +98,7 @@ export function ProjectActions({ project }: Props) {
         key={status}
         type="button"
         onClick={() => handleStatusChange(status)}
-        disabled={loading || !clickable}
+        disabled={isPending || !clickable}
         className={`inline-flex items-center justify-center rounded-lg px-3 py-1.5 text-xs font-medium transition-all border ${
           isActive
             ? `${config.activeBg} ${config.activeText} border-transparent shadow-sm`
