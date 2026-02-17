@@ -7,7 +7,7 @@ import Link from "next/link";
 import { buttonStyles } from "@/components/ui/form-styles";
 import { getUnreadNoteCountsByClients } from "@/lib/actions/items";
 import type { Profile, Project, Client, Item } from "@/types";
-import { isAdminRole } from "@/types";
+import { isAdminRole, isEmployeeRole } from "@/types";
 
 export default async function DashboardPage() {
   const supabase = await createSupabaseServer();
@@ -31,6 +31,10 @@ export default async function DashboardPage() {
 
   if (admin) {
     return <AdminDashboard />;
+  }
+
+  if (isEmployeeRole(typedProfile.role)) {
+    return <EmployeeDashboard profileId={typedProfile.id} />;
   }
 
   return <ClientDashboard clientId={typedProfile.client_id} />;
@@ -123,6 +127,56 @@ async function AdminDashboard() {
       </div>
 
       <DashboardClients clients={dashboardClients} />
+    </div>
+  );
+}
+
+async function EmployeeDashboard({ profileId }: { profileId: string }) {
+  const supabase = await createSupabaseServer();
+
+  // Fetch assigned client IDs
+  const { data: assignments } = await supabase
+    .from("employee_client_assignments")
+    .select("client_id")
+    .eq("employee_id", profileId);
+
+  const assignedClientIds = (assignments ?? []).map((a: { client_id: string }) => a.client_id);
+
+  if (assignedClientIds.length === 0) {
+    return (
+      <div className="flex min-h-[50vh] items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-xl font-bold text-foreground">Welcome</h1>
+          <p className="mt-2 text-sm text-muted-foreground">
+            You have not been assigned to any clients yet. Please contact the admin.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // Fetch assigned clients
+  const { data: allClients } = await supabase
+    .from("clients")
+    .select("id, name, phone, email")
+    .in("id", assignedClientIds)
+    .order("created_at", { ascending: false });
+
+  // Build dashboard data WITHOUT cost/profit
+  const dashboardClients: DashboardClient[] = (allClients ?? []).map((c) => ({
+    id: c.id,
+    name: c.name,
+    phone: c.phone,
+    email: c.email,
+    totalCharge: 0,
+    totalCost: 0,
+    unreadNotes: 0,
+  }));
+
+  return (
+    <div className="space-y-4 sm:space-y-6">
+      <h1 className="text-lg sm:text-2xl font-bold text-foreground">Dashboard</h1>
+      <DashboardClients clients={dashboardClients} showProfit={false} />
     </div>
   );
 }

@@ -55,12 +55,17 @@ export async function middleware(request: NextRequest) {
   if (user && !PUBLIC_AUTH_ROUTES.has(pathname) && pathname !== "/pending") {
     const { data: profile } = await supabase
       .from("profiles")
-      .select("status")
+      .select("status, role")
       .eq("id", user.id)
       .single();
 
     if (!profile || profile.status !== "approved") {
       return NextResponse.redirect(new URL("/pending", request.url));
+    }
+
+    // Block non-admin/collaborator users from /admin routes
+    if (pathname.startsWith("/admin") && !["admin", "collaborator"].includes(profile.role)) {
+      return NextResponse.redirect(new URL("/dashboard", request.url));
     }
   }
 

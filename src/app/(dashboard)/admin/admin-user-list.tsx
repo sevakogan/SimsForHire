@@ -37,6 +37,7 @@ export function AdminUserList({ users, clients, currentUserId }: Props) {
   const companyUsers = approvedUsers.filter(
     (u) => u.role === "admin" || u.role === "collaborator"
   );
+  const employeeUsers = approvedUsers.filter((u) => u.role === "employee");
   const clientUsers = approvedUsers.filter((u) => u.role === "client");
   const deniedUsers = approvedUsers.filter((u) => u.status === "denied");
   const activeUsers = approvedUsers.filter((u) => u.status !== "denied");
@@ -69,6 +70,7 @@ export function AdminUserList({ users, clients, currentUserId }: Props) {
             <option value="all">All Roles</option>
             <option value="admin">Admin</option>
             <option value="collaborator">Collaborator</option>
+            <option value="employee">Employee</option>
             <option value="client">Client</option>
           </select>
           <select
@@ -134,6 +136,34 @@ export function AdminUserList({ users, clients, currentUserId }: Props) {
                   user={user}
                   clients={clients}
                   currentUserId={currentUserId}
+                  showBorder={i < arr.length - 1}
+                />
+              ))}
+          </div>
+        </section>
+      )}
+
+      {/* Employee Users */}
+      {employeeUsers.filter((u) => u.status !== "denied").length > 0 && (
+        <section className="space-y-1.5">
+          <div className="flex items-center gap-2 px-1">
+            <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              Employees
+            </h2>
+            <span className="text-xs text-muted-foreground">
+              {employeeUsers.filter((u) => u.status !== "denied").length}
+            </span>
+          </div>
+          <div className="overflow-hidden rounded-xl border border-border bg-white">
+            {employeeUsers
+              .filter((u) => u.status !== "denied")
+              .map((user, i, arr) => (
+                <UserRow
+                  key={user.id}
+                  user={user}
+                  clients={clients}
+                  currentUserId={currentUserId}
+                  showEmployeeClients
                   showBorder={i < arr.length - 1}
                 />
               ))}

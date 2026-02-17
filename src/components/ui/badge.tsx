@@ -14,6 +14,7 @@ const variants: Record<string, string> = {
   denied: "bg-red-100 text-red-700",
   admin: "bg-indigo-100 text-indigo-700",
   collaborator: "bg-cyan-100 text-cyan-700",
+  employee: "bg-emerald-100 text-emerald-700",
   client: "bg-slate-100 text-slate-700",
   // Shipment statuses
   label_created: "bg-slate-100 text-slate-700",

@@ -17,18 +17,23 @@ async function getCurrentUserId(): Promise<string | null> {
 export interface ProfileWithClient extends Profile {
   client_name?: string;
   invite_accepted: boolean;
+  /** For employee users: IDs of assigned clients */
+  assigned_client_ids?: string[];
 }
 
 export async function getUsers(): Promise<ProfileWithClient[]> {
   // Use admin client to bypass RLS — this is an admin-only function
   const admin = getAdminSupabase();
 
-  const [profilesResult, authResult] = await Promise.all([
+  const [profilesResult, authResult, assignmentsResult] = await Promise.all([
     admin
       .from("profiles")
       .select("*, clients!profiles_client_id_fkey(name)")
       .order("created_at", { ascending: false }),
     admin.auth.admin.listUsers({ perPage: 1000 }),
+    admin
+      .from("employee_client_assignments")
+      .select("employee_id, client_id"),
   ]);
 
   if (profilesResult.error) throw new Error(profilesResult.error.message);
@@ -43,14 +48,25 @@ export async function getUsers(): Promise<ProfileWithClient[]> {
     }
   }
 
+  // Build a map of employee_id -> client_ids[]
+  const assignmentMap = new Map<string, string[]>();
+  if (assignmentsResult.data) {
+    for (const row of assignmentsResult.data) {
+      const existing = assignmentMap.get(row.employee_id) ?? [];
+      assignmentMap.set(row.employee_id, [...existing, row.client_id]);
+    }
+  }
+
   return (profilesResult.data ?? []).map((row) => {
     const { clients, ...profile } = row as Record<string, unknown>;
     const clientData = clients as { name: string } | null;
     const id = profile.id as string;
+    const role = profile.role as string;
     return {
       ...profile,
       client_name: clientData?.name ?? undefined,
       invite_accepted: confirmedIds.has(id),
+      assigned_client_ids: role === "employee" ? (assignmentMap.get(id) ?? []) : undefined,
     } as ProfileWithClient;
   });
 }
@@ -125,7 +141,7 @@ export async function approveAsEmployee(
   const { error } = await admin
     .from("profiles")
     .update({
-      role: "collaborator",
+      role: "employee",
       status: "approved",
     })
     .eq("id", userId);
@@ -235,4 +251,50 @@ export async function deleteUser(
   if (authError) return { error: authError.message };
 
   return { error: null };
+}
+
+/* ── Employee–Client assignment helpers ─────────────── */
+
+export async function assignClientsToEmployee(
+  employeeId: string,
+  clientIds: string[]
+): Promise<{ error: string | null }> {
+  const admin = getAdminSupabase();
+
+  // Remove all existing assignments
+  const { error: deleteError } = await admin
+    .from("employee_client_assignments")
+    .delete()
+    .eq("employee_id", employeeId);
+
+  if (deleteError) return { error: deleteError.message };
+
+  // Insert new assignments (if any)
+  if (clientIds.length > 0) {
+    const rows = clientIds.map((clientId) => ({
+      employee_id: employeeId,
+      client_id: clientId,
+    }));
+
+    const { error: insertError } = await admin
+      .from("employee_client_assignments")
+      .insert(rows);
+
+    if (insertError) return { error: insertError.message };
+  }
+
+  return { error: null };
+}
+
+export async function getEmployeeClientIds(
+  employeeId: string
+): Promise<string[]> {
+  const admin = getAdminSupabase();
+  const { data, error } = await admin
+    .from("employee_client_assignments")
+    .select("client_id")
+    .eq("employee_id", employeeId);
+
+  if (error || !data) return [];
+  return data.map((row) => row.client_id);
 }

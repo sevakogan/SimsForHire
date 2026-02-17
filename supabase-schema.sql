@@ -21,7 +21,7 @@ CREATE TABLE profiles (
   email TEXT NOT NULL,
   full_name TEXT,
   avatar_url TEXT,
-  role TEXT NOT NULL DEFAULT 'client' CHECK (role IN ('admin', 'collaborator', 'client')),
+  role TEXT NOT NULL DEFAULT 'client' CHECK (role IN ('admin', 'collaborator', 'client', 'employee')),
   status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'denied')),
   client_id UUID,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -71,7 +71,7 @@ CREATE TABLE projects (
   invoice_link TEXT,
   invoice_link_2 TEXT,
   date_required DATE,
-  fulfillment_type TEXT NOT NULL DEFAULT 'delivery' CHECK (fulfillment_type IN ('pickup', 'delivery')),
+  fulfillment_type TEXT NOT NULL DEFAULT 'delivery' CHECK (fulfillment_type IN ('pickup', 'delivery', 'white_glove')),
   notes TEXT NOT NULL DEFAULT '',
   tax_percent NUMERIC(6, 3) NOT NULL DEFAULT 0,
   discount_percent NUMERIC(6, 3) NOT NULL DEFAULT 0,
@@ -141,6 +141,28 @@ RETURNS UUID AS $$
 $$ LANGUAGE sql SECURITY DEFINER STABLE;
 
 -- ============================================================
+-- Employee–Client assignments (many-to-many)
+-- ============================================================
+CREATE TABLE employee_client_assignments (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  employee_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  client_id UUID NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE (employee_id, client_id)
+);
+
+CREATE INDEX idx_eca_employee ON employee_client_assignments (employee_id);
+CREATE INDEX idx_eca_client ON employee_client_assignments (client_id);
+
+CREATE OR REPLACE FUNCTION auth_employee_client_ids()
+RETURNS UUID[] AS $$
+  SELECT COALESCE(
+    ARRAY(SELECT client_id FROM employee_client_assignments WHERE employee_id = auth.uid()),
+    '{}'::uuid[]
+  )
+$$ LANGUAGE sql SECURITY DEFINER STABLE;
+
+-- ============================================================
 -- Auto-create profile on user signup
 -- ============================================================
 CREATE OR REPLACE FUNCTION handle_new_user()
@@ -187,6 +209,17 @@ CREATE POLICY "Users can update their own profile"
   USING (id = auth.uid())
   WITH CHECK (id = auth.uid());
 
+-- Employee–Client assignments RLS
+ALTER TABLE employee_client_assignments ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Admins and collaborators can manage employee assignments"
+  ON employee_client_assignments FOR ALL
+  USING (auth_role() IN ('admin', 'collaborator'));
+
+CREATE POLICY "Employees can view their own assignments"
+  ON employee_client_assignments FOR SELECT
+  USING (employee_id = auth.uid());
+
 -- Clients
 ALTER TABLE clients ENABLE ROW LEVEL SECURITY;
 
@@ -198,6 +231,10 @@ CREATE POLICY "Client users can view their own client record"
   ON clients FOR SELECT
   USING (id = auth_client_id());
 
+CREATE POLICY "Employees can view their assigned clients"
+  ON clients FOR SELECT
+  USING (auth_role() = 'employee' AND id = ANY(auth_employee_client_ids()));
+
 -- Projects
 ALTER TABLE projects ENABLE ROW LEVEL SECURITY;
 
@@ -208,6 +245,15 @@ CREATE POLICY "Admins and collaborators can manage all projects"
 CREATE POLICY "Client users can view their own projects"
   ON projects FOR SELECT
   USING (client_id = auth_client_id());
+
+CREATE POLICY "Employees can view projects for assigned clients"
+  ON projects FOR SELECT
+  USING (auth_role() = 'employee' AND client_id = ANY(auth_employee_client_ids()));
+
+CREATE POLICY "Employees can update projects for assigned clients"
+  ON projects FOR UPDATE
+  USING (auth_role() = 'employee' AND client_id = ANY(auth_employee_client_ids()))
+  WITH CHECK (auth_role() = 'employee' AND client_id = ANY(auth_employee_client_ids()));
 
 -- Items
 ALTER TABLE items ENABLE ROW LEVEL SECURITY;
@@ -221,6 +267,15 @@ CREATE POLICY "Client users can view their own items"
   USING (
     project_id IN (
       SELECT id FROM projects WHERE client_id = auth_client_id()
+    )
+  );
+
+CREATE POLICY "Employees can manage items for assigned clients"
+  ON items FOR ALL
+  USING (
+    auth_role() = 'employee'
+    AND project_id IN (
+      SELECT id FROM projects WHERE client_id = ANY(auth_employee_client_ids())
     )
   );
 
@@ -251,6 +306,14 @@ CREATE POLICY "Admins and collaborators can delete item images"
     bucket_id = 'item-images'
     AND auth_role() IN ('admin', 'collaborator')
   );
+
+CREATE POLICY "Employees can upload item images"
+  ON storage.objects FOR INSERT
+  WITH CHECK (bucket_id = 'item-images' AND auth_role() = 'employee');
+
+CREATE POLICY "Employees can update item images"
+  ON storage.objects FOR UPDATE
+  USING (bucket_id = 'item-images' AND auth_role() = 'employee');
 
 CREATE POLICY "Anyone authenticated can view item images"
   ON storage.objects FOR SELECT
@@ -301,6 +364,10 @@ CREATE POLICY "Admins and collaborators can manage all products"
 CREATE POLICY "Client users can view products"
   ON products FOR SELECT
   USING (auth_role() = 'client' AND auth_status() = 'approved');
+
+CREATE POLICY "Employees can view products"
+  ON products FOR SELECT
+  USING (auth_role() = 'employee' AND auth_status() = 'approved');
 
 -- ============================================================
 -- SHIPMENTS

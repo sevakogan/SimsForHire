@@ -9,6 +9,7 @@ interface ItemsWithSidebarProps {
   items: (Item | ClientItem)[];
   projectId: string;
   isAdmin: boolean;
+  canEdit?: boolean;
   unreadNoteCount: number;
   readOnly: boolean;
 }
@@ -17,6 +18,7 @@ export function ItemsWithSidebar({
   items,
   projectId,
   isAdmin,
+  canEdit,
   unreadNoteCount,
   readOnly,
 }: ItemsWithSidebarProps) {
@@ -32,6 +34,7 @@ export function ItemsWithSidebar({
       items={items}
       projectId={projectId}
       isAdmin={isAdmin}
+      canEdit={canEdit}
       unreadNoteCount={unreadNoteCount}
       readOnly={readOnly}
       tagFilter={tagFilter}

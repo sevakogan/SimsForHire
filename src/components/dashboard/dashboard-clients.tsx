@@ -15,6 +15,7 @@ export interface DashboardClient {
 
 interface DashboardClientsProps {
   clients: DashboardClient[];
+  showProfit?: boolean;
 }
 
 function formatCurrency(value: number): string {
@@ -60,7 +61,7 @@ function splitName(fullName: string): { first: string; last: string } {
   return { first: fullName, last: "" };
 }
 
-export function DashboardClients({ clients }: DashboardClientsProps) {
+export function DashboardClients({ clients, showProfit = true }: DashboardClientsProps) {
   const [view, setView] = useState<"cards" | "list">("cards");
 
   if (clients.length === 0) {
@@ -107,15 +108,15 @@ export function DashboardClients({ clients }: DashboardClientsProps) {
       </div>
 
       {view === "cards" ? (
-        <CardsView clients={clients} />
+        <CardsView clients={clients} showProfit={showProfit} />
       ) : (
-        <ListView clients={clients} />
+        <ListView clients={clients} showProfit={showProfit} />
       )}
     </div>
   );
 }
 
-function CardsView({ clients }: { clients: DashboardClient[] }) {
+function CardsView({ clients, showProfit = true }: { clients: DashboardClient[]; showProfit?: boolean }) {
   return (
     <div className="flex flex-wrap gap-4">
       {clients.map((client) => {
@@ -175,18 +176,20 @@ function CardsView({ clients }: { clients: DashboardClient[] }) {
               </div>
 
               {/* Bottom section: financials */}
-              <div className="flex items-end justify-between border-t border-border/30 pt-2">
-                <div>
-                  <p className="text-[9px] font-medium uppercase tracking-wider text-muted-foreground/50">Total Charge</p>
-                  <p className="text-sm font-bold text-foreground tabular-nums">{formatCurrency(client.totalCharge)}</p>
+              {showProfit && (
+                <div className="flex items-end justify-between border-t border-border/30 pt-2">
+                  <div>
+                    <p className="text-[9px] font-medium uppercase tracking-wider text-muted-foreground/50">Total Charge</p>
+                    <p className="text-sm font-bold text-foreground tabular-nums">{formatCurrency(client.totalCharge)}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-[9px] font-medium uppercase tracking-wider text-muted-foreground/50">Profit</p>
+                    <p className={`text-sm font-bold tabular-nums ${profit >= 0 ? "text-success" : "text-destructive"}`}>
+                      {formatCurrency(profit)}
+                    </p>
+                  </div>
                 </div>
-                <div className="text-right">
-                  <p className="text-[9px] font-medium uppercase tracking-wider text-muted-foreground/50">Profit</p>
-                  <p className={`text-sm font-bold tabular-nums ${profit >= 0 ? "text-success" : "text-destructive"}`}>
-                    {formatCurrency(profit)}
-                  </p>
-                </div>
-              </div>
+              )}
             </div>
           </Link>
         );
@@ -195,7 +198,7 @@ function CardsView({ clients }: { clients: DashboardClient[] }) {
   );
 }
 
-function ListView({ clients }: { clients: DashboardClient[] }) {
+function ListView({ clients, showProfit = true }: { clients: DashboardClient[]; showProfit?: boolean }) {
   return (
     <div className="space-y-2">
       {clients.map((client) => {
@@ -225,16 +228,20 @@ function ListView({ clients }: { clients: DashboardClient[] }) {
               </div>
             </div>
             <div className="flex shrink-0 items-center gap-4 sm:gap-6 text-right">
-              <div>
-                <p className="text-[9px] font-medium uppercase tracking-wider text-muted-foreground/60 sm:text-[10px]">Charge</p>
-                <p className="text-sm font-semibold text-foreground tabular-nums">{formatCurrency(client.totalCharge)}</p>
-              </div>
-              <div>
-                <p className="text-[9px] font-medium uppercase tracking-wider text-muted-foreground/60 sm:text-[10px]">Profit</p>
-                <p className={`text-sm font-semibold tabular-nums ${profit >= 0 ? "text-success" : "text-destructive"}`}>
-                  {formatCurrency(profit)}
-                </p>
-              </div>
+              {showProfit && (
+                <div>
+                  <p className="text-[9px] font-medium uppercase tracking-wider text-muted-foreground/60 sm:text-[10px]">Charge</p>
+                  <p className="text-sm font-semibold text-foreground tabular-nums">{formatCurrency(client.totalCharge)}</p>
+                </div>
+              )}
+              {showProfit && (
+                <div>
+                  <p className="text-[9px] font-medium uppercase tracking-wider text-muted-foreground/60 sm:text-[10px]">Profit</p>
+                  <p className={`text-sm font-semibold tabular-nums ${profit >= 0 ? "text-success" : "text-destructive"}`}>
+                    {formatCurrency(profit)}
+                  </p>
+                </div>
+              )}
             </div>
           </Link>
         );

@@ -15,7 +15,7 @@ const navTabs = [
 
 export function TopNav() {
   const pathname = usePathname();
-  const { user, profile, signOut, isAdmin } = useAuth();
+  const { user, profile, signOut, isAdmin, isEmployee } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -121,7 +121,7 @@ export function TopNav() {
 
         {/* Bell + User dropdown */}
         <div className="flex items-center gap-1">
-          {isAdmin && <NotificationBell />}
+          {(isAdmin || isEmployee) && <NotificationBell />}
 
         <div className="relative" ref={dropdownRef}>
           <button

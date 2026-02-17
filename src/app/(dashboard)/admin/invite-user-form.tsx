@@ -181,7 +181,8 @@ export function InviteUserForm() {
                     className={`${formStyles.select} py-2 text-sm`}
                     disabled={loading}
                   >
-                    <option value="collaborator">Employee</option>
+                    <option value="employee">Employee</option>
+                    <option value="collaborator">Collaborator</option>
                     <option value="admin">Admin</option>
                     <option value="client">Client</option>
                   </select>

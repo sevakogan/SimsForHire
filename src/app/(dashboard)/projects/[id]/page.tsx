@@ -12,7 +12,7 @@ import { InvoiceDiscountProvider, InvoiceSection, LiveInvoiceFooter } from "./in
 import { EditableProjectName } from "./editable-project-name";
 import { isEditLocked } from "@/lib/constants/project-statuses";
 import type { Profile, Item, DiscountType } from "@/types";
-import { isAdminRole } from "@/types";
+import { isAdminRole, isEmployeeRole } from "@/types";
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -38,17 +38,19 @@ export default async function ProjectDetailPage({ params }: Props) {
 
   const typedProfile = profile as Profile;
   const admin = isAdminRole(typedProfile.role);
+  const employee = isEmployeeRole(typedProfile.role);
+  const canEdit = admin || employee;
 
   const project = await getProjectById(id);
   if (!project) notFound();
 
   // Lock editing once submitted (customer is viewing the invoice)
-  const editLocked = admin && isEditLocked(project.status);
+  const editLocked = canEdit && isEditLocked(project.status);
 
   const client = await getClientById(project.client_id);
   const [items, noteCount] = await Promise.all([
     admin ? getItems(id) : getItemsForClient(id),
-    admin ? getUnreadNoteCount(id) : Promise.resolve(0),
+    canEdit ? getUnreadNoteCount(id) : Promise.resolve(0),
   ]);
 
   // Split retail totals by category: products vs services
@@ -98,24 +100,24 @@ export default async function ProjectDetailPage({ params }: Props) {
     <div className="space-y-4 sm:space-y-6">
       {/* Header: status + share on top, name below */}
       <div>
-        {admin && (
+        {canEdit && (
           <div className="flex items-center justify-between mb-2">
             <ProjectActions project={project} />
           </div>
         )}
         <div className="flex items-center gap-2 sm:gap-3">
-          <EditableProjectName projectId={project.id} name={project.name} isAdmin={admin} readOnly={editLocked} />
-          {!admin && <Badge variant={project.status}>{project.status}</Badge>}
+          <EditableProjectName projectId={project.id} name={project.name} isAdmin={canEdit} readOnly={editLocked} />
+          {!canEdit && <Badge variant={project.status}>{project.status}</Badge>}
         </div>
-        {!admin && project.invoice_number && (
+        {!canEdit && project.invoice_number && (
           <p className="text-xs text-muted-foreground mt-0.5">
             Invoice #{project.invoice_number}
           </p>
         )}
       </div>
 
-      {/* Side-by-side: Customer card (30%) + Invoice card (70%) — admin only */}
-      {admin && (
+      {/* Side-by-side: Customer card (30%) + Invoice card (70%) — internal users */}
+      {canEdit && (
         <div className="flex flex-col lg:flex-row gap-4">
           {/* Customer info card — compact, pretty */}
           {client && (
@@ -238,17 +240,17 @@ export default async function ProjectDetailPage({ params }: Props) {
       {/* Invoice items */}
       <div className="flex items-center gap-2">
         <h2 className="text-base sm:text-lg font-semibold text-foreground">Invoice</h2>
-        {admin && noteCount > 0 && (
+        {canEdit && noteCount > 0 && (
           <span className="inline-flex items-center justify-center rounded-full bg-red-500 px-1.5 py-0.5 text-[10px] font-bold text-white min-w-[18px] leading-none">
             {noteCount}
           </span>
         )}
       </div>
 
-      <ItemsWithSidebar items={items} projectId={id} isAdmin={admin} unreadNoteCount={noteCount} readOnly={editLocked} />
+      <ItemsWithSidebar items={items} projectId={id} isAdmin={admin} canEdit={canEdit} unreadNoteCount={noteCount} readOnly={editLocked} />
 
       {/* Inline add item bar — hidden when invoice is locked */}
-      {admin && !editLocked && <InlineAddItem projectId={id} isAdmin={admin} />}
+      {canEdit && !editLocked && <InlineAddItem projectId={id} isAdmin={admin} />}
 
       {/* Invoice Summary Footer — live-synced with discount changes */}
       {items.length > 0 && (

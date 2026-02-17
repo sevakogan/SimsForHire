@@ -1,4 +1,4 @@
-export type UserRole = "admin" | "collaborator" | "client";
+export type UserRole = "admin" | "collaborator" | "client" | "employee";
 export type UserStatus = "pending" | "approved" | "denied";
 export type ProjectStatus = "draft" | "quote" | "submitted" | "accepted" | "paid" | "preparing" | "shipped" | "received" | "completed";
 export type FulfillmentType = "pickup" | "delivery" | "white_glove";
@@ -120,6 +120,16 @@ export interface ProductSearchResult {
 
 export function isAdminRole(role: UserRole): boolean {
   return role === "admin" || role === "collaborator";
+}
+
+/** Returns true for roles that can see the internal dashboard (admin, collaborator, employee) */
+export function isInternalRole(role: UserRole): boolean {
+  return role === "admin" || role === "collaborator" || role === "employee";
+}
+
+/** Returns true specifically for the employee role */
+export function isEmployeeRole(role: UserRole): boolean {
+  return role === "employee";
 }
 
 // Shipments

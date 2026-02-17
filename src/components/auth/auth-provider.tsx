@@ -10,7 +10,7 @@ import {
 import type { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
 import type { Profile } from "@/types";
-import { isAdminRole } from "@/types";
+import { isAdminRole, isEmployeeRole, isInternalRole } from "@/types";
 
 interface AuthContextType {
   user: User | null;
@@ -18,6 +18,8 @@ interface AuthContextType {
   session: Session | null;
   isLoading: boolean;
   isAdmin: boolean;
+  isEmployee: boolean;
+  isInternal: boolean;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
 }
@@ -92,10 +94,12 @@ export function AuthProvider({ children, serverProfile }: AuthProviderProps) {
   }
 
   const isAdmin = profile ? isAdminRole(profile.role) : false;
+  const isEmployee = profile ? isEmployeeRole(profile.role) : false;
+  const isInternal = profile ? isInternalRole(profile.role) : false;
 
   return (
     <AuthContext.Provider
-      value={{ user, profile, session, isLoading, isAdmin, signOut, refreshProfile }}
+      value={{ user, profile, session, isLoading, isAdmin, isEmployee, isInternal, signOut, refreshProfile }}
     >
       {children}
     </AuthContext.Provider>

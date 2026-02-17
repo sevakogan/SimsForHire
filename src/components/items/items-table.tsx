@@ -19,6 +19,8 @@ interface ItemsTableProps {
   items: (Item | ClientItem)[];
   projectId: string;
   isAdmin: boolean;
+  /** When true, user can edit/delete items even if not admin (e.g. employee) */
+  canEdit?: boolean;
   unreadNoteCount?: number;
   /** When true, items cannot be edited, deleted, or added */
   readOnly?: boolean;
@@ -104,7 +106,8 @@ function formatCurrency(value: number): string {
 
 /* ─── Main Component ─── */
 
-export function ItemsTable({ items, projectId, isAdmin, unreadNoteCount = 0, readOnly = false, tagFilter: externalTagFilter, onTagFilterChange }: ItemsTableProps) {
+export function ItemsTable({ items, projectId, isAdmin, canEdit: canEditProp, unreadNoteCount = 0, readOnly = false, tagFilter: externalTagFilter, onTagFilterChange }: ItemsTableProps) {
+  const canEdit = canEditProp ?? isAdmin;
   const router = useRouter();
   const [internalTypeFilter, setInternalTypeFilter] = useState("");
   const typeFilter = externalTagFilter ?? internalTypeFilter;
@@ -212,6 +215,7 @@ export function ItemsTable({ items, projectId, isAdmin, unreadNoteCount = 0, rea
           items={filtered}
           projectId={projectId}
           isAdmin={isAdmin}
+          canEdit={canEdit}
           readOnly={readOnly}
           onDelete={handleDelete}
           onEdit={readOnly ? undefined : setEditItem}
@@ -239,7 +243,7 @@ export function ItemsTable({ items, projectId, isAdmin, unreadNoteCount = 0, rea
                 <col style={{ width: "88px" }} />
                 {isAdmin && <col style={{ width: "80px" }} />}
                 {isAdmin && <col style={{ width: "80px" }} />}
-                {isAdmin && <col style={{ width: "32px" }} />}
+                {canEdit && <col style={{ width: "32px" }} />}
               </colgroup>
               <thead>
                 <tr className="bg-muted/40">
@@ -270,7 +274,7 @@ export function ItemsTable({ items, projectId, isAdmin, unreadNoteCount = 0, rea
                       Profit
                     </th>
                   )}
-                  {isAdmin && <th className="py-2 px-1" />}
+                  {canEdit && <th className="py-2 px-1" />}
                 </tr>
               </thead>
               <tbody>
@@ -357,11 +361,11 @@ export function ItemsTable({ items, projectId, isAdmin, unreadNoteCount = 0, rea
                               </span>
                             );
                           })()}
-                          {isAdmin && item.acceptance_status && item.acceptance_status !== "pending" && (
+                          {canEdit && item.acceptance_status && item.acceptance_status !== "pending" && (
                             <AcceptanceBadge status={item.acceptance_status} />
                           )}
                         </div>
-                        {isAdmin && item.client_note && (
+                        {canEdit && item.client_note && (
                           <ClientNoteInline
                             note={item.client_note}
                             itemId={item.id}
@@ -438,7 +442,7 @@ export function ItemsTable({ items, projectId, isAdmin, unreadNoteCount = 0, rea
                       })()}
 
                       {/* Delete */}
-                      {isAdmin && !readOnly && (
+                      {canEdit && !readOnly && (
                         <td className="py-2 px-1 align-middle">
                           <button
                             onClick={() => handleDelete(item.id)}
@@ -451,7 +455,7 @@ export function ItemsTable({ items, projectId, isAdmin, unreadNoteCount = 0, rea
                           </button>
                         </td>
                       )}
-                      {isAdmin && readOnly && <td className="py-2 px-1" />}
+                      {canEdit && readOnly && <td className="py-2 px-1" />}
                     </tr>
                   );
                 })}
@@ -529,11 +533,11 @@ export function ItemsTable({ items, projectId, isAdmin, unreadNoteCount = 0, rea
                             </span>
                           );
                         })()}
-                        {isAdmin && item.acceptance_status && item.acceptance_status !== "pending" && (
+                        {canEdit && item.acceptance_status && item.acceptance_status !== "pending" && (
                           <AcceptanceBadge status={item.acceptance_status} />
                         )}
                       </div>
-                      {isAdmin && item.client_note && (
+                      {canEdit && item.client_note && (
                         <ClientNoteInline
                           note={item.client_note}
                           itemId={item.id}
@@ -544,7 +548,7 @@ export function ItemsTable({ items, projectId, isAdmin, unreadNoteCount = 0, rea
                         />
                       )}
                     </div>
-                    {isAdmin && !readOnly && (
+                    {canEdit && !readOnly && (
                       <button
                         onClick={() => handleDelete(item.id)}
                         className="shrink-0 rounded-md p-1.5 text-muted-foreground/40 transition-all hover:bg-destructive/10 hover:text-destructive"
@@ -648,7 +652,7 @@ export function ItemsTable({ items, projectId, isAdmin, unreadNoteCount = 0, rea
             </h2>
 
             {/* Client note banner */}
-            {isAdmin && editItem.client_note && (
+            {canEdit && editItem.client_note && (
               <div className="mb-4">
                 <ClientNoteBanner
                   itemId={editItem.id}
@@ -726,6 +730,7 @@ interface ItemsCardGridProps {
   items: (Item | ClientItem)[];
   projectId: string;
   isAdmin: boolean;
+  canEdit?: boolean;
   readOnly?: boolean;
   onDelete: (id: string) => void;
   onEdit?: (item: Item) => void;
@@ -733,7 +738,8 @@ interface ItemsCardGridProps {
   onImageClick: (url: string, name: string) => void;
 }
 
-function ItemsCardGrid({ items, projectId, isAdmin, readOnly = false, onDelete, onEdit, dismissedNoteIds, onImageClick }: ItemsCardGridProps) {
+function ItemsCardGrid({ items, projectId, isAdmin, canEdit: canEditProp, readOnly = false, onDelete, onEdit, dismissedNoteIds, onImageClick }: ItemsCardGridProps) {
+  const canEdit = canEditProp ?? isAdmin;
   if (items.length === 0) {
     return (
       <div className="rounded-xl border border-dashed border-border p-8 text-center">
@@ -791,13 +797,13 @@ function ItemsCardGrid({ items, projectId, isAdmin, readOnly = false, onDelete, 
                 </div>
               )}
               {/* Acceptance badge overlay */}
-              {isAdmin && item.acceptance_status && item.acceptance_status !== "pending" && (
+              {canEdit && item.acceptance_status && item.acceptance_status !== "pending" && (
                 <div className="absolute top-1.5 right-1.5">
                   <AcceptanceBadge status={item.acceptance_status} />
                 </div>
               )}
               {/* Client note indicator */}
-              {isAdmin && item.client_note && (() => {
+              {canEdit && item.client_note && (() => {
                 const noteIsUnread =
                   !("client_note_read_at" in item && (item as Item).client_note_read_at) && !dismissedNoteIds.has(item.id);
                 return (
@@ -856,7 +862,7 @@ function ItemsCardGrid({ items, projectId, isAdmin, readOnly = false, onDelete, 
               })()}
 
               {/* Admin delete */}
-              {isAdmin && !readOnly && (
+              {canEdit && !readOnly && (
                 <div className="mt-1">
                   <button
                     onClick={(e) => {
