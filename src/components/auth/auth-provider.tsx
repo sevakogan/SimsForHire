@@ -87,12 +87,8 @@ export function AuthProvider({ children, serverProfile }: AuthProviderProps) {
     setProfile(null);
     setSession(null);
 
-    try {
-      // Client-side signOut to clear browser session
-      await supabase.auth.signOut();
-    } catch {
-      // Ignore — server route will clear cookies regardless
-    }
+    // Fire-and-forget client-side signOut — don't await so it can't block navigation
+    supabase.auth.signOut().catch(() => {});
 
     // POST to server route to clear HTTP-only auth cookies,
     // then follow the redirect to /login
