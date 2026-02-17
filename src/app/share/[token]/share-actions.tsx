@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import Image from "next/image";
 import Link from "next/link";
 import { isExternalImage } from "@/lib/parse-images";
@@ -41,8 +42,8 @@ interface ShareActionsProps {
   discountAmount: number;
 }
 
-/** Read-only 2-row status display for the customer share page */
-function StatusBadge({ status }: { status: string }) {
+/** Inner content for the status badge — renders the two rows of pills */
+function StatusBadgeContent({ status }: { status: string }) {
   function renderPill(s: ProjectStatus) {
     const config = STATUS_CONFIG[s];
     const isActive = status === s;
@@ -61,13 +62,22 @@ function StatusBadge({ status }: { status: string }) {
   }
 
   return (
-    <div id="share-status-badge" className="flex flex-col gap-1.5">
+    <>
       <div className="flex items-center gap-1.5">
         {STATUS_ROW_1.map(renderPill)}
       </div>
       <div className="flex items-center gap-1.5">
         {STATUS_ROW_2.map(renderPill)}
       </div>
+    </>
+  );
+}
+
+/** Read-only 2-row status display for the customer share page */
+function StatusBadge({ status }: { status: string }) {
+  return (
+    <div id="share-status-badge" className="flex flex-col gap-1.5">
+      <StatusBadgeContent status={status} />
     </div>
   );
 }
@@ -269,7 +279,25 @@ export function ShareActions({
   // Displayed status
   const displayStatus = submitted && allAccepted ? "accepted" : currentStatus;
 
-  // Already submitted or project already accepted
+  // Ref for the server-rendered status badge container (for portal override)
+  const statusBadgeRef = useRef<HTMLElement | null>(null);
+  const [statusBadgeReady, setStatusBadgeReady] = useState(false);
+
+  useEffect(() => {
+    const el = document.getElementById("share-status-badge");
+    if (el) {
+      statusBadgeRef.current = el;
+      setStatusBadgeReady(true);
+    }
+  }, []);
+
+  // Portal the updated StatusBadge into the header when client-side status differs from server
+  const statusPortal =
+    statusBadgeReady && statusBadgeRef.current && displayStatus !== projectStatus
+      ? createPortal(<StatusBadgeContent status={displayStatus} />, statusBadgeRef.current)
+      : null;
+
+  // Already submitted or project already accepted — show read-only invoice
   if (submitted || alreadyAccepted) {
     const isAllAccepted = alreadyAccepted || allAccepted;
 
@@ -297,45 +325,323 @@ export function ShareActions({
     );
 
     return (
-      <div className="space-y-6">
+      <div className="space-y-4">
+        {/* Portal: update the header status badge to reflect the new status */}
+        {statusPortal}
+
+        {/* Compact confirmation banner */}
+        <div
+          className={`flex items-center gap-3 rounded-lg px-4 py-3 ${
+            isAllAccepted ? "bg-green-50 border border-green-200" : "bg-amber-50 border border-amber-200"
+          }`}
+        >
+          {isAllAccepted ? (
+            <svg className="h-5 w-5 shrink-0 text-green-600" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+            </svg>
+          ) : (
+            <svg className="h-5 w-5 shrink-0 text-amber-600" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" />
+            </svg>
+          )}
+          <p className={`text-sm font-medium ${isAllAccepted ? "text-green-800" : "text-amber-800"}`}>
+            {isAllAccepted
+              ? "Invoice Accepted — Thank you!"
+              : "Response Submitted — The team will review rejected items."}
+          </p>
+        </div>
+
         {/* Top CTA */}
         {isAllAccepted && nextStepsCta}
 
-        {/* Confirmation card */}
-        <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm text-center">
-          <div
-            className={`mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full ${
-              isAllAccepted ? "bg-green-100" : "bg-amber-100"
-            }`}
-          >
-            {isAllAccepted ? (
-              <svg className="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
-              </svg>
-            ) : (
-              <svg className="h-6 w-6 text-amber-600" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" />
-              </svg>
-            )}
+        {/* Read-only items table — desktop */}
+        <div className="hidden sm:block overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+          <table className="w-full text-sm table-fixed">
+            <thead className="border-b border-gray-200 bg-gray-50/80">
+              <tr>
+                <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 w-10">
+                  #
+                </th>
+                <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+                  Item
+                </th>
+                <th className="px-3 py-3 text-center text-xs font-semibold uppercase tracking-wider text-gray-500 w-12">
+                  Qty
+                </th>
+                <th className="px-3 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-500 w-20">
+                  Price
+                </th>
+                <th className="px-3 py-3 text-center text-xs font-semibold uppercase tracking-wider text-gray-500 w-24">
+                  Status
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {visibleDisplayData.map((display, index) => {
+                const status = decisions[display.id];
+                const hasNote = !!(notes[display.id]?.trim());
+                const rowBg = status === "accepted"
+                  ? "bg-green-50/50"
+                  : status === "rejected"
+                    ? "bg-red-50/50"
+                    : index % 2 === 0
+                      ? "bg-white"
+                      : "bg-gray-50/40";
+
+                return (
+                  <tr key={display.id} className={rowBg}>
+                    <td className="px-3 py-2.5 text-gray-400 tabular-nums text-xs">
+                      {index + 1}
+                    </td>
+                    <td className="px-3 py-2.5 overflow-hidden">
+                      <div className="flex items-center gap-2.5">
+                        {display.thumb ? (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              setLightboxItem(display);
+                            }}
+                            className="shrink-0 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 cursor-pointer"
+                          >
+                            <Image
+                              src={display.thumb}
+                              alt=""
+                              width={36}
+                              height={36}
+                              className="h-9 w-9 rounded-lg object-cover"
+                              unoptimized={isExternalImage(display.thumb)}
+                            />
+                          </button>
+                        ) : (
+                          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gray-100 text-gray-400">
+                            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0 0 22.5 18.75V5.25A2.25 2.25 0 0 0 20.25 3H3.75A2.25 2.25 0 0 0 1.5 5.25v13.5A2.25 2.25 0 0 0 3.75 21Z" />
+                            </svg>
+                          </div>
+                        )}
+                        <div className="min-w-0 overflow-hidden">
+                          <p className="text-sm font-medium text-gray-900 truncate">
+                            {display.name}
+                          </p>
+                          {hasNote && (
+                            <p className="mt-0.5 text-[10px] text-blue-600 truncate" title={notes[display.id]}>
+                              &ldquo;{notes[display.id]}&rdquo;
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-3 py-2.5 text-center tabular-nums text-gray-700 text-xs">
+                      {display.qty}
+                    </td>
+                    <td className="px-3 py-2.5 text-right tabular-nums text-gray-900 text-xs font-medium">
+                      {formatCurrency(display.price)}
+                    </td>
+                    <td className="px-3 py-2.5 text-center">
+                      <span
+                        className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium ${
+                          status === "accepted"
+                            ? "bg-green-100 text-green-700"
+                            : status === "rejected"
+                              ? "bg-red-100 text-red-700"
+                              : "bg-gray-100 text-gray-500"
+                        }`}
+                      >
+                        {status === "accepted" ? "Accepted" : status === "rejected" ? "Rejected" : "Pending"}
+                      </span>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Read-only items — mobile cards */}
+        <div className="space-y-3 sm:hidden">
+          {visibleDisplayData.map((display, index) => {
+            const status = decisions[display.id];
+            const hasNote = !!(notes[display.id]?.trim());
+            const cardBorder = status === "accepted"
+              ? "border-green-200"
+              : status === "rejected"
+                ? "border-red-200"
+                : "border-gray-200";
+            const cardBg = status === "accepted"
+              ? "bg-green-50/30"
+              : status === "rejected"
+                ? "bg-red-50/30"
+                : index % 2 === 0
+                  ? "bg-white"
+                  : "bg-gray-50/60";
+
+            return (
+              <div
+                key={display.id}
+                className={`rounded-xl border p-3 shadow-sm ${cardBorder} ${cardBg}`}
+              >
+                <div className="flex items-start gap-2.5">
+                  <span className="mt-0.5 text-xs font-medium text-gray-400">
+                    {index + 1}.
+                  </span>
+                  {display.thumb ? (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setLightboxItem(display);
+                      }}
+                      className="shrink-0 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 cursor-pointer"
+                    >
+                      <Image
+                        src={display.thumb}
+                        alt=""
+                        width={40}
+                        height={40}
+                        className="h-10 w-10 rounded-lg object-cover"
+                        unoptimized={isExternalImage(display.thumb)}
+                      />
+                    </button>
+                  ) : (
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-gray-100 text-gray-400">
+                      <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0 0 22.5 18.75V5.25A2.25 2.25 0 0 0 20.25 3H3.75A2.25 2.25 0 0 0 1.5 5.25v13.5A2.25 2.25 0 0 0 3.75 21Z" />
+                      </svg>
+                    </div>
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium text-gray-900 line-clamp-2">
+                      {display.name}
+                    </p>
+                    <div className="mt-1 flex items-center gap-3 text-xs text-gray-500">
+                      <span>Qty: {display.qty}</span>
+                      <span className="font-medium text-gray-900">{formatCurrency(display.price)}</span>
+                    </div>
+                  </div>
+                  <span
+                    className={`shrink-0 inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium ${
+                      status === "accepted"
+                        ? "bg-green-100 text-green-700"
+                        : status === "rejected"
+                          ? "bg-red-100 text-red-700"
+                          : "bg-gray-100 text-gray-500"
+                    }`}
+                  >
+                    {status === "accepted" ? "Accepted" : status === "rejected" ? "Rejected" : "Pending"}
+                  </span>
+                </div>
+
+                {/* Note preview */}
+                {hasNote && (
+                  <p className="mt-2 text-[10px] text-blue-600 bg-blue-50 rounded px-2 py-1 italic">
+                    &ldquo;{notes[display.id]}&rdquo;
+                  </p>
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Summary totals */}
+        <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+          <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+            <span className="text-sm text-gray-500">Items Total</span>
+            <span className="text-sm tabular-nums text-gray-900">
+              {formatCurrency(totalSelling)}
+            </span>
           </div>
-          <h3 className="text-base font-semibold text-gray-900">
-            {isAllAccepted ? "Invoice Accepted" : "Response Submitted"}
-          </h3>
-          <p className="mt-1 text-sm text-gray-500">
-            {isAllAccepted
-              ? "Thank you! All items have been accepted."
-              : "Thank you! Your selections have been submitted. The team will review rejected items."}
-          </p>
+          <div className="flex items-center justify-between border-b border-gray-100 py-3">
+            <span className="text-sm text-gray-500">Services</span>
+            <span className="text-sm tabular-nums text-gray-900">
+              {formatCurrency(totalServices)}
+            </span>
+          </div>
+          {taxPercent > 0 && (
+            <div className="flex items-center justify-between border-b border-gray-100 py-3">
+              <span className="text-sm text-gray-500">Tax ({taxPercent}%)</span>
+              <span className="text-sm tabular-nums text-gray-900">
+                {formatCurrency(taxAmount)}
+              </span>
+            </div>
+          )}
+          {discountAmount > 0 && (
+            <div className="flex items-center justify-between border-b border-gray-100 py-3">
+              <span className="text-sm text-gray-500">
+                {discountType === "percent" ? `Discount (${discountPercent}%)` : "Discount"}
+              </span>
+              <span className="text-sm tabular-nums text-green-600">
+                −{formatCurrency(discountAmount)}
+              </span>
+            </div>
+          )}
+          <div className="flex items-center justify-between pt-3">
+            <span className="text-base font-semibold text-gray-900">Total</span>
+            <span className="text-lg font-bold tabular-nums text-gray-900">
+              {formatCurrency(grandTotal)}
+            </span>
+          </div>
         </div>
 
         {/* Bottom CTA */}
         {isAllAccepted && nextStepsCta}
+
+        {/* Image lightbox overlay */}
+        {lightboxItem && lightboxItem.thumb && (
+          <div
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 px-4"
+            onClick={() => setLightboxItem(null)}
+          >
+            <div
+              className="relative w-full max-w-md rounded-2xl bg-white shadow-2xl overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button
+                type="button"
+                onClick={() => setLightboxItem(null)}
+                className="absolute right-3 top-3 z-10 rounded-full bg-black/40 p-1.5 text-white/90 backdrop-blur-sm transition-colors hover:bg-black/60"
+              >
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+                </svg>
+              </button>
+              <div className="relative aspect-square w-full bg-gray-100">
+                <Image
+                  src={lightboxItem.thumb}
+                  alt={lightboxItem.name}
+                  fill
+                  className="object-contain"
+                  sizes="(max-width: 448px) 100vw, 448px"
+                  unoptimized={isExternalImage(lightboxItem.thumb)}
+                />
+              </div>
+              <div className="px-5 py-4">
+                <h3 className="text-base font-semibold text-gray-900">
+                  {lightboxItem.name}
+                </h3>
+                {lightboxItem.itemType && (
+                  <p className="mt-0.5 text-xs font-medium text-primary">
+                    {lightboxItem.itemType}
+                  </p>
+                )}
+                <p className="mt-2 text-lg font-bold text-gray-900 tabular-nums">
+                  {formatCurrency(lightboxItem.price)}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
 
   return (
     <div className="space-y-4">
+      {/* Portal: update the header status badge if status changed client-side */}
+      {statusPortal}
+
       {error && (
         <div className="rounded-lg bg-red-50 p-3 text-sm text-red-600">
           {error}
