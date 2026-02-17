@@ -205,9 +205,23 @@ function ProjectListRow({
           </p>
           <FulfillmentBadge type={project.fulfillment_type} />
         </div>
-        <p className="text-xs sm:text-sm text-muted-foreground truncate">
-          {project.client_name} · {new Date(project.created_at).toLocaleDateString()}
-        </p>
+        <div className="flex items-center gap-1.5 mt-0.5">
+          {project.creator_avatar ? (
+            <img
+              src={project.creator_avatar}
+              alt={project.creator_name ?? ""}
+              className="h-4 w-4 rounded-full object-cover"
+              referrerPolicy="no-referrer"
+            />
+          ) : project.creator_name ? (
+            <div className="flex h-4 w-4 items-center justify-center rounded-full bg-gray-100 text-[8px] font-semibold text-gray-500">
+              {project.creator_name.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase()}
+            </div>
+          ) : null}
+          <p className="text-xs sm:text-sm text-muted-foreground truncate">
+            {project.client_name} · {new Date(project.created_at).toLocaleDateString()}
+          </p>
+        </div>
       </Link>
 
       <div className="flex items-center gap-2 ml-3 shrink-0">
@@ -306,9 +320,23 @@ function ProjectGridCard({
             {project.name}
           </p>
 
-          <p className="text-xs text-muted-foreground truncate">
-            {project.client_name}
-          </p>
+          <div className="flex items-center gap-1.5">
+            {project.creator_avatar ? (
+              <img
+                src={project.creator_avatar}
+                alt={project.creator_name ?? ""}
+                className="h-3.5 w-3.5 rounded-full object-cover shrink-0"
+                referrerPolicy="no-referrer"
+              />
+            ) : project.creator_name ? (
+              <div className="flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full bg-gray-100 text-[7px] font-semibold text-gray-500">
+                {project.creator_name.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase()}
+              </div>
+            ) : null}
+            <p className="text-xs text-muted-foreground truncate">
+              {project.client_name}
+            </p>
+          </div>
 
           <div className="flex items-center gap-1.5 flex-wrap">
             <Badge variant={project.status}>{project.status}</Badge>

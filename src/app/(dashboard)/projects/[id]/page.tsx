@@ -48,6 +48,18 @@ export default async function ProjectDetailPage({ params }: Props) {
   const editLocked = canEdit && isEditLocked(project.status);
 
   const client = await getClientById(project.client_id);
+
+  // Fetch creator profile (for "Created by" display)
+  let creator: { full_name: string | null; avatar_url: string | null } | null = null;
+  if (project.created_by) {
+    const { data: creatorProfile } = await supabase
+      .from("profiles")
+      .select("full_name, avatar_url")
+      .eq("id", project.created_by)
+      .single();
+    creator = creatorProfile;
+  }
+
   const [items, noteCount] = await Promise.all([
     admin ? getItems(id) : getItemsForClient(id),
     canEdit ? getUnreadNoteCount(id) : Promise.resolve(0),
@@ -109,6 +121,31 @@ export default async function ProjectDetailPage({ params }: Props) {
           <EditableProjectName projectId={project.id} name={project.name} isAdmin={admin} readOnly={editLocked || employee} />
           {!canEdit && <Badge variant={project.status}>{project.status}</Badge>}
         </div>
+        {/* Created by */}
+        {creator && canEdit && (
+          <div className="flex items-center gap-2 mt-1.5">
+            {creator.avatar_url ? (
+              <img
+                src={creator.avatar_url}
+                alt={creator.full_name ?? "Creator"}
+                className="h-5 w-5 rounded-full object-cover"
+                referrerPolicy="no-referrer"
+              />
+            ) : (
+              <div className="flex h-5 w-5 items-center justify-center rounded-full bg-gray-100 text-[9px] font-semibold text-gray-500">
+                {(creator.full_name ?? "?")
+                  .split(" ")
+                  .map((w) => w[0])
+                  .join("")
+                  .slice(0, 2)
+                  .toUpperCase()}
+              </div>
+            )}
+            <span className="text-xs text-muted-foreground">
+              Created by <span className="font-medium text-foreground">{creator.full_name ?? "Unknown"}</span>
+            </span>
+          </div>
+        )}
         {!canEdit && project.invoice_number && (
           <p className="text-xs text-muted-foreground mt-0.5">
             Invoice #{project.invoice_number}

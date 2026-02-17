@@ -26,6 +26,8 @@ export async function getProjects(filters?: {
 
 export interface ProjectWithClient extends Project {
   client_name: string;
+  creator_name: string | null;
+  creator_avatar: string | null;
 }
 
 export async function getProjectsWithClients(): Promise<ProjectWithClient[]> {
@@ -37,11 +39,32 @@ export async function getProjectsWithClients(): Promise<ProjectWithClient[]> {
 
   if (error) throw new Error(error.message);
 
-  return (data ?? []).map((p) => ({
-    ...p,
-    client_name: (p.clients as unknown as { name: string })?.name ?? "Unknown",
-    clients: undefined,
-  })) as ProjectWithClient[];
+  // Batch-fetch creator profiles for all projects with a created_by
+  const creatorIds = [...new Set(
+    (data ?? []).map((p) => p.created_by).filter(Boolean) as string[]
+  )];
+  const creatorMap = new Map<string, { full_name: string | null; avatar_url: string | null }>();
+  if (creatorIds.length > 0) {
+    const { data: profiles } = await supabase
+      .from("profiles")
+      .select("id, full_name, avatar_url")
+      .in("id", creatorIds);
+    for (const p of profiles ?? []) {
+      creatorMap.set(p.id, { full_name: p.full_name, avatar_url: p.avatar_url });
+    }
+  }
+
+  return (data ?? []).map((p) => {
+    const clientData = p.clients as unknown as { name: string } | null;
+    const creator = p.created_by ? creatorMap.get(p.created_by) : null;
+    return {
+      ...p,
+      client_name: clientData?.name ?? "Unknown",
+      creator_name: creator?.full_name ?? null,
+      creator_avatar: creator?.avatar_url ?? null,
+      clients: undefined,
+    };
+  }) as ProjectWithClient[];
 }
 
 export async function getProjectById(id: string): Promise<Project | null> {
