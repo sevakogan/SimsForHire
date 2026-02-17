@@ -7,15 +7,20 @@ import Image from "next/image";
 import { useAuth } from "@/components/auth/auth-provider";
 import { NotificationBell } from "./notification-bell";
 
-const navTabs = [
-  { label: "Dashboard", href: "/dashboard" },
-  { label: "Clients", href: "/clients" },
-  { label: "Projects", href: "/projects" },
+const allNavTabs = [
+  { label: "Dashboard", href: "/dashboard", internalOnly: false },
+  { label: "Clients", href: "/clients", internalOnly: true },
+  { label: "Projects", href: "/projects", internalOnly: false },
 ];
+
+/** Display "Customer" instead of "client" in the role badge */
+function displayRole(role: string): string {
+  return role === "client" ? "Customer" : role;
+}
 
 export function TopNav() {
   const pathname = usePathname();
-  const { user, profile, signOut, isAdmin, isEmployee } = useAuth();
+  const { user, profile, signOut, isAdmin, isEmployee, isInternal } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -80,26 +85,28 @@ export function TopNav() {
 
           {/* Desktop nav */}
           <nav className="hidden items-center gap-1 sm:flex">
-            {navTabs.map((tab) => {
-              const isActive =
-                pathname === tab.href ||
-                (tab.href !== "/dashboard" && pathname.startsWith(tab.href));
-              return (
-                <Link
-                  key={tab.href}
-                  href={tab.href}
-                  className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                    isActive
-                      ? "bg-primary/10 text-primary"
-                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                  }`}
-                >
-                  {tab.label}
-                </Link>
-              );
-            })}
-            {/* Customizations tab — always visible */}
-            {(() => {
+            {allNavTabs
+              .filter((tab) => !tab.internalOnly || isInternal)
+              .map((tab) => {
+                const isActive =
+                  pathname === tab.href ||
+                  (tab.href !== "/dashboard" && pathname.startsWith(tab.href));
+                return (
+                  <Link
+                    key={tab.href}
+                    href={tab.href}
+                    className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                      isActive
+                        ? "bg-primary/10 text-primary"
+                        : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                    }`}
+                  >
+                    {tab.label}
+                  </Link>
+                );
+              })}
+            {/* Customizations tab — internal roles only */}
+            {isInternal && (() => {
               const isCustomizationsActive = pathname.startsWith("/customizations");
               const customizationsLabel = isAdmin ? "Customizations" : "Products";
               const customizationsHref = isAdmin ? "/customizations" : "/customizations/products";
@@ -185,7 +192,7 @@ export function TopNav() {
                 </div>
                 {profile?.role && (
                   <span className="mt-2 inline-block rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium capitalize text-primary">
-                    {profile.role}
+                    {displayRole(profile.role)}
                   </span>
                 )}
               </div>
@@ -213,7 +220,7 @@ export function TopNav() {
                     label="Customizations"
                     description="Tags, merchants, products & services"
                   />
-                ) : (
+                ) : isInternal ? (
                   <DropdownLink
                     href="/customizations/products"
                     icon={
@@ -224,7 +231,7 @@ export function TopNav() {
                     label="Products"
                     description="Product catalog"
                   />
-                )}
+                ) : null}
 
                 {isAdmin && (
                   <DropdownLink
@@ -278,24 +285,26 @@ export function TopNav() {
       {mobileOpen && (
         <nav className="border-t border-border bg-white px-4 pb-3 pt-2 sm:hidden">
           <div className="space-y-1">
-            {navTabs.map((tab) => {
-              const isActive =
-                pathname === tab.href ||
-                (tab.href !== "/dashboard" && pathname.startsWith(tab.href));
-              return (
-                <Link
-                  key={tab.href}
-                  href={tab.href}
-                  className={`block rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
-                    isActive
-                      ? "bg-primary/10 text-primary"
-                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                  }`}
-                >
-                  {tab.label}
-                </Link>
-              );
-            })}
+            {allNavTabs
+              .filter((tab) => !tab.internalOnly || isInternal)
+              .map((tab) => {
+                const isActive =
+                  pathname === tab.href ||
+                  (tab.href !== "/dashboard" && pathname.startsWith(tab.href));
+                return (
+                  <Link
+                    key={tab.href}
+                    href={tab.href}
+                    className={`block rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
+                      isActive
+                        ? "bg-primary/10 text-primary"
+                        : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                    }`}
+                  >
+                    {tab.label}
+                  </Link>
+                );
+              })}
           </div>
           <div className="mt-2 border-t border-border/50 pt-2">
             <p className="px-3 py-1 text-xs text-muted-foreground truncate">
