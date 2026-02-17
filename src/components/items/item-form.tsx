@@ -170,8 +170,13 @@ export function ItemForm({ projectId, itemNumber, item, isAdmin, onDone }: ItemF
         retail_price: isNaN(parsedRetail) ? 0 : parsedRetail,
         retail_shipping: isNaN(parsedShipping) ? 0 : parsedShipping,
         discount_percent: isNaN(parsedDiscount) ? 0 : parsedDiscount,
-        my_cost: isNaN(parsedMyCost) ? 0 : parsedMyCost,
-        my_shipping: isNaN(parsedMyShipping) ? 0 : parsedMyShipping,
+        // Only admins can set cost fields — employees must not overwrite them
+        ...(isAdmin
+          ? {
+              my_cost: isNaN(parsedMyCost) ? 0 : parsedMyCost,
+              my_shipping: isNaN(parsedMyShipping) ? 0 : parsedMyShipping,
+            }
+          : {}),
         price_sold_for: parsedSoldFor !== null && !isNaN(parsedSoldFor) ? parsedSoldFor : null,
         image_url: imageUrl ?? null,
         notes: fields.notes || "",
@@ -404,10 +409,11 @@ export function ItemForm({ projectId, itemNumber, item, isAdmin, onDone }: ItemF
 
       </div>
 
-      {!isAdmin && (
-        <input type="hidden" name="my_cost" value="0" />
+      {/* Admin cost fields are included in handleSubmit payload only for admins.
+         No hidden fields needed — non-admins simply omit cost data. */}
+      {isAdmin && (
+        <input type="hidden" name="my_shipping" value={fields.my_shipping} />
       )}
-      <input type="hidden" name="my_shipping" value={fields.my_shipping} />
 
       {/* Row 4: Notes */}
       <div className={pillWrapper}>

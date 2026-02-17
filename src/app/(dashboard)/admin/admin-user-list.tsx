@@ -3,7 +3,7 @@
 import { useState, useMemo } from "react";
 import { Badge } from "@/components/ui/badge";
 import { formStyles } from "@/components/ui/form-styles";
-import { UserRow } from "./user-row";
+import { UserRow, EmployeeCard } from "./user-row";
 import type { ProfileWithClient } from "@/lib/actions/users";
 import type { Client } from "@/types";
 
@@ -145,7 +145,7 @@ export function AdminUserList({ users, clients, currentUserId }: Props) {
 
       {/* Employee Users */}
       {employeeUsers.filter((u) => u.status !== "denied").length > 0 && (
-        <section className="space-y-1.5">
+        <section className="space-y-2.5">
           <div className="flex items-center gap-2 px-1">
             <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               Employees
@@ -154,17 +154,15 @@ export function AdminUserList({ users, clients, currentUserId }: Props) {
               {employeeUsers.filter((u) => u.status !== "denied").length}
             </span>
           </div>
-          <div className="overflow-hidden rounded-xl border border-border bg-white">
+          <div className="space-y-2">
             {employeeUsers
               .filter((u) => u.status !== "denied")
-              .map((user, i, arr) => (
-                <UserRow
+              .map((user) => (
+                <EmployeeCard
                   key={user.id}
                   user={user}
                   clients={clients}
                   currentUserId={currentUserId}
-                  showEmployeeClients
-                  showBorder={i < arr.length - 1}
                 />
               ))}
           </div>
