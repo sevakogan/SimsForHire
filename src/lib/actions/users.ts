@@ -196,20 +196,21 @@ export async function updateUserRole(
 export async function inviteUser(
   email: string,
   fullName: string,
-  role: UserRole
+  role: UserRole,
+  password: string
 ): Promise<{ error: string | null }> {
   const admin = getAdminSupabase();
 
-  // Invite user via Supabase Auth (sends magic link email)
-  const { data, error: inviteError } = await admin.auth.admin.inviteUserByEmail(
+  // Create user directly via admin API — bypasses email rate limits.
+  // email_confirm: true marks email as verified so user can log in immediately.
+  const { data, error: createError } = await admin.auth.admin.createUser({
     email,
-    {
-      data: { full_name: fullName },
-      redirectTo: `${process.env.NEXT_PUBLIC_APP_URL ?? "https://simsforhire.com"}/auth/callback`,
-    }
-  );
+    password,
+    email_confirm: true,
+    user_metadata: { full_name: fullName },
+  });
 
-  if (inviteError) return { error: inviteError.message };
+  if (createError) return { error: createError.message };
 
   // Update the profile that was auto-created by the trigger
   if (data?.user) {
