@@ -136,8 +136,14 @@ export function ShareActions({
   const isEditable =
     !["accepted", "paid", "preparing", "shipped", "received", "completed"].includes(currentStatus);
 
+  // Lock the invoice if the project status is at "accepted" or beyond,
+  // OR if every single item was already accepted on initial load (fallback).
+  const allItemsAlreadyAccepted = initialItems.length > 0 &&
+    initialItems.every((item) => item.acceptance_status === "accepted");
+
   const alreadyAccepted =
-    ["accepted", "paid", "preparing", "shipped", "received", "completed"].includes(currentStatus);
+    ["accepted", "paid", "preparing", "shipped", "received", "completed"].includes(currentStatus) ||
+    allItemsAlreadyAccepted;
 
   const activeDecisions = Object.fromEntries(
     Object.entries(decisions).filter(([id]) =>
@@ -284,12 +290,17 @@ export function ShareActions({
   const [statusBadgeReady, setStatusBadgeReady] = useState(false);
 
   useEffect(() => {
+    if (displayStatus === projectStatus) return; // No change — skip portal setup
     const el = document.getElementById("share-status-badge");
     if (el) {
+      // Clear server-rendered children so the portal doesn't double them
+      while (el.firstChild) {
+        el.removeChild(el.firstChild);
+      }
       statusBadgeRef.current = el;
       setStatusBadgeReady(true);
     }
-  }, []);
+  }, [displayStatus, projectStatus]);
 
   // Portal the updated StatusBadge into the header when client-side status differs from server
   const statusPortal =

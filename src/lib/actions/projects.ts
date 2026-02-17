@@ -430,6 +430,14 @@ export async function acceptAllItemsByShareToken(
 
   if (itemsError) return { error: itemsError.message };
 
+  // Update project status to "accepted" so it stays locked on reload
+  const { error: statusError } = await supabase
+    .from("projects")
+    .update({ status: "accepted" })
+    .eq("id", project.id);
+
+  if (statusError) return { error: statusError.message };
+
   // Notify admin
   await createNotification({
     projectId: project.id,
@@ -439,6 +447,7 @@ export async function acceptAllItemsByShareToken(
   });
 
   revalidatePath("/projects", "layout");
+  revalidatePath("/share", "layout");
   return { error: null };
 }
 
