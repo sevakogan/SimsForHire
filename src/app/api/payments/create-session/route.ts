@@ -133,8 +133,9 @@ export async function POST(request: NextRequest) {
       : project.name;
 
     // 6. Create Checkout Session
+    // Omit payment_method_types so Stripe dynamically shows all methods
+    // enabled in the Stripe Dashboard (Affirm, Klarna, Apple Pay, etc.)
     const session = await stripe.checkout.sessions.create({
-      payment_method_types: settings.accepted_payment_methods as Stripe.Checkout.SessionCreateParams.PaymentMethodType[],
       line_items: [
         {
           price_data: {
