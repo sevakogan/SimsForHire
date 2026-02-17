@@ -1,7 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
-import { createPortal } from "react-dom";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { isExternalImage } from "@/lib/parse-images";
@@ -40,6 +39,7 @@ interface ShareActionsProps {
   discountPercent: number;
   discountType: DiscountType;
   discountAmount: number;
+  companyPhone: string | null;
 }
 
 /** Inner content for the status badge — renders the two rows of pills */
@@ -97,6 +97,7 @@ export function ShareActions({
   discountPercent,
   discountType,
   discountAmount: discountAmountProp,
+  companyPhone,
 }: ShareActionsProps) {
   const [currentStatus, setCurrentStatus] = useState(projectStatus);
   const [visibleItems, setVisibleItems] = useState(initialItems);
@@ -285,28 +286,28 @@ export function ShareActions({
   // Displayed status
   const displayStatus = submitted && allAccepted ? "accepted" : currentStatus;
 
-  // Ref for the server-rendered status badge container (for portal override)
-  const statusBadgeRef = useRef<HTMLElement | null>(null);
-  const [statusBadgeReady, setStatusBadgeReady] = useState(false);
-
+  // Update the server-rendered status badge pills via DOM when status changes client-side
   useEffect(() => {
-    if (displayStatus === projectStatus) return; // No change — skip portal setup
-    const el = document.getElementById("share-status-badge");
-    if (el) {
-      // Clear server-rendered children so the portal doesn't double them
-      while (el.firstChild) {
-        el.removeChild(el.firstChild);
-      }
-      statusBadgeRef.current = el;
-      setStatusBadgeReady(true);
-    }
-  }, [displayStatus, projectStatus]);
+    if (displayStatus === projectStatus) return;
+    const container = document.getElementById("share-status-badge");
+    if (!container) return;
 
-  // Portal the updated StatusBadge into the header when client-side status differs from server
-  const statusPortal =
-    statusBadgeReady && statusBadgeRef.current && displayStatus !== projectStatus
-      ? createPortal(<StatusBadgeContent status={displayStatus} />, statusBadgeRef.current)
-      : null;
+    const pills = container.querySelectorAll<HTMLSpanElement>("span");
+    pills.forEach((pill) => {
+      const label = pill.textContent?.trim().toLowerCase() ?? "";
+      const statusKey = label === "quote" ? "quote" : label;
+      const config = STATUS_CONFIG[statusKey as ProjectStatus];
+      if (!config) return;
+
+      const isActive = statusKey === displayStatus;
+      // Reset classes — keep layout classes, swap color/state classes
+      pill.className = `inline-flex items-center justify-center rounded-lg px-3 py-1.5 text-xs font-medium border ${
+        isActive
+          ? `${config.activeBg} ${config.activeText} border-transparent shadow-sm`
+          : `${config.bg} ${config.text} ${config.border} opacity-60`
+      }`;
+    });
+  }, [displayStatus, projectStatus]);
 
   // Already submitted or project already accepted — show read-only invoice
   if (submitted || alreadyAccepted) {
@@ -337,9 +338,6 @@ export function ShareActions({
 
     return (
       <div className="space-y-4">
-        {/* Portal: update the header status badge to reflect the new status */}
-        {statusPortal}
-
         {/* Compact confirmation banner */}
         <div
           className={`flex items-center gap-3 rounded-lg px-4 py-3 ${
@@ -599,6 +597,23 @@ export function ShareActions({
         {/* Bottom CTA */}
         {isAllAccepted && nextStepsCta}
 
+        {/* Locked footer */}
+        <div className="mt-4 text-center">
+          <p className="text-xs text-gray-400">
+            This invoice is locked.{" "}
+            {companyPhone ? (
+              <>
+                Message your rep with any questions{" "}
+                <a href={`tel:${companyPhone}`} className="text-primary hover:underline">
+                  {companyPhone}
+                </a>
+              </>
+            ) : (
+              "Contact your rep with any questions."
+            )}
+          </p>
+        </div>
+
         {/* Image lightbox overlay */}
         {lightboxItem && lightboxItem.thumb && (
           <div
@@ -650,9 +665,6 @@ export function ShareActions({
 
   return (
     <div className="space-y-4">
-      {/* Portal: update the header status badge if status changed client-side */}
-      {statusPortal}
-
       {error && (
         <div className="rounded-lg bg-red-50 p-3 text-sm text-red-600">
           {error}
@@ -1122,6 +1134,13 @@ export function ShareActions({
           </div>
         </div>
       )}
+
+      {/* Live invoice footer */}
+      <div className="mt-4 text-center">
+        <p className="text-xs text-gray-400">
+          This is a live invoice — prices may be updated at any time.
+        </p>
+      </div>
 
       {/* Image lightbox overlay */}
       {lightboxItem && lightboxItem.thumb && (

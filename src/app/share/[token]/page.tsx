@@ -234,15 +234,11 @@ export default async function SharedInvoicePage({ params }: Props) {
           discountPercent={discPct}
           discountType={discountType}
           discountAmount={discAmt}
+          companyPhone={company.phone ?? null}
         />
       )}
 
-      {/* Footer */}
-      <div className="mt-8 text-center">
-        <p className="text-xs text-gray-400">
-          This is a live invoice — prices may be updated at any time.
-        </p>
-      </div>
+      {/* Footer is rendered inside ShareActions so it reacts to acceptance state */}
     </>
   );
 }
