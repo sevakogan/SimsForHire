@@ -82,15 +82,25 @@ export function AuthProvider({ children, serverProfile }: AuthProviderProps) {
   }, [fetchProfile]);
 
   async function signOut() {
-    try {
-      await supabase.auth.signOut();
-    } catch {
-      // Sign out from Supabase failed — redirect to login anyway
-    }
+    // Clear client-side state immediately
     setUser(null);
     setProfile(null);
     setSession(null);
-    window.location.href = "/login";
+
+    try {
+      // Client-side signOut to clear browser session
+      await supabase.auth.signOut();
+    } catch {
+      // Ignore — server route will clear cookies regardless
+    }
+
+    // POST to server route to clear HTTP-only auth cookies,
+    // then follow the redirect to /login
+    const form = document.createElement("form");
+    form.method = "POST";
+    form.action = "/auth/signout";
+    document.body.appendChild(form);
+    form.submit();
   }
 
   const isAdmin = profile ? isAdminRole(profile.role) : false;
