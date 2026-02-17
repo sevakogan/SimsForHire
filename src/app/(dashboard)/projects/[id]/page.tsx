@@ -106,7 +106,7 @@ export default async function ProjectDetailPage({ params }: Props) {
           </div>
         )}
         <div className="flex items-center gap-2 sm:gap-3">
-          <EditableProjectName projectId={project.id} name={project.name} isAdmin={canEdit} readOnly={editLocked} />
+          <EditableProjectName projectId={project.id} name={project.name} isAdmin={admin} readOnly={editLocked || employee} />
           {!canEdit && <Badge variant={project.status}>{project.status}</Badge>}
         </div>
         {!canEdit && project.invoice_number && (
@@ -203,9 +203,9 @@ export default async function ProjectDetailPage({ params }: Props) {
               discountAmount={Number(project.discount_amount) || 0}
               itemsTotal={totalRetail}
               deliveryTotal={totalServices}
-              myCost={totalMyCost}
-              myShipping={totalMyShipping}
-              readOnly={editLocked}
+              myCost={admin ? totalMyCost : undefined}
+              myShipping={admin ? totalMyShipping : undefined}
+              readOnly={editLocked || employee}
             />
           </div>
         </div>
@@ -247,10 +247,10 @@ export default async function ProjectDetailPage({ params }: Props) {
         )}
       </div>
 
-      <ItemsWithSidebar items={items} projectId={id} isAdmin={admin} canEdit={canEdit} unreadNoteCount={noteCount} readOnly={editLocked} />
+      <ItemsWithSidebar items={items} projectId={id} isAdmin={admin} canEdit={admin} unreadNoteCount={noteCount} readOnly={editLocked} />
 
-      {/* Inline add item bar — hidden when invoice is locked */}
-      {canEdit && !editLocked && <InlineAddItem projectId={id} isAdmin={admin} />}
+      {/* Inline add item bar — admin only, hidden when invoice is locked */}
+      {admin && !editLocked && <InlineAddItem projectId={id} isAdmin={admin} />}
 
       {/* Invoice Summary Footer — live-synced with discount changes */}
       {items.length > 0 && (
