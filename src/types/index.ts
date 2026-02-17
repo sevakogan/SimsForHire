@@ -158,3 +158,30 @@ export interface ContactMessage {
   read_at: string | null;
   created_at: string;
 }
+
+// Payments
+export type PaymentMethod = "card" | "us_bank_account" | "cashapp";
+export type PaymentStatus = "pending" | "succeeded" | "failed" | "refunded" | "expired";
+
+export interface PaymentSettings {
+  id: string;
+  stripe_publishable_key: string;
+  stripe_secret_key: string;
+  stripe_webhook_secret: string;
+  payments_enabled: boolean;
+  accepted_payment_methods: PaymentMethod[];
+  updated_at: string;
+}
+
+export interface Payment {
+  id: string;
+  project_id: string;
+  stripe_session_id: string;
+  stripe_payment_intent_id: string | null;
+  amount: number;
+  currency: string;
+  status: PaymentStatus;
+  customer_email: string | null;
+  created_at: string;
+  updated_at: string;
+}

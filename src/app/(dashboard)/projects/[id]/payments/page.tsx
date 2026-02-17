@@ -1,9 +1,12 @@
 import { notFound } from "next/navigation";
+import Link from "next/link";
 import { getProjectById } from "@/lib/actions/projects";
 import { getItems } from "@/lib/actions/items";
+import { getPaymentsByProjectId } from "@/lib/actions/payments";
+import { getPaymentSettings } from "@/lib/actions/payment-settings";
 import { createSupabaseServer } from "@/lib/supabase-server";
 import { calculateInvoiceTotals, formatCurrency } from "@/lib/invoice-calculations";
-import type { Profile, Item, DiscountType } from "@/types";
+import type { Profile, Item, DiscountType, PaymentStatus } from "@/types";
 import { isAdminRole } from "@/types";
 
 interface Props {
@@ -31,7 +34,11 @@ export default async function PaymentsPage({ params }: Props) {
   const project = await getProjectById(id);
   if (!project) notFound();
 
-  const items = await getItems(id);
+  const [items, payments, paymentSettings] = await Promise.all([
+    getItems(id),
+    getPaymentsByProjectId(id),
+    getPaymentSettings(),
+  ]);
 
   const itemsTotal = items.reduce(
     (sum, i) => sum + Number(i.retail_price) * (i.quantity ?? 1),
@@ -204,28 +211,107 @@ export default async function PaymentsPage({ params }: Props) {
         </div>
       </div>
 
-      {/* Payment status placeholder */}
-      <div className="rounded-xl border border-dashed border-gray-200 py-12 text-center">
-        <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-gray-100">
-          <svg
-            className="h-7 w-7 text-gray-400"
-            fill="none"
-            viewBox="0 0 24 24"
-            strokeWidth={1.5}
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 0 0 2.25-2.25V6.75A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25v10.5A2.25 2.25 0 0 0 4.5 19.5Z"
-            />
-          </svg>
+      {/* Payment History */}
+      <div className="rounded-2xl border border-gray-200/80 bg-white shadow-sm overflow-hidden">
+        <div className="p-5 sm:p-6">
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-4">
+            Payment History
+          </h2>
+
+          {payments.length === 0 ? (
+            <div className="py-8 text-center">
+              <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-gray-100">
+                <svg
+                  className="h-6 w-6 text-gray-400"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={1.5}
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 0 0 2.25-2.25V6.75A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25v10.5A2.25 2.25 0 0 0 4.5 19.5Z"
+                  />
+                </svg>
+              </div>
+              <p className="text-sm font-medium text-gray-700">
+                No payments received yet
+              </p>
+              {!paymentSettings.payments_enabled && admin && (
+                <p className="mt-2 text-xs text-muted-foreground">
+                  Online payments are not configured.{" "}
+                  <Link
+                    href="/payment-setup"
+                    className="font-medium text-primary hover:underline"
+                  >
+                    Set up Stripe
+                  </Link>
+                </p>
+              )}
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {payments.map((payment) => (
+                <div
+                  key={payment.id}
+                  className="flex items-center justify-between rounded-xl border border-gray-100 bg-gray-50/50 px-4 py-3"
+                >
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-semibold tabular-nums text-gray-900">
+                        {formatCurrency(payment.amount / 100)}
+                      </span>
+                      <StatusBadge status={payment.status} />
+                    </div>
+                    <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
+                      <span>
+                        {new Date(payment.created_at).toLocaleDateString(
+                          "en-US",
+                          {
+                            month: "short",
+                            day: "numeric",
+                            year: "numeric",
+                            hour: "numeric",
+                            minute: "2-digit",
+                          }
+                        )}
+                      </span>
+                      {payment.customer_email && (
+                        <>
+                          <span className="text-gray-300">|</span>
+                          <span className="truncate">
+                            {payment.customer_email}
+                          </span>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
-        <h2 className="text-base font-semibold text-foreground">Payment Tracking Coming Soon</h2>
-        <p className="mx-auto mt-2 max-w-sm text-xs leading-relaxed text-muted-foreground">
-          Payment status tracking and history will be available in a future update.
-        </p>
       </div>
     </div>
+  );
+}
+
+const STATUS_STYLES: Record<PaymentStatus, { bg: string; text: string; label: string }> = {
+  succeeded: { bg: "bg-green-100", text: "text-green-700", label: "Paid" },
+  pending: { bg: "bg-amber-100", text: "text-amber-700", label: "Pending" },
+  failed: { bg: "bg-red-100", text: "text-red-700", label: "Failed" },
+  refunded: { bg: "bg-blue-100", text: "text-blue-700", label: "Refunded" },
+  expired: { bg: "bg-gray-100", text: "text-gray-600", label: "Expired" },
+};
+
+function StatusBadge({ status }: { status: PaymentStatus }) {
+  const style = STATUS_STYLES[status] ?? STATUS_STYLES.pending;
+  return (
+    <span
+      className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${style.bg} ${style.text}`}
+    >
+      {style.label}
+    </span>
   );
 }

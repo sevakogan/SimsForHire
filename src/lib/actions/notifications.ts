@@ -15,7 +15,8 @@ export type NotificationType =
   | "item_added"
   | "item_updated"
   | "invoice_updated"
-  | "project_created";
+  | "project_created"
+  | "payment_received";
 
 export interface Notification {
   id: string;
