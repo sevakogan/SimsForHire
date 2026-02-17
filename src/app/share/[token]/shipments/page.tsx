@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { getProjectByShareToken } from "@/lib/actions/projects";
 import { getShipmentsByShareToken } from "@/lib/actions/shipments";
 import { Badge } from "@/components/ui/badge";
+import { PortalAuthGate } from "@/components/portal/portal-auth-gate";
 
 export const dynamic = "force-dynamic";
 
@@ -25,7 +26,7 @@ export default async function ShipmentsPage({ params }: Props) {
   const shipments = await getShipmentsByShareToken(token);
 
   return (
-    <>
+    <PortalAuthGate token={token}>
       <div className="mb-6">
         <h1 className="text-lg font-bold text-gray-900 sm:text-xl">
           Shipments
@@ -114,6 +115,6 @@ export default async function ShipmentsPage({ params }: Props) {
           ))}
         </div>
       )}
-    </>
+    </PortalAuthGate>
   );
 }

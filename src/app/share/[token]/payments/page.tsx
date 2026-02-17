@@ -7,6 +7,7 @@ import { getPaymentSettingsPublic } from "@/lib/actions/payment-settings";
 import { getPaymentsByProjectIdPublic } from "@/lib/actions/payments";
 import { calculateInvoiceTotals, formatCurrency } from "@/lib/invoice-calculations";
 import { PayButton } from "@/components/portal/pay-button";
+import { PortalAuthGate } from "@/components/portal/portal-auth-gate";
 import type { DiscountType } from "@/types";
 
 export const dynamic = "force-dynamic";
@@ -76,7 +77,7 @@ export default async function PaymentsPage({ params, searchParams }: Props) {
 
   if (items.length === 0) {
     return (
-      <>
+      <PortalAuthGate token={token}>
         <div className="mb-6">
           <h1 className="text-lg font-bold text-gray-900 sm:text-xl">
             Payments
@@ -88,12 +89,12 @@ export default async function PaymentsPage({ params, searchParams }: Props) {
             invoice.
           </p>
         </div>
-      </>
+      </PortalAuthGate>
     );
   }
 
   return (
-    <>
+    <PortalAuthGate token={token}>
       <div className="mb-6">
         <h1 className="text-lg font-bold text-gray-900 sm:text-xl">
           Payments
@@ -290,6 +291,6 @@ export default async function PaymentsPage({ params, searchParams }: Props) {
           </div>
         )}
       </div>
-    </>
+    </PortalAuthGate>
   );
 }
