@@ -13,8 +13,11 @@ const PAYMENT_METHOD_OPTIONS: { value: PaymentMethod; label: string; description
   { value: "card", label: "Credit / Debit Card", description: "Visa, Mastercard, Amex, etc." },
   { value: "us_bank_account", label: "ACH Bank Transfer", description: "Direct bank payments (US only)" },
   { value: "cashapp", label: "Cash App", description: "Cash App Pay" },
+  { value: "affirm", label: "Affirm", description: "Pay in installments ($35–$30,000)" },
   { value: "klarna", label: "Klarna", description: "Pay in 4 installments, pay later" },
   { value: "afterpay_clearpay", label: "Afterpay / Clearpay", description: "Split into 4 interest-free payments" },
+  { value: "amazon_pay", label: "Amazon Pay", description: "Pay with Amazon account" },
+  { value: "link", label: "Link", description: "Fast checkout by Stripe" },
 ];
 
 const inputClass =

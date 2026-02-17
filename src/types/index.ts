@@ -160,7 +160,7 @@ export interface ContactMessage {
 }
 
 // Payments
-export type PaymentMethod = "card" | "us_bank_account" | "cashapp" | "klarna" | "afterpay_clearpay";
+export type PaymentMethod = "card" | "us_bank_account" | "cashapp" | "klarna" | "afterpay_clearpay" | "affirm" | "amazon_pay" | "link";
 export type PaymentStatus = "pending" | "succeeded" | "failed" | "refunded" | "expired";
 
 export interface PaymentSettings {
