@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { isExternalImage } from "@/lib/parse-images";
 import {
   acceptAllItemsByShareToken,
@@ -272,10 +273,36 @@ export function ShareActions({
   if (submitted || alreadyAccepted) {
     const isAllAccepted = alreadyAccepted || allAccepted;
 
+    const nextStepsCta = (
+      <div className="flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
+        <Link
+          href={`/share/${shareToken}/contract`}
+          className="inline-flex items-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-primary/90"
+        >
+          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
+          </svg>
+          Sign a Contract
+        </Link>
+        <Link
+          href={`/share/${shareToken}/payments`}
+          className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-5 py-2.5 text-sm font-medium text-gray-700 shadow-sm transition-colors hover:bg-gray-50"
+        >
+          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 0 0 2.25-2.25V6.75A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25v10.5A2.25 2.25 0 0 0 4.5 19.5Z" />
+          </svg>
+          Submit a Payment
+        </Link>
+      </div>
+    );
+
     return (
-      <>
-        {/* StatusBadge in the header already shows current status */}
-        <div className="mt-6 rounded-xl border border-gray-200 bg-white p-6 shadow-sm text-center">
+      <div className="space-y-6">
+        {/* Top CTA */}
+        {isAllAccepted && nextStepsCta}
+
+        {/* Confirmation card */}
+        <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm text-center">
           <div
             className={`mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full ${
               isAllAccepted ? "bg-green-100" : "bg-amber-100"
@@ -300,7 +327,10 @@ export function ShareActions({
               : "Thank you! Your selections have been submitted. The team will review rejected items."}
           </p>
         </div>
-      </>
+
+        {/* Bottom CTA */}
+        {isAllAccepted && nextStepsCta}
+      </div>
     );
   }
 
