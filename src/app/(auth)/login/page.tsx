@@ -2,9 +2,12 @@
 
 import { Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { formStyles, buttonStyles } from "@/components/ui/form-styles";
+import Link from "next/link";
+
+/** Toggle to show email/password login form */
+const SHOW_EMAIL_LOGIN = false;
 
 function LoginForm() {
   const [email, setEmail] = useState("");
@@ -64,7 +67,7 @@ function LoginForm() {
         </div>
       )}
 
-      {message === "password-updated" && (
+      {SHOW_EMAIL_LOGIN && message === "password-updated" && (
         <div className="mb-4 rounded-lg bg-green-50 p-3 text-sm text-green-700">
           Password updated successfully. Sign in with your new password.
         </div>
@@ -76,63 +79,67 @@ function LoginForm() {
         </div>
       )}
 
-      <form onSubmit={handleEmailSignIn} className="space-y-4">
-        <div>
-          <label htmlFor="email" className={formStyles.label}>
-            Email
-          </label>
-          <input
-            id="email"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="you@example.com"
-            required
-            className={formStyles.input}
-          />
-        </div>
+      {SHOW_EMAIL_LOGIN && (
+        <>
+          <form onSubmit={handleEmailSignIn} className="space-y-4">
+            <div>
+              <label htmlFor="email" className={formStyles.label}>
+                Email
+              </label>
+              <input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@example.com"
+                required
+                className={formStyles.input}
+              />
+            </div>
 
-        <div>
-          <div className="flex items-center justify-between mb-1.5">
-            <label htmlFor="password" className="text-sm font-medium text-foreground">
-              Password
-            </label>
-            <Link
-              href="/forgot-password"
-              className="text-xs text-primary hover:text-primary-hover transition-colors"
+            <div>
+              <div className="flex items-center justify-between mb-1.5">
+                <label htmlFor="password" className="text-sm font-medium text-foreground">
+                  Password
+                </label>
+                <Link
+                  href="/forgot-password"
+                  className="text-xs text-primary hover:text-primary-hover transition-colors"
+                >
+                  Forgot password?
+                </Link>
+              </div>
+              <input
+                id="password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                required
+                className={formStyles.input}
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className={`${buttonStyles.primary} w-full`}
             >
-              Forgot password?
-            </Link>
+              {loading ? "Signing in..." : "Sign In"}
+            </button>
+          </form>
+
+          {/* Divider */}
+          <div className="relative my-6">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-border" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-white px-2 text-muted-foreground">or</span>
+            </div>
           </div>
-          <input
-            id="password"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="••••••••"
-            required
-            className={formStyles.input}
-          />
-        </div>
-
-        <button
-          type="submit"
-          disabled={loading}
-          className={`${buttonStyles.primary} w-full`}
-        >
-          {loading ? "Signing in..." : "Sign In"}
-        </button>
-      </form>
-
-      {/* Divider */}
-      <div className="relative my-6">
-        <div className="absolute inset-0 flex items-center">
-          <div className="w-full border-t border-border" />
-        </div>
-        <div className="relative flex justify-center text-xs uppercase">
-          <span className="bg-white px-2 text-muted-foreground">or</span>
-        </div>
-      </div>
+        </>
+      )}
 
       {/* Google OAuth */}
       <button
@@ -158,18 +165,20 @@ function LoginForm() {
             fill="#EA4335"
           />
         </svg>
-        Sign in with Google
+        {loading ? "Signing in..." : "Sign in with Google"}
       </button>
 
-      <p className="mt-6 text-center text-sm text-muted-foreground">
-        Don&apos;t have an account?{" "}
-        <Link
-          href="/signup"
-          className="font-medium text-primary hover:text-primary-hover transition-colors"
-        >
-          Sign up
-        </Link>
-      </p>
+      {SHOW_EMAIL_LOGIN && (
+        <p className="mt-6 text-center text-sm text-muted-foreground">
+          Don&apos;t have an account?{" "}
+          <Link
+            href="/signup"
+            className="font-medium text-primary hover:text-primary-hover transition-colors"
+          >
+            Sign up
+          </Link>
+        </p>
+      )}
     </div>
   );
 }
