@@ -10,7 +10,12 @@ export type NotificationType =
   | "items_decided"
   | "client_note"
   | "item_deleted"
-  | "contact_message";
+  | "contact_message"
+  | "status_changed"
+  | "item_added"
+  | "item_updated"
+  | "invoice_updated"
+  | "project_created";
 
 export interface Notification {
   id: string;
@@ -49,6 +54,39 @@ export async function createNotification(input: {
 
   if (error) {
     console.error("[createNotification]", error.message);
+  }
+}
+
+/**
+ * Create a notification for a change made by an internal user.
+ * Automatically resolves the current user's name from the session.
+ */
+export async function notifyChange(input: {
+  projectId: string;
+  type: NotificationType;
+  description: string;
+}): Promise<void> {
+  try {
+    const supabase = await createSupabaseServer();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("full_name")
+      .eq("id", user.id)
+      .single();
+
+    const actorName = profile?.full_name ?? user.email ?? "Someone";
+
+    await createNotification({
+      projectId: input.projectId,
+      type: input.type,
+      title: `${actorName} ${input.description}`,
+      link: `/projects/${input.projectId}`,
+    });
+  } catch (err) {
+    console.error("[notifyChange]", err);
   }
 }
 

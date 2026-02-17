@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createSupabaseServer } from "@/lib/supabase-server";
 import { getAdminSupabase } from "@/lib/supabase-admin";
-import { createNotification } from "@/lib/actions/notifications";
+import { createNotification, notifyChange } from "@/lib/actions/notifications";
 import type { Project, ProjectStatus, FulfillmentType, DiscountType, ClientItem, AcceptanceStatus } from "@/types";
 
 export async function getProjects(filters?: {
@@ -123,6 +123,14 @@ export async function createProject(input: {
     .single();
 
   if (error) return { id: null, error: error.message };
+
+  // Notify: project created
+  notifyChange({
+    projectId: data.id,
+    type: "project_created",
+    description: `created project "${input.name}"`,
+  });
+
   revalidatePath("/projects", "layout");
   revalidatePath("/dashboard");
   return { id: data.id, error: null };
@@ -172,6 +180,16 @@ export async function updateProject(
     .eq("id", id);
 
   if (error) return { error: error.message };
+
+  // Notify on status change
+  if (input.status) {
+    notifyChange({
+      projectId: id,
+      type: "status_changed",
+      description: `changed status to "${input.status}"`,
+    });
+  }
+
   revalidatePath("/projects", "layout");
   revalidatePath("/dashboard");
   return { error: null };

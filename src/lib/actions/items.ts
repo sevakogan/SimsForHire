@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createSupabaseServer } from "@/lib/supabase-server";
+import { notifyChange } from "@/lib/actions/notifications";
 import type { Item, ClientItem, ProductCategory } from "@/types";
 
 const CLIENT_SAFE_COLUMNS =
@@ -108,6 +109,14 @@ export async function createItem(input: {
     .single();
 
   if (error) return { id: null, error: error.message };
+
+  // Notify: item added
+  notifyChange({
+    projectId: input.project_id,
+    type: "item_added",
+    description: `added item "${input.description ?? "New item"}"`,
+  });
+
   revalidatePath(`/projects/${input.project_id}`);
   return { id: data.id, error: null };
 }
@@ -118,8 +127,26 @@ export async function updateItem(
   input: Record<string, any>
 ): Promise<{ error: string | null }> {
   const supabase = await createSupabaseServer();
+
+  // Fetch project_id + description before updating (for notification)
+  const { data: existing } = await supabase
+    .from("items")
+    .select("project_id, description")
+    .eq("id", id)
+    .single();
+
   const { error } = await supabase.from("items").update(input).eq("id", id);
   if (error) return { error: error.message };
+
+  // Notify: item updated
+  if (existing?.project_id) {
+    notifyChange({
+      projectId: existing.project_id,
+      type: "item_updated",
+      description: `updated item "${existing.description ?? "item"}"`,
+    });
+  }
+
   revalidatePath("/projects", "layout");
   return { error: null };
 }
