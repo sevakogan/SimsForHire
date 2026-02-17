@@ -1,7 +1,11 @@
 import { notFound } from "next/navigation";
 import { getProjectByShareToken } from "@/lib/actions/projects";
 import { getCompanyInfo } from "@/lib/actions/company-info";
+import { createSupabaseServer } from "@/lib/supabase-server";
 import { PortalSidebar } from "@/components/portal/portal-sidebar";
+import { AuthProvider } from "@/components/auth/auth-provider";
+import { PortalTopNav } from "@/components/portal/portal-top-nav";
+import type { Profile } from "@/types";
 import type { Metadata } from "next";
 
 export const dynamic = "force-dynamic";
@@ -9,6 +13,26 @@ export const dynamic = "force-dynamic";
 interface Props {
   params: Promise<{ token: string }>;
   children: React.ReactNode;
+}
+
+async function getPortalProfile(): Promise<Profile | null> {
+  try {
+    const supabase = await createSupabaseServer();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return null;
+
+    const { data } = await supabase
+      .from("profiles")
+      .select("*")
+      .eq("id", user.id)
+      .single();
+
+    return (data as Profile) ?? null;
+  } catch {
+    return null;
+  }
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -46,22 +70,37 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function ShareLayout({ params, children }: Props) {
   const { token } = await params;
-  const [{ project, client }, company] = await Promise.all([
+  const [{ project, client }, company, profile] = await Promise.all([
     getProjectByShareToken(token),
     getCompanyInfo(),
+    getPortalProfile(),
   ]);
 
   if (!project) notFound();
 
-  return (
+  const isAuthenticated = profile !== null;
+
+  const portalContent = (
     <PortalSidebar
       token={token}
       clientName={client?.name ?? "Client"}
       projectName={project.name}
       invoiceNumber={project.invoice_number ?? null}
       companyName={company.name}
+      hasTopNav={isAuthenticated}
     >
       {children}
     </PortalSidebar>
   );
+
+  if (isAuthenticated) {
+    return (
+      <AuthProvider serverProfile={profile}>
+        <PortalTopNav />
+        {portalContent}
+      </AuthProvider>
+    );
+  }
+
+  return portalContent;
 }

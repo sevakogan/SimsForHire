@@ -9,6 +9,7 @@ interface PortalSidebarProps {
   projectName: string;
   invoiceNumber: string | null;
   companyName: string;
+  hasTopNav?: boolean;
   children: React.ReactNode;
 }
 
@@ -79,6 +80,7 @@ export function PortalSidebar({
   projectName,
   invoiceNumber,
   companyName,
+  hasTopNav = false,
   children,
 }: PortalSidebarProps) {
   const pathname = usePathname();
@@ -182,7 +184,7 @@ export function PortalSidebar({
   );
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
+    <div className={`flex bg-gray-50 ${hasTopNav ? "min-h-[calc(100vh-56px)]" : "min-h-screen"}`}>
       {/* Desktop sidebar */}
       <aside
         className={`hidden sm:flex sm:flex-col sm:shrink-0 bg-white border-r border-gray-200 transition-all duration-200 ${
@@ -193,7 +195,7 @@ export function PortalSidebar({
       </aside>
 
       {/* Mobile header bar */}
-      <div className="fixed inset-x-0 top-0 z-30 flex h-14 items-center gap-3 border-b border-gray-200 bg-white px-4 sm:hidden">
+      <div className={`fixed inset-x-0 z-30 flex h-14 items-center gap-3 border-b border-gray-200 bg-white px-4 sm:hidden ${hasTopNav ? "top-14" : "top-0"}`}>
         <button
           type="button"
           onClick={() => setMobileOpen(true)}
@@ -238,7 +240,7 @@ export function PortalSidebar({
 
       {/* Main content */}
       <main className="flex-1 min-w-0">
-        <div className="mx-auto max-w-4xl px-4 py-6 sm:px-6 sm:py-8 mt-14 sm:mt-0">
+        <div className={`mx-auto max-w-4xl px-4 py-6 sm:px-6 sm:py-8 sm:mt-0 ${hasTopNav ? "mt-14" : "mt-14"}`}>
           {children}
         </div>
       </main>
