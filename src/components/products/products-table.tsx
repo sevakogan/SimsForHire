@@ -270,9 +270,9 @@ export function ProductsTable({ products, isAdmin, basePath = "/customizations/p
     );
   }
 
-  // Compact cell styles for denser table
-  const tdCompact = "px-1.5 py-1.5 text-xs text-foreground";
-  const thBase = "text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground";
+  // Compact cell styles
+  const tdCompact = "px-2 py-2 text-xs text-foreground";
+  const thBase = "text-left text-[11px] font-semibold uppercase tracking-wider text-muted-foreground";
 
   function SortableTh({ field, children, className = "" }: { field: SortField; children: React.ReactNode; className?: string }) {
     return (
@@ -296,7 +296,7 @@ export function ProductsTable({ products, isAdmin, basePath = "/customizations/p
               <th className={`${tdCompact} ${thBase} w-[44px]`}>Image</th>
               <SortableTh field="seller_merchant" className="w-[90px]">Merchant</SortableTh>
               <SortableTh field="type" className="w-[80px]">Type</SortableTh>
-              <SortableTh field="name" className="max-w-[150px]">Name</SortableTh>
+              <SortableTh field="name" className="max-w-[130px]">Name</SortableTh>
               <SortableTh field="retail_price" className="w-[75px]">Retail</SortableTh>
               {isAdmin && <th className={`${tdCompact} ${thBase} w-[50px]`}>%</th>}
               {isAdmin && <SortableTh field="cost" className="w-[75px]">Cost</SortableTh>}
@@ -392,7 +392,7 @@ export function ProductsTable({ products, isAdmin, basePath = "/customizations/p
                   </td>
 
                   {/* 4. Name */}
-                  <td className={`${tdCompact} max-w-[150px]`}>
+                  <td className={`${tdCompact} max-w-[130px]`}>
                     {isAdmin ? (
                       <InlineTextInput
                         value={String(displayVal("name") ?? "")}
