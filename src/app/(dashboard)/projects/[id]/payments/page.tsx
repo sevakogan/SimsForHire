@@ -5,8 +5,10 @@ import { getItems } from "@/lib/actions/items";
 import { getPaymentsByProjectId } from "@/lib/actions/payments";
 import { getPaymentSettings } from "@/lib/actions/payment-settings";
 import { getClientById } from "@/lib/actions/clients";
+import { getCompanyInfo } from "@/lib/actions/company-info";
 import { createSupabaseServer } from "@/lib/supabase-server";
 import { calculateInvoiceTotals, formatCurrency } from "@/lib/invoice-calculations";
+import { AdminDownloadPackageButton } from "@/components/dashboard/download-package-button";
 import type { Profile, Item, DiscountType, PaymentStatus, Payment } from "@/types";
 import { isAdminRole } from "@/types";
 
@@ -35,11 +37,12 @@ export default async function PaymentsPage({ params }: Props) {
   const project = await getProjectById(id);
   if (!project) notFound();
 
-  const [items, payments, paymentSettings, client] = await Promise.all([
+  const [items, payments, paymentSettings, client, company] = await Promise.all([
     getItems(id),
     getPaymentsByProjectId(id),
     getPaymentSettings(),
     getClientById(project.client_id),
+    getCompanyInfo(),
   ]);
 
   const itemsTotal = items.reduce(
@@ -105,6 +108,11 @@ export default async function PaymentsPage({ params }: Props) {
   // Contract status
   const contractSigned = project.contract_signed_at !== null;
   const contractViewed = project.contract_viewed_at !== null;
+
+  // First succeeded payment (for download package)
+  const firstSucceeded = succeededPayments[0] ?? null;
+  const companyName = company.name || "SimsForHire (LevelSim LLC Holdings)";
+  const buyerName = client?.name ?? "—";
 
   if (items.length === 0) {
     return (
@@ -422,6 +430,65 @@ export default async function PaymentsPage({ params }: Props) {
           )}
         </div>
       </div>
+
+      {/* Download Package — only show when payment succeeded */}
+      {firstSucceeded && (
+        <div className="rounded-2xl border border-gray-200/80 bg-white shadow-sm overflow-hidden">
+          <div className="p-5 sm:p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-xs font-semibold uppercase tracking-wider text-gray-400">
+                  Documents
+                </h2>
+                <p className="mt-1 text-xs text-gray-500">
+                  Download receipt & invoice as a single PDF
+                </p>
+              </div>
+              <AdminDownloadPackageButton
+                invoiceData={{
+                  companyName,
+                  logoUrl: company.logo_url,
+                  logoScale: company.logo_scale,
+                  buyerName,
+                  buyerEmail: client?.email ?? null,
+                  buyerPhone: client?.phone ?? null,
+                  buyerAddress: client?.address ?? null,
+                  invoiceNumber: project.invoice_number,
+                  date: new Date(project.created_at).toLocaleDateString("en-US", {
+                    month: "long",
+                    day: "numeric",
+                    year: "numeric",
+                  }),
+                  items: items.map((i) => ({
+                    description: i.description,
+                    retail_price: i.retail_price,
+                    price_sold_for: (i as Item).price_sold_for,
+                    retail_shipping: i.retail_shipping,
+                    quantity: i.quantity,
+                    category: (i as Item).category,
+                    item_type: i.item_type,
+                  })),
+                  itemsTotal: totals.itemsTotal,
+                  deliveryTotal: totals.deliveryTotal,
+                  discountAmount: totals.discountAmount,
+                  taxAmount: totals.taxAmount,
+                  grandTotal: totals.grandTotal,
+                  fulfillmentType: project.fulfillment_type,
+                  shippingAddress: project.shipping_address,
+                }}
+                receiptNumber={firstSucceeded.stripe_payment_intent_id}
+                paymentDate={new Date(firstSucceeded.created_at).toLocaleDateString("en-US", {
+                  month: "long",
+                  day: "numeric",
+                  year: "numeric",
+                })}
+                paymentAmount={formatCurrency(firstSucceeded.amount / 100)}
+                grandTotal={formatCurrency(totals.grandTotal)}
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

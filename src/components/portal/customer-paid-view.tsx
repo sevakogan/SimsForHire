@@ -657,38 +657,6 @@ export function CustomerPaidView({
 
   return (
     <div className="space-y-6">
-      {/* ── Thank You Card ── */}
-      <div className="rounded-2xl border border-green-200 bg-gradient-to-br from-green-50 via-white to-emerald-50 shadow-sm overflow-hidden">
-        <div className="h-1 bg-gradient-to-r from-green-400 via-emerald-500 to-teal-500" />
-
-        <div className="px-6 py-8 sm:px-8 sm:py-10 text-center">
-          {/* Animated checkmark */}
-          <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-green-100 ring-4 ring-green-50">
-            <svg
-              className="h-8 w-8 text-green-600"
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth={2.5}
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="m4.5 12.75 6 6 9-13.5"
-              />
-            </svg>
-          </div>
-
-          <h2 className="text-xl font-bold text-gray-900 sm:text-2xl">
-            Thank You, {buyerName}!
-          </h2>
-          <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-gray-500">
-            Your payment has been received and confirmed. We appreciate your
-            business and look forward to serving you.
-          </p>
-        </div>
-      </div>
-
       {/* ── Payment Receipt ── */}
       <div className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
         <div className="px-5 py-4 border-b border-gray-100 bg-gray-50/50">
