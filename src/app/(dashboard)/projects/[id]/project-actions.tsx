@@ -74,7 +74,6 @@ export function ProjectActions({ project }: Props) {
 
   // Sequential status flow — strict next-only forward, back to any previous.
   // "paid" is locked (will be enabled via Stripe later).
-  // "accepted" is set by customer acceptance, not admin click.
   const currentIdx = PROJECT_STATUSES.indexOf(optimisticStatus);
 
   function isStatusClickable(status: ProjectStatus): boolean {
@@ -83,8 +82,6 @@ export function ProjectActions({ project }: Props) {
     if (targetIdx === currentIdx) return false;
     // "paid" is always locked for now (Stripe integration later)
     if (status === "paid") return false;
-    // "accepted" is set by customer, not admin
-    if (status === "accepted") return false;
     // Can always go back to any previous status
     if (targetIdx < currentIdx) return true;
     // Forward: only the immediate next status

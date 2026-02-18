@@ -254,6 +254,10 @@ export function ShareActions({
         setError(result.error);
       } else {
         setSubmitted(true);
+        // If every item was accepted, update client-side status to match server
+        if (allAccepted) {
+          setCurrentStatus("accepted");
+        }
       }
     } catch {
       setError("Something went wrong. Please try again.");

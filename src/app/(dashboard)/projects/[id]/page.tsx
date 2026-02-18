@@ -12,6 +12,7 @@ import { ProjectActions } from "./project-actions";
 import { InvoiceDiscountProvider, InvoiceSection, LiveInvoiceFooter } from "./invoice-section";
 import { EditableProjectName } from "./editable-project-name";
 import { EditableCustomerCard } from "./editable-customer-card";
+import { EditInvoiceButton } from "./edit-invoice-button";
 import { isEditLocked } from "@/lib/constants/project-statuses";
 import type { Profile, Item, DiscountType } from "@/types";
 import { isAdminRole, isEmployeeRole } from "@/types";
@@ -266,6 +267,9 @@ export default async function ProjectDetailPage({ params }: Props) {
 
       {/* Inline add item bar — admin only, hidden when invoice is locked */}
       {admin && !editLocked && <InlineAddItem projectId={id} isAdmin={admin} />}
+
+      {/* Edit The Invoice button — shown when invoice is locked (accepted+) */}
+      {admin && editLocked && <EditInvoiceButton projectId={id} />}
 
       {/* Invoice Summary Footer — live-synced with discount changes */}
       {items.length > 0 && (
