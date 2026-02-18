@@ -3,7 +3,7 @@ import { getProjectById } from "@/lib/actions/projects";
 import { getClientSafeItemsByProjectId } from "@/lib/actions/projects";
 import { getCompanyInfo } from "@/lib/actions/company-info";
 import { calculateInvoiceTotals } from "@/lib/invoice-calculations";
-import { SignedAgreementView } from "@/components/portal/signed-agreement-view";
+import { ContractWithPdf } from "@/components/portal/contract-with-pdf";
 import { createSupabaseServer } from "@/lib/supabase-server";
 import type { DiscountType, FulfillmentType } from "@/types";
 
@@ -162,9 +162,9 @@ export default async function ContractPage({ params }: Props) {
         </div>
       )}
 
-      {/* Signed: show full contract with signatures */}
+      {/* Signed: show full contract with signatures + PDF download */}
       {isSigned && (
-        <SignedAgreementView
+        <ContractWithPdf
           buyer={buyerInfo}
           order={orderInfo}
           companyName={companyName}
@@ -176,6 +176,12 @@ export default async function ContractPage({ params }: Props) {
           logoScale={company.logo_scale ?? 100}
           fulfillmentType={project.fulfillment_type as FulfillmentType}
           shippingAddress={project.shipping_address}
+          items={items}
+          itemsTotal={itemsTotal}
+          deliveryTotal={deliveryTotal}
+          discountAmount={totals.discountAmount}
+          taxAmount={totals.taxAmount}
+          grandTotal={totals.grandTotal}
         />
       )}
 

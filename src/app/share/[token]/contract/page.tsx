@@ -8,7 +8,7 @@ import { getCompanyInfo } from "@/lib/actions/company-info";
 import { calculateInvoiceTotals } from "@/lib/invoice-calculations";
 import { PortalAuthGate } from "@/components/portal/portal-auth-gate";
 import { PurchaseAgreement } from "@/components/portal/purchase-agreement";
-import { SignedAgreementView } from "@/components/portal/signed-agreement-view";
+import { ContractWithPdf } from "@/components/portal/contract-with-pdf";
 import type { DiscountType, FulfillmentType } from "@/types";
 
 export const dynamic = "force-dynamic";
@@ -95,7 +95,7 @@ export default async function ContractPage({ params }: Props) {
       </div>
 
       {isSigned ? (
-        <SignedAgreementView
+        <ContractWithPdf
           buyer={buyerInfo}
           order={orderInfo}
           companyName={companyName}
@@ -109,6 +109,12 @@ export default async function ContractPage({ params }: Props) {
           logoScale={logoScale}
           fulfillmentType={fulfillmentType}
           shippingAddress={project.shipping_address}
+          items={items}
+          itemsTotal={itemsTotal}
+          deliveryTotal={deliveryTotal}
+          discountAmount={totals.discountAmount}
+          taxAmount={totals.taxAmount}
+          grandTotal={totals.grandTotal}
         />
       ) : (
         <PurchaseAgreement
