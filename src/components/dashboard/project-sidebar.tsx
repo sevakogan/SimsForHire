@@ -250,6 +250,18 @@ export function ProjectSidebar({
           {!collapsed && <span>All Projects</span>}
         </Link>
       </div>
+
+      {/* Build footer */}
+      {!collapsed && (
+        <div className="border-t border-gray-200 px-4 py-2.5">
+          <p className="text-[10px] text-gray-400 leading-relaxed">
+            Designed by TheLevelTeam LLC
+          </p>
+          <p className="text-[10px] text-gray-400">
+            Built: #{process.env.NEXT_PUBLIC_BUILD_NUMBER}, Version {process.env.NEXT_PUBLIC_APP_VERSION}
+          </p>
+        </div>
+      )}
     </>
   );
 

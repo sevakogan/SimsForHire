@@ -114,7 +114,7 @@ export function PortalSidebar({
   }
 
   const sidebarContent = (
-    <>
+    <div className="flex flex-col h-full">
       {/* Business card + collapse toggle */}
       <div className={`border-b border-gray-200 ${collapsed ? "px-2 py-3" : "px-4 py-5"}`}>
         {collapsed ? (
@@ -180,7 +180,22 @@ export function PortalSidebar({
           );
         })}
       </nav>
-    </>
+
+      {/* Spacer */}
+      <div className="flex-1" />
+
+      {/* Build footer */}
+      {!collapsed && (
+        <div className="border-t border-gray-200 px-4 py-2.5">
+          <p className="text-[10px] text-gray-400 leading-relaxed">
+            Designed by TheLevelTeam LLC
+          </p>
+          <p className="text-[10px] text-gray-400">
+            Built: #{process.env.NEXT_PUBLIC_BUILD_NUMBER}, Version {process.env.NEXT_PUBLIC_APP_VERSION}
+          </p>
+        </div>
+      )}
+    </div>
   );
 
   return (

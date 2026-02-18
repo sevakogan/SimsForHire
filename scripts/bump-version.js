@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 
 /**
- * Auto-increment patch version on each build.
- * Reads version.json, bumps the patch number, writes it back.
+ * Auto-increment patch version and build number on each build.
  *
- * 1.0.0 → 1.0.1 → 1.0.2 → 1.0.3 …
+ * version: 1.0.4 → 1.0.5 → 1.0.6 …
+ * build:   4     → 5     → 6     …
  */
 
 const fs = require("fs");
@@ -19,8 +19,10 @@ const parts = data.version.split(".").map(Number);
 parts[2] = parts[2] + 1;
 
 const newVersion = parts.join(".");
-const updated = { version: newVersion };
+const newBuild = (data.build || 0) + 1;
+
+const updated = { version: newVersion, build: newBuild };
 
 fs.writeFileSync(versionFile, JSON.stringify(updated, null, 2) + "\n", "utf-8");
 
-console.log(`✓ Version bumped to v${newVersion}`);
+console.log(`✓ Version bumped to v${newVersion}, Build #${newBuild}`);

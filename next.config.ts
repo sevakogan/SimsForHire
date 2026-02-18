@@ -17,6 +17,7 @@ const nextConfig: NextConfig = {
   },
   env: {
     NEXT_PUBLIC_APP_VERSION: versionData.version,
+    NEXT_PUBLIC_BUILD_NUMBER: String(versionData.build ?? 0),
   },
 };
 

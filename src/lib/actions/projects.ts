@@ -485,17 +485,37 @@ export async function submitItemDecisions(
     if (error) return { error: error.message };
   }
 
+  // Check if ALL items on the project are now accepted
+  const { data: allItems } = await supabase
+    .from("items")
+    .select("acceptance_status")
+    .eq("project_id", project.id);
+
+  const allAccepted = allItems && allItems.length > 0 &&
+    allItems.every((item) => item.acceptance_status === "accepted");
+
+  // If every item is accepted, promote project status to "accepted"
+  if (allAccepted) {
+    await supabase
+      .from("projects")
+      .update({ status: "accepted" })
+      .eq("id", project.id);
+  }
+
   // Notify admin with summary
   const accepted = decisions.filter((d) => d.status === "accepted").length;
   const rejected = decisions.filter((d) => d.status === "rejected").length;
   await createNotification({
     projectId: project.id,
     type: "items_decided",
-    title: "Items reviewed by customer",
-    body: `${accepted} accepted, ${rejected} rejected out of ${decisions.length} items.`,
+    title: allAccepted ? "All items accepted" : "Items reviewed by customer",
+    body: allAccepted
+      ? "Customer accepted all items on the invoice."
+      : `${accepted} accepted, ${rejected} rejected out of ${decisions.length} items.`,
   });
 
   revalidatePath("/projects", "layout");
+  revalidatePath("/share", "layout");
   return { error: null };
 }
 
