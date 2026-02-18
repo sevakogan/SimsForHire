@@ -35,16 +35,16 @@ export async function getPaymentsByProjectId(
  */
 export async function getPaymentsByProjectIdPublic(
   projectId: string
-): Promise<Pick<Payment, "id" | "amount" | "currency" | "status" | "created_at">[]> {
+): Promise<Pick<Payment, "id" | "amount" | "currency" | "status" | "created_at" | "stripe_payment_intent_id">[]> {
   const supabase = getServiceClient();
   const { data, error } = await supabase
     .from("payments")
-    .select("id, amount, currency, status, created_at")
+    .select("id, amount, currency, status, created_at, stripe_payment_intent_id")
     .eq("project_id", projectId)
     .order("created_at", { ascending: false });
 
   if (error || !data) return [];
-  return data as Pick<Payment, "id" | "amount" | "currency" | "status" | "created_at">[];
+  return data as Pick<Payment, "id" | "amount" | "currency" | "status" | "created_at" | "stripe_payment_intent_id">[];
 }
 
 /**

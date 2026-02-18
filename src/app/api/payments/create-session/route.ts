@@ -132,7 +132,16 @@ export async function POST(request: NextRequest) {
       ? `Invoice #${project.invoice_number}`
       : project.name;
 
-    // 6. Create Checkout Session
+    // 6. Look up client email for receipt
+    const { data: client } = await supabase
+      .from("clients")
+      .select("email")
+      .eq("id", project.client_id)
+      .single();
+
+    const clientEmail = client?.email ?? null;
+
+    // 7. Create Checkout Session
     // Omit payment_method_types so Stripe dynamically shows all methods
     // enabled in the Stripe Dashboard (Affirm, Klarna, Apple Pay, etc.)
     const session = await stripe.checkout.sessions.create({
@@ -150,6 +159,12 @@ export async function POST(request: NextRequest) {
         },
       ],
       mode: "payment",
+      // Pre-fill customer email so Stripe sends a receipt automatically
+      ...(clientEmail ? { customer_email: clientEmail } : {}),
+      // Tell Stripe to send an email receipt after successful payment
+      payment_intent_data: {
+        receipt_email: clientEmail ?? undefined,
+      },
       success_url: `${origin}/share/${shareToken}/payments?status=success&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/share/${shareToken}/payments?status=cancel`,
       metadata: {
@@ -158,7 +173,7 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // 7. Create payment record in DB
+    // 8. Create payment record in DB
     await supabase.from("payments").insert({
       project_id: projectId,
       stripe_session_id: session.id,

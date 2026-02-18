@@ -171,7 +171,7 @@ export default async function PaymentsPage({ params, searchParams }: Props) {
             Payment Successful!
           </h2>
           <p className="mt-1 text-sm text-green-600">
-            Thank you for your payment. You will receive a confirmation email shortly.
+            Thank you for your payment. A receipt has been sent to your email.
           </p>
         </div>
       )}
@@ -263,6 +263,7 @@ export default async function PaymentsPage({ params, searchParams }: Props) {
             buyerName={buyerName}
             companyName={companyName}
             invoiceNumber={project.invoice_number}
+            receiptNumber={succeededPayment?.stripe_payment_intent_id ?? null}
             paymentDate={succeededPayment
               ? new Date(succeededPayment.created_at).toLocaleDateString("en-US", {
                   month: "long",
@@ -274,6 +275,38 @@ export default async function PaymentsPage({ params, searchParams }: Props) {
               ? formatCurrency(succeededPayment.amount / 100)
               : formatCurrency(totals.grandTotal)}
             grandTotal={formatCurrency(totals.grandTotal)}
+            invoiceData={{
+              companyName,
+              logoUrl: company.logo_url,
+              logoScale: company.logo_scale,
+              buyerName,
+              buyerEmail: client?.email ?? null,
+              buyerPhone: client?.phone ?? null,
+              buyerAddress: client?.address ?? null,
+              invoiceNumber: project.invoice_number,
+              date: new Date(project.created_at).toLocaleDateString("en-US", {
+                month: "long",
+                day: "numeric",
+                year: "numeric",
+              }),
+              items: items.map((i) => ({
+                description: i.description,
+                retail_price: i.retail_price,
+                price_sold_for: i.price_sold_for,
+                retail_shipping: i.retail_shipping,
+                quantity: i.quantity,
+                category: (i as { category?: string }).category,
+                item_type: i.item_type,
+                image_url: i.image_url,
+              })),
+              itemsTotal: totals.itemsTotal,
+              deliveryTotal: totals.deliveryTotal,
+              discountAmount: totals.discountAmount,
+              taxAmount: totals.taxAmount,
+              grandTotal: totals.grandTotal,
+              fulfillmentType: project.fulfillment_type,
+              shippingAddress: project.shipping_address,
+            }}
           />
         ) : paymentSettings.payments_enabled ? (
           <PayButton
