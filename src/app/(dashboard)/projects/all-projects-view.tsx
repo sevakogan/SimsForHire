@@ -252,11 +252,12 @@ function ProjectListRow({
   const s = summary ?? { itemCount: 0, grandTotal: 0, totalCost: 0, profit: 0, totalPaid: 0 };
 
   return (
-    <div className="group flex items-center justify-between rounded-xl border border-border bg-white p-3.5 shadow-sm transition-all hover:border-primary/20 hover:shadow-md sm:p-5">
-      <Link
-        href={`/projects/${project.id}`}
-        className="min-w-0 flex-1"
-      >
+    <Link
+      href={`/projects/${project.id}`}
+      className="group grid grid-cols-[1fr] sm:grid-cols-[1fr_100px_80px_50px_80px_48px_60px] items-center gap-x-3 rounded-xl border border-border bg-white p-3.5 shadow-sm transition-all hover:border-primary/20 hover:shadow-md sm:p-5"
+    >
+      {/* Col 1: Name + meta */}
+      <div className="min-w-0">
         <div className="flex items-center gap-2">
           <p className="text-sm sm:text-base font-medium text-foreground truncate">
             {project.name}
@@ -280,33 +281,45 @@ function ProjectListRow({
             {project.client_name} · {new Date(project.created_at).toLocaleDateString()}
           </p>
         </div>
-      </Link>
+      </div>
 
-      {/* Financial summary — center area */}
-      <div className="hidden sm:flex items-center gap-4 mx-4 shrink-0">
-        {s.grandTotal > 0 && (
-          <div className="text-right">
+      {/* Col 2: Total + Profit */}
+      <div className="hidden sm:block text-right">
+        {s.grandTotal > 0 ? (
+          <>
             <p className="text-sm font-bold tabular-nums text-foreground">
               {formatCurrency(s.grandTotal)}
             </p>
             <ProfitIndicator profit={s.profit} />
-          </div>
-        )}
-        {s.grandTotal > 0 && (
-          <div className="w-20">
-            <PaymentProgress totalPaid={s.totalPaid} grandTotal={s.grandTotal} />
-          </div>
-        )}
-        {s.itemCount > 0 && (
-          <span className="text-[10px] text-muted-foreground/60 tabular-nums">
-            {s.itemCount} item{s.itemCount !== 1 ? "s" : ""}
-          </span>
+          </>
+        ) : (
+          <span className="text-xs text-muted-foreground/40">—</span>
         )}
       </div>
 
-      <div className="flex items-center gap-2 ml-3 shrink-0">
-        <Badge variant={project.status}>{project.status}</Badge>
+      {/* Col 3: Payment progress */}
+      <div className="hidden sm:block">
+        {s.grandTotal > 0 ? (
+          <PaymentProgress totalPaid={s.totalPaid} grandTotal={s.grandTotal} />
+        ) : null}
+      </div>
 
+      {/* Col 4: Item count */}
+      <div className="hidden sm:block text-center">
+        {s.itemCount > 0 ? (
+          <span className="text-[10px] text-muted-foreground/60 tabular-nums">
+            {s.itemCount} item{s.itemCount !== 1 ? "s" : ""}
+          </span>
+        ) : null}
+      </div>
+
+      {/* Col 5: Status badge */}
+      <div className="hidden sm:flex justify-end">
+        <Badge variant={project.status}>{project.status}</Badge>
+      </div>
+
+      {/* Col 6: Notes */}
+      <div className="hidden sm:flex justify-center">
         {noteCount > 0 && (
           <span className="inline-flex items-center gap-1 rounded-full bg-red-50 border border-red-200 px-2 py-0.5 text-[10px] font-semibold text-red-600">
             <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
@@ -315,17 +328,18 @@ function ProjectListRow({
             {noteCount}
           </span>
         )}
+      </div>
 
+      {/* Col 7: Invoice # + actions */}
+      <div className="hidden sm:flex items-center justify-end gap-1">
         {project.invoice_number && (
-          <span className="hidden sm:inline text-[10px] text-muted-foreground/60">
+          <span className="text-[10px] text-muted-foreground/60 group-hover:hidden">
             #{project.invoice_number}
           </span>
         )}
-
-        {/* Action buttons — visible on hover */}
-        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+        <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
           <button
-            onClick={() => onDuplicate(project.id)}
+            onClick={(e) => { e.preventDefault(); onDuplicate(project.id); }}
             disabled={isLoading}
             className="rounded-md p-1.5 text-muted-foreground/50 transition-colors hover:bg-blue-50 hover:text-blue-600 disabled:opacity-50"
             title="Duplicate project"
@@ -335,7 +349,7 @@ function ProjectListRow({
             </svg>
           </button>
           <button
-            onClick={() => onDeleteRequest(project.id)}
+            onClick={(e) => { e.preventDefault(); onDeleteRequest(project.id); }}
             disabled={isLoading}
             className="rounded-md p-1.5 text-muted-foreground/50 transition-colors hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
             title="Delete project"
@@ -346,7 +360,27 @@ function ProjectListRow({
           </button>
         </div>
       </div>
-    </div>
+
+      {/* Mobile: compact row below name */}
+      <div className="flex items-center gap-2 mt-2 sm:hidden">
+        <Badge variant={project.status}>{project.status}</Badge>
+        {s.grandTotal > 0 && (
+          <span className="text-xs font-bold tabular-nums text-foreground">
+            {formatCurrency(s.grandTotal)}
+          </span>
+        )}
+        {noteCount > 0 && (
+          <span className="inline-flex items-center gap-0.5 rounded-full bg-red-50 border border-red-200 px-1.5 py-0.5 text-[10px] font-semibold text-red-600">
+            {noteCount}
+          </span>
+        )}
+        {project.invoice_number && (
+          <span className="text-[10px] text-muted-foreground/60 ml-auto">
+            #{project.invoice_number}
+          </span>
+        )}
+      </div>
+    </Link>
   );
 }
 
