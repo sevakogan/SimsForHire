@@ -346,7 +346,7 @@ export async function getProjectByShareToken(
   token: string
 ): Promise<{
   project: Project | null;
-  client: { name: string; email: string | null; phone: string | null } | null;
+  client: { name: string; email: string | null; phone: string | null; address: string | null } | null;
 }> {
   if (!token) return { project: null, client: null };
 
@@ -365,14 +365,19 @@ export async function getProjectByShareToken(
 
   const { data: client } = await supabase
     .from("clients")
-    .select("name, email, phone")
+    .select("name, email, phone, address")
     .eq("id", project.client_id)
     .single();
 
   return {
     project: project as Project,
     client: client
-      ? { name: client.name, email: client.email ?? null, phone: client.phone ?? null }
+      ? {
+          name: client.name,
+          email: client.email ?? null,
+          phone: client.phone ?? null,
+          address: client.address ?? null,
+        }
       : null,
   };
 }

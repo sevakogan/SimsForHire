@@ -49,6 +49,8 @@ export interface Project {
   contract_viewed_at: string | null;
   contract_signed_at: string | null;
   contract_signed_by: string | null;
+  contract_signature_data: string | null;
+  contract_initials_data: string | null;
   created_by: string | null;
   created_at: string;
   updated_at: string;

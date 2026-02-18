@@ -1,7 +1,15 @@
 import { notFound } from "next/navigation";
-import { getProjectByShareToken, markContractViewed } from "@/lib/actions/projects";
+import {
+  getProjectByShareToken,
+  getClientSafeItemsByProjectId,
+  markContractViewed,
+} from "@/lib/actions/projects";
+import { getCompanyInfo } from "@/lib/actions/company-info";
+import { calculateInvoiceTotals } from "@/lib/invoice-calculations";
 import { PortalAuthGate } from "@/components/portal/portal-auth-gate";
-import { ContractSignForm } from "@/components/portal/contract-sign-form";
+import { PurchaseAgreement } from "@/components/portal/purchase-agreement";
+import { SignedAgreementView } from "@/components/portal/signed-agreement-view";
+import type { DiscountType } from "@/types";
 
 export const dynamic = "force-dynamic";
 
@@ -11,87 +19,97 @@ interface Props {
 
 export default async function ContractPage({ params }: Props) {
   const { token } = await params;
-  const { project } = await getProjectByShareToken(token);
+  const [{ project, client }, company] = await Promise.all([
+    getProjectByShareToken(token),
+    getCompanyInfo(),
+  ]);
 
   if (!project) notFound();
 
   // Record that the customer viewed the contract (idempotent)
   await markContractViewed(token);
 
+  // Calculate grand total for the contract header
+  const items = await getClientSafeItemsByProjectId(project.id);
+  const itemsTotal = items.reduce((sum, item) => {
+    const cat = (item as { category?: string }).category ?? "product";
+    const price = Number(item.price_sold_for ?? item.retail_price);
+    const qty = item.quantity ?? 1;
+    return cat === "service" ? sum : sum + price * qty;
+  }, 0);
+  const serviceTotal = items.reduce((sum, item) => {
+    const cat = (item as { category?: string }).category ?? "product";
+    const price = Number(item.price_sold_for ?? item.retail_price);
+    const qty = item.quantity ?? 1;
+    return cat === "service" ? sum + price * qty : sum;
+  }, 0);
+  const shippingTotal = items.reduce(
+    (sum, item) => sum + Number(item.retail_shipping) * (item.quantity ?? 1),
+    0
+  );
+  const deliveryTotal = serviceTotal + shippingTotal;
+  const discountType = (project.discount_type ?? "percent") as DiscountType;
+  const totals = calculateInvoiceTotals({
+    itemsTotal,
+    deliveryTotal,
+    discountType,
+    discountPercent: Number(project.discount_percent) || 0,
+    discountValue: Number(project.discount_amount) || 0,
+    taxPercent: Number(project.tax_percent) || 0,
+  });
+
+  const buyerInfo = {
+    name: client?.name ?? "—",
+    email: client?.email ?? null,
+    phone: client?.phone ?? null,
+    address: client?.address ?? null,
+  };
+
+  const orderInfo = {
+    orderRef: project.invoice_number,
+    date: new Date(project.created_at).toLocaleDateString("en-US", {
+      month: "long",
+      day: "numeric",
+      year: "numeric",
+    }),
+    total: totals.grandTotal,
+  };
+
   const isSigned = project.contract_signed_at !== null;
+  const companyName = company.name || "SimsForHire (LevelSim LLC Holdings)";
 
   return (
     <PortalAuthGate token={token}>
       <div className="mb-6">
         <h1 className="text-lg font-bold text-gray-900 sm:text-xl">
-          Contract
+          Purchase Agreement
         </h1>
         <p className="mt-1 text-xs text-gray-500">
-          Review and sign the contract for your project
+          {isSigned
+            ? "Your signed purchase agreement is below"
+            : "Review and sign the purchase agreement for your order"}
         </p>
       </div>
 
-      {/* Contract content placeholder */}
-      <div className="rounded-2xl border border-gray-200 bg-white p-5 sm:p-6 shadow-sm mb-6">
-        <div className="prose prose-sm max-w-none text-gray-700">
-          <h2 className="text-base font-semibold text-gray-900">
-            Terms &amp; Conditions
-          </h2>
-          <p className="text-sm text-gray-600 leading-relaxed">
-            Contract details for this project will be provided by your
-            representative. By signing below, you acknowledge that you have
-            reviewed the terms associated with this project and agree to
-            proceed.
-          </p>
-
-          {/* Decorative divider */}
-          <div className="my-6 flex items-center justify-center gap-2">
-            <div className="h-px w-12 bg-gray-200" />
-            <div className="h-1.5 w-1.5 rounded-full bg-gray-300" />
-            <div className="h-px w-12 bg-gray-200" />
-          </div>
-
-          <p className="text-xs text-gray-400">
-            If you have questions about the contract, please contact your
-            representative before signing.
-          </p>
-        </div>
-      </div>
-
-      {/* Signed state */}
       {isSigned ? (
-        <div className="rounded-xl border border-green-200 bg-green-50 p-6 text-center">
-          <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-green-100">
-            <svg
-              className="h-6 w-6 text-green-600"
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth={2}
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="m4.5 12.75 6 6 9-13.5"
-              />
-            </svg>
-          </div>
-          <h3 className="text-base font-semibold text-green-800">
-            Contract Signed
-          </h3>
-          <p className="mt-1 text-sm text-green-600">
-            Signed by{" "}
-            <span className="font-medium">{project.contract_signed_by}</span>
-            {" on "}
-            {new Date(project.contract_signed_at!).toLocaleDateString("en-US", {
-              month: "long",
-              day: "numeric",
-              year: "numeric",
-            })}
-          </p>
-        </div>
+        <SignedAgreementView
+          buyer={buyerInfo}
+          order={orderInfo}
+          companyName={companyName}
+          signedBy={project.contract_signed_by ?? "—"}
+          signedAt={project.contract_signed_at!}
+          signatureDataUrl={project.contract_signature_data ?? null}
+          initialsDataUrl={project.contract_initials_data ?? null}
+          shareToken={token}
+          contractSignedAt={project.contract_signed_at}
+        />
       ) : (
-        <ContractSignForm shareToken={token} />
+        <PurchaseAgreement
+          shareToken={token}
+          buyer={buyerInfo}
+          order={orderInfo}
+          companyName={companyName}
+        />
       )}
     </PortalAuthGate>
   );

@@ -82,6 +82,8 @@ CREATE TABLE projects (
   contract_viewed_at TIMESTAMPTZ,
   contract_signed_at TIMESTAMPTZ,
   contract_signed_by TEXT,
+  contract_signature_data TEXT,
+  contract_initials_data TEXT,
   created_by UUID REFERENCES profiles(id),
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
