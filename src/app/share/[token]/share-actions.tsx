@@ -368,6 +368,7 @@ export function ShareActions({
     const isAllAccepted = alreadyAccepted || allAccepted;
 
     const isContractSigned = contractSignedAt !== null;
+    const isPaid = ["paid", "preparing", "shipped", "received", "completed"].includes(displayStatus);
 
     const nextStepsCta = (
       <div className="flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
@@ -389,7 +390,14 @@ export function ShareActions({
             Sign a Contract
           </Link>
         )}
-        {isContractSigned ? (
+        {isPaid ? (
+          <span className="inline-flex items-center gap-2 rounded-lg bg-green-50 border border-green-200 px-5 py-2.5 text-sm font-medium text-green-700">
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+            </svg>
+            Payment Submitted
+          </span>
+        ) : isContractSigned ? (
           <Link
             href={`/share/${shareToken}/payments`}
             className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-5 py-2.5 text-sm font-medium text-gray-700 shadow-sm transition-colors hover:bg-gray-50"

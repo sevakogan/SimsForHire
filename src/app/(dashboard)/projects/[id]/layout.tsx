@@ -27,6 +27,7 @@ export default async function ProjectLayout({ params, children }: Props) {
           projectName={project.name}
           invoiceNumber={project.invoice_number}
           contractSignedAt={project.contract_signed_at}
+          projectStatus={project.status}
         >
           {children}
         </ProjectSidebar>

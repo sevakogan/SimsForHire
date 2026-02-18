@@ -14,6 +14,7 @@ interface ProjectSidebarProps {
   projectName: string;
   invoiceNumber: string | null;
   contractSignedAt: string | null;
+  projectStatus: string;
   children: React.ReactNode;
 }
 
@@ -24,16 +25,30 @@ function contractSeenKey(projectId: string): string {
   return `contract-signed-seen-${projectId}`;
 }
 
+/** localStorage key for tracking whether payment-received badge has been seen */
+function paymentSeenKey(projectId: string): string {
+  return `payment-received-seen-${projectId}`;
+}
+
+/** Statuses that mean "paid" */
+const PAID_STATUSES = ["paid", "preparing", "shipped", "received", "completed"];
+
 interface NavItem {
   label: string;
   href: string;
   icon: React.ReactNode;
   exact?: boolean;
-  /** Show a notification badge */
+  /** Show a notification badge dot */
   badge?: boolean;
+  /** Badge dot color: "violet" for contract, "green" for payment */
+  badgeColor?: "violet" | "green";
 }
 
-function getNavItems(projectId: string, contractBadge: boolean): NavItem[] {
+function getNavItems(
+  projectId: string,
+  contractBadge: boolean,
+  paymentBadge: boolean
+): NavItem[] {
   const base = `/projects/${projectId}`;
   return [
     {
@@ -50,6 +65,7 @@ function getNavItems(projectId: string, contractBadge: boolean): NavItem[] {
       label: "Contract",
       href: `${base}/contract`,
       badge: contractBadge,
+      badgeColor: "violet",
       icon: (
         <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 0 0 2.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 0 0-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 0 0 .75-.75 2.25 2.25 0 0 0-.1-.664m-5.8 0A2.251 2.251 0 0 1 13.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25Z" />
@@ -59,6 +75,8 @@ function getNavItems(projectId: string, contractBadge: boolean): NavItem[] {
     {
       label: "Payments",
       href: `${base}/payments`,
+      badge: paymentBadge,
+      badgeColor: "green",
       icon: (
         <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 0 0 2.25-2.25V6.75A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25v10.5A2.25 2.25 0 0 0 4.5 19.5Z" />
@@ -77,12 +95,19 @@ function getNavItems(projectId: string, contractBadge: boolean): NavItem[] {
   ];
 }
 
+/** Badge dot colors */
+const BADGE_COLORS = {
+  violet: { ping: "bg-violet-400", dot: "bg-violet-500" },
+  green: { ping: "bg-green-400", dot: "bg-green-500" },
+} as const;
+
 export function ProjectSidebar({
   projectId,
   clientName,
   projectName,
   invoiceNumber,
   contractSignedAt,
+  projectStatus,
   children,
 }: ProjectSidebarProps) {
   const pathname = usePathname();
@@ -93,6 +118,12 @@ export function ProjectSidebar({
   // Contract notification badge state
   const [contractSigned, setContractSigned] = useState(contractSignedAt !== null);
   const [contractSeen, setContractSeen] = useState(true);
+
+  // Payment notification badge state
+  const [paymentReceived, setPaymentReceived] = useState(
+    PAID_STATUSES.includes(projectStatus)
+  );
+  const [paymentSeen, setPaymentSeen] = useState(true);
 
   // Load collapsed state from localStorage (default: collapsed)
   useEffect(() => {
@@ -108,12 +139,25 @@ export function ProjectSidebar({
     }
   }, [contractSigned, projectId]);
 
+  useEffect(() => {
+    if (paymentReceived) {
+      const seen = localStorage.getItem(paymentSeenKey(projectId));
+      setPaymentSeen(seen === "true");
+    }
+  }, [paymentReceived, projectId]);
+
   // Sync server prop into local state
   useEffect(() => {
     if (contractSignedAt !== null && !contractSigned) {
       setContractSigned(true);
     }
   }, [contractSignedAt, contractSigned]);
+
+  useEffect(() => {
+    if (PAID_STATUSES.includes(projectStatus) && !paymentReceived) {
+      setPaymentReceived(true);
+    }
+  }, [projectStatus, paymentReceived]);
 
   // Clear badge when user navigates to contract page
   const onContractPage = pathname.endsWith("/contract");
@@ -124,11 +168,20 @@ export function ProjectSidebar({
     }
   }, [onContractPage, contractSigned, contractSeen, projectId]);
 
-  // ── Supabase realtime subscription for instant contract updates ──
+  // Clear badge when user navigates to payments page
+  const onPaymentsPage = pathname.endsWith("/payments");
+  useEffect(() => {
+    if (onPaymentsPage && paymentReceived && !paymentSeen) {
+      localStorage.setItem(paymentSeenKey(projectId), "true");
+      setPaymentSeen(true);
+    }
+  }, [onPaymentsPage, paymentReceived, paymentSeen, projectId]);
+
+  // ── Supabase realtime subscription for instant updates ──
   useEffect(() => {
     const supabase = getSupabaseBrowser();
     const channel = supabase
-      .channel(`project-contract-${projectId}`)
+      .channel(`project-updates-${projectId}`)
       .on(
         "postgres_changes",
         {
@@ -138,11 +191,20 @@ export function ProjectSidebar({
           filter: `id=eq.${projectId}`,
         },
         (payload) => {
-          const newRow = payload.new as { contract_signed_at?: string | null };
+          const newRow = payload.new as {
+            contract_signed_at?: string | null;
+            status?: string;
+          };
+          // Contract signed
           if (newRow.contract_signed_at && !contractSigned) {
             setContractSigned(true);
             setContractSeen(false);
-            // Refresh the page to pick up the new contract data
+            router.refresh();
+          }
+          // Payment received (status changed to paid or beyond)
+          if (newRow.status && PAID_STATUSES.includes(newRow.status) && !paymentReceived) {
+            setPaymentReceived(true);
+            setPaymentSeen(false);
             router.refresh();
           }
         }
@@ -152,7 +214,7 @@ export function ProjectSidebar({
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [projectId, contractSigned, router]);
+  }, [projectId, contractSigned, paymentReceived, router]);
 
   // Close mobile drawer on route change
   useEffect(() => {
@@ -167,9 +229,10 @@ export function ProjectSidebar({
     });
   }, []);
 
-  // Show badge when signed but not yet seen by admin
+  // Show badges when event happened but not yet seen by admin
   const showContractBadge = contractSigned && !contractSeen;
-  const navItems = getNavItems(projectId, showContractBadge);
+  const showPaymentBadge = paymentReceived && !paymentSeen;
+  const navItems = getNavItems(projectId, showContractBadge, showPaymentBadge);
   const tagCtx = useTagFilterSafe();
 
   function isActive(item: NavItem): boolean {
@@ -177,11 +240,15 @@ export function ProjectSidebar({
     return pathname.startsWith(item.href);
   }
 
-  /** Handle clicking on a nav item — clear badge when clicking Contract */
+  /** Handle clicking on a nav item — clear relevant badge */
   function handleNavClick(item: NavItem) {
     if (item.label === "Contract" && showContractBadge) {
       localStorage.setItem(contractSeenKey(projectId), "true");
       setContractSeen(true);
+    }
+    if (item.label === "Payments" && showPaymentBadge) {
+      localStorage.setItem(paymentSeenKey(projectId), "true");
+      setPaymentSeen(true);
     }
   }
 
@@ -235,6 +302,7 @@ export function ProjectSidebar({
       <nav className="space-y-0.5 px-2 py-3">
         {navItems.map((item) => {
           const active = isActive(item);
+          const colors = item.badge && item.badgeColor ? BADGE_COLORS[item.badgeColor] : null;
           return (
             <Link
               key={item.href}
@@ -249,21 +317,22 @@ export function ProjectSidebar({
             >
               <span className="relative shrink-0">
                 {item.icon}
-                {/* Notification badge dot */}
-                {item.badge && (
-                  <span className="absolute -top-1 -right-1 flex h-3 w-3">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-violet-400 opacity-75" />
-                    <span className="relative inline-flex rounded-full h-3 w-3 bg-violet-500" />
+                {/* Notification dot on icon (collapsed mode) */}
+                {item.badge && collapsed && colors && (
+                  <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5">
+                    <span className={`animate-ping absolute inline-flex h-full w-full rounded-full ${colors.ping} opacity-75`} />
+                    <span className={`relative inline-flex rounded-full h-2.5 w-2.5 ${colors.dot}`} />
                   </span>
                 )}
               </span>
               {!collapsed && (
                 <span className="flex items-center gap-2">
                   {item.label}
-                  {/* Text badge for expanded sidebar */}
-                  {item.badge && (
-                    <span className="inline-flex items-center justify-center rounded-full bg-violet-500 px-1.5 py-0.5 text-[10px] font-bold text-white min-w-[18px] leading-none">
-                      1
+                  {/* Notification dot to the right of label */}
+                  {item.badge && colors && (
+                    <span className="flex h-2.5 w-2.5">
+                      <span className={`animate-ping absolute inline-flex h-2.5 w-2.5 rounded-full ${colors.ping} opacity-75`} />
+                      <span className={`relative inline-flex rounded-full h-2.5 w-2.5 ${colors.dot}`} />
                     </span>
                   )}
                 </span>
@@ -380,6 +449,7 @@ export function ProjectSidebar({
       <div className="fixed inset-x-0 bottom-0 z-30 flex h-14 items-center justify-around border-t border-gray-200 bg-white sm:hidden">
         {navItems.map((item) => {
           const active = isActive(item);
+          const colors = item.badge && item.badgeColor ? BADGE_COLORS[item.badgeColor] : null;
           return (
             <Link
               key={item.href}
@@ -391,10 +461,10 @@ export function ProjectSidebar({
             >
               <span className="relative shrink-0">
                 {item.icon}
-                {item.badge && (
-                  <span className="absolute -top-1 -right-1 flex h-3 w-3">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-violet-400 opacity-75" />
-                    <span className="relative inline-flex rounded-full h-3 w-3 bg-violet-500" />
+                {item.badge && colors && (
+                  <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5">
+                    <span className={`animate-ping absolute inline-flex h-full w-full rounded-full ${colors.ping} opacity-75`} />
+                    <span className={`relative inline-flex rounded-full h-2.5 w-2.5 ${colors.dot}`} />
                   </span>
                 )}
               </span>
