@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ProductsTable } from "@/components/products/products-table";
 import { ProductsGrid } from "@/components/products/products-grid";
 import { TypeFilterPills } from "@/components/products/type-filter-pills";
+import { SellerFilterPills } from "@/components/products/seller-filter-pills";
 import { ViewToggle } from "@/components/ui/view-toggle";
 import type { ViewMode } from "@/components/ui/view-toggle";
 import type { Product, ClientProduct } from "@/types";
@@ -19,6 +20,7 @@ interface ProductsViewProps {
 export function ProductsView({ products, isAdmin, basePath = "/customizations/products" }: ProductsViewProps) {
   const [view, setView] = useState<ViewMode>("list");
   const [typeFilter, setTypeFilter] = useState("");
+  const [sellerFilter, setSellerFilter] = useState("");
 
   const extraTypes = useMemo(() => {
     const types = new Set(
@@ -27,22 +29,40 @@ export function ProductsView({ products, isAdmin, basePath = "/customizations/pr
     return [...types];
   }, [products]);
 
+  const uniqueSellers = useMemo(() => {
+    const sellers = new Set(
+      products
+        .map((p) => p.seller_merchant)
+        .filter((s): s is string => typeof s === "string" && s.length > 0)
+    );
+    return [...sellers].sort((a, b) => a.localeCompare(b));
+  }, [products]);
+
   const filtered = useMemo(
     () =>
-      typeFilter === ""
-        ? products
-        : products.filter((p) => p.type === typeFilter),
-    [products, typeFilter]
+      products.filter((p) => {
+        if (typeFilter !== "" && p.type !== typeFilter) return false;
+        if (sellerFilter !== "" && p.seller_merchant !== sellerFilter) return false;
+        return true;
+      }),
+    [products, typeFilter, sellerFilter]
   );
 
   return (
     <div className="space-y-4">
-      {/* Type filter pills */}
-      <TypeFilterPills
-        value={typeFilter}
-        onChange={setTypeFilter}
-        extraTypes={extraTypes}
-      />
+      {/* Filter pills */}
+      <div className="space-y-2">
+        <TypeFilterPills
+          value={typeFilter}
+          onChange={setTypeFilter}
+          extraTypes={extraTypes}
+        />
+        <SellerFilterPills
+          value={sellerFilter}
+          onChange={setSellerFilter}
+          sellers={uniqueSellers}
+        />
+      </div>
 
       {/* Header row: add button + view toggle (right-aligned) */}
       <div className="flex items-center justify-end gap-3">

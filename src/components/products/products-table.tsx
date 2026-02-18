@@ -53,6 +53,14 @@ function formatCurrency(value: number): string {
   }).format(value);
 }
 
+/** Returns a text color class based on cost vs sales_price comparison */
+function costColorClass(cost: number, salesPrice: number): string {
+  if (cost === 0 && salesPrice === 0) return "";
+  if (cost < salesPrice) return "text-green-600";
+  if (cost > salesPrice) return "text-red-600";
+  return "";
+}
+
 function compareValues(a: string | number, b: string | number, dir: SortDir): number {
   if (typeof a === "string" && typeof b === "string") {
     const cmp = a.localeCompare(b, "en", { sensitivity: "base" });
@@ -398,7 +406,7 @@ export function ProductsTable({ products, isAdmin, basePath = "/customizations/p
 
                   {/* Dealer (admin only) */}
                   {isAdmin && (
-                    <td className={tdCompact}>
+                    <td className={`${tdCompact} ${costColorClass(Number(displayVal("cost") ?? 0), Number(displayVal("sales_price") ?? 0))}`}>
                       <InlineNumberInput
                         value={Number(displayVal("cost") ?? 0)}
                         onChange={(v) => handleFieldChange(product.id, "cost", v)}
@@ -595,12 +603,16 @@ export function ProductsTable({ products, isAdmin, basePath = "/customizations/p
               </div>
 
               {/* Admin cost */}
-              {isAdmin && "cost" in product && (
-                <div className="mt-2 flex items-center justify-between border-t border-border/30 pt-2">
-                  <span className="text-[9px] font-medium uppercase tracking-wider text-amber-600/60">Cost</span>
-                  <span className="text-xs text-amber-600/80">{formatCurrency((product as Product).cost)}</span>
-                </div>
-              )}
+              {isAdmin && "cost" in product && (() => {
+                const cost = (product as Product).cost;
+                const colorCls = costColorClass(cost, product.sales_price);
+                return (
+                  <div className={`mt-2 flex items-center justify-between border-t border-border/30 pt-2 ${colorCls}`}>
+                    <span className="text-[9px] font-medium uppercase tracking-wider opacity-60">Cost</span>
+                    <span className="text-xs">{formatCurrency(cost)}</span>
+                  </div>
+                );
+              })()}
             </button>
           );
         })}

@@ -36,6 +36,13 @@ export default async function DashboardLayout({
       <main className="mx-auto max-w-5xl px-4 py-4 sm:px-6 sm:py-6">
         {children}
       </main>
+      <footer className="py-4 text-center text-[10px] text-muted-foreground/50">
+        <p>Designed by TheLevelTeam LLC</p>
+        <p>
+          Built: #{process.env.NEXT_PUBLIC_BUILD_NUMBER}, Version{" "}
+          {process.env.NEXT_PUBLIC_APP_VERSION}
+        </p>
+      </footer>
     </AuthProvider>
   );
 }
