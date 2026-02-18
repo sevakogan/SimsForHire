@@ -405,15 +405,22 @@ export function ProductsTable({ products, isAdmin, basePath = "/customizations/p
                   </td>
 
                   {/* Dealer (admin only) */}
-                  {isAdmin && (
-                    <td className={`${tdCompact} ${costColorClass(Number(displayVal("cost") ?? 0), Number(displayVal("sales_price") ?? 0))}`}>
-                      <InlineNumberInput
-                        value={Number(displayVal("cost") ?? 0)}
-                        onChange={(v) => handleFieldChange(product.id, "cost", v)}
-                        prefix="$"
-                      />
-                    </td>
-                  )}
+                  {isAdmin && (() => {
+                    const costColor = costColorClass(
+                      Number(displayVal("cost") ?? 0),
+                      Number(displayVal("sales_price") ?? 0)
+                    );
+                    return (
+                      <td className={tdCompact}>
+                        <InlineNumberInput
+                          value={Number(displayVal("cost") ?? 0)}
+                          onChange={(v) => handleFieldChange(product.id, "cost", v)}
+                          prefix="$"
+                          textColorClass={costColor || "text-foreground"}
+                        />
+                      </td>
+                    );
+                  })()}
 
                   {/* S/H */}
                   <td className={tdCompact}>

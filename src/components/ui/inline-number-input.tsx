@@ -10,6 +10,8 @@ interface InlineNumberInputProps {
   className?: string;
   prefix?: string;
   isInteger?: boolean;
+  /** Override the default text-foreground color on the input (e.g. "text-green-600") */
+  textColorClass?: string;
 }
 
 export function InlineNumberInput({
@@ -20,6 +22,7 @@ export function InlineNumberInput({
   className = "",
   prefix = "",
   isInteger = false,
+  textColorClass = "text-foreground",
 }: InlineNumberInputProps) {
   const [localValue, setLocalValue] = useState(String(value));
   const [isFocused, setIsFocused] = useState(false);
@@ -89,7 +92,11 @@ export function InlineNumberInput({
       {prefix && (
         <span
           className={`absolute left-2 top-1/2 -translate-y-1/2 text-xs pointer-events-none transition-colors ${
-            isFocused ? "text-primary" : "text-muted-foreground/60"
+            isFocused
+              ? "text-primary"
+              : textColorClass !== "text-foreground"
+                ? `${textColorClass} opacity-60`
+                : "text-muted-foreground/60"
           }`}
         >
           {prefix}
@@ -104,7 +111,7 @@ export function InlineNumberInput({
         onBlur={handleBlur}
         onFocus={handleFocus}
         onKeyDown={handleKeyDown}
-        className={`w-full rounded-md border border-transparent bg-transparent py-1 text-sm text-foreground text-right transition-all hover:border-border/60 hover:bg-white focus:border-primary/40 focus:bg-white focus:outline-none focus:ring-1 focus:ring-primary/40 ${
+        className={`w-full rounded-md border border-transparent bg-transparent py-1 text-sm ${textColorClass} text-right transition-all hover:border-border/60 hover:bg-white focus:border-primary/40 focus:bg-white focus:outline-none focus:ring-1 focus:ring-primary/40 ${
           prefix ? "pl-5 pr-2" : "px-2"
         }`}
       />
