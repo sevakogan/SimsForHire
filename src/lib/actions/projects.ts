@@ -156,6 +156,19 @@ export async function updateProject(
 ): Promise<{ error: string | null }> {
   const supabase = await createSupabaseServer();
 
+  // Block ALL edits (except notes) when contract is signed
+  const hasNonNoteChanges = Object.keys(input).some((k) => k !== "notes");
+  if (hasNonNoteChanges) {
+    const { data: proj } = await supabase
+      .from("projects")
+      .select("contract_signed_at")
+      .eq("id", id)
+      .single();
+    if (proj?.contract_signed_at) {
+      return { error: "Invoice is locked — the purchase agreement has been signed" };
+    }
+  }
+
   // If status is being downgraded from accepted+ to pre-accepted, reset all
   // item acceptance statuses so the customer sees a fresh review screen.
   const POST_ACCEPTANCE: string[] = ["accepted", "paid", "preparing", "shipped", "received", "completed"];

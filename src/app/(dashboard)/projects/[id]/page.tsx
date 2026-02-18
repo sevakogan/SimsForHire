@@ -13,7 +13,7 @@ import { InvoiceDiscountProvider, InvoiceSection, LiveInvoiceFooter } from "./in
 import { EditableProjectName } from "./editable-project-name";
 import { EditableCustomerCard } from "./editable-customer-card";
 import { EditInvoiceButton } from "./edit-invoice-button";
-import { isEditLocked } from "@/lib/constants/project-statuses";
+import { isEditLocked, isContractLocked } from "@/lib/constants/project-statuses";
 import type { Profile, Item, DiscountType } from "@/types";
 import { isAdminRole, isEmployeeRole } from "@/types";
 
@@ -48,7 +48,9 @@ export default async function ProjectDetailPage({ params }: Props) {
   if (!project) notFound();
 
   // Lock editing once submitted (customer is viewing the invoice)
-  const editLocked = canEdit && isEditLocked(project.status);
+  // Once contract is signed, invoice is permanently locked — no escape-hatch
+  const contractLocked = isContractLocked(project.contract_signed_at);
+  const editLocked = canEdit && (isEditLocked(project.status) || contractLocked);
 
   const client = await getClientById(project.client_id);
 
@@ -268,8 +270,18 @@ export default async function ProjectDetailPage({ params }: Props) {
       {/* Inline add item bar — admin only, hidden when invoice is locked */}
       {admin && !editLocked && <InlineAddItem projectId={id} isAdmin={admin} />}
 
-      {/* Edit The Invoice button — shown when invoice is locked (accepted+) */}
-      {admin && editLocked && <EditInvoiceButton projectId={id} />}
+      {/* Edit The Invoice button — shown when invoice is locked (accepted+) but NOT when contract is signed */}
+      {admin && editLocked && !contractLocked && <EditInvoiceButton projectId={id} />}
+
+      {/* Contract-locked notice — shown when contract is signed */}
+      {admin && contractLocked && (
+        <div className="flex items-center gap-2.5 rounded-lg border border-violet-200 bg-violet-50 px-4 py-2.5 text-xs text-violet-700">
+          <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" />
+          </svg>
+          <span>Invoice is locked — the purchase agreement has been signed.</span>
+        </div>
+      )}
 
       {/* Invoice Summary Footer — live-synced with discount changes */}
       {items.length > 0 && (

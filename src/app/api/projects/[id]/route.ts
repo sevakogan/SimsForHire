@@ -38,6 +38,20 @@ export async function PATCH(
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
+  // Check if contract is signed — if so, invoice is permanently locked
+  const { data: project } = await supabase
+    .from("projects")
+    .select("contract_signed_at")
+    .eq("id", id)
+    .single();
+
+  if (project?.contract_signed_at) {
+    return NextResponse.json(
+      { error: "Invoice is locked — the purchase agreement has been signed" },
+      { status: 403 }
+    );
+  }
+
   // Parse body — accept only the invoice-card fields
   const body = await request.json();
 

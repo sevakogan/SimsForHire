@@ -85,6 +85,15 @@ export function isEditLocked(status: string): boolean {
   return EDIT_LOCKED_STATUSES.has(status as ProjectStatus);
 }
 
+/**
+ * Once the contract is signed the invoice is permanently locked.
+ * The "Edit The Invoice" escape-hatch is NOT available when the contract
+ * is signed — fields cannot be changed without voiding the contract.
+ */
+export function isContractLocked(contractSignedAt: string | null): boolean {
+  return contractSignedAt !== null;
+}
+
 /* ── Contract step row (between Row 1 and Row 2) ──── */
 
 export type ContractStep = "contract_viewed" | "contract_signed";

@@ -1,30 +1,39 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { COMPANY_INFO } from "@/lib/constants/company-info";
 import { useTagFilterSafe } from "@/components/items/tag-filter-context";
 import { getTypeColor } from "@/lib/constants/product-types";
+import { getSupabaseBrowser } from "@/lib/supabase";
 
 interface ProjectSidebarProps {
   projectId: string;
   clientName: string;
   projectName: string;
   invoiceNumber: string | null;
+  contractSignedAt: string | null;
   children: React.ReactNode;
 }
 
 const COLLAPSED_KEY = "project-sidebar-collapsed";
+
+/** localStorage key for tracking whether contract-signed badge has been seen */
+function contractSeenKey(projectId: string): string {
+  return `contract-signed-seen-${projectId}`;
+}
 
 interface NavItem {
   label: string;
   href: string;
   icon: React.ReactNode;
   exact?: boolean;
+  /** Show a notification badge */
+  badge?: boolean;
 }
 
-function getNavItems(projectId: string): NavItem[] {
+function getNavItems(projectId: string, contractBadge: boolean): NavItem[] {
   const base = `/projects/${projectId}`;
   return [
     {
@@ -40,6 +49,7 @@ function getNavItems(projectId: string): NavItem[] {
     {
       label: "Contract",
       href: `${base}/contract`,
+      badge: contractBadge,
       icon: (
         <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 0 0 2.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 0 0-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 0 0 .75-.75 2.25 2.25 0 0 0-.1-.664m-5.8 0A2.251 2.251 0 0 1 13.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25Z" />
@@ -72,11 +82,17 @@ export function ProjectSidebar({
   clientName,
   projectName,
   invoiceNumber,
+  contractSignedAt,
   children,
 }: ProjectSidebarProps) {
   const pathname = usePathname();
+  const router = useRouter();
   const [collapsed, setCollapsed] = useState(true);
   const [mobileOpen, setMobileOpen] = useState(false);
+
+  // Contract notification badge state
+  const [contractSigned, setContractSigned] = useState(contractSignedAt !== null);
+  const [contractSeen, setContractSeen] = useState(true);
 
   // Load collapsed state from localStorage (default: collapsed)
   useEffect(() => {
@@ -84,25 +100,89 @@ export function ProjectSidebar({
     if (saved === "false") setCollapsed(false);
   }, []);
 
+  // Load "seen" state from localStorage
+  useEffect(() => {
+    if (contractSigned) {
+      const seen = localStorage.getItem(contractSeenKey(projectId));
+      setContractSeen(seen === "true");
+    }
+  }, [contractSigned, projectId]);
+
+  // Sync server prop into local state
+  useEffect(() => {
+    if (contractSignedAt !== null && !contractSigned) {
+      setContractSigned(true);
+    }
+  }, [contractSignedAt, contractSigned]);
+
+  // Clear badge when user navigates to contract page
+  const onContractPage = pathname.endsWith("/contract");
+  useEffect(() => {
+    if (onContractPage && contractSigned && !contractSeen) {
+      localStorage.setItem(contractSeenKey(projectId), "true");
+      setContractSeen(true);
+    }
+  }, [onContractPage, contractSigned, contractSeen, projectId]);
+
+  // ── Supabase realtime subscription for instant contract updates ──
+  useEffect(() => {
+    const supabase = getSupabaseBrowser();
+    const channel = supabase
+      .channel(`project-contract-${projectId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "projects",
+          filter: `id=eq.${projectId}`,
+        },
+        (payload) => {
+          const newRow = payload.new as { contract_signed_at?: string | null };
+          if (newRow.contract_signed_at && !contractSigned) {
+            setContractSigned(true);
+            setContractSeen(false);
+            // Refresh the page to pick up the new contract data
+            router.refresh();
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [projectId, contractSigned, router]);
+
   // Close mobile drawer on route change
   useEffect(() => {
     setMobileOpen(false);
   }, [pathname]);
 
-  function toggleCollapsed() {
+  const toggleCollapsed = useCallback(() => {
     setCollapsed((prev) => {
       const next = !prev;
       localStorage.setItem(COLLAPSED_KEY, String(next));
       return next;
     });
-  }
+  }, []);
 
-  const navItems = getNavItems(projectId);
+  // Show badge when signed but not yet seen by admin
+  const showContractBadge = contractSigned && !contractSeen;
+  const navItems = getNavItems(projectId, showContractBadge);
   const tagCtx = useTagFilterSafe();
 
   function isActive(item: NavItem): boolean {
     if (item.exact) return pathname === item.href;
     return pathname.startsWith(item.href);
+  }
+
+  /** Handle clicking on a nav item — clear badge when clicking Contract */
+  function handleNavClick(item: NavItem) {
+    if (item.label === "Contract" && showContractBadge) {
+      localStorage.setItem(contractSeenKey(projectId), "true");
+      setContractSeen(true);
+    }
   }
 
   const sidebarContent = (
@@ -159,15 +239,35 @@ export function ProjectSidebar({
             <Link
               key={item.href}
               href={item.href}
-              className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
+              onClick={() => handleNavClick(item)}
+              className={`relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
                 active
                   ? "bg-primary/10 text-primary"
                   : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
               } ${collapsed ? "justify-center px-2" : ""}`}
               title={collapsed ? item.label : undefined}
             >
-              <span className="shrink-0">{item.icon}</span>
-              {!collapsed && <span>{item.label}</span>}
+              <span className="relative shrink-0">
+                {item.icon}
+                {/* Notification badge dot */}
+                {item.badge && (
+                  <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-violet-400 opacity-75" />
+                    <span className="relative inline-flex rounded-full h-3 w-3 bg-violet-500" />
+                  </span>
+                )}
+              </span>
+              {!collapsed && (
+                <span className="flex items-center gap-2">
+                  {item.label}
+                  {/* Text badge for expanded sidebar */}
+                  {item.badge && (
+                    <span className="inline-flex items-center justify-center rounded-full bg-violet-500 px-1.5 py-0.5 text-[10px] font-bold text-white min-w-[18px] leading-none">
+                      1
+                    </span>
+                  )}
+                </span>
+              )}
             </Link>
           );
         })}
@@ -202,14 +302,14 @@ export function ProjectSidebar({
             </button>
             {tagCtx.tags.map(([tag, count]) => {
               const colors = getTypeColor(tag);
-              const isActive = tagCtx.tagFilter === tag;
+              const tagActive = tagCtx.tagFilter === tag;
               return (
                 <button
                   key={tag}
                   type="button"
-                  onClick={() => tagCtx.setTagFilter(isActive ? "" : tag)}
+                  onClick={() => tagCtx.setTagFilter(tagActive ? "" : tag)}
                   className={`${collapsed ? "flex w-full items-center justify-center rounded-md p-1.5" : "rounded-full px-2.5 py-0.5"} text-[11px] font-medium transition-all ${
-                    isActive
+                    tagActive
                       ? `${colors.activeBg} ${colors.activeText} shadow-sm`
                       : `${colors.bg} ${colors.text} hover:opacity-80`
                   }`}
@@ -220,7 +320,7 @@ export function ProjectSidebar({
                   ) : (
                     <>
                       {tag}
-                      <span className={`ml-1 text-[10px] ${isActive ? "opacity-80" : "opacity-60"}`}>
+                      <span className={`ml-1 text-[10px] ${tagActive ? "opacity-80" : "opacity-60"}`}>
                         {count}
                       </span>
                     </>
@@ -284,11 +384,20 @@ export function ProjectSidebar({
             <Link
               key={item.href}
               href={item.href}
-              className={`flex flex-col items-center gap-0.5 px-3 py-1.5 text-[10px] font-medium transition-colors ${
+              onClick={() => handleNavClick(item)}
+              className={`relative flex flex-col items-center gap-0.5 px-3 py-1.5 text-[10px] font-medium transition-colors ${
                 active ? "text-primary" : "text-gray-400"
               }`}
             >
-              <span className="shrink-0">{item.icon}</span>
+              <span className="relative shrink-0">
+                {item.icon}
+                {item.badge && (
+                  <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-violet-400 opacity-75" />
+                    <span className="relative inline-flex rounded-full h-3 w-3 bg-violet-500" />
+                  </span>
+                )}
+              </span>
               <span>{item.label}</span>
             </Link>
           );
