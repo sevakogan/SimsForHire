@@ -290,23 +290,23 @@ export function ProductsTable({ products, isAdmin, basePath = "/customizations/p
     <>
       {/* Desktop table — horizontally scrollable */}
       <div className={`${tableStyles.wrapper} hidden sm:block`}>
-        <table className={`${tableStyles.table} min-w-[750px]`}>
+        <table className={`${tableStyles.table} w-full`}>
           <thead className={tableStyles.thead}>
             <tr>
-              <th className={`${tdCompact} ${thBase} w-[44px]`}>Image</th>
-              <SortableTh field="seller_merchant" className="w-[90px]">Merchant</SortableTh>
-              <SortableTh field="type" className="w-[80px]">Type</SortableTh>
-              <SortableTh field="name" className="max-w-[130px]">Name</SortableTh>
-              <SortableTh field="retail_price" className="w-[75px]">Retail</SortableTh>
-              {isAdmin && <th className={`${tdCompact} ${thBase} w-[50px]`}>%</th>}
-              {isAdmin && <SortableTh field="cost" className="w-[75px]">Cost</SortableTh>}
-              <SortableTh field="sales_price" className="w-[75px]">Sales</SortableTh>
-              <th className={`${tdCompact} ${thBase} w-[30px]`} title="Website">
+              <th className={`${tdCompact} ${thBase}`} style={{ width: 44 }}>Image</th>
+              <SortableTh field="seller_merchant">Merchant</SortableTh>
+              <SortableTh field="type">Type</SortableTh>
+              <SortableTh field="name">Name</SortableTh>
+              <SortableTh field="retail_price">Retail</SortableTh>
+              {isAdmin && <th className={`${tdCompact} ${thBase}`} style={{ width: 56 }}>%</th>}
+              {isAdmin && <SortableTh field="cost">Cost</SortableTh>}
+              <SortableTh field="sales_price">Sales</SortableTh>
+              <th className={`${tdCompact} ${thBase}`} style={{ width: 36 }} title="Website">
                 <svg className="h-3 w-3 mx-auto text-muted-foreground/50" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.5 0 0 1 1.242 7.244l-4.5 4.5a4.5 4.5 0 0 1-6.364-6.364l1.757-1.757m9.86-2.338a4.5 4.5 0 0 0-1.242-7.244l-4.5-4.5a4.5 4.5 0 0 0-6.364 6.364L4.757 8.25" />
                 </svg>
               </th>
-              {isAdmin && <th className={`${tdCompact} ${thBase} w-[56px]`}></th>}
+              {isAdmin && <th className={`${tdCompact} ${thBase}`} style={{ width: 56 }}></th>}
             </tr>
           </thead>
           <tbody className={tableStyles.tbody}>
@@ -357,7 +357,7 @@ export function ProductsTable({ products, isAdmin, basePath = "/customizations/p
                   </td>
 
                   {/* 2. Merchant */}
-                  <td className={`${tdCompact} max-w-[90px]`}>
+                  <td className={tdCompact}>
                     {isAdmin ? (
                       <InlineTextInput
                         value={String(displayVal("seller_merchant") ?? "")}
@@ -392,7 +392,7 @@ export function ProductsTable({ products, isAdmin, basePath = "/customizations/p
                   </td>
 
                   {/* 4. Name */}
-                  <td className={`${tdCompact} max-w-[130px]`}>
+                  <td className={tdCompact}>
                     {isAdmin ? (
                       <InlineTextInput
                         value={String(displayVal("name") ?? "")}
