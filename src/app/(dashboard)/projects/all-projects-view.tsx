@@ -183,6 +183,82 @@ function ConfirmDeleteModal({
   );
 }
 
+/* ─── Status phase bars ─── */
+
+const SALES_STEPS: ProjectStatus[] = ["draft", "quote", "submitted", "accepted", "paid"];
+const FULFILLMENT_STEPS: ProjectStatus[] = ["preparing", "shipped", "received", "completed"];
+
+/** Returns 0–1 progress through a status array based on current status */
+function statusProgress(currentStatus: ProjectStatus, steps: ProjectStatus[]): number {
+  const idx = steps.indexOf(currentStatus);
+  if (idx === -1) {
+    // If current status is beyond this phase, check if it's a later phase
+    const allStatuses: ProjectStatus[] = ["draft", "quote", "submitted", "accepted", "paid", "preparing", "shipped", "received", "completed"];
+    const currentIdx = allStatuses.indexOf(currentStatus);
+    const lastStepIdx = allStatuses.indexOf(steps[steps.length - 1]);
+    // If we're past this phase's last step, it's 100%
+    if (currentIdx > lastStepIdx) return 1;
+    return 0;
+  }
+  // step 0 = first step reached → show some progress
+  return (idx + 1) / steps.length;
+}
+
+function StatusBars({
+  status,
+  contractViewedAt,
+  contractSignedAt,
+  compact = false,
+}: {
+  status: ProjectStatus;
+  contractViewedAt: string | null;
+  contractSignedAt: string | null;
+  compact?: boolean;
+}) {
+  const salesPct = statusProgress(status, SALES_STEPS) * 100;
+  const fulfillmentPct = statusProgress(status, FULFILLMENT_STEPS) * 100;
+
+  // Contract: 0 = none, 50 = viewed, 100 = signed
+  const contractPct = contractSignedAt ? 100 : contractViewedAt ? 50 : 0;
+
+  const barHeight = compact ? "h-1" : "h-1.5";
+
+  return (
+    <div className={`flex items-center gap-1 ${compact ? "w-full" : ""}`}>
+      {/* Sales: draft → paid */}
+      <div className="flex-1 flex flex-col items-center gap-0.5" title={`Sales: ${Math.round(salesPct)}%`}>
+        <div className={`w-full ${barHeight} rounded-full bg-gray-100 overflow-hidden`}>
+          <div
+            className="h-full rounded-full bg-blue-500 transition-all"
+            style={{ width: `${salesPct}%` }}
+          />
+        </div>
+        {!compact && <span className="text-[8px] text-gray-400 leading-none">Sales</span>}
+      </div>
+      {/* Contract: viewed → signed */}
+      <div className="flex-1 flex flex-col items-center gap-0.5" title={`Contract: ${contractSignedAt ? "Signed" : contractViewedAt ? "Viewed" : "Pending"}`}>
+        <div className={`w-full ${barHeight} rounded-full bg-gray-100 overflow-hidden`}>
+          <div
+            className="h-full rounded-full bg-violet-500 transition-all"
+            style={{ width: `${contractPct}%` }}
+          />
+        </div>
+        {!compact && <span className="text-[8px] text-gray-400 leading-none">Contract</span>}
+      </div>
+      {/* Fulfillment: preparing → completed */}
+      <div className="flex-1 flex flex-col items-center gap-0.5" title={`Fulfillment: ${Math.round(fulfillmentPct)}%`}>
+        <div className={`w-full ${barHeight} rounded-full bg-gray-100 overflow-hidden`}>
+          <div
+            className="h-full rounded-full bg-emerald-500 transition-all"
+            style={{ width: `${fulfillmentPct}%` }}
+          />
+        </div>
+        {!compact && <span className="text-[8px] text-gray-400 leading-none">Fulfillment</span>}
+      </div>
+    </div>
+  );
+}
+
 /* ─── Profit indicator helper ─── */
 
 function ProfitIndicator({ profit }: { profit: number }) {
@@ -254,7 +330,7 @@ function ProjectListRow({
   return (
     <Link
       href={`/projects/${project.id}`}
-      className="group grid grid-cols-[1fr] sm:grid-cols-[1fr_100px_80px_50px_80px_48px_60px] items-center gap-x-3 rounded-xl border border-border bg-white p-3.5 shadow-sm transition-all hover:border-primary/20 hover:shadow-md sm:p-5"
+      className="group grid grid-cols-[1fr] sm:grid-cols-[1fr_120px_100px_80px_50px_80px_48px_60px] items-center gap-x-3 rounded-xl border border-border bg-white p-3.5 shadow-sm transition-all hover:border-primary/20 hover:shadow-md sm:p-5"
     >
       {/* Col 1: Name + meta */}
       <div className="min-w-0">
@@ -283,7 +359,16 @@ function ProjectListRow({
         </div>
       </div>
 
-      {/* Col 2: Total + Profit */}
+      {/* Col 2: Status bars */}
+      <div className="hidden sm:block">
+        <StatusBars
+          status={project.status}
+          contractViewedAt={project.contract_viewed_at}
+          contractSignedAt={project.contract_signed_at}
+        />
+      </div>
+
+      {/* Col 3: Total + Profit */}
       <div className="hidden sm:block text-right">
         {s.grandTotal > 0 ? (
           <>
@@ -297,14 +382,14 @@ function ProjectListRow({
         )}
       </div>
 
-      {/* Col 3: Payment progress */}
+      {/* Col 4: Payment progress */}
       <div className="hidden sm:block">
         {s.grandTotal > 0 ? (
           <PaymentProgress totalPaid={s.totalPaid} grandTotal={s.grandTotal} />
         ) : null}
       </div>
 
-      {/* Col 4: Item count */}
+      {/* Col 5: Item count */}
       <div className="hidden sm:block text-center">
         {s.itemCount > 0 ? (
           <span className="text-[10px] text-muted-foreground/60 tabular-nums">
@@ -313,12 +398,12 @@ function ProjectListRow({
         ) : null}
       </div>
 
-      {/* Col 5: Status badge */}
+      {/* Col 6: Status badge */}
       <div className="hidden sm:flex justify-end">
         <Badge variant={project.status}>{project.status}</Badge>
       </div>
 
-      {/* Col 6: Notes */}
+      {/* Col 7: Notes */}
       <div className="hidden sm:flex justify-center">
         {noteCount > 0 && (
           <span className="inline-flex items-center gap-1 rounded-full bg-red-50 border border-red-200 px-2 py-0.5 text-[10px] font-semibold text-red-600">
@@ -330,7 +415,7 @@ function ProjectListRow({
         )}
       </div>
 
-      {/* Col 7: Invoice # + actions */}
+      {/* Col 8: Invoice # + actions */}
       <div className="hidden sm:flex items-center justify-end gap-1">
         {project.invoice_number && (
           <span className="text-[10px] text-muted-foreground/60 group-hover:hidden">
@@ -405,8 +490,15 @@ function ProjectGridCard({
 
   return (
     <div className="group relative rounded-xl border border-border bg-white shadow-sm transition-all hover:shadow-md hover:border-primary/20 overflow-hidden">
-      {/* Color bar */}
-      <div className={`h-1.5 ${statusColor(project.status)}`} />
+      {/* Status progress bars */}
+      <div className="px-3 pt-2.5">
+        <StatusBars
+          status={project.status}
+          contractViewedAt={project.contract_viewed_at}
+          contractSignedAt={project.contract_signed_at}
+          compact
+        />
+      </div>
 
       {/* Action buttons — top-right on hover */}
       <div className="absolute top-3 right-2 flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity z-10">
@@ -513,23 +605,3 @@ function ProjectGridCard({
   );
 }
 
-/* ─── Helpers ─── */
-
-function statusColor(status: ProjectStatus): string {
-  switch (status) {
-    case "quote":
-    case "submitted":
-      return "bg-gray-400";
-    case "accepted":
-    case "paid":
-      return "bg-green-400";
-    case "preparing":
-    case "shipped":
-    case "received":
-      return "bg-sky-400";
-    case "completed":
-      return "bg-green-400";
-    default:
-      return "bg-slate-300";
-  }
-}
