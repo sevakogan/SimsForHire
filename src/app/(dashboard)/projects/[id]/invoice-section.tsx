@@ -4,7 +4,7 @@ import { createContext, useContext, useState, type ReactNode } from "react";
 import { InvoiceInfoCard } from "./invoice-info-card";
 import { InvoiceSummaryFooter } from "@/components/invoice/invoice-summary-footer";
 import type { DiscountState } from "./invoice-info-card";
-import type { DiscountType } from "@/types";
+import type { DiscountType, FulfillmentType } from "@/types";
 
 /* ── Context for live discount/tax state ──────────────── */
 
@@ -14,6 +14,14 @@ function useDiscountState() {
   return useContext(DiscountContext);
 }
 
+/* ── Context for live fulfillment type ────────────────── */
+
+const FulfillmentContext = createContext<FulfillmentType>("delivery");
+
+export function useFulfillmentType() {
+  return useContext(FulfillmentContext);
+}
+
 /* ── Provider wraps the whole page section ────────────── */
 
 interface InvoiceDiscountProviderProps {
@@ -21,6 +29,7 @@ interface InvoiceDiscountProviderProps {
   discountPercent: number;
   discountAmount: number;
   taxPercent: number;
+  fulfillmentType: FulfillmentType;
   children: ReactNode;
 }
 
@@ -29,6 +38,7 @@ export function InvoiceDiscountProvider({
   discountPercent,
   discountAmount,
   taxPercent,
+  fulfillmentType,
   children,
 }: InvoiceDiscountProviderProps) {
   const [liveDiscount, setLiveDiscount] = useState<DiscountState>({
@@ -38,17 +48,24 @@ export function InvoiceDiscountProvider({
     taxPercent,
   });
 
+  const [liveFulfillment, setLiveFulfillment] = useState<FulfillmentType>(fulfillmentType);
+
   return (
     <DiscountContext.Provider value={liveDiscount}>
-      {/* Expose setter via a hidden context — we pass it via the InvoiceInfoCardWrapper */}
-      <SetterContext.Provider value={setLiveDiscount}>
-        {children}
-      </SetterContext.Provider>
+      <FulfillmentContext.Provider value={liveFulfillment}>
+        {/* Expose setters via hidden contexts */}
+        <SetterContext.Provider value={setLiveDiscount}>
+          <FulfillmentSetterContext.Provider value={setLiveFulfillment}>
+            {children}
+          </FulfillmentSetterContext.Provider>
+        </SetterContext.Provider>
+      </FulfillmentContext.Provider>
     </DiscountContext.Provider>
   );
 }
 
 const SetterContext = createContext<((s: DiscountState) => void) | null>(null);
+const FulfillmentSetterContext = createContext<((f: FulfillmentType) => void) | null>(null);
 
 /* ── InvoiceInfoCard that auto-wires to context ──────── */
 
@@ -72,11 +89,13 @@ interface InvoiceSectionProps {
 
 export function InvoiceSection(props: InvoiceSectionProps) {
   const setter = useContext(SetterContext);
+  const fulfillmentSetter = useContext(FulfillmentSetterContext);
 
   return (
     <InvoiceInfoCard
       {...props}
       onDiscountChange={setter ?? undefined}
+      onFulfillmentChange={fulfillmentSetter ?? undefined}
       readOnly={props.readOnly}
     />
   );

@@ -78,6 +78,7 @@ CREATE TABLE projects (
   discount_type TEXT NOT NULL DEFAULT 'percent' CHECK (discount_type IN ('percent', 'amount')),
   discount_amount NUMERIC(12, 2) NOT NULL DEFAULT 0,
   share_token UUID UNIQUE,
+  shipping_address TEXT,
   contract_viewed_at TIMESTAMPTZ,
   contract_signed_at TIMESTAMPTZ,
   contract_signed_by TEXT,

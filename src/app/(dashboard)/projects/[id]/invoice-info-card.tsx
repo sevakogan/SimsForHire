@@ -26,6 +26,7 @@ interface InvoiceInfoCardProps {
   myCost?: number;
   myShipping?: number;
   onDiscountChange?: (state: DiscountState) => void;
+  onFulfillmentChange?: (type: FulfillmentType) => void;
   readOnly?: boolean;
 }
 
@@ -44,6 +45,7 @@ export function InvoiceInfoCard({
   myCost,
   myShipping,
   onDiscountChange,
+  onFulfillmentChange,
   readOnly = false,
 }: InvoiceInfoCardProps) {
   // "Saved" values — the server-side truth
@@ -158,6 +160,7 @@ export function InvoiceInfoCard({
 
   function handleFulfillmentToggle(type: FulfillmentType) {
     setLocalFulfillment(type);
+    onFulfillmentChange?.(type);
     persist("fulfillment_type", type);
   }
 

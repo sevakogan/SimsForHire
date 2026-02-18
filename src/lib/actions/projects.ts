@@ -151,6 +151,7 @@ export async function updateProject(
     discount_percent?: number;
     discount_type?: DiscountType;
     discount_amount?: number;
+    shipping_address?: string | null;
   }
 ): Promise<{ error: string | null }> {
   const supabase = await createSupabaseServer();

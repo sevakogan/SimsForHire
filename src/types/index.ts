@@ -44,6 +44,7 @@ export interface Project {
   discount_percent: number;
   discount_type: DiscountType;
   discount_amount: number;
+  shipping_address: string | null;
   share_token: string | null;
   contract_viewed_at: string | null;
   contract_signed_at: string | null;

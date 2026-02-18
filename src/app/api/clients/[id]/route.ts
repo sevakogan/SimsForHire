@@ -1,15 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseServer } from "@/lib/supabase-server";
 import { isAdminRole } from "@/types";
-import type { Profile, DiscountType, FulfillmentType } from "@/types";
+import type { Profile } from "@/types";
 
 /**
- * PATCH /api/projects/[id]
+ * PATCH /api/clients/[id]
  *
- * Lightweight endpoint for persisting individual invoice-card field edits.
- * Uses a plain fetch (not a server action) so it is immune to React's
- * startTransition / AbortController behaviour that was silently aborting
- * server-action POSTs on this page.
+ * Lightweight endpoint for inline-editing client fields from the project
+ * detail page. Uses a plain fetch so it's immune to React's
+ * startTransition / AbortController issues.
  */
 export async function PATCH(
   request: NextRequest,
@@ -38,33 +37,28 @@ export async function PATCH(
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  // Parse body — accept only the invoice-card fields
+  // Parse body — accept only safe client fields
   const body = await request.json();
 
-  const ALLOWED_FIELDS: Record<string, "string" | "number" | "nullable_string"> = {
-    invoice_number: "nullable_string",
-    date_required: "nullable_string",
-    fulfillment_type: "string",
-    notes: "string",
-    tax_percent: "number",
-    discount_percent: "number",
-    discount_type: "string",
-    discount_amount: "number",
-    shipping_address: "nullable_string",
+  const ALLOWED_FIELDS: Record<string, "string" | "nullable_string"> = {
+    name: "string",
+    email: "nullable_string",
+    phone: "nullable_string",
+    address: "nullable_string",
   };
 
-  const update: Record<string, string | number | null> = {};
+  const update: Record<string, string | null> = {};
 
   for (const [key, value] of Object.entries(body)) {
     const type = ALLOWED_FIELDS[key];
-    if (!type) continue; // ignore unknown fields
+    if (!type) continue;
 
-    if (type === "number") {
-      update[key] = typeof value === "number" ? value : parseFloat(value as string) || 0;
-    } else if (type === "nullable_string") {
+    if (type === "nullable_string") {
       update[key] = value === null || value === "" ? null : String(value);
     } else {
-      update[key] = String(value);
+      // "string" — required field, skip if empty
+      const str = String(value).trim();
+      if (str) update[key] = str;
     }
   }
 
@@ -73,12 +67,12 @@ export async function PATCH(
   }
 
   const { error } = await supabase
-    .from("projects")
+    .from("clients")
     .update(update)
     .eq("id", id);
 
   if (error) {
-    console.error("[PATCH /api/projects/[id]]", error.message);
+    console.error("[PATCH /api/clients/[id]]", error.message);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
