@@ -9,7 +9,7 @@ import { calculateInvoiceTotals } from "@/lib/invoice-calculations";
 import { PortalAuthGate } from "@/components/portal/portal-auth-gate";
 import { PurchaseAgreement } from "@/components/portal/purchase-agreement";
 import { SignedAgreementView } from "@/components/portal/signed-agreement-view";
-import type { DiscountType } from "@/types";
+import type { DiscountType, FulfillmentType } from "@/types";
 
 export const dynamic = "force-dynamic";
 
@@ -77,6 +77,9 @@ export default async function ContractPage({ params }: Props) {
 
   const isSigned = project.contract_signed_at !== null;
   const companyName = company.name || "SimsForHire (LevelSim LLC Holdings)";
+  const logoUrl = company.logo_url ?? null;
+  const logoScale = company.logo_scale ?? 100;
+  const fulfillmentType = project.fulfillment_type as FulfillmentType;
 
   return (
     <PortalAuthGate token={token}>
@@ -102,6 +105,10 @@ export default async function ContractPage({ params }: Props) {
           initialsDataUrl={project.contract_initials_data ?? null}
           shareToken={token}
           contractSignedAt={project.contract_signed_at}
+          logoUrl={logoUrl}
+          logoScale={logoScale}
+          fulfillmentType={fulfillmentType}
+          shippingAddress={project.shipping_address}
         />
       ) : (
         <PurchaseAgreement
@@ -109,6 +116,10 @@ export default async function ContractPage({ params }: Props) {
           buyer={buyerInfo}
           order={orderInfo}
           companyName={companyName}
+          logoUrl={logoUrl}
+          logoScale={logoScale}
+          fulfillmentType={fulfillmentType}
+          shippingAddress={project.shipping_address}
         />
       )}
     </PortalAuthGate>

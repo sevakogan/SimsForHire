@@ -9,6 +9,7 @@ import {
 } from "@/lib/constants/contract-content";
 import type { ContractSection } from "@/lib/constants/contract-content";
 import { formatCurrency } from "@/lib/invoice-calculations";
+import type { FulfillmentType } from "@/types";
 
 /* ────────────────────────────────────────────────
    Types
@@ -39,6 +40,10 @@ interface SignedAgreementViewProps {
   shareToken?: string | null;
   /** Whether the contract has been signed (for payment CTA) */
   contractSignedAt?: string | null;
+  logoUrl?: string | null;
+  logoScale?: number;
+  fulfillmentType?: FulfillmentType;
+  shippingAddress?: string | null;
 }
 
 /* ────────────────────────────────────────────────
@@ -58,40 +63,81 @@ function RichText({ text, bold }: { text: string; bold?: string }) {
   );
 }
 
-function SectionBlock({ section }: { section: ContractSection }) {
+function SectionBlock({
+  section,
+  initialsDataUrl,
+}: {
+  section: ContractSection;
+  initialsDataUrl: string | null;
+}) {
   return (
     <div className="mt-6 first:mt-0">
-      <h3 className="text-sm font-bold text-gray-900">
-        {section.number}. {section.title}
-      </h3>
-      <div className="mt-2 space-y-2">
-        {section.clauses.map((clause) => (
-          <div key={clause.id}>
-            <p className="text-[13px] leading-relaxed text-gray-700">
-              <span className="font-semibold text-gray-800">{clause.id}</span>{" "}
-              <RichText text={clause.text} bold={clause.bold} />
-            </p>
-            {clause.subItems && (
-              <div className="mt-1.5 ml-6 space-y-1">
-                {clause.subItems.map((sub) => (
-                  <p
-                    key={sub.id}
-                    className="text-[13px] leading-relaxed text-gray-700"
-                  >
-                    <span className="font-medium text-gray-600">
-                      {sub.id})
-                    </span>{" "}
-                    <RichText text={sub.text} bold={sub.bold} />
-                  </p>
-                ))}
+      <div className="flex items-start gap-3">
+        {/* Initials stamp */}
+        <div className="shrink-0 mt-0.5">
+          {initialsDataUrl ? (
+            <div className="flex h-8 w-8 items-center justify-center rounded border border-green-200 bg-green-50">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={initialsDataUrl}
+                alt="Initials"
+                className="h-6 w-6 object-contain"
+              />
+            </div>
+          ) : (
+            <div className="flex h-8 w-8 items-center justify-center rounded border border-gray-200 bg-gray-50">
+              <span className="text-[8px] text-gray-300">—</span>
+            </div>
+          )}
+        </div>
+
+        {/* Section content */}
+        <div className="flex-1 min-w-0">
+          <h3 className="text-sm font-bold text-gray-900">
+            {section.number}. {section.title}
+          </h3>
+          <div className="mt-2 space-y-2">
+            {section.clauses.map((clause) => (
+              <div key={clause.id}>
+                <p className="text-[13px] leading-relaxed text-gray-700">
+                  <span className="font-semibold text-gray-800">
+                    {clause.id}
+                  </span>{" "}
+                  <RichText text={clause.text} bold={clause.bold} />
+                </p>
+                {clause.subItems && (
+                  <div className="mt-1.5 ml-6 space-y-1">
+                    {clause.subItems.map((sub) => (
+                      <p
+                        key={sub.id}
+                        className="text-[13px] leading-relaxed text-gray-700"
+                      >
+                        <span className="font-medium text-gray-600">
+                          {sub.id})
+                        </span>{" "}
+                        <RichText text={sub.text} bold={sub.bold} />
+                      </p>
+                    ))}
+                  </div>
+                )}
               </div>
-            )}
+            ))}
           </div>
-        ))}
+        </div>
       </div>
     </div>
   );
 }
+
+/* ────────────────────────────────────────────────
+   Fulfillment type display label
+   ──────────────────────────────────────────────── */
+
+const FULFILLMENT_LABELS: Record<FulfillmentType, string> = {
+  pickup: "Pickup",
+  delivery: "Delivery",
+  white_glove: "White Glove Delivery",
+};
 
 /* ────────────────────────────────────────────────
    Main component
@@ -107,6 +153,10 @@ export function SignedAgreementView({
   initialsDataUrl,
   shareToken = null,
   contractSignedAt = null,
+  logoUrl,
+  logoScale = 100,
+  fulfillmentType,
+  shippingAddress,
 }: SignedAgreementViewProps) {
   const formattedDate = new Date(signedAt).toLocaleDateString("en-US", {
     month: "long",
@@ -122,6 +172,13 @@ export function SignedAgreementView({
     minute: "2-digit",
     timeZoneName: "short",
   });
+
+  const showShippingAddress =
+    fulfillmentType &&
+    fulfillmentType !== "pickup" &&
+    shippingAddress;
+
+  const logoSize = 48 * (logoScale / 100);
 
   return (
     <div className="space-y-6">
@@ -183,8 +240,21 @@ export function SignedAgreementView({
 
       {/* ─── Contract Document (read-only) ─── */}
       <div className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
-        {/* Header */}
+        {/* Header with logo */}
         <div className="border-b border-gray-200 bg-gray-50/80 px-5 py-6 sm:px-8 text-center">
+          {logoUrl && (
+            <div className="flex justify-center mb-3">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={logoUrl}
+                alt={companyName}
+                width={logoSize}
+                height={logoSize}
+                className="rounded-lg bg-primary/10 object-contain"
+                style={{ width: logoSize, height: logoSize }}
+              />
+            </div>
+          )}
           <h2 className="text-xl font-black tracking-wide text-gray-900 sm:text-2xl">
             {CONTRACT_HEADER.company}
           </h2>
@@ -204,43 +274,73 @@ export function SignedAgreementView({
         <div className="border-b border-gray-200 px-5 py-4 sm:px-8">
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div className="flex items-baseline gap-2">
-              <span className="text-xs font-bold text-gray-900 shrink-0">Buyer:</span>
-              <span className="text-sm text-gray-700 truncate">{buyer.name}</span>
+              <span className="text-xs font-bold text-gray-900 shrink-0">
+                Buyer:
+              </span>
+              <span className="text-sm text-gray-700 truncate">
+                {buyer.name}
+              </span>
             </div>
             <div className="flex items-baseline gap-2">
-              <span className="text-xs font-bold text-gray-900 shrink-0">Order Ref:</span>
+              <span className="text-xs font-bold text-gray-900 shrink-0">
+                Order Ref:
+              </span>
               <span className="text-sm text-gray-700 truncate">
                 {order.orderRef ?? "—"}
               </span>
             </div>
             <div className="flex items-baseline gap-2">
-              <span className="text-xs font-bold text-gray-900 shrink-0">Email:</span>
+              <span className="text-xs font-bold text-gray-900 shrink-0">
+                Email:
+              </span>
               <span className="text-sm text-gray-700 truncate">
                 {buyer.email ?? "—"}
               </span>
             </div>
             <div className="flex items-baseline gap-2">
-              <span className="text-xs font-bold text-gray-900 shrink-0">Date:</span>
+              <span className="text-xs font-bold text-gray-900 shrink-0">
+                Date:
+              </span>
               <span className="text-sm text-gray-700">{order.date}</span>
             </div>
             <div className="flex items-baseline gap-2">
-              <span className="text-xs font-bold text-gray-900 shrink-0">Phone:</span>
+              <span className="text-xs font-bold text-gray-900 shrink-0">
+                Phone:
+              </span>
               <span className="text-sm text-gray-700">
                 {buyer.phone ?? "—"}
               </span>
             </div>
             <div className="flex items-baseline gap-2">
-              <span className="text-xs font-bold text-gray-900 shrink-0">Total:</span>
+              <span className="text-xs font-bold text-gray-900 shrink-0">
+                Total:
+              </span>
               <span className="text-sm font-semibold text-gray-900">
                 {formatCurrency(order.total)}
               </span>
             </div>
-            <div className="flex items-baseline gap-2 sm:col-span-2">
-              <span className="text-xs font-bold text-gray-900 shrink-0">Address:</span>
+
+            {/* Billing Address */}
+            <div className="flex items-baseline gap-2">
+              <span className="text-xs font-bold text-gray-900 shrink-0">
+                Address:
+              </span>
               <span className="text-sm text-gray-700">
                 {buyer.address ?? "—"}
               </span>
             </div>
+
+            {/* Shipping/Delivery Address */}
+            {showShippingAddress && (
+              <div className="flex items-baseline gap-2">
+                <span className="text-xs font-bold text-gray-900 shrink-0">
+                  {FULFILLMENT_LABELS[fulfillmentType!]} Address:
+                </span>
+                <span className="text-sm text-gray-700">
+                  {shippingAddress}
+                </span>
+              </div>
+            )}
           </div>
         </div>
 
@@ -261,10 +361,14 @@ export function SignedAgreementView({
           </p>
         </div>
 
-        {/* Sections */}
+        {/* Sections with initials stamps */}
         <div className="px-5 pb-6 sm:px-8">
           {CONTRACT_SECTIONS.map((section) => (
-            <SectionBlock key={section.number} section={section} />
+            <SectionBlock
+              key={section.number}
+              section={section}
+              initialsDataUrl={initialsDataUrl}
+            />
           ))}
         </div>
 
@@ -280,21 +384,6 @@ export function SignedAgreementView({
           ))}
         </div>
 
-        {/* ─── Initials ─── */}
-        {initialsDataUrl && (
-          <div className="border-t border-gray-200 px-5 py-4 sm:px-8 flex items-center gap-3">
-            <div className="rounded-lg border border-gray-200 bg-gray-50 p-1.5">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={initialsDataUrl}
-                alt="Buyer initials"
-                className="h-12 w-12 object-contain"
-              />
-            </div>
-            <span className="text-xs text-gray-500">Buyer Initials</span>
-          </div>
-        )}
-
         {/* ─── BUYER SIGNATURE ─── */}
         <div className="border-t border-gray-200 px-5 py-5 sm:px-8">
           <h3 className="text-sm font-bold text-gray-900 mb-4">
@@ -309,7 +398,9 @@ export function SignedAgreementView({
               <p className="text-sm font-medium text-gray-900">{signedBy}</p>
             </div>
             <div>
-              <p className="text-[10px] font-medium text-gray-500 mb-1">Date</p>
+              <p className="text-[10px] font-medium text-gray-500 mb-1">
+                Date
+              </p>
               <p className="text-sm text-gray-700">{formattedDate}</p>
             </div>
           </div>
@@ -342,7 +433,9 @@ export function SignedAgreementView({
           </h3>
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
             <div>
-              <p className="text-[10px] text-gray-500">Authorized Representative</p>
+              <p className="text-[10px] text-gray-500">
+                Authorized Representative
+              </p>
               <p className="text-sm italic text-gray-600">{companyName}</p>
             </div>
             <div>

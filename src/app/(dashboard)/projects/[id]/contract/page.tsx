@@ -5,7 +5,7 @@ import { getCompanyInfo } from "@/lib/actions/company-info";
 import { calculateInvoiceTotals } from "@/lib/invoice-calculations";
 import { SignedAgreementView } from "@/components/portal/signed-agreement-view";
 import { createSupabaseServer } from "@/lib/supabase-server";
-import type { DiscountType } from "@/types";
+import type { DiscountType, FulfillmentType } from "@/types";
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -172,6 +172,10 @@ export default async function ContractPage({ params }: Props) {
           signedAt={project.contract_signed_at!}
           signatureDataUrl={project.contract_signature_data ?? null}
           initialsDataUrl={project.contract_initials_data ?? null}
+          logoUrl={company.logo_url ?? null}
+          logoScale={company.logo_scale ?? 100}
+          fulfillmentType={project.fulfillment_type as FulfillmentType}
+          shippingAddress={project.shipping_address}
         />
       )}
 
