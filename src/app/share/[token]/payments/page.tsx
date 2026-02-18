@@ -6,6 +6,7 @@ import {
 import { getPaymentSettingsPublic } from "@/lib/actions/payment-settings";
 import { getPaymentsByProjectIdPublic } from "@/lib/actions/payments";
 import { calculateInvoiceTotals, formatCurrency } from "@/lib/invoice-calculations";
+import Link from "next/link";
 import { PayButton } from "@/components/portal/pay-button";
 import { PortalAuthGate } from "@/components/portal/portal-auth-gate";
 import type { DiscountType } from "@/types";
@@ -23,6 +24,56 @@ export default async function PaymentsPage({ params, searchParams }: Props) {
   const { project } = await getProjectByShareToken(token);
 
   if (!project) notFound();
+
+  // Gate: contract must be signed before payment is allowed
+  const contractSigned = project.contract_signed_at !== null;
+  const alreadyPaidStatus = ["paid", "preparing", "shipped", "received", "completed"].includes(project.status);
+
+  if (!contractSigned && !alreadyPaidStatus) {
+    return (
+      <PortalAuthGate token={token}>
+        <div className="mb-6">
+          <h1 className="text-lg font-bold text-gray-900 sm:text-xl">
+            Payments
+          </h1>
+        </div>
+        <div className="rounded-2xl border border-gray-200 bg-white p-6 sm:p-8 shadow-sm">
+          <div className="mx-auto max-w-md text-center">
+            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-violet-50">
+              <svg
+                className="h-7 w-7 text-violet-600"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={1.5}
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z"
+                />
+              </svg>
+            </div>
+            <h2 className="text-lg font-bold text-gray-900">
+              Contract Signing Required
+            </h2>
+            <p className="mt-2 text-sm text-gray-500 leading-relaxed">
+              Please sign your contract before making a payment.
+            </p>
+            <Link
+              href={`/share/${token}/contract`}
+              className="mt-4 inline-flex items-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-primary/90"
+            >
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
+              </svg>
+              Sign Contract
+            </Link>
+          </div>
+        </div>
+      </PortalAuthGate>
+    );
+  }
 
   const [items, paymentSettings, payments] = await Promise.all([
     getClientSafeItemsByProjectId(project.id),

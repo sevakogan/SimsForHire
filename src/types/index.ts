@@ -45,6 +45,9 @@ export interface Project {
   discount_type: DiscountType;
   discount_amount: number;
   share_token: string | null;
+  contract_viewed_at: string | null;
+  contract_signed_at: string | null;
+  contract_signed_by: string | null;
   created_by: string | null;
   created_at: string;
   updated_at: string;

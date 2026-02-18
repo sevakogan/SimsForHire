@@ -594,3 +594,92 @@ export async function deleteItemByShareToken(
   revalidatePath("/projects", "layout");
   return { error: null };
 }
+
+/**
+ * Mark a contract as viewed via share token.
+ * Idempotent — only sets the timestamp and fires notification on first view.
+ */
+export async function markContractViewed(
+  shareToken: string
+): Promise<{ error: string | null }> {
+  if (!shareToken) return { error: "Invalid token" };
+
+  const supabase = getAdminSupabase();
+
+  const { data: project } = await supabase
+    .from("projects")
+    .select("id, contract_viewed_at")
+    .eq("share_token", shareToken)
+    .single();
+
+  if (!project) return { error: "Invalid share link" };
+
+  // Idempotent — already viewed, skip
+  if (project.contract_viewed_at) return { error: null };
+
+  const { error } = await supabase
+    .from("projects")
+    .update({ contract_viewed_at: new Date().toISOString() })
+    .eq("id", project.id);
+
+  if (error) return { error: error.message };
+
+  await createNotification({
+    projectId: project.id,
+    type: "contract_viewed",
+    title: "Contract viewed by customer",
+    body: "The customer opened the contract page.",
+  });
+
+  revalidatePath("/projects", "layout");
+  revalidatePath("/share", "layout");
+  return { error: null };
+}
+
+/**
+ * Sign the contract via share token.
+ * Records the signer name and timestamp. Cannot be undone by customer.
+ */
+export async function signContract(
+  shareToken: string,
+  signerName: string
+): Promise<{ error: string | null }> {
+  if (!shareToken) return { error: "Invalid token" };
+  const trimmedName = signerName.trim();
+  if (!trimmedName) return { error: "Signer name is required" };
+
+  const supabase = getAdminSupabase();
+
+  const { data: project } = await supabase
+    .from("projects")
+    .select("id, contract_signed_at")
+    .eq("share_token", shareToken)
+    .single();
+
+  if (!project) return { error: "Invalid share link" };
+
+  if (project.contract_signed_at) {
+    return { error: "Contract has already been signed" };
+  }
+
+  const { error } = await supabase
+    .from("projects")
+    .update({
+      contract_signed_at: new Date().toISOString(),
+      contract_signed_by: trimmedName,
+    })
+    .eq("id", project.id);
+
+  if (error) return { error: error.message };
+
+  await createNotification({
+    projectId: project.id,
+    type: "contract_signed",
+    title: `Contract signed by ${trimmedName}`,
+    body: "The customer has signed the contract.",
+  });
+
+  revalidatePath("/projects", "layout");
+  revalidatePath("/share", "layout");
+  return { error: null };
+}

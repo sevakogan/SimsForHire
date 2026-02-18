@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
-import { getProjectByShareToken } from "@/lib/actions/projects";
+import { getProjectByShareToken, markContractViewed } from "@/lib/actions/projects";
 import { PortalAuthGate } from "@/components/portal/portal-auth-gate";
+import { ContractSignForm } from "@/components/portal/contract-sign-form";
 
 export const dynamic = "force-dynamic";
 
@@ -14,44 +15,84 @@ export default async function ContractPage({ params }: Props) {
 
   if (!project) notFound();
 
+  // Record that the customer viewed the contract (idempotent)
+  await markContractViewed(token);
+
+  const isSigned = project.contract_signed_at !== null;
+
   return (
     <PortalAuthGate token={token}>
-    <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm sm:p-8">
-      <div className="mx-auto max-w-md text-center">
-        {/* Icon */}
-        <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-primary/10">
-          <svg
-            className="h-7 w-7 text-primary"
-            fill="none"
-            viewBox="0 0 24 24"
-            strokeWidth={1.5}
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 0 0 2.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 0 0-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 0 0 .75-.75 2.25 2.25 0 0 0-.1-.664m-5.8 0A2.251 2.251 0 0 1 13.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25Z"
-            />
-          </svg>
-        </div>
-
-        <h1 className="text-xl font-bold text-gray-900">Contract</h1>
-        <p className="mt-2 text-sm text-gray-500 leading-relaxed">
-          Contract details for this project will be available here soon.
-        </p>
-
-        {/* Decorative divider */}
-        <div className="mt-6 flex items-center justify-center gap-2">
-          <div className="h-px w-8 bg-gray-200" />
-          <div className="h-1.5 w-1.5 rounded-full bg-gray-300" />
-          <div className="h-px w-8 bg-gray-200" />
-        </div>
-
-        <p className="mt-4 text-xs text-gray-400">
-          Check back later or contact us for more information.
+      <div className="mb-6">
+        <h1 className="text-lg font-bold text-gray-900 sm:text-xl">
+          Contract
+        </h1>
+        <p className="mt-1 text-xs text-gray-500">
+          Review and sign the contract for your project
         </p>
       </div>
-    </div>
+
+      {/* Contract content placeholder */}
+      <div className="rounded-2xl border border-gray-200 bg-white p-5 sm:p-6 shadow-sm mb-6">
+        <div className="prose prose-sm max-w-none text-gray-700">
+          <h2 className="text-base font-semibold text-gray-900">
+            Terms &amp; Conditions
+          </h2>
+          <p className="text-sm text-gray-600 leading-relaxed">
+            Contract details for this project will be provided by your
+            representative. By signing below, you acknowledge that you have
+            reviewed the terms associated with this project and agree to
+            proceed.
+          </p>
+
+          {/* Decorative divider */}
+          <div className="my-6 flex items-center justify-center gap-2">
+            <div className="h-px w-12 bg-gray-200" />
+            <div className="h-1.5 w-1.5 rounded-full bg-gray-300" />
+            <div className="h-px w-12 bg-gray-200" />
+          </div>
+
+          <p className="text-xs text-gray-400">
+            If you have questions about the contract, please contact your
+            representative before signing.
+          </p>
+        </div>
+      </div>
+
+      {/* Signed state */}
+      {isSigned ? (
+        <div className="rounded-xl border border-green-200 bg-green-50 p-6 text-center">
+          <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-green-100">
+            <svg
+              className="h-6 w-6 text-green-600"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth={2}
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="m4.5 12.75 6 6 9-13.5"
+              />
+            </svg>
+          </div>
+          <h3 className="text-base font-semibold text-green-800">
+            Contract Signed
+          </h3>
+          <p className="mt-1 text-sm text-green-600">
+            Signed by{" "}
+            <span className="font-medium">{project.contract_signed_by}</span>
+            {" on "}
+            {new Date(project.contract_signed_at!).toLocaleDateString("en-US", {
+              month: "long",
+              day: "numeric",
+              year: "numeric",
+            })}
+          </p>
+        </div>
+      ) : (
+        <ContractSignForm shareToken={token} />
+      )}
     </PortalAuthGate>
   );
 }

@@ -9,6 +9,7 @@ import {
 } from "@/lib/actions/shipments";
 import { Badge } from "@/components/ui/badge";
 import { buttonStyles, formStyles, cardStyles } from "@/components/ui/form-styles";
+import { CARRIER_OPTIONS } from "@/lib/constants/carrier-options";
 import type { Shipment, ShipmentStatus } from "@/types";
 
 interface ShipmentsSectionProps {
@@ -42,14 +43,19 @@ export function ShipmentsSection({
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   // Form state
-  const [carrierName, setCarrierName] = useState("");
+  const [carrierSelection, setCarrierSelection] = useState("");
+  const [carrierCustom, setCarrierCustom] = useState("");
   const [trackingUrl, setTrackingUrl] = useState("");
   const [trackingNumber, setTrackingNumber] = useState("");
   const [status, setStatus] = useState<ShipmentStatus>("in_transit");
   const [notes, setNotes] = useState("");
 
+  const carrierName =
+    carrierSelection === "Other" ? carrierCustom : carrierSelection;
+
   function resetForm() {
-    setCarrierName("");
+    setCarrierSelection("");
+    setCarrierCustom("");
     setTrackingUrl("");
     setTrackingNumber("");
     setStatus("in_transit");
@@ -59,7 +65,16 @@ export function ShipmentsSection({
   }
 
   function startEdit(shipment: Shipment) {
-    setCarrierName(shipment.carrier_name);
+    const knownCarrier = CARRIER_OPTIONS.find(
+      (o) => o.value !== "Other" && o.value === shipment.carrier_name
+    );
+    if (knownCarrier) {
+      setCarrierSelection(knownCarrier.value);
+      setCarrierCustom("");
+    } else {
+      setCarrierSelection("Other");
+      setCarrierCustom(shipment.carrier_name);
+    }
     setTrackingUrl(shipment.tracking_url);
     setTrackingNumber(shipment.tracking_number);
     setStatus(shipment.status);
@@ -173,16 +188,31 @@ export function ShipmentsSection({
           <div className="grid gap-3 sm:grid-cols-2">
             <div>
               <label className="mb-1 block text-xs font-medium text-foreground">
-                Carrier Name *
+                Carrier *
               </label>
-              <input
-                type="text"
-                value={carrierName}
-                onChange={(e) => setCarrierName(e.target.value)}
-                placeholder="e.g. UPS, FedEx, USPS"
-                className={`${formStyles.input} !py-2 text-sm`}
+              <select
+                value={carrierSelection}
+                onChange={(e) => setCarrierSelection(e.target.value)}
+                className={`${formStyles.select} !py-2 text-sm`}
                 disabled={loading}
-              />
+              >
+                <option value="">Select carrier...</option>
+                {CARRIER_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
+              {carrierSelection === "Other" && (
+                <input
+                  type="text"
+                  value={carrierCustom}
+                  onChange={(e) => setCarrierCustom(e.target.value)}
+                  placeholder="Enter carrier name"
+                  className={`${formStyles.input} !py-2 text-sm mt-2`}
+                  disabled={loading}
+                />
+              )}
             </div>
             <div>
               <label className="mb-1 block text-xs font-medium text-foreground">

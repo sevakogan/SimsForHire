@@ -16,7 +16,10 @@ import {
   STATUS_ROW_1,
   STATUS_ROW_2,
   STATUS_CONFIG,
+  CONTRACT_ROW,
+  CONTRACT_CONFIG,
 } from "@/lib/constants/project-statuses";
+import type { ContractStep } from "@/lib/constants/project-statuses";
 import type { ProjectStatus } from "@/types";
 
 interface ItemDisplayData {
@@ -40,10 +43,20 @@ interface ShareActionsProps {
   discountType: DiscountType;
   discountAmount: number;
   companyPhone: string | null;
+  contractViewedAt: string | null;
+  contractSignedAt: string | null;
 }
 
-/** Inner content for the status badge — renders the two rows of pills */
-function StatusBadgeContent({ status }: { status: string }) {
+/** Inner content for the status badge — renders three rows of pills */
+function StatusBadgeContent({
+  status,
+  contractViewedAt,
+  contractSignedAt,
+}: {
+  status: string;
+  contractViewedAt: string | null;
+  contractSignedAt: string | null;
+}) {
   function renderPill(s: ProjectStatus) {
     const config = STATUS_CONFIG[s];
     const isActive = status === s;
@@ -61,10 +74,33 @@ function StatusBadgeContent({ status }: { status: string }) {
     );
   }
 
+  function renderContractPill(step: ContractStep) {
+    const config = CONTRACT_CONFIG[step];
+    const isActive =
+      step === "contract_viewed"
+        ? contractViewedAt !== null
+        : contractSignedAt !== null;
+    return (
+      <span
+        key={step}
+        className={`inline-flex items-center justify-center rounded-lg px-3 py-1.5 text-xs font-medium border ${
+          isActive
+            ? `${config.activeBg} ${config.activeText} border-transparent shadow-sm`
+            : `${config.bg} ${config.text} ${config.border} opacity-60`
+        }`}
+      >
+        {config.label}
+      </span>
+    );
+  }
+
   return (
     <>
       <div className="flex items-center gap-1.5">
         {STATUS_ROW_1.map(renderPill)}
+      </div>
+      <div className="flex items-center gap-1.5">
+        {CONTRACT_ROW.map(renderContractPill)}
       </div>
       <div className="flex items-center gap-1.5">
         {STATUS_ROW_2.map(renderPill)}
@@ -73,11 +109,23 @@ function StatusBadgeContent({ status }: { status: string }) {
   );
 }
 
-/** Read-only 2-row status display for the customer share page */
-function StatusBadge({ status }: { status: string }) {
+/** Read-only 3-row status display for the customer share page */
+function StatusBadge({
+  status,
+  contractViewedAt,
+  contractSignedAt,
+}: {
+  status: string;
+  contractViewedAt: string | null;
+  contractSignedAt: string | null;
+}) {
   return (
     <div id="share-status-badge" className="flex flex-col gap-1.5">
-      <StatusBadgeContent status={status} />
+      <StatusBadgeContent
+        status={status}
+        contractViewedAt={contractViewedAt}
+        contractSignedAt={contractSignedAt}
+      />
     </div>
   );
 }
@@ -98,6 +146,8 @@ export function ShareActions({
   discountType,
   discountAmount: discountAmountProp,
   companyPhone,
+  contractViewedAt,
+  contractSignedAt,
 }: ShareActionsProps) {
   const [currentStatus, setCurrentStatus] = useState(projectStatus);
   const [visibleItems, setVisibleItems] = useState(initialItems);
@@ -313,26 +363,49 @@ export function ShareActions({
   if (submitted || alreadyAccepted) {
     const isAllAccepted = alreadyAccepted || allAccepted;
 
+    const isContractSigned = contractSignedAt !== null;
+
     const nextStepsCta = (
       <div className="flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
-        <Link
-          href={`/share/${shareToken}/contract`}
-          className="inline-flex items-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-primary/90"
-        >
-          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
-          </svg>
-          Sign a Contract
-        </Link>
-        <Link
-          href={`/share/${shareToken}/payments`}
-          className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-5 py-2.5 text-sm font-medium text-gray-700 shadow-sm transition-colors hover:bg-gray-50"
-        >
-          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 0 0 2.25-2.25V6.75A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25v10.5A2.25 2.25 0 0 0 4.5 19.5Z" />
-          </svg>
-          Submit a Payment
-        </Link>
+        {isContractSigned ? (
+          <span className="inline-flex items-center gap-2 rounded-lg bg-green-50 border border-green-200 px-5 py-2.5 text-sm font-medium text-green-700">
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+            </svg>
+            Contract Signed
+          </span>
+        ) : (
+          <Link
+            href={`/share/${shareToken}/contract`}
+            className="inline-flex items-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-primary/90"
+          >
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
+            </svg>
+            Sign a Contract
+          </Link>
+        )}
+        {isContractSigned ? (
+          <Link
+            href={`/share/${shareToken}/payments`}
+            className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-5 py-2.5 text-sm font-medium text-gray-700 shadow-sm transition-colors hover:bg-gray-50"
+          >
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 0 0 2.25-2.25V6.75A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25v10.5A2.25 2.25 0 0 0 4.5 19.5Z" />
+            </svg>
+            Submit a Payment
+          </Link>
+        ) : (
+          <span
+            className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-5 py-2.5 text-sm font-medium text-gray-400 cursor-not-allowed"
+            title="Sign the contract first"
+          >
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" />
+            </svg>
+            Sign Contract First
+          </span>
+        )}
       </div>
     );
 

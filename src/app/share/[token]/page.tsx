@@ -136,7 +136,11 @@ export default async function SharedInvoicePage({ params }: Props) {
           </div>
 
           {/* Status badge — right side */}
-          <StatusBadge status={project.status} />
+          <StatusBadge
+            status={project.status}
+            contractViewedAt={project.contract_viewed_at ?? null}
+            contractSignedAt={project.contract_signed_at ?? null}
+          />
         </div>
 
         {/* Divider */}
@@ -235,6 +239,8 @@ export default async function SharedInvoicePage({ params }: Props) {
           discountType={discountType}
           discountAmount={discAmt}
           companyPhone={company.phone ?? null}
+          contractViewedAt={project.contract_viewed_at ?? null}
+          contractSignedAt={project.contract_signed_at ?? null}
         />
       )}
 

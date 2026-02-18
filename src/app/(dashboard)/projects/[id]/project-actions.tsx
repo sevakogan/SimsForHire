@@ -9,7 +9,10 @@ import {
   STATUS_ROW_2,
   STATUS_CONFIG,
   PROJECT_STATUSES,
+  CONTRACT_ROW,
+  CONTRACT_CONFIG,
 } from "@/lib/constants/project-statuses";
+import type { ContractStep } from "@/lib/constants/project-statuses";
 import type { Project, ProjectStatus } from "@/types";
 
 interface Props {
@@ -112,12 +115,35 @@ export function ProjectActions({ project }: Props) {
     );
   }
 
+  function renderContractPill(step: ContractStep) {
+    const config = CONTRACT_CONFIG[step];
+    const isActive =
+      step === "contract_viewed"
+        ? project.contract_viewed_at !== null
+        : project.contract_signed_at !== null;
+    return (
+      <span
+        key={step}
+        className={`inline-flex items-center justify-center rounded-lg px-3 py-1.5 text-xs font-medium border ${
+          isActive
+            ? `${config.activeBg} ${config.activeText} border-transparent shadow-sm`
+            : `${config.bg} ${config.text} ${config.border} opacity-60`
+        } cursor-default`}
+      >
+        {config.label}
+      </span>
+    );
+  }
+
   return (
     <div className="flex items-start justify-between gap-4 w-full">
-      {/* Status pills — 2 rows, left */}
+      {/* Status pills — 3 rows, left */}
       <div className="flex flex-col gap-1.5">
         <div className="flex items-center gap-1.5">
           {STATUS_ROW_1.map(renderStatusButton)}
+        </div>
+        <div className="flex items-center gap-1.5">
+          {CONTRACT_ROW.map(renderContractPill)}
         </div>
         <div className="flex items-center gap-1.5">
           {STATUS_ROW_2.map(renderStatusButton)}

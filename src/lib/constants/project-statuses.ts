@@ -84,3 +84,17 @@ const EDIT_LOCKED_STATUSES: ReadonlySet<ProjectStatus> = new Set([
 export function isEditLocked(status: string): boolean {
   return EDIT_LOCKED_STATUSES.has(status as ProjectStatus);
 }
+
+/* ── Contract step row (between Row 1 and Row 2) ──── */
+
+export type ContractStep = "contract_viewed" | "contract_signed";
+
+export const CONTRACT_ROW: ContractStep[] = ["contract_viewed", "contract_signed"];
+
+const CONTRACT_INACTIVE = { bg: "bg-violet-50", text: "text-violet-600", border: "border-violet-200" };
+const CONTRACT_ACTIVE   = { activeBg: "bg-violet-600", activeText: "text-white" };
+
+export const CONTRACT_CONFIG: Record<ContractStep, StatusConfig> = {
+  contract_viewed: { label: "Contract Viewed", ...CONTRACT_INACTIVE, ...CONTRACT_ACTIVE },
+  contract_signed: { label: "Contract Signed", ...CONTRACT_INACTIVE, ...CONTRACT_ACTIVE },
+};
