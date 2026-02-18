@@ -22,7 +22,7 @@ interface ProductsTableProps {
 
 /* ─── Sorting ─── */
 
-type SortField = "model_number" | "name" | "type" | "retail_price" | "sales_price" | "cost" | "shipping";
+type SortField = "model_number" | "name" | "type" | "retail_price" | "sales_price" | "cost" | "shipping" | "seller_merchant";
 type SortDir = "asc" | "desc";
 
 function SortIcon({ active, dir }: { active: boolean; dir: SortDir }) {
@@ -51,6 +51,17 @@ function formatCurrency(value: number): string {
     style: "currency",
     currency: "USD",
   }).format(value);
+}
+
+/** Compute discount % off retail: percent = (1 - cost / retail) * 100 */
+function costPercent(retail: number, cost: number): number {
+  if (retail <= 0) return 0;
+  return Math.round((1 - cost / retail) * 100 * 100) / 100; // 2 decimal places
+}
+
+/** Compute cost from retail and discount %: cost = retail * (1 - percent / 100) */
+function costFromPercent(retail: number, percent: number): number {
+  return Math.round(retail * (1 - percent / 100) * 100) / 100;
 }
 
 /** Returns a text color class based on cost vs sales_price comparison */
@@ -279,16 +290,18 @@ export function ProductsTable({ products, isAdmin, basePath = "/customizations/p
     <>
       {/* Desktop table — horizontally scrollable */}
       <div className={`${tableStyles.wrapper} hidden sm:block`}>
-        <table className={`${tableStyles.table} min-w-[800px]`}>
+        <table className={`${tableStyles.table} min-w-[900px]`}>
           <thead className={tableStyles.thead}>
             <tr>
               <th className={`${tdCompact} ${thBase} w-[50px]`}>Image</th>
               <SortableTh field="type" className="w-[90px]">Type</SortableTh>
-              <SortableTh field="name" className="max-w-[180px]">Name</SortableTh>
-              <SortableTh field="retail_price" className="w-[90px]">Retail</SortableTh>
-              <SortableTh field="sales_price" className="w-[90px]">Sales</SortableTh>
-              {isAdmin && <SortableTh field="cost" className="w-[90px]">Cost</SortableTh>}
-              <SortableTh field="shipping" className="w-[75px]">S/H</SortableTh>
+              <SortableTh field="name" className="max-w-[160px]">Name</SortableTh>
+              <SortableTh field="retail_price" className="w-[85px]">Retail</SortableTh>
+              <SortableTh field="sales_price" className="w-[85px]">Sales</SortableTh>
+              {isAdmin && <th className={`${tdCompact} ${thBase} w-[55px]`}>%</th>}
+              {isAdmin && <SortableTh field="cost" className="w-[85px]">Cost</SortableTh>}
+              <SortableTh field="shipping" className="w-[70px]">S/H</SortableTh>
+              <SortableTh field="seller_merchant" className="w-[100px]">Merchant</SortableTh>
               <th className={`${tdCompact} ${thBase} w-[40px]`} title="Website">
                 <svg className="h-3.5 w-3.5 mx-auto text-muted-foreground/50" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.5 0 0 1 1.242 7.244l-4.5 4.5a4.5 4.5 0 0 1-6.364-6.364l1.757-1.757m9.86-2.338a4.5 4.5 0 0 0-1.242-7.244l-4.5-4.5a4.5 4.5 0 0 0-6.364 6.364L4.757 8.25" />
@@ -404,7 +417,26 @@ export function ProductsTable({ products, isAdmin, basePath = "/customizations/p
                     )}
                   </td>
 
-                  {/* Dealer (admin only) */}
+                  {/* % off retail (admin only) — derived from cost & retail */}
+                  {isAdmin && (() => {
+                    const retail = Number(displayVal("retail_price") ?? 0);
+                    const cost = Number(displayVal("cost") ?? 0);
+                    const pct = costPercent(retail, cost);
+                    return (
+                      <td className={tdCompact}>
+                        <InlineNumberInput
+                          value={pct}
+                          onChange={(v) => {
+                            const newCost = costFromPercent(retail, v);
+                            handleFieldChange(product.id, "cost", newCost);
+                          }}
+                          suffix="%"
+                        />
+                      </td>
+                    );
+                  })()}
+
+                  {/* Dealer cost (admin only) */}
                   {isAdmin && (() => {
                     const costColor = costColorClass(
                       Number(displayVal("cost") ?? 0),
@@ -432,6 +464,22 @@ export function ProductsTable({ products, isAdmin, basePath = "/customizations/p
                       />
                     ) : (
                       <span className="text-xs">{formatCurrency(product.shipping)}</span>
+                    )}
+                  </td>
+
+                  {/* Merchant */}
+                  <td className={`${tdCompact} max-w-[100px]`}>
+                    {isAdmin ? (
+                      <InlineTextInput
+                        value={String(displayVal("seller_merchant") ?? "")}
+                        onChange={(v) => handleFieldChange(product.id, "seller_merchant", v)}
+                        placeholder="--"
+                        className="truncate"
+                      />
+                    ) : (
+                      <span className="truncate block text-xs text-muted-foreground">
+                        {product.seller_merchant || "--"}
+                      </span>
                     )}
                   </td>
 
@@ -593,6 +641,13 @@ export function ProductsTable({ products, isAdmin, basePath = "/customizations/p
                 )}
               </div>
 
+              {/* Merchant */}
+              {product.seller_merchant && (
+                <p className="mt-1.5 text-[10px] text-muted-foreground/60 truncate">
+                  {product.seller_merchant}
+                </p>
+              )}
+
               {/* Price grid */}
               <div className="mt-2.5 grid grid-cols-3 gap-2 text-center">
                 <div>
@@ -609,14 +664,20 @@ export function ProductsTable({ products, isAdmin, basePath = "/customizations/p
                 </div>
               </div>
 
-              {/* Admin cost */}
+              {/* Admin cost + % */}
               {isAdmin && "cost" in product && (() => {
                 const cost = (product as Product).cost;
+                const pct = costPercent(product.retail_price, cost);
                 const colorCls = costColorClass(cost, product.sales_price);
                 return (
                   <div className={`mt-2 flex items-center justify-between border-t border-border/30 pt-2 ${colorCls}`}>
                     <span className="text-[9px] font-medium uppercase tracking-wider opacity-60">Cost</span>
-                    <span className="text-xs">{formatCurrency(cost)}</span>
+                    <span className="text-xs">
+                      {formatCurrency(cost)}
+                      {pct > 0 && (
+                        <span className="ml-1 text-[10px] opacity-60">({pct}%)</span>
+                      )}
+                    </span>
                   </div>
                 );
               })()}

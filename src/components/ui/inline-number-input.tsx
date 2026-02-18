@@ -9,6 +9,8 @@ interface InlineNumberInputProps {
   min?: number;
   className?: string;
   prefix?: string;
+  /** Suffix displayed after the value (e.g. "%") */
+  suffix?: string;
   isInteger?: boolean;
   /** Override the default text-foreground color on the input (e.g. "text-green-600") */
   textColorClass?: string;
@@ -21,6 +23,7 @@ export function InlineNumberInput({
   min = 0,
   className = "",
   prefix = "",
+  suffix = "",
   isInteger = false,
   textColorClass = "text-foreground",
 }: InlineNumberInputProps) {
@@ -87,6 +90,9 @@ export function InlineNumberInput({
     [value, onChange]
   );
 
+  const hasPadLeft = !!prefix;
+  const hasPadRight = !!suffix;
+
   return (
     <div className={`relative ${className}`}>
       {prefix && (
@@ -112,9 +118,22 @@ export function InlineNumberInput({
         onFocus={handleFocus}
         onKeyDown={handleKeyDown}
         className={`w-full rounded-md border border-transparent bg-transparent py-1 text-sm ${textColorClass} text-right transition-all hover:border-border/60 hover:bg-white focus:border-primary/40 focus:bg-white focus:outline-none focus:ring-1 focus:ring-primary/40 ${
-          prefix ? "pl-5 pr-2" : "px-2"
-        }`}
+          hasPadLeft ? "pl-5" : "pl-2"
+        } ${hasPadRight ? "pr-5" : "pr-2"}`}
       />
+      {suffix && (
+        <span
+          className={`absolute right-2 top-1/2 -translate-y-1/2 text-xs pointer-events-none transition-colors ${
+            isFocused
+              ? "text-primary"
+              : textColorClass !== "text-foreground"
+                ? `${textColorClass} opacity-60`
+                : "text-muted-foreground/60"
+          }`}
+        >
+          {suffix}
+        </span>
+      )}
     </div>
   );
 }
