@@ -1,11 +1,16 @@
 import { getProjectsWithClients } from "@/lib/actions/projects";
 import { getUnreadNoteCountsByProjects } from "@/lib/actions/items";
+import { getProjectSummaries } from "@/lib/actions/project-summaries";
 import { AllProjectsView } from "./all-projects-view";
 
 export default async function AllProjectsPage() {
   const projects = await getProjectsWithClients();
   const projectIds = projects.map((p) => p.id);
-  const noteCountsMap = await getUnreadNoteCountsByProjects(projectIds);
+
+  const [noteCountsMap, summaries] = await Promise.all([
+    getUnreadNoteCountsByProjects(projectIds),
+    getProjectSummaries(projects),
+  ]);
 
   const noteCounts: Record<string, number> = {};
   noteCountsMap.forEach((count, projectId) => {
@@ -18,7 +23,11 @@ export default async function AllProjectsPage() {
         All Projects
       </h1>
 
-      <AllProjectsView projects={projects} noteCounts={noteCounts} />
+      <AllProjectsView
+        projects={projects}
+        noteCounts={noteCounts}
+        summaries={summaries}
+      />
     </div>
   );
 }

@@ -9,11 +9,14 @@ import { Badge } from "@/components/ui/badge";
 import { FulfillmentBadge } from "@/components/ui/fulfillment-badge";
 import { deleteProject, duplicateProject } from "@/lib/actions/projects";
 import type { ProjectWithClient } from "@/lib/actions/projects";
+import type { ProjectSummary } from "@/lib/actions/project-summaries";
+import { formatCurrency } from "@/lib/invoice-calculations";
 import type { ProjectStatus } from "@/types";
 
 interface AllProjectsViewProps {
   projects: ProjectWithClient[];
   noteCounts: Record<string, number>;
+  summaries: Record<string, ProjectSummary>;
 }
 
 const STATUS_FILTERS: { label: string; value: ProjectStatus | "" }[] = [
@@ -29,7 +32,7 @@ const STATUS_FILTERS: { label: string; value: ProjectStatus | "" }[] = [
   { label: "Completed", value: "completed" },
 ];
 
-export function AllProjectsView({ projects, noteCounts }: AllProjectsViewProps) {
+export function AllProjectsView({ projects, noteCounts, summaries }: AllProjectsViewProps) {
   const router = useRouter();
   const [view, setView] = useState<ViewMode>("list");
   const [statusFilter, setStatusFilter] = useState<ProjectStatus | "">("");
@@ -96,6 +99,7 @@ export function AllProjectsView({ projects, noteCounts }: AllProjectsViewProps) 
               key={project.id}
               project={project}
               noteCount={noteCounts[project.id] ?? 0}
+              summary={summaries[project.id]}
               onDuplicate={handleDuplicate}
               onDeleteRequest={setConfirmDeleteId}
               isLoading={actionLoading === project.id}
@@ -109,6 +113,7 @@ export function AllProjectsView({ projects, noteCounts }: AllProjectsViewProps) 
               key={project.id}
               project={project}
               noteCount={noteCounts[project.id] ?? 0}
+              summary={summaries[project.id]}
               onDuplicate={handleDuplicate}
               onDeleteRequest={setConfirmDeleteId}
               isLoading={actionLoading === project.id}
@@ -178,21 +183,74 @@ function ConfirmDeleteModal({
   );
 }
 
+/* ─── Profit indicator helper ─── */
+
+function ProfitIndicator({ profit }: { profit: number }) {
+  if (profit === 0) return null;
+  const isPositive = profit > 0;
+  return (
+    <span
+      className={`inline-flex items-center gap-0.5 text-[10px] font-semibold ${
+        isPositive ? "text-emerald-600" : "text-red-500"
+      }`}
+    >
+      <svg
+        className={`h-2.5 w-2.5 ${isPositive ? "" : "rotate-180"}`}
+        fill="none"
+        viewBox="0 0 24 24"
+        strokeWidth={2.5}
+        stroke="currentColor"
+      >
+        <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 15.75l7.5-7.5 7.5 7.5" />
+      </svg>
+      {formatCurrency(Math.abs(profit))}
+    </span>
+  );
+}
+
+/* ─── Payment progress helper ─── */
+
+function PaymentProgress({ totalPaid, grandTotal }: { totalPaid: number; grandTotal: number }) {
+  if (grandTotal <= 0) return null;
+  const pct = Math.min(100, (totalPaid / grandTotal) * 100);
+  const isPaid = totalPaid >= grandTotal && totalPaid > 0;
+
+  return (
+    <div className="flex items-center gap-2 min-w-0">
+      <div className="flex-1 h-1.5 rounded-full bg-gray-100 overflow-hidden min-w-[40px]">
+        <div
+          className={`h-full rounded-full transition-all ${
+            isPaid ? "bg-emerald-500" : pct > 0 ? "bg-amber-400" : "bg-gray-200"
+          }`}
+          style={{ width: `${pct}%` }}
+        />
+      </div>
+      <span className={`text-[10px] font-semibold shrink-0 ${isPaid ? "text-emerald-600" : "text-gray-400"}`}>
+        {isPaid ? "Paid" : pct > 0 ? `${Math.round(pct)}%` : "Unpaid"}
+      </span>
+    </div>
+  );
+}
+
 /* ─── List row ─── */
 
 function ProjectListRow({
   project,
   noteCount,
+  summary,
   onDuplicate,
   onDeleteRequest,
   isLoading,
 }: {
   project: ProjectWithClient;
   noteCount: number;
+  summary?: ProjectSummary;
   onDuplicate: (id: string) => void;
   onDeleteRequest: (id: string) => void;
   isLoading: boolean;
 }) {
+  const s = summary ?? { itemCount: 0, grandTotal: 0, totalCost: 0, profit: 0, totalPaid: 0 };
+
   return (
     <div className="group flex items-center justify-between rounded-xl border border-border bg-white p-3.5 shadow-sm transition-all hover:border-primary/20 hover:shadow-md sm:p-5">
       <Link
@@ -223,6 +281,28 @@ function ProjectListRow({
           </p>
         </div>
       </Link>
+
+      {/* Financial summary — center area */}
+      <div className="hidden sm:flex items-center gap-4 mx-4 shrink-0">
+        {s.grandTotal > 0 && (
+          <div className="text-right">
+            <p className="text-sm font-bold tabular-nums text-foreground">
+              {formatCurrency(s.grandTotal)}
+            </p>
+            <ProfitIndicator profit={s.profit} />
+          </div>
+        )}
+        {s.grandTotal > 0 && (
+          <div className="w-20">
+            <PaymentProgress totalPaid={s.totalPaid} grandTotal={s.grandTotal} />
+          </div>
+        )}
+        {s.itemCount > 0 && (
+          <span className="text-[10px] text-muted-foreground/60 tabular-nums">
+            {s.itemCount} item{s.itemCount !== 1 ? "s" : ""}
+          </span>
+        )}
+      </div>
 
       <div className="flex items-center gap-2 ml-3 shrink-0">
         <Badge variant={project.status}>{project.status}</Badge>
@@ -275,16 +355,20 @@ function ProjectListRow({
 function ProjectGridCard({
   project,
   noteCount,
+  summary,
   onDuplicate,
   onDeleteRequest,
   isLoading,
 }: {
   project: ProjectWithClient;
   noteCount: number;
+  summary?: ProjectSummary;
   onDuplicate: (id: string) => void;
   onDeleteRequest: (id: string) => void;
   isLoading: boolean;
 }) {
+  const s = summary ?? { itemCount: 0, grandTotal: 0, totalCost: 0, profit: 0, totalPaid: 0 };
+
   return (
     <div className="group relative rounded-xl border border-border bg-white shadow-sm transition-all hover:shadow-md hover:border-primary/20 overflow-hidden">
       {/* Color bar */}
@@ -316,10 +400,15 @@ function ProjectGridCard({
 
       <Link href={`/projects/${project.id}`} className="block">
         <div className="p-3 sm:p-4 space-y-2.5">
-          <p className="text-sm font-semibold text-foreground truncate group-hover:text-primary transition-colors">
-            {project.name}
-          </p>
+          {/* Name + fulfillment */}
+          <div className="flex items-center gap-1.5">
+            <p className="text-sm font-semibold text-foreground truncate group-hover:text-primary transition-colors">
+              {project.name}
+            </p>
+            <FulfillmentBadge type={project.fulfillment_type} />
+          </div>
 
+          {/* Creator + client */}
           <div className="flex items-center gap-1.5">
             {project.creator_avatar ? (
               <img
@@ -338,15 +427,31 @@ function ProjectGridCard({
             </p>
           </div>
 
+          {/* Financial summary */}
+          {s.grandTotal > 0 && (
+            <div className="rounded-lg bg-gray-50 px-3 py-2 space-y-1.5">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-medium text-gray-400 uppercase tracking-wider">Total</span>
+                <span className="text-sm font-bold tabular-nums text-foreground">
+                  {formatCurrency(s.grandTotal)}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-medium text-gray-400 uppercase tracking-wider">Profit</span>
+                <ProfitIndicator profit={s.profit} />
+              </div>
+              <PaymentProgress totalPaid={s.totalPaid} grandTotal={s.grandTotal} />
+            </div>
+          )}
+
+          {/* Status row */}
           <div className="flex items-center gap-1.5 flex-wrap">
             <Badge variant={project.status}>{project.status}</Badge>
-            <FulfillmentBadge type={project.fulfillment_type} />
-          </div>
-
-          <div className="flex items-center justify-between">
-            <p className="text-[10px] sm:text-xs text-muted-foreground">
-              {new Date(project.created_at).toLocaleDateString()}
-            </p>
+            {s.itemCount > 0 && (
+              <span className="inline-flex items-center rounded-full bg-gray-50 border border-gray-100 px-1.5 py-0.5 text-[10px] font-medium text-gray-500 tabular-nums">
+                {s.itemCount} item{s.itemCount !== 1 ? "s" : ""}
+              </span>
+            )}
             {noteCount > 0 && (
               <span className="inline-flex items-center gap-0.5 rounded-full bg-red-50 border border-red-200 px-1.5 py-0.5 text-[10px] font-semibold text-red-600">
                 <svg className="h-2.5 w-2.5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
@@ -357,11 +462,17 @@ function ProjectGridCard({
             )}
           </div>
 
-          {project.invoice_number && (
-            <p className="text-[10px] text-muted-foreground/60 truncate">
-              Invoice #{project.invoice_number}
+          {/* Footer: date + invoice # */}
+          <div className="flex items-center justify-between">
+            <p className="text-[10px] sm:text-xs text-muted-foreground">
+              {new Date(project.created_at).toLocaleDateString()}
             </p>
-          )}
+            {project.invoice_number && (
+              <p className="text-[10px] text-muted-foreground/60 truncate">
+                #{project.invoice_number}
+              </p>
+            )}
+          </div>
         </div>
       </Link>
     </div>
@@ -388,4 +499,3 @@ function statusColor(status: ProjectStatus): string {
       return "bg-slate-300";
   }
 }
-
