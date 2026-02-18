@@ -3,6 +3,7 @@
 import { useState, useRef, useCallback } from "react";
 import Link from "next/link";
 import { formatCurrency } from "@/lib/invoice-calculations";
+import { FullContractPdf } from "@/components/pdf/full-contract-pdf";
 import type { FulfillmentType } from "@/types";
 
 /* ────────────────────────────────────────────────
@@ -403,73 +404,30 @@ function DownloadPackageButton({
           background: "#fff",
         }}
       >
-        {/* Contract page */}
-        <div ref={contractRef} style={{ padding: "60px 40px", fontFamily: "system-ui, -apple-system, sans-serif" }}>
-          <div style={{ textAlign: "center", marginBottom: "32px" }}>
-            {d.logoUrl && (
-              <img src={d.logoUrl} alt={companyName} style={{ width: `${48 * (d.logoScale / 100)}px`, height: `${48 * (d.logoScale / 100)}px`, objectFit: "contain", margin: "0 auto 12px", display: "block", borderRadius: "8px" }} />
-            )}
-            <h1 style={{ fontSize: "24px", fontWeight: 900, margin: 0, letterSpacing: "0.05em" }}>{companyName}</h1>
-            <div style={{ margin: "16px 0", display: "flex", alignItems: "center", justifyContent: "center", gap: "12px" }}>
-              <div style={{ height: "1px", flex: 1, background: "#d1d5db" }} />
-              <span style={{ fontSize: "18px", fontWeight: 700, letterSpacing: "0.1em", color: "#7c3aed" }}>PURCHASE AGREEMENT</span>
-              <div style={{ height: "1px", flex: 1, background: "#d1d5db" }} />
-            </div>
-          </div>
-
-          <div style={{ maxWidth: "600px", margin: "0 auto" }}>
-            {[
-              { label: "Buyer", value: d.buyerName },
-              ...(d.buyerEmail ? [{ label: "Email", value: d.buyerEmail }] : []),
-              ...(d.buyerPhone ? [{ label: "Phone", value: d.buyerPhone }] : []),
-              ...(d.buyerAddress ? [{ label: "Address", value: d.buyerAddress }] : []),
-              ...(d.invoiceNumber ? [{ label: "Order Reference", value: d.invoiceNumber }] : []),
-              { label: "Date", value: d.date },
-              { label: "Fulfillment", value: FULFILLMENT_LABELS[d.fulfillmentType] },
-              ...(showShippingAddress ? [{ label: `${FULFILLMENT_LABELS[d.fulfillmentType]} Address`, value: d.shippingAddress! }] : []),
-              { label: "Order Total", value: formatCurrency(d.grandTotal) },
-            ].map(({ label, value }) => (
-              <div key={label} style={{ display: "flex", justifyContent: "space-between", padding: "12px 0", borderBottom: "1px solid #f3f4f6", fontSize: "14px" }}>
-                <span style={{ color: "#6b7280" }}>{label}</span>
-                <span style={{ fontWeight: 700, color: "#111827" }}>{value}</span>
-              </div>
-            ))}
-
-            {/* Contract status */}
-            <div style={{ marginTop: "32px", padding: "20px", border: "2px solid #7c3aed", borderRadius: "12px", background: "#f5f3ff" }}>
-              <div style={{ fontSize: "16px", fontWeight: 700, color: "#7c3aed", marginBottom: "12px" }}>
-                {contractData.signedAt ? "✓ Contract Signed" : "Contract Pending"}
-              </div>
-              {contractData.signedBy && (
-                <div style={{ display: "flex", justifyContent: "space-between", padding: "12px 0", borderBottom: "1px solid #e9e5f5", fontSize: "14px" }}>
-                  <span style={{ color: "#6b7280" }}>Signed By</span>
-                  <span style={{ fontWeight: 700, color: "#111827" }}>{contractData.signedBy}</span>
-                </div>
-              )}
-              {contractData.signedAt && (
-                <div style={{ display: "flex", justifyContent: "space-between", padding: "12px 0", borderBottom: "1px solid #e9e5f5", fontSize: "14px" }}>
-                  <span style={{ color: "#6b7280" }}>Date Signed</span>
-                  <span style={{ fontWeight: 700, color: "#111827" }}>{new Date(contractData.signedAt).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}</span>
-                </div>
-              )}
-              {contractData.signatureDataUrl && (
-                <div style={{ marginTop: "16px" }}>
-                  <p style={{ fontSize: "11px", fontWeight: 700, color: "#6b7280", marginBottom: "8px" }}>SIGNATURE</p>
-                  <div style={{ background: "#fff", border: "1px solid #e5e7eb", borderRadius: "8px", padding: "12px", display: "inline-block" }}>
-                    <img src={contractData.signatureDataUrl} alt="Signature" style={{ height: "60px", objectFit: "contain" }} />
-                  </div>
-                </div>
-              )}
-              {contractData.initialsDataUrl && (
-                <div style={{ marginTop: "12px" }}>
-                  <p style={{ fontSize: "11px", fontWeight: 700, color: "#6b7280", marginBottom: "8px" }}>INITIALS</p>
-                  <div style={{ background: "#fff", border: "1px solid #e5e7eb", borderRadius: "8px", padding: "8px", display: "inline-block" }}>
-                    <img src={contractData.initialsDataUrl} alt="Initials" style={{ height: "40px", objectFit: "contain" }} />
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
+        {/* Full Purchase Agreement */}
+        <div ref={contractRef}>
+          <FullContractPdf
+            companyName={companyName}
+            logoUrl={d.logoUrl}
+            logoScale={d.logoScale}
+            buyer={{
+              name: d.buyerName,
+              email: d.buyerEmail,
+              phone: d.buyerPhone,
+              address: d.buyerAddress,
+            }}
+            order={{
+              orderRef: d.invoiceNumber,
+              date: d.date,
+              total: d.grandTotal,
+            }}
+            fulfillmentType={d.fulfillmentType}
+            shippingAddress={d.shippingAddress}
+            signedBy={contractData.signedBy}
+            signedAt={contractData.signedAt}
+            signatureDataUrl={contractData.signatureDataUrl}
+            initialsDataUrl={contractData.initialsDataUrl}
+          />
         </div>
 
         {/* Receipt page */}
