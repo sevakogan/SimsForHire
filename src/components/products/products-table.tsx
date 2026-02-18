@@ -271,8 +271,8 @@ export function ProductsTable({ products, isAdmin, basePath = "/customizations/p
   }
 
   // Compact cell styles for denser table
-  const tdCompact = "px-2 py-2 text-sm text-foreground";
-  const thBase = "text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground";
+  const tdCompact = "px-1.5 py-1.5 text-xs text-foreground";
+  const thBase = "text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground";
 
   function SortableTh({ field, children, className = "" }: { field: SortField; children: React.ReactNode; className?: string }) {
     return (
@@ -290,24 +290,23 @@ export function ProductsTable({ products, isAdmin, basePath = "/customizations/p
     <>
       {/* Desktop table — horizontally scrollable */}
       <div className={`${tableStyles.wrapper} hidden sm:block`}>
-        <table className={`${tableStyles.table} min-w-[900px]`}>
+        <table className={`${tableStyles.table} min-w-[750px]`}>
           <thead className={tableStyles.thead}>
             <tr>
-              <th className={`${tdCompact} ${thBase} w-[50px]`}>Image</th>
-              <SortableTh field="type" className="w-[90px]">Type</SortableTh>
-              <SortableTh field="name" className="max-w-[160px]">Name</SortableTh>
-              <SortableTh field="retail_price" className="w-[85px]">Retail</SortableTh>
-              <SortableTh field="sales_price" className="w-[85px]">Sales</SortableTh>
-              {isAdmin && <th className={`${tdCompact} ${thBase} w-[55px]`}>%</th>}
-              {isAdmin && <SortableTh field="cost" className="w-[85px]">Cost</SortableTh>}
-              <SortableTh field="shipping" className="w-[70px]">S/H</SortableTh>
-              <SortableTh field="seller_merchant" className="w-[100px]">Merchant</SortableTh>
-              <th className={`${tdCompact} ${thBase} w-[40px]`} title="Website">
-                <svg className="h-3.5 w-3.5 mx-auto text-muted-foreground/50" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+              <th className={`${tdCompact} ${thBase} w-[44px]`}>Image</th>
+              <SortableTh field="seller_merchant" className="w-[90px]">Merchant</SortableTh>
+              <SortableTh field="type" className="w-[80px]">Type</SortableTh>
+              <SortableTh field="name" className="max-w-[150px]">Name</SortableTh>
+              <SortableTh field="retail_price" className="w-[75px]">Retail</SortableTh>
+              {isAdmin && <th className={`${tdCompact} ${thBase} w-[50px]`}>%</th>}
+              {isAdmin && <SortableTh field="cost" className="w-[75px]">Cost</SortableTh>}
+              <SortableTh field="sales_price" className="w-[75px]">Sales</SortableTh>
+              <th className={`${tdCompact} ${thBase} w-[30px]`} title="Website">
+                <svg className="h-3 w-3 mx-auto text-muted-foreground/50" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.5 0 0 1 1.242 7.244l-4.5 4.5a4.5 4.5 0 0 1-6.364-6.364l1.757-1.757m9.86-2.338a4.5 4.5 0 0 0-1.242-7.244l-4.5-4.5a4.5 4.5 0 0 0-6.364 6.364L4.757 8.25" />
                 </svg>
               </th>
-              {isAdmin && <th className={`${tdCompact} ${thBase} w-[70px]`}>Actions</th>}
+              {isAdmin && <th className={`${tdCompact} ${thBase} w-[56px]`}></th>}
             </tr>
           </thead>
           <tbody className={tableStyles.tbody}>
@@ -326,7 +325,7 @@ export function ProductsTable({ products, isAdmin, basePath = "/customizations/p
                   key={product.id}
                   className={`${tableStyles.row} ${isDirty ? "bg-amber-50/50" : ""}`}
                 >
-                  {/* Image — has image: navigate to detail; no image: open edit popup */}
+                  {/* 1. Image */}
                   <td className={tdCompact}>
                     {thumb ? (
                       <button
@@ -337,9 +336,9 @@ export function ProductsTable({ products, isAdmin, basePath = "/customizations/p
                         <Image
                           src={thumb}
                           alt=""
-                          width={36}
-                          height={36}
-                          className="h-9 w-9 rounded object-cover"
+                          width={32}
+                          height={32}
+                          className="h-8 w-8 rounded object-cover"
                           unoptimized={isExternalImage(thumb)}
                         />
                       </button>
@@ -347,17 +346,33 @@ export function ProductsTable({ products, isAdmin, basePath = "/customizations/p
                       <button
                         type="button"
                         onClick={() => isAdmin && setEditProduct(product as Product)}
-                        className="flex h-9 w-9 items-center justify-center rounded bg-muted text-muted-foreground/40 hover:bg-muted/80 hover:text-muted-foreground transition-colors cursor-pointer"
+                        className="flex h-8 w-8 items-center justify-center rounded bg-muted text-muted-foreground/40 hover:bg-muted/80 hover:text-muted-foreground transition-colors cursor-pointer"
                         title="Add image"
                       >
-                        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                        <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0 0 22.5 18.75V5.25A2.25 2.25 0 0 0 20.25 3H3.75A2.25 2.25 0 0 0 1.5 5.25v13.5A2.25 2.25 0 0 0 3.75 21Z" />
                         </svg>
                       </button>
                     )}
                   </td>
 
-                  {/* Type — 2nd column after Image */}
+                  {/* 2. Merchant */}
+                  <td className={`${tdCompact} max-w-[90px]`}>
+                    {isAdmin ? (
+                      <InlineTextInput
+                        value={String(displayVal("seller_merchant") ?? "")}
+                        onChange={(v) => handleFieldChange(product.id, "seller_merchant", v)}
+                        placeholder="--"
+                        className="truncate"
+                      />
+                    ) : (
+                      <span className="truncate block text-muted-foreground">
+                        {product.seller_merchant || "--"}
+                      </span>
+                    )}
+                  </td>
+
+                  {/* 3. Type */}
                   <td className={tdCompact}>
                     {isAdmin ? (
                       <InlineTypePicker
@@ -368,7 +383,7 @@ export function ProductsTable({ products, isAdmin, basePath = "/customizations/p
                       product.type ? (() => {
                         const c = getTypeColor(product.type);
                         return (
-                          <span className={`inline-block rounded-full px-2 py-0.5 text-[11px] font-medium shadow-sm ${c.bg} ${c.text}`}>
+                          <span className={`inline-block rounded-full px-2 py-0.5 text-[10px] font-medium shadow-sm ${c.bg} ${c.text}`}>
                             {product.type}
                           </span>
                         );
@@ -376,8 +391,8 @@ export function ProductsTable({ products, isAdmin, basePath = "/customizations/p
                     )}
                   </td>
 
-                  {/* Name */}
-                  <td className={`${tdCompact} max-w-[180px]`}>
+                  {/* 4. Name */}
+                  <td className={`${tdCompact} max-w-[150px]`}>
                     {isAdmin ? (
                       <InlineTextInput
                         value={String(displayVal("name") ?? "")}
@@ -391,7 +406,7 @@ export function ProductsTable({ products, isAdmin, basePath = "/customizations/p
                     )}
                   </td>
 
-                  {/* Retail */}
+                  {/* 5. Retail */}
                   <td className={tdCompact}>
                     {isAdmin ? (
                       <InlineNumberInput
@@ -400,24 +415,11 @@ export function ProductsTable({ products, isAdmin, basePath = "/customizations/p
                         prefix="$"
                       />
                     ) : (
-                      <span className="text-xs">{formatCurrency(product.retail_price)}</span>
+                      <span>{formatCurrency(product.retail_price)}</span>
                     )}
                   </td>
 
-                  {/* Sales */}
-                  <td className={tdCompact}>
-                    {isAdmin ? (
-                      <InlineNumberInput
-                        value={Number(displayVal("sales_price") ?? 0)}
-                        onChange={(v) => handleFieldChange(product.id, "sales_price", v)}
-                        prefix="$"
-                      />
-                    ) : (
-                      <span className="text-xs">{formatCurrency(product.sales_price)}</span>
-                    )}
-                  </td>
-
-                  {/* % off retail (admin only) — derived from cost & retail */}
+                  {/* 6. % off retail (admin only) */}
                   {isAdmin && (() => {
                     const retail = Number(displayVal("retail_price") ?? 0);
                     const cost = Number(displayVal("cost") ?? 0);
@@ -436,7 +438,7 @@ export function ProductsTable({ products, isAdmin, basePath = "/customizations/p
                     );
                   })()}
 
-                  {/* Dealer cost (admin only) */}
+                  {/* 7. Cost (admin only) */}
                   {isAdmin && (() => {
                     const costColor = costColorClass(
                       Number(displayVal("cost") ?? 0),
@@ -454,36 +456,20 @@ export function ProductsTable({ products, isAdmin, basePath = "/customizations/p
                     );
                   })()}
 
-                  {/* S/H */}
+                  {/* 8. Sales */}
                   <td className={tdCompact}>
                     {isAdmin ? (
                       <InlineNumberInput
-                        value={Number(displayVal("shipping") ?? 0)}
-                        onChange={(v) => handleFieldChange(product.id, "shipping", v)}
+                        value={Number(displayVal("sales_price") ?? 0)}
+                        onChange={(v) => handleFieldChange(product.id, "sales_price", v)}
                         prefix="$"
                       />
                     ) : (
-                      <span className="text-xs">{formatCurrency(product.shipping)}</span>
+                      <span>{formatCurrency(product.sales_price)}</span>
                     )}
                   </td>
 
-                  {/* Merchant */}
-                  <td className={`${tdCompact} max-w-[100px]`}>
-                    {isAdmin ? (
-                      <InlineTextInput
-                        value={String(displayVal("seller_merchant") ?? "")}
-                        onChange={(v) => handleFieldChange(product.id, "seller_merchant", v)}
-                        placeholder="--"
-                        className="truncate"
-                      />
-                    ) : (
-                      <span className="truncate block text-xs text-muted-foreground">
-                        {product.seller_merchant || "--"}
-                      </span>
-                    )}
-                  </td>
-
-                  {/* Website — icon link */}
+                  {/* 9. Open link */}
                   <td className={`${tdCompact} text-center`}>
                     {(() => {
                       const url = String(displayVal("manufacturer_website") ?? "");
@@ -492,11 +478,11 @@ export function ProductsTable({ products, isAdmin, basePath = "/customizations/p
                           href={url.startsWith("http") ? url : `https://${url}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex items-center justify-center rounded-md p-1 text-primary/60 hover:text-primary hover:bg-primary/10 transition-colors"
+                          className="inline-flex items-center justify-center rounded-md p-0.5 text-primary/60 hover:text-primary hover:bg-primary/10 transition-colors"
                           title={url}
                           onClick={(e) => e.stopPropagation()}
                         >
-                          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                          <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
                           </svg>
                         </a>
@@ -506,49 +492,47 @@ export function ProductsTable({ products, isAdmin, basePath = "/customizations/p
                     })()}
                   </td>
 
-                  {/* Actions (admin only) */}
+                  {/* 10. Edit + Delete (admin only) */}
                   {isAdmin && (
                     <td className={tdCompact}>
                       {isDirty ? (
-                        <div className="flex gap-1">
-                          {/* Confirm */}
+                        <div className="flex gap-0.5">
                           <button
                             onClick={() => handleConfirm(product.id)}
-                            className="rounded-md p-1.5 text-green-600 transition-all hover:bg-green-50 hover:text-green-700"
+                            className="rounded-md p-1 text-green-600 transition-all hover:bg-green-50 hover:text-green-700"
                             title="Save changes"
                           >
-                            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
+                            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
                               <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
                             </svg>
                           </button>
-                          {/* Cancel */}
                           <button
                             onClick={() => handleCancel(product.id)}
-                            className="rounded-md p-1.5 text-red-500 transition-all hover:bg-red-50 hover:text-red-600"
+                            className="rounded-md p-1 text-red-500 transition-all hover:bg-red-50 hover:text-red-600"
                             title="Discard changes"
                           >
-                            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
+                            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
                               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
                             </svg>
                           </button>
                         </div>
                       ) : (
-                        <div className="flex gap-1">
+                        <div className="flex gap-0.5">
                           <button
                             onClick={() => setEditProduct(product as Product)}
-                            className="rounded-md p-1.5 text-muted-foreground/60 transition-all hover:bg-primary/10 hover:text-primary"
+                            className="rounded-md p-1 text-muted-foreground/60 transition-all hover:bg-primary/10 hover:text-primary"
                             title="Edit product"
                           >
-                            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
                               <path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
                             </svg>
                           </button>
                           <button
                             onClick={() => handleDelete(product.id)}
-                            className="rounded-md p-1.5 text-muted-foreground/40 transition-all hover:bg-destructive/10 hover:text-destructive"
+                            className="rounded-md p-1 text-muted-foreground/40 transition-all hover:bg-destructive/10 hover:text-destructive"
                             title="Delete"
                           >
-                            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
                               <path strokeLinecap="round" strokeLinejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
                             </svg>
                           </button>
