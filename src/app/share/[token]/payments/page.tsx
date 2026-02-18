@@ -328,6 +328,12 @@ export default async function PaymentsPage({ params, searchParams }: Props) {
               fulfillmentType: project.fulfillment_type,
               shippingAddress: project.shipping_address,
             }}
+            contractData={{
+              signedBy: project.contract_signed_by,
+              signedAt: project.contract_signed_at,
+              signatureDataUrl: project.contract_signature_data,
+              initialsDataUrl: project.contract_initials_data,
+            }}
           />
         ) : paymentSettings.payments_enabled ? (
           <PayButton

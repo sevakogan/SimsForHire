@@ -441,7 +441,7 @@ export default async function PaymentsPage({ params }: Props) {
                   Documents
                 </h2>
                 <p className="mt-1 text-xs text-gray-500">
-                  Download receipt & invoice as a single PDF
+                  Contract, invoice, receipt & Stripe details
                 </p>
               </div>
               <AdminDownloadPackageButton
@@ -484,6 +484,20 @@ export default async function PaymentsPage({ params }: Props) {
                 })}
                 paymentAmount={formatCurrency(firstSucceeded.amount / 100)}
                 grandTotal={formatCurrency(totals.grandTotal)}
+                contractData={{
+                  signedBy: project.contract_signed_by,
+                  signedAt: project.contract_signed_at,
+                  signatureDataUrl: project.contract_signature_data,
+                  initialsDataUrl: project.contract_initials_data,
+                }}
+                stripeData={{
+                  paymentIntentId: firstSucceeded.stripe_payment_intent_id,
+                  sessionId: firstSucceeded.stripe_session_id,
+                  customerEmail: firstSucceeded.customer_email,
+                  currency: firstSucceeded.currency,
+                  status: firstSucceeded.status,
+                  createdAt: firstSucceeded.created_at,
+                }}
               />
             </div>
           </div>

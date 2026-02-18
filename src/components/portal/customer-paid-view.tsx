@@ -40,6 +40,13 @@ interface InvoiceData {
   shippingAddress: string | null;
 }
 
+interface ContractData {
+  signedBy: string | null;
+  signedAt: string | null;
+  signatureDataUrl: string | null;
+  initialsDataUrl: string | null;
+}
+
 interface CustomerPaidViewProps {
   token: string;
   buyerName: string;
@@ -50,6 +57,7 @@ interface CustomerPaidViewProps {
   paymentAmount: string;
   grandTotal: string;
   invoiceData: InvoiceData;
+  contractData: ContractData;
 }
 
 /* ────────────────────────────────────────────────
@@ -239,6 +247,7 @@ function DownloadPackageButton({
   paymentDate,
   paymentAmount,
   grandTotal,
+  contractData,
 }: {
   invoiceData: InvoiceData;
   companyName: string;
@@ -248,8 +257,10 @@ function DownloadPackageButton({
   paymentDate: string | null;
   paymentAmount: string;
   grandTotal: string;
+  contractData: ContractData;
 }) {
   const [generating, setGenerating] = useState(false);
+  const contractRef = useRef<HTMLDivElement>(null);
   const receiptRef = useRef<HTMLDivElement>(null);
   const invoiceRef = useRef<HTMLDivElement>(null);
 
@@ -308,16 +319,26 @@ function DownloadPackageButton({
         }
       };
 
-      // ── Page 1: Receipt ──
-      if (receiptRef.current) {
-        const receiptCanvas = await captureElement(receiptRef.current);
-        addCanvasToPdf(receiptCanvas, true);
+      let isFirst = true;
+
+      // ── Page 1: Contract ──
+      if (contractRef.current) {
+        const canvas = await captureElement(contractRef.current);
+        addCanvasToPdf(canvas, isFirst);
+        isFirst = false;
       }
 
-      // ── Next pages: Invoice ──
+      // ── Page 2+: Invoice ──
       if (invoiceRef.current) {
-        const invoiceCanvas = await captureElement(invoiceRef.current);
-        addCanvasToPdf(invoiceCanvas, !receiptRef.current);
+        const canvas = await captureElement(invoiceRef.current);
+        addCanvasToPdf(canvas, isFirst);
+        isFirst = false;
+      }
+
+      // ── Page 3: Receipt ──
+      if (receiptRef.current) {
+        const canvas = await captureElement(receiptRef.current);
+        addCanvasToPdf(canvas, isFirst);
       }
 
       const filename = invoiceNumber
@@ -329,7 +350,7 @@ function DownloadPackageButton({
     } finally {
       setGenerating(false);
     }
-  }, [generating, invoiceData, invoiceNumber, buyerName, receiptNumber]);
+  }, [generating, invoiceData, invoiceNumber, buyerName, receiptNumber, contractData]);
 
   return (
     <>
@@ -382,6 +403,75 @@ function DownloadPackageButton({
           background: "#fff",
         }}
       >
+        {/* Contract page */}
+        <div ref={contractRef} style={{ padding: "60px 40px", fontFamily: "system-ui, -apple-system, sans-serif" }}>
+          <div style={{ textAlign: "center", marginBottom: "32px" }}>
+            {d.logoUrl && (
+              <img src={d.logoUrl} alt={companyName} style={{ width: `${48 * (d.logoScale / 100)}px`, height: `${48 * (d.logoScale / 100)}px`, objectFit: "contain", margin: "0 auto 12px", display: "block", borderRadius: "8px" }} />
+            )}
+            <h1 style={{ fontSize: "24px", fontWeight: 900, margin: 0, letterSpacing: "0.05em" }}>{companyName}</h1>
+            <div style={{ margin: "16px 0", display: "flex", alignItems: "center", justifyContent: "center", gap: "12px" }}>
+              <div style={{ height: "1px", flex: 1, background: "#d1d5db" }} />
+              <span style={{ fontSize: "18px", fontWeight: 700, letterSpacing: "0.1em", color: "#7c3aed" }}>PURCHASE AGREEMENT</span>
+              <div style={{ height: "1px", flex: 1, background: "#d1d5db" }} />
+            </div>
+          </div>
+
+          <div style={{ maxWidth: "600px", margin: "0 auto" }}>
+            {[
+              { label: "Buyer", value: d.buyerName },
+              ...(d.buyerEmail ? [{ label: "Email", value: d.buyerEmail }] : []),
+              ...(d.buyerPhone ? [{ label: "Phone", value: d.buyerPhone }] : []),
+              ...(d.buyerAddress ? [{ label: "Address", value: d.buyerAddress }] : []),
+              ...(d.invoiceNumber ? [{ label: "Order Reference", value: d.invoiceNumber }] : []),
+              { label: "Date", value: d.date },
+              { label: "Fulfillment", value: FULFILLMENT_LABELS[d.fulfillmentType] },
+              ...(showShippingAddress ? [{ label: `${FULFILLMENT_LABELS[d.fulfillmentType]} Address`, value: d.shippingAddress! }] : []),
+              { label: "Order Total", value: formatCurrency(d.grandTotal) },
+            ].map(({ label, value }) => (
+              <div key={label} style={{ display: "flex", justifyContent: "space-between", padding: "12px 0", borderBottom: "1px solid #f3f4f6", fontSize: "14px" }}>
+                <span style={{ color: "#6b7280" }}>{label}</span>
+                <span style={{ fontWeight: 700, color: "#111827" }}>{value}</span>
+              </div>
+            ))}
+
+            {/* Contract status */}
+            <div style={{ marginTop: "32px", padding: "20px", border: "2px solid #7c3aed", borderRadius: "12px", background: "#f5f3ff" }}>
+              <div style={{ fontSize: "16px", fontWeight: 700, color: "#7c3aed", marginBottom: "12px" }}>
+                {contractData.signedAt ? "✓ Contract Signed" : "Contract Pending"}
+              </div>
+              {contractData.signedBy && (
+                <div style={{ display: "flex", justifyContent: "space-between", padding: "12px 0", borderBottom: "1px solid #e9e5f5", fontSize: "14px" }}>
+                  <span style={{ color: "#6b7280" }}>Signed By</span>
+                  <span style={{ fontWeight: 700, color: "#111827" }}>{contractData.signedBy}</span>
+                </div>
+              )}
+              {contractData.signedAt && (
+                <div style={{ display: "flex", justifyContent: "space-between", padding: "12px 0", borderBottom: "1px solid #e9e5f5", fontSize: "14px" }}>
+                  <span style={{ color: "#6b7280" }}>Date Signed</span>
+                  <span style={{ fontWeight: 700, color: "#111827" }}>{new Date(contractData.signedAt).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}</span>
+                </div>
+              )}
+              {contractData.signatureDataUrl && (
+                <div style={{ marginTop: "16px" }}>
+                  <p style={{ fontSize: "11px", fontWeight: 700, color: "#6b7280", marginBottom: "8px" }}>SIGNATURE</p>
+                  <div style={{ background: "#fff", border: "1px solid #e5e7eb", borderRadius: "8px", padding: "12px", display: "inline-block" }}>
+                    <img src={contractData.signatureDataUrl} alt="Signature" style={{ height: "60px", objectFit: "contain" }} />
+                  </div>
+                </div>
+              )}
+              {contractData.initialsDataUrl && (
+                <div style={{ marginTop: "12px" }}>
+                  <p style={{ fontSize: "11px", fontWeight: 700, color: "#6b7280", marginBottom: "8px" }}>INITIALS</p>
+                  <div style={{ background: "#fff", border: "1px solid #e5e7eb", borderRadius: "8px", padding: "8px", display: "inline-block" }}>
+                    <img src={contractData.initialsDataUrl} alt="Initials" style={{ height: "40px", objectFit: "contain" }} />
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
         {/* Receipt page */}
         <div ref={receiptRef} style={{ padding: "60px 40px", fontFamily: "system-ui, -apple-system, sans-serif" }}>
           {/* Receipt Header */}
@@ -648,6 +738,7 @@ export function CustomerPaidView({
   paymentAmount,
   grandTotal,
   invoiceData,
+  contractData,
 }: CustomerPaidViewProps) {
   const [receiptOpen, setReceiptOpen] = useState(false);
 
@@ -836,6 +927,7 @@ export function CustomerPaidView({
               paymentDate={paymentDate}
               paymentAmount={paymentAmount}
               grandTotal={grandTotal}
+              contractData={contractData}
             />
           </div>
         </div>
