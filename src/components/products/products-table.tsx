@@ -271,8 +271,8 @@ export function ProductsTable({ products, isAdmin, basePath = "/customizations/p
   }
 
   // Compact cell styles
-  const tdCompact = "px-2 py-2 text-xs text-foreground";
-  const thBase = "text-left text-[11px] font-semibold uppercase tracking-wider text-muted-foreground";
+  const tdCompact = "px-1.5 py-1 text-xs text-foreground whitespace-nowrap";
+  const thBase = "text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground";
 
   function SortableTh({ field, children, className = "" }: { field: SortField; children: React.ReactNode; className?: string }) {
     return (
@@ -290,23 +290,23 @@ export function ProductsTable({ products, isAdmin, basePath = "/customizations/p
     <>
       {/* Desktop table — horizontally scrollable */}
       <div className={`${tableStyles.wrapper} hidden sm:block`}>
-        <table className={`${tableStyles.table} w-full`}>
+        <table className={tableStyles.table} style={{ minWidth: 920 }}>
           <thead className={tableStyles.thead}>
             <tr>
-              <th className={`${tdCompact} ${thBase}`} style={{ width: 44 }}>Image</th>
-              <SortableTh field="seller_merchant">Merchant</SortableTh>
-              <SortableTh field="type">Type</SortableTh>
-              <SortableTh field="name">Name</SortableTh>
-              <SortableTh field="retail_price">Retail</SortableTh>
-              {isAdmin && <th className={`${tdCompact} ${thBase}`} style={{ width: 56 }}>%</th>}
-              {isAdmin && <SortableTh field="cost">Cost</SortableTh>}
-              <SortableTh field="sales_price">Sales</SortableTh>
-              <th className={`${tdCompact} ${thBase}`} style={{ width: 36 }} title="Website">
+              <th className={`${tdCompact} ${thBase}`} style={{ width: 40 }}>Image</th>
+              <SortableTh field="seller_merchant" className="w-[100px]">Merchant</SortableTh>
+              <SortableTh field="type" className="w-[80px]">Type</SortableTh>
+              <SortableTh field="name" className="w-[260px]">Name</SortableTh>
+              <SortableTh field="retail_price" className="w-[80px]">Retail</SortableTh>
+              {isAdmin && <th className={`${tdCompact} ${thBase} w-[50px]`}>%</th>}
+              {isAdmin && <SortableTh field="cost" className="w-[80px]">Cost</SortableTh>}
+              <SortableTh field="sales_price" className="w-[80px]">Sales</SortableTh>
+              <th className={`${tdCompact} ${thBase}`} style={{ width: 30 }} title="Website">
                 <svg className="h-3 w-3 mx-auto text-muted-foreground/50" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.5 0 0 1 1.242 7.244l-4.5 4.5a4.5 4.5 0 0 1-6.364-6.364l1.757-1.757m9.86-2.338a4.5 4.5 0 0 0-1.242-7.244l-4.5-4.5a4.5 4.5 0 0 0-6.364 6.364L4.757 8.25" />
                 </svg>
               </th>
-              {isAdmin && <th className={`${tdCompact} ${thBase}`} style={{ width: 56 }}></th>}
+              {isAdmin && <th className={`${tdCompact} ${thBase}`} style={{ width: 50 }}></th>}
             </tr>
           </thead>
           <tbody className={tableStyles.tbody}>
