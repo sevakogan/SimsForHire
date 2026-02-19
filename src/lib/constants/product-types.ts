@@ -68,3 +68,56 @@ export function getTypeColor(type: string) {
 export function getColorByKey(colorKey: string): TypeColorScheme {
   return COLOR_KEY_MAP[colorKey] ?? DEFAULT_TYPE_COLOR;
 }
+
+/* ─── Merchant colors ─── */
+
+/**
+ * Color keys used for merchants, ordered to visually distinguish adjacent pills.
+ * Different order from type colors to reduce overlap.
+ */
+const MERCHANT_COLOR_KEYS = [
+  "teal", "rose", "indigo", "amber", "cyan", "purple",
+  "orange", "blue", "pink", "green", "red", "gray",
+] as const;
+
+/**
+ * Row background tint classes matching each merchant color key.
+ * Uses very light tints (50-level or /10 opacity) so text remains legible.
+ */
+export const MERCHANT_ROW_COLORS: Record<string, string> = {
+  teal:   "bg-teal-50/60",
+  rose:   "bg-rose-50/60",
+  indigo: "bg-indigo-50/60",
+  amber:  "bg-amber-50/60",
+  cyan:   "bg-cyan-50/60",
+  purple: "bg-purple-50/60",
+  orange: "bg-orange-50/60",
+  blue:   "bg-blue-50/60",
+  pink:   "bg-pink-50/60",
+  green:  "bg-green-50/60",
+  red:    "bg-red-50/60",
+  gray:   "bg-gray-50/60",
+};
+
+/**
+ * Build a stable merchant → color-key map from a sorted list of merchant names.
+ * Returns a Record so both pills and table rows share the same assignment.
+ */
+export function buildMerchantColorMap(merchants: readonly string[]): Record<string, string> {
+  const sorted = [...merchants].sort((a, b) => a.localeCompare(b));
+  const map: Record<string, string> = {};
+  for (let i = 0; i < sorted.length; i++) {
+    map[sorted[i]] = MERCHANT_COLOR_KEYS[i % MERCHANT_COLOR_KEYS.length];
+  }
+  return map;
+}
+
+/** Get pill color scheme for a merchant given its color key */
+export function getMerchantPillColor(colorKey: string): TypeColorScheme {
+  return COLOR_KEY_MAP[colorKey] ?? DEFAULT_TYPE_COLOR;
+}
+
+/** Get row tint class for a merchant given its color key */
+export function getMerchantRowTint(colorKey: string): string {
+  return MERCHANT_ROW_COLORS[colorKey] ?? "";
+}

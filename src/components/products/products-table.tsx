@@ -11,13 +11,15 @@ import { InlineTextInput } from "@/components/ui/inline-text-input";
 import { InlineNumberInput } from "@/components/ui/inline-number-input";
 import { InlineTypePicker } from "@/components/ui/inline-type-picker";
 import { ProductForm } from "@/components/products/product-form";
-import { getTypeColor } from "@/lib/constants/product-types";
+import { getTypeColor, getMerchantRowTint, buildMerchantColorMap } from "@/lib/constants/product-types";
 import type { Product, ClientProduct } from "@/types";
 
 interface ProductsTableProps {
   products: (Product | ClientProduct)[];
   isAdmin: boolean;
   basePath?: string;
+  /** Merchant name → color key mapping for row tints */
+  merchantColorMap?: Readonly<Record<string, string>>;
 }
 
 /* ─── Sorting ─── */
@@ -87,7 +89,7 @@ type PendingEdits = Record<string, Record<string, string | number>>;
 
 /* ─── Main Component ─── */
 
-export function ProductsTable({ products, isAdmin, basePath = "/customizations/products" }: ProductsTableProps) {
+export function ProductsTable({ products, isAdmin, basePath = "/customizations/products", merchantColorMap = {} }: ProductsTableProps) {
   const router = useRouter();
   const [localProducts, setLocalProducts] = useState(products);
   const [sortField, setSortField] = useState<SortField | null>(null);
@@ -127,6 +129,18 @@ export function ProductsTable({ products, isAdmin, basePath = "/customizations/p
       return { ...p, ...edits };
     });
   }, [localProducts, pendingEdits]);
+
+  // Rebuild merchant color map from display products (includes pending edits)
+  // so newly-typed merchant names get a color instantly
+  const liveColorMap = useMemo(() => {
+    const merchants = displayProducts
+      .map((p) => String(p.seller_merchant ?? ""))
+      .filter((s) => s.length > 0);
+    const uniqueMerchants = [...new Set(merchants)];
+    // Build a fresh map from all current merchants, then overlay parent's stable assignments
+    const fresh = buildMerchantColorMap(uniqueMerchants);
+    return { ...fresh, ...merchantColorMap };
+  }, [displayProducts, merchantColorMap]);
 
   const sortedProducts = useMemo(() => {
     if (!sortField) return displayProducts;
@@ -319,11 +333,15 @@ export function ProductsTable({ products, isAdmin, basePath = "/customizations/p
                 if (edits && field in edits) return edits[field];
                 return (product as Record<string, unknown>)[field];
               };
+              // Use the live (pending-aware) merchant name for row tint
+              const liveMerchant = String(displayVal("seller_merchant") ?? "");
+              const merchantKey = liveColorMap[liveMerchant] ?? "";
+              const rowTint = merchantKey ? getMerchantRowTint(merchantKey) : "";
 
               return (
                 <tr
                   key={product.id}
-                  className={`${tableStyles.row} ${isDirty ? "bg-amber-50/50" : ""}`}
+                  className={`${tableStyles.row} ${isDirty ? "bg-amber-50/50" : rowTint}`}
                 >
                   {/* 1. Image */}
                   <td className={tdCompact}>
@@ -551,12 +569,15 @@ export function ProductsTable({ products, isAdmin, basePath = "/customizations/p
       <div className="space-y-2 sm:hidden">
         {sortedProducts.map((product) => {
           const thumb = firstImage(product.image_url);
+          const mobileMerchant = String(product.seller_merchant ?? "");
+          const mobileKey = liveColorMap[mobileMerchant] ?? "";
+          const mobileTint = mobileKey ? getMerchantRowTint(mobileKey) : "bg-white";
           return (
             <button
               type="button"
               key={product.id}
               onClick={() => guardedNavigate(`${basePath}/${product.id}`)}
-              className="block w-full text-left rounded-xl border border-border/40 bg-white p-3"
+              className={`block w-full text-left rounded-xl border border-border/40 p-3 ${mobileTint}`}
             >
               {/* Top: image + name + type */}
               <div className="flex items-start gap-3">

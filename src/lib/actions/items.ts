@@ -162,6 +162,72 @@ export async function deleteItem(
 }
 
 /**
+ * Refresh all items in a project from their linked products.
+ * Only updates items that have a product_id. Syncs: retail_price, sales_price → price_sold_for,
+ * cost → my_cost, shipping → retail_shipping, image_url, description, type, seller_merchant, model_number.
+ * Returns the count of updated items.
+ */
+export async function syncItemsFromProducts(
+  projectId: string
+): Promise<{ updated: number; error: string | null }> {
+  const supabase = await createSupabaseServer();
+
+  // Fetch all items with a linked product
+  const { data: items, error: itemsErr } = await supabase
+    .from("items")
+    .select("id, product_id")
+    .eq("project_id", projectId)
+    .not("product_id", "is", null);
+
+  if (itemsErr) return { updated: 0, error: itemsErr.message };
+  if (!items || items.length === 0) return { updated: 0, error: null };
+
+  // Collect unique product IDs
+  const productIds = [...new Set(items.map((i) => i.product_id as string))];
+
+  // Fetch all referenced products in one query
+  const { data: products, error: productsErr } = await supabase
+    .from("products")
+    .select("id, retail_price, sales_price, cost, shipping, image_url, description, type, seller_merchant, model_number")
+    .in("id", productIds);
+
+  if (productsErr) return { updated: 0, error: productsErr.message };
+
+  // Build a product lookup map
+  const productMap = new Map(
+    (products ?? []).map((p) => [p.id, p])
+  );
+
+  // Update each item from its linked product
+  let updated = 0;
+  for (const item of items) {
+    const product = productMap.get(item.product_id as string);
+    if (!product) continue;
+
+    const { error: updateErr } = await supabase
+      .from("items")
+      .update({
+        retail_price: product.retail_price,
+        price_sold_for: product.sales_price,
+        my_cost: product.cost,
+        retail_shipping: product.shipping,
+        image_url: product.image_url,
+        description: product.description,
+        item_type: product.type,
+        seller_merchant: product.seller_merchant,
+        model_number: product.model_number,
+      })
+      .eq("id", item.id);
+
+    if (!updateErr) updated++;
+  }
+
+  revalidatePath(`/projects/${projectId}`);
+  revalidatePath("/projects", "layout");
+  return { updated, error: null };
+}
+
+/**
  * Count items with unread client notes for a project.
  * A note is "unread" when client_note is non-empty AND client_note_read_at is null.
  */

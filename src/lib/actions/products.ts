@@ -157,13 +157,52 @@ export async function updateProduct(
     await ensureSellerExists(cleanInput.seller_merchant as string);
   }
 
-  // Sync image_url to all linked items when product image changes
-  if ("image_url" in cleanInput) {
-    const imageValue = (cleanInput.image_url as string) ?? null;
-    await supabase
+  // ── Sync product changes to linked items in open invoices ──
+  // Map product fields → item fields
+  const PRODUCT_TO_ITEM_FIELD: Record<string, string> = {
+    retail_price: "retail_price",
+    sales_price: "price_sold_for",
+    cost: "my_cost",
+    shipping: "retail_shipping",
+    image_url: "image_url",
+    description: "description",
+    type: "item_type",
+    seller_merchant: "seller_merchant",
+    model_number: "model_number",
+  };
+
+  // Build the item update payload from changed product fields
+  const itemUpdate: Record<string, unknown> = {};
+  for (const [productField, itemField] of Object.entries(PRODUCT_TO_ITEM_FIELD)) {
+    if (productField in cleanInput) {
+      itemUpdate[itemField] = cleanInput[productField];
+    }
+  }
+
+  if (Object.keys(itemUpdate).length > 0) {
+    // Only update items in open (pre-accepted) projects
+    const OPEN_STATUSES = ["draft", "quote", "submitted"];
+
+    // Find item IDs linked to this product that belong to open projects
+    const { data: linkedItems } = await supabase
       .from("items")
-      .update({ image_url: imageValue })
+      .select("id, projects!inner(status)")
       .eq("product_id", id);
+
+    const openItemIds = (linkedItems ?? [])
+      .filter((row) => {
+        const project = row.projects as unknown as { status: string };
+        return OPEN_STATUSES.includes(project.status);
+      })
+      .map((row) => row.id);
+
+    if (openItemIds.length > 0) {
+      await supabase
+        .from("items")
+        .update(itemUpdate)
+        .in("id", openItemIds);
+    }
+
     revalidatePath("/projects", "layout");
   }
 

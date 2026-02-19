@@ -8,6 +8,7 @@ import { TypeFilterPills } from "@/components/products/type-filter-pills";
 import { SellerFilterPills } from "@/components/products/seller-filter-pills";
 import { ViewToggle } from "@/components/ui/view-toggle";
 import type { ViewMode } from "@/components/ui/view-toggle";
+import { buildMerchantColorMap } from "@/lib/constants/product-types";
 import type { Product, ClientProduct } from "@/types";
 
 interface ProductsViewProps {
@@ -38,6 +39,12 @@ export function ProductsView({ products, isAdmin, basePath = "/customizations/pr
     return [...sellers].sort((a, b) => a.localeCompare(b));
   }, [products]);
 
+  /** Stable merchant name → color key mapping */
+  const merchantColorMap = useMemo(
+    () => buildMerchantColorMap(uniqueSellers),
+    [uniqueSellers]
+  );
+
   const filtered = useMemo(
     () =>
       products.filter((p) => {
@@ -61,6 +68,7 @@ export function ProductsView({ products, isAdmin, basePath = "/customizations/pr
           value={sellerFilter}
           onChange={setSellerFilter}
           sellers={uniqueSellers}
+          colorMap={merchantColorMap}
         />
       </div>
 
@@ -86,7 +94,7 @@ export function ProductsView({ products, isAdmin, basePath = "/customizations/pr
       {view === "cards" ? (
         <ProductsGrid products={filtered} isAdmin={isAdmin} basePath={basePath} />
       ) : (
-        <ProductsTable products={filtered} isAdmin={isAdmin} basePath={basePath} />
+        <ProductsTable products={filtered} isAdmin={isAdmin} basePath={basePath} merchantColorMap={merchantColorMap} />
       )}
     </div>
   );

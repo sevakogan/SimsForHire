@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useRef, useCallback } from "react";
 import Image from "next/image";
-import { deleteItem, updateItem, markNoteRead } from "@/lib/actions/items";
+import { deleteItem, updateItem, markNoteRead, syncItemsFromProducts } from "@/lib/actions/items";
 import { useRouter } from "next/navigation";
 import { firstImage, isExternalImage } from "@/lib/parse-images";
 import { TypeFilterPills } from "@/components/products/type-filter-pills";
@@ -120,6 +120,7 @@ export function ItemsTable({ items, projectId, isAdmin, canEdit: canEditProp, un
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
   const [lightboxName, setLightboxName] = useState<string>("");
   const [editItem, setEditItem] = useState<Item | null>(null);
+  const [syncing, setSyncing] = useState(false);
 
   // Sync localItems when server data changes
   const itemsKey = items.map((i) => `${i.id}-${i.updated_at}`).join(",");
@@ -179,6 +180,26 @@ export function ItemsTable({ items, projectId, isAdmin, canEdit: canEditProp, un
     markNoteRead(itemId);
   }
 
+  async function handleSync() {
+    setSyncing(true);
+    try {
+      const result = await syncItemsFromProducts(projectId);
+      if (result.error) {
+        console.error("Sync failed:", result.error);
+      }
+      router.refresh();
+    } catch (err) {
+      console.error("Sync error:", err);
+    } finally {
+      setSyncing(false);
+    }
+  }
+
+  // Check if any items are linked to products (sync button is only useful then)
+  const hasLinkedProducts = localItems.some(
+    (item) => (item as Item).product_id != null
+  );
+
   if (items.length === 0) {
     return (
       <div className="rounded-2xl border border-dashed border-border/60 py-12 text-center">
@@ -206,7 +227,29 @@ export function ItemsTable({ items, projectId, isAdmin, canEdit: canEditProp, un
             extraTypes={extraTypes}
           />
         )}
-        <ViewToggle value={view} onChange={setView} />
+        <div className="flex items-center gap-2 shrink-0">
+          {isAdmin && hasLinkedProducts && !readOnly && (
+            <button
+              type="button"
+              onClick={handleSync}
+              disabled={syncing}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-border/60 bg-white px-2.5 py-1.5 text-[11px] font-medium text-muted-foreground transition-all hover:border-primary/30 hover:bg-primary/5 hover:text-primary disabled:opacity-50"
+              title="Refresh all items from their linked products"
+            >
+              <svg
+                className={`h-3.5 w-3.5 ${syncing ? "animate-spin" : ""}`}
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={1.5}
+                stroke="currentColor"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182M2.985 19.644l3.181-3.183" />
+              </svg>
+              {syncing ? "Syncing…" : "Sync Products"}
+            </button>
+          )}
+          <ViewToggle value={view} onChange={setView} />
+        </div>
       </div>
 
       {/* Cards view */}
@@ -433,7 +476,7 @@ export function ItemsTable({ items, projectId, isAdmin, canEdit: canEditProp, un
                         return (
                           <td className="py-2 px-1 align-middle text-right">
                             <span className={`text-xs font-medium tabular-nums ${
-                              itemProfit >= 0 ? "text-green-600" : "text-red-500"
+                              itemProfit > 0 ? "text-green-600" : "text-red-500"
                             }`}>
                               {formatCurrency(itemProfit)}
                             </span>
@@ -612,7 +655,7 @@ export function ItemsTable({ items, projectId, isAdmin, canEdit: canEditProp, un
                       <div className="flex items-center justify-between">
                         <span className="text-[9px] font-medium uppercase tracking-wider text-green-600/60">Profit</span>
                         <span className={`text-xs font-medium ${
-                          itemProfit >= 0 ? "text-green-600" : "text-red-500"
+                          itemProfit > 0 ? "text-green-600" : "text-red-500"
                         }`}>
                           {formatCurrency(itemProfit)}
                         </span>
@@ -854,7 +897,7 @@ function ItemsCardGrid({ items, projectId, isAdmin, canEdit: canEditProp, readOn
                 const itemProfit = total - (item as Item).my_cost * qty;
                 return (
                   <p className={`text-[10px] font-medium ${
-                    itemProfit >= 0 ? "text-green-600" : "text-red-500"
+                    itemProfit > 0 ? "text-green-600" : "text-red-500"
                   }`}>
                     Profit: {formatCurrency(itemProfit)}
                   </p>

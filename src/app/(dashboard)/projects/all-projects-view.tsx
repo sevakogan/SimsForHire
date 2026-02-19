@@ -341,6 +341,15 @@ function ProjectListRow({
           <FulfillmentBadge type={project.fulfillment_type} />
         </div>
         <div className="flex items-center gap-1.5 mt-0.5">
+          {/* Client (owner) */}
+          <svg className="h-3.5 w-3.5 shrink-0 text-primary/60" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
+          </svg>
+          <span className="text-xs sm:text-sm font-semibold text-foreground truncate">
+            {project.client_name}
+          </span>
+          <span className="text-xs text-muted-foreground/50">·</span>
+          {/* Creator avatar */}
           {project.creator_avatar ? (
             <img
               src={project.creator_avatar}
@@ -353,9 +362,9 @@ function ProjectListRow({
               {project.creator_name.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase()}
             </div>
           ) : null}
-          <p className="text-xs sm:text-sm text-muted-foreground truncate">
-            {project.client_name} · {new Date(project.created_at).toLocaleDateString()}
-          </p>
+          <span className="text-[10px] sm:text-xs text-muted-foreground/50 truncate">
+            {new Date(project.created_at).toLocaleDateString()}
+          </span>
         </div>
       </div>
 
@@ -447,7 +456,7 @@ function ProjectListRow({
       </div>
 
       {/* Mobile: compact row below name */}
-      <div className="flex items-center gap-2 mt-2 sm:hidden">
+      <div className="flex items-center gap-2 mt-2 sm:hidden flex-wrap">
         <Badge variant={project.status}>{project.status}</Badge>
         {s.grandTotal > 0 && (
           <span className="text-xs font-bold tabular-nums text-foreground">
@@ -534,8 +543,18 @@ function ProjectGridCard({
             <FulfillmentBadge type={project.fulfillment_type} />
           </div>
 
-          {/* Creator + client */}
+          {/* Client (owner) */}
           <div className="flex items-center gap-1.5">
+            <svg className="h-3.5 w-3.5 shrink-0 text-primary/60" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
+            </svg>
+            <span className="text-xs font-semibold text-foreground truncate">
+              {project.client_name}
+            </span>
+          </div>
+
+          {/* Creator */}
+          <div className="flex items-center gap-1">
             {project.creator_avatar ? (
               <img
                 src={project.creator_avatar}
@@ -548,9 +567,6 @@ function ProjectGridCard({
                 {project.creator_name.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase()}
               </div>
             ) : null}
-            <p className="text-xs text-muted-foreground truncate">
-              {project.client_name}
-            </p>
           </div>
 
           {/* Financial summary */}
