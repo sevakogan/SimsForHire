@@ -8,6 +8,7 @@ const variants: Record<string, string> = {
   shipped: "bg-sky-50 text-sky-600",
   received: "bg-sky-50 text-sky-600",
   completed: "bg-green-50 text-green-600",
+  archived: "bg-gray-100 text-gray-500",
   pending: "bg-amber-100 text-amber-700",
   invite_pending: "bg-amber-100 text-amber-700",
   approved: "bg-green-100 text-green-700",

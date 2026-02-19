@@ -209,12 +209,75 @@ export async function updateProject(
   return { error: null };
 }
 
+/** Statuses that indicate a project has financial activity and should not be hard-deleted. */
+const PROTECTED_STATUSES: ProjectStatus[] = [
+  "paid", "preparing", "shipped", "received", "completed", "archived",
+];
+
 export async function deleteProject(
   id: string
 ): Promise<{ error: string | null }> {
   const supabase = await createSupabaseServer();
+
+  // Block hard-delete for projects that have reached "paid" or beyond
+  const { data: proj } = await supabase
+    .from("projects")
+    .select("status")
+    .eq("id", id)
+    .single();
+
+  if (proj && PROTECTED_STATUSES.includes(proj.status as ProjectStatus)) {
+    return { error: "This project has financial history and cannot be deleted. Use archive instead." };
+  }
+
   const { error } = await supabase.from("projects").delete().eq("id", id);
   if (error) return { error: error.message };
+  revalidatePath("/projects", "layout");
+  revalidatePath("/dashboard");
+  return { error: null };
+}
+
+export async function archiveProject(
+  id: string
+): Promise<{ error: string | null }> {
+  const supabase = await createSupabaseServer();
+
+  const { error } = await supabase
+    .from("projects")
+    .update({ status: "archived" })
+    .eq("id", id);
+
+  if (error) return { error: error.message };
+
+  notifyChange({
+    projectId: id,
+    type: "status_changed",
+    description: 'archived project',
+  });
+
+  revalidatePath("/projects", "layout");
+  revalidatePath("/dashboard");
+  return { error: null };
+}
+
+export async function unarchiveProject(
+  id: string
+): Promise<{ error: string | null }> {
+  const supabase = await createSupabaseServer();
+
+  const { error } = await supabase
+    .from("projects")
+    .update({ status: "completed" })
+    .eq("id", id);
+
+  if (error) return { error: error.message };
+
+  notifyChange({
+    projectId: id,
+    type: "status_changed",
+    description: 'unarchived project (restored to completed)',
+  });
+
   revalidatePath("/projects", "layout");
   revalidatePath("/dashboard");
   return { error: null };
@@ -556,7 +619,7 @@ export async function saveClientNote(
     .single();
 
   if (!project) return { error: "Invalid share link" };
-  if (["accepted", "paid", "preparing", "shipped", "received", "completed"].includes(project.status)) {
+  if (["accepted", "paid", "preparing", "shipped", "received", "completed", "archived"].includes(project.status)) {
     return { error: "This invoice is no longer editable" };
   }
 
@@ -602,7 +665,7 @@ export async function deleteItemByShareToken(
     .single();
 
   if (!project) return { error: "Invalid share link" };
-  if (["accepted", "paid", "preparing", "shipped", "received", "completed"].includes(project.status)) {
+  if (["accepted", "paid", "preparing", "shipped", "received", "completed", "archived"].includes(project.status)) {
     return { error: "This invoice is no longer editable" };
   }
 

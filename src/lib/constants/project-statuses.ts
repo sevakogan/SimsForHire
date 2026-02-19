@@ -60,6 +60,7 @@ export const STATUS_CONFIG: Record<ProjectStatus, StatusConfig> = {
   shipped:   { label: "Shipped",     ...ROW2_BLUE_INACTIVE,  ...ROW2_BLUE_ACTIVE },
   received:  { label: "Received",    ...ROW2_BLUE_INACTIVE,  ...ROW2_BLUE_ACTIVE },
   completed: { label: "Completed",   ...ROW2_GREEN_INACTIVE, ...ROW2_GREEN_ACTIVE },
+  archived:  { label: "Archived",    bg: "bg-gray-100", text: "text-gray-400", border: "border-gray-200", activeBg: "bg-gray-500", activeText: "text-white" },
 };
 
 /** Get the config for a status, with a safe fallback */
@@ -79,6 +80,7 @@ const EDIT_LOCKED_STATUSES: ReadonlySet<ProjectStatus> = new Set([
   "shipped",
   "received",
   "completed",
+  "archived",
 ]);
 
 export function isEditLocked(status: string): boolean {

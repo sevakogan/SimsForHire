@@ -7,7 +7,7 @@ import { ViewToggle } from "@/components/ui/view-toggle";
 import type { ViewMode } from "@/components/ui/view-toggle";
 import { Badge } from "@/components/ui/badge";
 import { FulfillmentBadge } from "@/components/ui/fulfillment-badge";
-import { deleteProject, duplicateProject } from "@/lib/actions/projects";
+import { deleteProject, duplicateProject, archiveProject, unarchiveProject } from "@/lib/actions/projects";
 import type { ProjectWithClient } from "@/lib/actions/projects";
 import type { ProjectSummary } from "@/lib/actions/project-summaries";
 import { formatCurrency } from "@/lib/invoice-calculations";
@@ -32,19 +32,36 @@ const STATUS_FILTERS: { label: string; value: ProjectStatus | "" }[] = [
   { label: "Completed", value: "completed" },
 ];
 
+/** Statuses where the project has financial history and should be archived, not deleted. */
+const ARCHIVE_ONLY_STATUSES: ProjectStatus[] = [
+  "paid", "preparing", "shipped", "received", "completed",
+];
+
 export function AllProjectsView({ projects, noteCounts, summaries }: AllProjectsViewProps) {
   const router = useRouter();
   const [view, setView] = useState<ViewMode>("list");
   const [statusFilter, setStatusFilter] = useState<ProjectStatus | "">("");
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [confirmArchiveId, setConfirmArchiveId] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [archivedOpen, setArchivedOpen] = useState(false);
+
+  // Split: active vs archived
+  const activeProjects = useMemo(
+    () => projects.filter((p) => p.status !== "archived"),
+    [projects]
+  );
+  const archivedProjects = useMemo(
+    () => projects.filter((p) => p.status === "archived"),
+    [projects]
+  );
 
   const filtered = useMemo(
     () =>
       statusFilter === ""
-        ? projects
-        : projects.filter((p) => p.status === statusFilter),
-    [projects, statusFilter]
+        ? activeProjects
+        : activeProjects.filter((p) => p.status === statusFilter),
+    [activeProjects, statusFilter]
   );
 
   async function handleDuplicate(projectId: string) {
@@ -60,6 +77,31 @@ export function AllProjectsView({ projects, noteCounts, summaries }: AllProjects
     setConfirmDeleteId(null);
     setActionLoading(null);
     router.refresh();
+  }
+
+  async function handleArchive(projectId: string) {
+    setActionLoading(projectId);
+    await archiveProject(projectId);
+    setConfirmArchiveId(null);
+    setActionLoading(null);
+    router.refresh();
+  }
+
+  async function handleUnarchive(projectId: string) {
+    setActionLoading(projectId);
+    await unarchiveProject(projectId);
+    setActionLoading(null);
+    router.refresh();
+  }
+
+  /** For paid+ projects: archive. For pre-paid projects: delete. */
+  function handleRemoveRequest(projectId: string) {
+    const project = projects.find((p) => p.id === projectId);
+    if (project && ARCHIVE_ONLY_STATUSES.includes(project.status)) {
+      setConfirmArchiveId(projectId);
+    } else {
+      setConfirmDeleteId(projectId);
+    }
   }
 
   return (
@@ -87,7 +129,7 @@ export function AllProjectsView({ projects, noteCounts, summaries }: AllProjects
       {filtered.length === 0 ? (
         <div className="rounded-xl border border-dashed border-border p-8 text-center">
           <p className="text-sm text-muted-foreground">
-            {projects.length === 0
+            {activeProjects.length === 0
               ? "No projects yet."
               : "No projects match this filter."}
           </p>
@@ -101,7 +143,7 @@ export function AllProjectsView({ projects, noteCounts, summaries }: AllProjects
               noteCount={noteCounts[project.id] ?? 0}
               summary={summaries[project.id]}
               onDuplicate={handleDuplicate}
-              onDeleteRequest={setConfirmDeleteId}
+              onDeleteRequest={handleRemoveRequest}
               isLoading={actionLoading === project.id}
             />
           ))}
@@ -115,10 +157,70 @@ export function AllProjectsView({ projects, noteCounts, summaries }: AllProjects
               noteCount={noteCounts[project.id] ?? 0}
               summary={summaries[project.id]}
               onDuplicate={handleDuplicate}
-              onDeleteRequest={setConfirmDeleteId}
+              onDeleteRequest={handleRemoveRequest}
               isLoading={actionLoading === project.id}
             />
           ))}
+        </div>
+      )}
+
+      {/* ─── Archived projects dropdown ─── */}
+      {archivedProjects.length > 0 && (
+        <div className="border-t border-border/50 pt-3">
+          <button
+            onClick={() => setArchivedOpen((prev) => !prev)}
+            className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted/40 hover:text-foreground"
+          >
+            <svg
+              className={`h-4 w-4 shrink-0 transition-transform ${archivedOpen ? "rotate-90" : ""}`}
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth={2}
+              stroke="currentColor"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+            </svg>
+            <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="m20.25 7.5-.625 10.632a2.25 2.25 0 0 1-2.247 2.118H6.622a2.25 2.25 0 0 1-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125Z" />
+            </svg>
+            Archived ({archivedProjects.length})
+          </button>
+
+          {archivedOpen && (
+            <div className="mt-2">
+              {view === "list" ? (
+                <div className="space-y-2">
+                  {archivedProjects.map((project) => (
+                    <ProjectListRow
+                      key={project.id}
+                      project={project}
+                      noteCount={noteCounts[project.id] ?? 0}
+                      summary={summaries[project.id]}
+                      onDuplicate={handleDuplicate}
+                      onDeleteRequest={handleRemoveRequest}
+                      isLoading={actionLoading === project.id}
+                      onUnarchive={handleUnarchive}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="grid gap-3 grid-cols-2 sm:grid-cols-3 md:grid-cols-4">
+                  {archivedProjects.map((project) => (
+                    <ProjectGridCard
+                      key={project.id}
+                      project={project}
+                      noteCount={noteCounts[project.id] ?? 0}
+                      summary={summaries[project.id]}
+                      onDuplicate={handleDuplicate}
+                      onDeleteRequest={handleRemoveRequest}
+                      isLoading={actionLoading === project.id}
+                      onUnarchive={handleUnarchive}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
 
@@ -129,6 +231,16 @@ export function AllProjectsView({ projects, noteCounts, summaries }: AllProjects
           isLoading={actionLoading === confirmDeleteId}
           onConfirm={() => handleDelete(confirmDeleteId)}
           onCancel={() => setConfirmDeleteId(null)}
+        />
+      )}
+
+      {/* Archive confirmation modal */}
+      {confirmArchiveId && (
+        <ConfirmArchiveModal
+          projectName={projects.find((p) => p.id === confirmArchiveId)?.name ?? "this project"}
+          isLoading={actionLoading === confirmArchiveId}
+          onConfirm={() => handleArchive(confirmArchiveId)}
+          onCancel={() => setConfirmArchiveId(null)}
         />
       )}
     </div>
@@ -183,6 +295,54 @@ function ConfirmDeleteModal({
   );
 }
 
+/* ─── Archive Confirmation Modal ─── */
+
+function ConfirmArchiveModal({
+  projectName,
+  isLoading,
+  onConfirm,
+  onCancel,
+}: {
+  projectName: string;
+  isLoading: boolean;
+  onConfirm: () => void;
+  onCancel: () => void;
+}) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+      <div className="mx-4 w-full max-w-sm rounded-2xl border border-border bg-white p-6 shadow-xl">
+        <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-amber-100">
+          <svg className="h-6 w-6 text-amber-600" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" d="m20.25 7.5-.625 10.632a2.25 2.25 0 0 1-2.247 2.118H6.622a2.25 2.25 0 0 1-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125Z" />
+          </svg>
+        </div>
+        <h3 className="text-base font-semibold text-foreground text-center">Archive Project</h3>
+        <p className="mt-2 text-sm text-muted-foreground text-center">
+          <span className="font-medium text-foreground">{projectName}</span>{" "}
+          has financial history and cannot be deleted. Would you like to archive it instead?
+          You can restore it later.
+        </p>
+        <div className="mt-5 flex gap-3">
+          <button
+            onClick={onCancel}
+            disabled={isLoading}
+            className="flex-1 rounded-lg border border-border px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-muted disabled:opacity-50"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={onConfirm}
+            disabled={isLoading}
+            className="flex-1 rounded-lg bg-amber-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-amber-700 disabled:opacity-50"
+          >
+            {isLoading ? "Archiving..." : "Archive"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ─── Status phase bars ─── */
 
 const SALES_STEPS: ProjectStatus[] = ["draft", "quote", "submitted", "accepted", "paid"];
@@ -193,7 +353,7 @@ function statusProgress(currentStatus: ProjectStatus, steps: ProjectStatus[]): n
   const idx = steps.indexOf(currentStatus);
   if (idx === -1) {
     // If current status is beyond this phase, check if it's a later phase
-    const allStatuses: ProjectStatus[] = ["draft", "quote", "submitted", "accepted", "paid", "preparing", "shipped", "received", "completed"];
+    const allStatuses: ProjectStatus[] = ["draft", "quote", "submitted", "accepted", "paid", "preparing", "shipped", "received", "completed", "archived"];
     const currentIdx = allStatuses.indexOf(currentStatus);
     const lastStepIdx = allStatuses.indexOf(steps[steps.length - 1]);
     // If we're past this phase's last step, it's 100%
@@ -317,6 +477,7 @@ function ProjectListRow({
   onDuplicate,
   onDeleteRequest,
   isLoading,
+  onUnarchive,
 }: {
   project: ProjectWithClient;
   noteCount: number;
@@ -324,6 +485,7 @@ function ProjectListRow({
   onDuplicate: (id: string) => void;
   onDeleteRequest: (id: string) => void;
   isLoading: boolean;
+  onUnarchive?: (id: string) => void;
 }) {
   const s = summary ?? { itemCount: 0, grandTotal: 0, totalCost: 0, profit: 0, totalPaid: 0 };
 
@@ -432,6 +594,19 @@ function ProjectListRow({
           </span>
         )}
         <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+          {/* Unarchive button (archived projects only) */}
+          {project.status === "archived" && onUnarchive && (
+            <button
+              onClick={(e) => { e.preventDefault(); onUnarchive(project.id); }}
+              disabled={isLoading}
+              className="rounded-md p-1.5 text-muted-foreground/50 transition-colors hover:bg-emerald-50 hover:text-emerald-600 disabled:opacity-50"
+              title="Restore from archive"
+            >
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 8.25H7.5a2.25 2.25 0 0 0-2.25 2.25v9a2.25 2.25 0 0 0 2.25 2.25h9a2.25 2.25 0 0 0 2.25-2.25v-9a2.25 2.25 0 0 0-2.25-2.25H15m0-3-3-3m0 0-3 3m3-3V15" />
+              </svg>
+            </button>
+          )}
           <button
             onClick={(e) => { e.preventDefault(); onDuplicate(project.id); }}
             disabled={isLoading}
@@ -442,16 +617,30 @@ function ProjectListRow({
               <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 0 1-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 0 1 1.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 0 0-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5m7.5 10.375H9.375a1.125 1.125 0 0 1-1.125-1.125v-9.25m12 6.625v-1.875a3.375 3.375 0 0 0-3.375-3.375h-1.5a1.125 1.125 0 0 1-1.125-1.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H9.75" />
             </svg>
           </button>
-          <button
-            onClick={(e) => { e.preventDefault(); onDeleteRequest(project.id); }}
-            disabled={isLoading}
-            className="rounded-md p-1.5 text-muted-foreground/50 transition-colors hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
-            title="Delete project"
-          >
-            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
-            </svg>
-          </button>
+          {/* Archive (paid+) or Delete (pre-paid) */}
+          {ARCHIVE_ONLY_STATUSES.includes(project.status) ? (
+            <button
+              onClick={(e) => { e.preventDefault(); onDeleteRequest(project.id); }}
+              disabled={isLoading}
+              className="rounded-md p-1.5 text-muted-foreground/50 transition-colors hover:bg-amber-50 hover:text-amber-600 disabled:opacity-50"
+              title="Archive project"
+            >
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="m20.25 7.5-.625 10.632a2.25 2.25 0 0 1-2.247 2.118H6.622a2.25 2.25 0 0 1-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125Z" />
+              </svg>
+            </button>
+          ) : project.status !== "archived" ? (
+            <button
+              onClick={(e) => { e.preventDefault(); onDeleteRequest(project.id); }}
+              disabled={isLoading}
+              className="rounded-md p-1.5 text-muted-foreground/50 transition-colors hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
+              title="Delete project"
+            >
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+              </svg>
+            </button>
+          ) : null}
         </div>
       </div>
 
@@ -487,6 +676,7 @@ function ProjectGridCard({
   onDuplicate,
   onDeleteRequest,
   isLoading,
+  onUnarchive,
 }: {
   project: ProjectWithClient;
   noteCount: number;
@@ -494,6 +684,7 @@ function ProjectGridCard({
   onDuplicate: (id: string) => void;
   onDeleteRequest: (id: string) => void;
   isLoading: boolean;
+  onUnarchive?: (id: string) => void;
 }) {
   const s = summary ?? { itemCount: 0, grandTotal: 0, totalCost: 0, profit: 0, totalPaid: 0 };
 
@@ -511,6 +702,19 @@ function ProjectGridCard({
 
       {/* Action buttons — top-right on hover */}
       <div className="absolute top-3 right-2 flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+        {/* Unarchive button (archived projects only) */}
+        {project.status === "archived" && onUnarchive && (
+          <button
+            onClick={() => onUnarchive(project.id)}
+            disabled={isLoading}
+            className="rounded-md p-1 bg-white/90 text-muted-foreground/60 shadow-sm border border-border/40 transition-colors hover:bg-emerald-50 hover:text-emerald-600 disabled:opacity-50"
+            title="Restore from archive"
+          >
+            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 8.25H7.5a2.25 2.25 0 0 0-2.25 2.25v9a2.25 2.25 0 0 0 2.25 2.25h9a2.25 2.25 0 0 0 2.25-2.25v-9a2.25 2.25 0 0 0-2.25-2.25H15m0-3-3-3m0 0-3 3m3-3V15" />
+            </svg>
+          </button>
+        )}
         <button
           onClick={() => onDuplicate(project.id)}
           disabled={isLoading}
@@ -521,16 +725,30 @@ function ProjectGridCard({
             <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 0 1-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 0 1 1.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 0 0-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5m7.5 10.375H9.375a1.125 1.125 0 0 1-1.125-1.125v-9.25m12 6.625v-1.875a3.375 3.375 0 0 0-3.375-3.375h-1.5a1.125 1.125 0 0 1-1.125-1.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H9.75" />
           </svg>
         </button>
-        <button
-          onClick={() => onDeleteRequest(project.id)}
-          disabled={isLoading}
-          className="rounded-md p-1 bg-white/90 text-muted-foreground/60 shadow-sm border border-border/40 transition-colors hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
-          title="Delete project"
-        >
-          <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
-          </svg>
-        </button>
+        {/* Archive (paid+) or Delete (pre-paid) */}
+        {ARCHIVE_ONLY_STATUSES.includes(project.status) ? (
+          <button
+            onClick={() => onDeleteRequest(project.id)}
+            disabled={isLoading}
+            className="rounded-md p-1 bg-white/90 text-muted-foreground/60 shadow-sm border border-border/40 transition-colors hover:bg-amber-50 hover:text-amber-600 disabled:opacity-50"
+            title="Archive project"
+          >
+            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="m20.25 7.5-.625 10.632a2.25 2.25 0 0 1-2.247 2.118H6.622a2.25 2.25 0 0 1-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125Z" />
+            </svg>
+          </button>
+        ) : project.status !== "archived" ? (
+          <button
+            onClick={() => onDeleteRequest(project.id)}
+            disabled={isLoading}
+            className="rounded-md p-1 bg-white/90 text-muted-foreground/60 shadow-sm border border-border/40 transition-colors hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
+            title="Delete project"
+          >
+            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+            </svg>
+          </button>
+        ) : null}
       </div>
 
       <Link href={`/projects/${project.id}`} className="block">

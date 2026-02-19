@@ -31,7 +31,7 @@ function paymentSeenKey(projectId: string): string {
 }
 
 /** Statuses that mean "paid" */
-const PAID_STATUSES = ["paid", "preparing", "shipped", "received", "completed"];
+const PAID_STATUSES = ["paid", "preparing", "shipped", "received", "completed", "archived"];
 
 interface NavItem {
   label: string;
