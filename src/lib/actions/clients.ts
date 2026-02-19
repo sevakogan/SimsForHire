@@ -2,7 +2,10 @@
 
 import { revalidatePath } from "next/cache";
 import { createSupabaseServer } from "@/lib/supabase-server";
+import { getAdminSupabase } from "@/lib/supabase-admin";
 import type { Client } from "@/types";
+import { isInternalRole } from "@/types";
+import type { UserRole } from "@/types";
 
 export async function getClients(): Promise<Client[]> {
   const supabase = await createSupabaseServer();
@@ -90,7 +93,7 @@ export async function updateClient(
 
 /**
  * Portal-safe: update the client address by a logged-in portal user.
- * Validates the user is linked to the client via their profile.client_id.
+ * Allows internal users (admin/collaborator/employee) or clients linked to this client.
  */
 export async function updateClientAddressByPortalUser(
   clientId: string,
@@ -100,18 +103,22 @@ export async function updateClientAddressByPortalUser(
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: "Not authenticated" };
 
-  // Verify the user is linked to this client
   const { data: profile } = await supabase
     .from("profiles")
-    .select("client_id")
+    .select("client_id, role")
     .eq("id", user.id)
     .single();
 
-  if (!profile || profile.client_id !== clientId) {
+  if (!profile) return { error: "Profile not found" };
+
+  // Allow internal users (admin, collaborator, employee) or linked clients
+  const internal = isInternalRole(profile.role as UserRole);
+  if (!internal && profile.client_id !== clientId) {
     return { error: "You are not authorized to update this client" };
   }
 
-  const { error } = await supabase
+  const adminDb = getAdminSupabase();
+  const { error } = await adminDb
     .from("clients")
     .update({ address: address || null })
     .eq("id", clientId);

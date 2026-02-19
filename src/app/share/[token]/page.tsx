@@ -18,17 +18,11 @@ interface Props {
   params: Promise<{ token: string }>;
 }
 
-async function isPortalAuthenticated(clientId: string): Promise<boolean> {
+async function isPortalAuthenticated(): Promise<boolean> {
   try {
     const supabase = await createSupabaseServer();
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return false;
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("client_id")
-      .eq("id", user.id)
-      .single();
-    return profile?.client_id === clientId;
+    return !!user;
   } catch {
     return false;
   }
@@ -45,7 +39,7 @@ export default async function SharedInvoicePage({ params }: Props) {
 
   const [items, isAuthenticated] = await Promise.all([
     getClientSafeItemsByProjectId(project.id),
-    isPortalAuthenticated(project.client_id),
+    isPortalAuthenticated(),
   ]);
 
   // Pre-compute display data for each item (passed to client component)

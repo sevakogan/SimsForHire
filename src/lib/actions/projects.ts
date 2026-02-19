@@ -764,14 +764,17 @@ export async function updateShippingAddressByPortalUser(
   if (!project) return { error: "Invalid share link" };
   if (project.contract_signed_at) return { error: "Cannot update — contract is signed" };
 
-  // Verify the user is linked to this client
+  // Allow internal users (admin, collaborator, employee) or linked clients
   const { data: profile } = await supabase
     .from("profiles")
-    .select("client_id")
+    .select("client_id, role")
     .eq("id", user.id)
     .single();
 
-  if (!profile || profile.client_id !== project.client_id) {
+  if (!profile) return { error: "Profile not found" };
+
+  const internal = ["admin", "collaborator", "employee"].includes(profile.role);
+  if (!internal && profile.client_id !== project.client_id) {
     return { error: "You are not authorized to update this project" };
   }
 
