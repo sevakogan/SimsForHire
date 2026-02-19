@@ -2,9 +2,20 @@
 
 import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { useAuth } from "@/components/auth/auth-provider";
 
-export function PortalTopNav() {
+interface PortalTopNavProps {
+  /** When viewing a share page, the project name to show in breadcrumb */
+  currentProjectName?: string;
+  /** When viewing a share page, the share token for the link */
+  currentShareToken?: string;
+}
+
+export function PortalTopNav({
+  currentProjectName,
+  currentShareToken,
+}: PortalTopNavProps) {
   const { user, profile, signOut } = useAuth();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -45,7 +56,35 @@ export function PortalTopNav() {
 
   return (
     <header className="border-b border-gray-200 bg-white">
-      <div className="flex h-14 items-center justify-end px-4 sm:px-6">
+      <div className="flex h-14 items-center justify-between px-4 sm:px-6">
+        {/* Left side: Navigation links */}
+        <nav className="flex items-center gap-1 text-sm">
+          <Link
+            href="/portal/dashboard"
+            className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 font-medium text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-900"
+          >
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="m2.25 12 8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
+            </svg>
+            <span className="hidden sm:inline">Dashboard</span>
+          </Link>
+
+          {currentProjectName && currentShareToken && (
+            <>
+              <svg className="h-4 w-4 text-gray-300" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+              </svg>
+              <Link
+                href={`/share/${currentShareToken}`}
+                className="max-w-[180px] truncate rounded-lg px-2.5 py-1.5 font-medium text-primary transition-colors hover:bg-primary/5"
+              >
+                {currentProjectName}
+              </Link>
+            </>
+          )}
+        </nav>
+
+        {/* Right side: User dropdown */}
         <div className="relative" ref={dropdownRef}>
           <button
             onClick={() => setDropdownOpen(!dropdownOpen)}
@@ -113,6 +152,20 @@ export function PortalTopNav() {
                     {roleBadge}
                   </span>
                 )}
+              </div>
+
+              {/* Navigation links inside dropdown (for mobile) */}
+              <div className="border-b border-gray-200 py-1 sm:hidden">
+                <Link
+                  href="/portal/dashboard"
+                  className="flex w-full items-center gap-3 px-4 py-2.5 text-sm text-gray-700 transition-colors hover:bg-gray-50"
+                  onClick={() => setDropdownOpen(false)}
+                >
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="m2.25 12 8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
+                  </svg>
+                  Dashboard
+                </Link>
               </div>
 
               {/* Sign out */}

@@ -42,6 +42,7 @@ interface ShareActionsProps {
   discountPercent: number;
   discountType: DiscountType;
   discountAmount: number;
+  additionalDiscount: number;
   companyPhone: string | null;
   contractViewedAt: string | null;
   contractSignedAt: string | null;
@@ -145,6 +146,7 @@ export function ShareActions({
   discountPercent,
   discountType,
   discountAmount: discountAmountProp,
+  additionalDiscount: additionalDiscountProp,
   companyPhone,
   contractViewedAt,
   contractSignedAt,
@@ -332,8 +334,10 @@ export function ShareActions({
     discountPercent,
     discountValue: discountAmountProp,
     taxPercent,
+    additionalDiscount: additionalDiscountProp,
   });
   const discountAmount = invoiceTotals.discountAmount;
+  const additionalDiscount = invoiceTotals.additionalDiscount;
   const taxAmount = invoiceTotals.taxAmount;
   const grandTotal = invoiceTotals.grandTotal;
 
@@ -668,6 +672,14 @@ export function ShareActions({
               </span>
               <span className="text-sm tabular-nums text-green-600">
                 −{formatCurrency(discountAmount)}
+              </span>
+            </div>
+          )}
+          {additionalDiscount > 0 && (
+            <div className="flex items-center justify-between border-b border-gray-100 py-3">
+              <span className="text-sm text-gray-500">Additional Discount</span>
+              <span className="text-sm tabular-nums text-green-600">
+                −{formatCurrency(additionalDiscount)}
               </span>
             </div>
           )}
@@ -1094,6 +1106,16 @@ export function ShareActions({
             </span>
             <span className="text-sm tabular-nums text-green-600">
               −{formatCurrency(discountAmount)}
+            </span>
+          </div>
+        )}
+
+        {/* Additional Discount — only shown when > 0 */}
+        {additionalDiscount > 0 && (
+          <div className="flex items-center justify-between border-b border-gray-100 py-3">
+            <span className="text-sm text-gray-500">Additional Discount</span>
+            <span className="text-sm tabular-nums text-green-600">
+              −{formatCurrency(additionalDiscount)}
             </span>
           </div>
         )}

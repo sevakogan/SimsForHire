@@ -151,6 +151,7 @@ export async function updateProject(
     discount_percent?: number;
     discount_type?: DiscountType;
     discount_amount?: number;
+    additional_discount?: number;
     shipping_address?: string | null;
   }
 ): Promise<{ error: string | null }> {
@@ -734,6 +735,52 @@ export async function markContractViewed(
   });
 
   revalidatePath("/projects", "layout");
+  revalidatePath("/share", "layout");
+  return { error: null };
+}
+
+/**
+ * Portal-safe: update a project's shipping address by a logged-in portal user.
+ * Validates the user is linked to the project's client. Blocks if contract is signed.
+ */
+export async function updateShippingAddressByPortalUser(
+  shareToken: string,
+  shippingAddress: string | null
+): Promise<{ error: string | null }> {
+  if (!shareToken) return { error: "Invalid token" };
+
+  const supabase = await createSupabaseServer();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: "Not authenticated" };
+
+  // Fetch project + client
+  const adminDb = getAdminSupabase();
+  const { data: project } = await adminDb
+    .from("projects")
+    .select("id, client_id, contract_signed_at")
+    .eq("share_token", shareToken)
+    .single();
+
+  if (!project) return { error: "Invalid share link" };
+  if (project.contract_signed_at) return { error: "Cannot update — contract is signed" };
+
+  // Verify the user is linked to this client
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("client_id")
+    .eq("id", user.id)
+    .single();
+
+  if (!profile || profile.client_id !== project.client_id) {
+    return { error: "You are not authorized to update this project" };
+  }
+
+  const { error } = await adminDb
+    .from("projects")
+    .update({ shipping_address: shippingAddress || null })
+    .eq("id", project.id);
+
+  if (error) return { error: error.message };
   revalidatePath("/share", "layout");
   return { error: null };
 }

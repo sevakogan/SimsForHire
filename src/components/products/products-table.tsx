@@ -312,7 +312,7 @@ export function ProductsTable({ products, isAdmin, basePath = "/customizations/p
               <SortableTh field="type" className="w-[80px]">Type</SortableTh>
               <SortableTh field="name" className="w-[260px]">Name</SortableTh>
               <SortableTh field="retail_price" className="w-[80px]">Retail</SortableTh>
-              {isAdmin && <th className={`${tdCompact} ${thBase} w-[50px]`}>%</th>}
+              {isAdmin && <th className={`${tdCompact} ${thBase} w-[65px]`}>%</th>}
               {isAdmin && <SortableTh field="cost" className="w-[80px]">Cost</SortableTh>}
               <SortableTh field="sales_price" className="w-[80px]">Sales</SortableTh>
               <th className={`${tdCompact} ${thBase}`} style={{ width: 30 }} title="Website">

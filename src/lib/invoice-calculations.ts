@@ -5,11 +5,13 @@ export interface InvoiceTotals {
   itemsTotal: number;
   /** Sum of retail_shipping * qty for all items */
   deliveryTotal: number;
-  /** Discount applied to items only */
+  /** Primary discount applied to items only */
   discountAmount: number;
-  /** Tax applied to items after discount */
+  /** Additional fixed-$ discount stacked on top of primary discount */
+  additionalDiscount: number;
+  /** Tax applied to items after all discounts */
   taxAmount: number;
-  /** Items after discount + tax + delivery */
+  /** Items after discounts + tax + delivery */
   grandTotal: number;
 }
 
@@ -20,6 +22,7 @@ export function calculateInvoiceTotals({
   discountPercent,
   discountValue,
   taxPercent,
+  additionalDiscount = 0,
 }: {
   itemsTotal: number;
   deliveryTotal: number;
@@ -27,25 +30,30 @@ export function calculateInvoiceTotals({
   discountPercent: number;
   discountValue: number;
   taxPercent: number;
+  additionalDiscount?: number;
 }): InvoiceTotals {
-  // Discount applies to items only
+  // Primary discount applies to items only
   const discountAmount =
     discountType === "percent"
       ? itemsTotal * (discountPercent / 100)
       : Math.min(discountValue, itemsTotal); // can't discount more than items total
 
-  const itemsAfterDiscount = itemsTotal - discountAmount;
+  // Additional discount (fixed $) — also capped so we don't go below 0
+  const cappedAdditional = Math.min(additionalDiscount, Math.max(0, itemsTotal - discountAmount));
 
-  // Tax applies to items after discount only (not delivery)
+  const itemsAfterDiscount = itemsTotal - discountAmount - cappedAdditional;
+
+  // Tax applies to items after all discounts only (not delivery)
   const taxAmount = taxPercent > 0 ? itemsAfterDiscount * (taxPercent / 100) : 0;
 
-  // Grand total: items after discount + tax + delivery
+  // Grand total: items after discounts + tax + delivery
   const grandTotal = itemsAfterDiscount + taxAmount + deliveryTotal;
 
   return {
     itemsTotal,
     deliveryTotal,
     discountAmount,
+    additionalDiscount: cappedAdditional,
     taxAmount,
     grandTotal,
   };

@@ -28,6 +28,7 @@ interface InvoiceDiscountProviderProps {
   discountType: DiscountType;
   discountPercent: number;
   discountAmount: number;
+  additionalDiscount: number;
   taxPercent: number;
   fulfillmentType: FulfillmentType;
   children: ReactNode;
@@ -37,6 +38,7 @@ export function InvoiceDiscountProvider({
   discountType,
   discountPercent,
   discountAmount,
+  additionalDiscount,
   taxPercent,
   fulfillmentType,
   children,
@@ -45,6 +47,7 @@ export function InvoiceDiscountProvider({
     discountType,
     discountPercent,
     discountAmount,
+    additionalDiscount,
     taxPercent,
   });
 
@@ -79,6 +82,7 @@ interface InvoiceSectionProps {
   discountPercent: number;
   discountType: DiscountType;
   discountAmount: number;
+  additionalDiscount: number;
   itemsTotal: number;
   deliveryTotal: number;
   myCost?: number;
@@ -110,6 +114,7 @@ interface LiveFooterProps {
   discountType: DiscountType;
   discountPercent: number;
   discountAmount: number;
+  additionalDiscount: number;
   taxPercent: number;
   myCost?: number;
   myShipping?: number;
@@ -121,6 +126,7 @@ export function LiveInvoiceFooter({
   discountType,
   discountPercent,
   discountAmount,
+  additionalDiscount,
   taxPercent,
   myCost,
   myShipping,
@@ -134,6 +140,7 @@ export function LiveInvoiceFooter({
       discountType={live?.discountType ?? discountType}
       discountPercent={live?.discountPercent ?? discountPercent}
       discountAmount={live?.discountAmount ?? discountAmount}
+      additionalDiscount={live?.additionalDiscount ?? additionalDiscount}
       taxPercent={live?.taxPercent ?? taxPercent}
       myCost={myCost}
       myShipping={myShipping}

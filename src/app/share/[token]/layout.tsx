@@ -96,7 +96,10 @@ export default async function ShareLayout({ params, children }: Props) {
   if (isAuthenticated) {
     return (
       <AuthProvider serverProfile={profile}>
-        <PortalTopNav />
+        <PortalTopNav
+          currentProjectName={project.name}
+          currentShareToken={token}
+        />
         {portalContent}
       </AuthProvider>
     );

@@ -64,6 +64,7 @@ export async function PATCH(
     discount_percent: "number",
     discount_type: "string",
     discount_amount: "number",
+    additional_discount: "number",
     shipping_address: "nullable_string",
   };
 

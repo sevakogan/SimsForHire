@@ -6,13 +6,32 @@ import {
 import { firstImage } from "@/lib/parse-images";
 import { calculateInvoiceTotals, formatCurrency } from "@/lib/invoice-calculations";
 import { getCompanyInfo } from "@/lib/actions/company-info";
+import { createSupabaseServer } from "@/lib/supabase-server";
 import { ShareActions, StatusBadge } from "./share-actions";
+import { PortalAddressEditor } from "@/components/portal/portal-address-editor";
+import { PortalStepsGuide } from "@/components/portal/portal-steps-guide";
 import type { DiscountType } from "@/types";
 
 export const dynamic = "force-dynamic";
 
 interface Props {
   params: Promise<{ token: string }>;
+}
+
+async function isPortalAuthenticated(clientId: string): Promise<boolean> {
+  try {
+    const supabase = await createSupabaseServer();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return false;
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("client_id")
+      .eq("id", user.id)
+      .single();
+    return profile?.client_id === clientId;
+  } catch {
+    return false;
+  }
 }
 
 export default async function SharedInvoicePage({ params }: Props) {
@@ -24,7 +43,10 @@ export default async function SharedInvoicePage({ params }: Props) {
 
   if (!project) notFound();
 
-  const items = await getClientSafeItemsByProjectId(project.id);
+  const [items, isAuthenticated] = await Promise.all([
+    getClientSafeItemsByProjectId(project.id),
+    isPortalAuthenticated(project.client_id),
+  ]);
 
   // Pre-compute display data for each item (passed to client component)
   const itemDisplayData = items.map((item) => {
@@ -63,6 +85,7 @@ export default async function SharedInvoicePage({ params }: Props) {
   const discountType = (project.discount_type ?? "percent") as DiscountType;
   const discPct = Number(project.discount_percent) || 0;
   const discAmt = Number(project.discount_amount) || 0;
+  const addlDisc = Number(project.additional_discount) || 0;
   const taxPct = Number(project.tax_percent) || 0;
 
   const totals = calculateInvoiceTotals({
@@ -72,6 +95,7 @@ export default async function SharedInvoicePage({ params }: Props) {
     discountPercent: discPct,
     discountValue: discAmt,
     taxPercent: taxPct,
+    additionalDiscount: addlDisc,
   });
 
   const projectNotes = (project.notes ?? "").trim();
@@ -223,6 +247,25 @@ export default async function SharedInvoicePage({ params }: Props) {
         )}
       </div>
 
+      {/* Address editor — only for authenticated portal users */}
+      {isAuthenticated && (
+        <div className="mb-6">
+          <PortalAddressEditor
+            clientId={project.client_id}
+            shareToken={token}
+            clientAddress={client?.address ?? null}
+            shippingAddress={project.shipping_address ?? null}
+            contractSigned={!!project.contract_signed_at}
+          />
+        </div>
+      )}
+
+      {/* Steps guide — between header and invoice items */}
+      <PortalStepsGuide
+        projectStatus={project.status}
+        contractSignedAt={project.contract_signed_at ?? null}
+      />
+
       {/* Items */}
       {items.length === 0 ? (
         <div className="rounded-xl border border-dashed border-gray-300 py-12 text-center">
@@ -238,6 +281,7 @@ export default async function SharedInvoicePage({ params }: Props) {
           discountPercent={discPct}
           discountType={discountType}
           discountAmount={discAmt}
+          additionalDiscount={addlDisc}
           companyPhone={company.phone ?? null}
           contractViewedAt={project.contract_viewed_at ?? null}
           contractSignedAt={project.contract_signed_at ?? null}

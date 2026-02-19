@@ -8,6 +8,7 @@ export interface DiscountState {
   discountType: DiscountType;
   discountPercent: number;
   discountAmount: number;
+  additionalDiscount: number;
   taxPercent: number;
 }
 
@@ -21,6 +22,7 @@ interface InvoiceInfoCardProps {
   discountPercent: number;
   discountType: DiscountType;
   discountAmount: number;
+  additionalDiscount: number;
   itemsTotal: number;
   deliveryTotal: number;
   myCost?: number;
@@ -40,6 +42,7 @@ export function InvoiceInfoCard({
   discountPercent,
   discountType,
   discountAmount,
+  additionalDiscount,
   itemsTotal,
   deliveryTotal,
   myCost,
@@ -55,6 +58,7 @@ export function InvoiceInfoCard({
   const savedDate = dateRequired ? dateRequired.slice(0, 10) : "";
   const savedDiscountPercent = String(discountPercent || "");
   const savedDiscountAmount = String(discountAmount || "");
+  const savedAdditionalDiscount = String(additionalDiscount || "");
 
   // Local editing state
   const [localInvoice, setLocalInvoice] = useState(savedInvoice);
@@ -64,6 +68,7 @@ export function InvoiceInfoCard({
   const [localDiscountType, setLocalDiscountType] = useState<DiscountType>(discountType);
   const [localDiscountPercent, setLocalDiscountPercent] = useState(savedDiscountPercent);
   const [localDiscountAmount, setLocalDiscountAmount] = useState(savedDiscountAmount);
+  const [localAdditionalDiscount, setLocalAdditionalDiscount] = useState(savedAdditionalDiscount);
   const [localFulfillment, setLocalFulfillment] = useState<FulfillmentType>(
     (fulfillmentType as FulfillmentType) || "delivery"
   );
@@ -79,6 +84,8 @@ export function InvoiceInfoCard({
   discountPctRef.current = localDiscountPercent;
   const discountAmtRef = useRef(localDiscountAmount);
   discountAmtRef.current = localDiscountAmount;
+  const additionalDiscRef = useRef(localAdditionalDiscount);
+  additionalDiscRef.current = localAdditionalDiscount;
 
   // Emit discount state changes to parent for live footer sync
   function emitDiscountChange(overrides: Partial<DiscountState> = {}) {
@@ -86,6 +93,7 @@ export function InvoiceInfoCard({
       discountType: overrides.discountType ?? localDiscountType,
       discountPercent: overrides.discountPercent ?? (parseFloat(discountPctRef.current) || 0),
       discountAmount: overrides.discountAmount ?? (parseFloat(discountAmtRef.current) || 0),
+      additionalDiscount: overrides.additionalDiscount ?? (parseFloat(additionalDiscRef.current) || 0),
       taxPercent: overrides.taxPercent ?? (parseFloat(taxRef.current) || 0),
     });
   }
@@ -150,6 +158,13 @@ export function InvoiceInfoCard({
     persist("discount_amount", num);
   }
 
+  function handleAdditionalDiscountBlur() {
+    const num = parseFloat(additionalDiscRef.current) || 0;
+    setLocalAdditionalDiscount(String(num || ""));
+    emitDiscountChange({ additionalDiscount: num });
+    persist("additional_discount", num);
+  }
+
   /* ── Immediate-save toggles ────────────────────────────── */
 
   function handleDiscountTypeToggle(type: DiscountType) {
@@ -187,6 +202,13 @@ export function InvoiceInfoCard({
     emitDiscountChange({ discountAmount: !isNaN(num) ? num : 0 });
   }
 
+  function handleAdditionalDiscountInput(e: React.ChangeEvent<HTMLInputElement>) {
+    const val = e.target.value;
+    setLocalAdditionalDiscount(val);
+    const num = parseFloat(val);
+    emitDiscountChange({ additionalDiscount: !isNaN(num) ? num : 0 });
+  }
+
   // Calculate totals for display
   const totals = calculateInvoiceTotals({
     itemsTotal,
@@ -195,6 +217,7 @@ export function InvoiceInfoCard({
     discountPercent: parseFloat(localDiscountPercent) || 0,
     discountValue: parseFloat(localDiscountAmount) || 0,
     taxPercent: parseFloat(localTax) || 0,
+    additionalDiscount: parseFloat(localAdditionalDiscount) || 0,
   });
 
   const profit = myCost !== undefined
@@ -385,6 +408,28 @@ export function InvoiceInfoCard({
             </div>
           </div>
 
+          {/* Additional Discount — fixed $ */}
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="text-[10px] font-semibold uppercase tracking-wider text-orange-600 shrink-0">
+              Addtl
+            </span>
+            <div className="flex items-center gap-1">
+              <span className="text-xs font-medium text-orange-500">$</span>
+              <input
+                type="number"
+                value={localAdditionalDiscount}
+                onChange={handleAdditionalDiscountInput}
+                onBlur={handleAdditionalDiscountBlur}
+                onKeyDown={(e) => { if (e.key === "Enter") e.currentTarget.blur(); }}
+                placeholder="0.00"
+                min={0}
+                step="0.01"
+                disabled={readOnly}
+                className={`${inputBase} w-24 !border-orange-200 focus:!border-orange-400 focus:!ring-orange-400/20 ${readOnly ? "opacity-60 cursor-not-allowed" : ""}`}
+              />
+            </div>
+          </div>
+
           {/* Tax section — pushed right */}
           <div className="flex items-center gap-2 ml-auto">
             <span className="text-[10px] font-semibold uppercase tracking-wider text-gray-400 shrink-0">
@@ -453,6 +498,14 @@ export function InvoiceInfoCard({
                 Discount{" "}
                 <span className="font-semibold tabular-nums text-emerald-600">
                   −{formatCurrency(totals.discountAmount)}
+                </span>
+              </span>
+            )}
+            {totals.additionalDiscount > 0 && (
+              <span className="text-gray-400">
+                Addtl{" "}
+                <span className="font-semibold tabular-nums text-orange-500">
+                  −{formatCurrency(totals.additionalDiscount)}
                 </span>
               </span>
             )}

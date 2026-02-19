@@ -9,6 +9,7 @@ interface InvoiceSummaryFooterProps {
   discountType: DiscountType;
   discountPercent: number;
   discountAmount: number;
+  additionalDiscount: number;
   taxPercent: number;
   /** optional: admin-only cost data */
   myCost?: number;
@@ -21,6 +22,7 @@ export function InvoiceSummaryFooter({
   discountType,
   discountPercent,
   discountAmount,
+  additionalDiscount,
   taxPercent,
   myCost,
   myShipping,
@@ -32,6 +34,7 @@ export function InvoiceSummaryFooter({
     discountPercent,
     discountValue: discountAmount,
     taxPercent,
+    additionalDiscount,
   });
 
   const isAdmin = myCost !== undefined;
@@ -83,6 +86,16 @@ export function InvoiceSummaryFooter({
                 <span className="text-emerald-600">{discountLabel}</span>
                 <span className="tabular-nums font-medium text-emerald-600">
                   −{formatCurrency(totals.discountAmount)}
+                </span>
+              </div>
+            )}
+
+            {/* Additional Discount */}
+            {totals.additionalDiscount > 0 && (
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-orange-500">Addtl Discount</span>
+                <span className="tabular-nums font-medium text-orange-500">
+                  −{formatCurrency(totals.additionalDiscount)}
                 </span>
               </div>
             )}

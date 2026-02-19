@@ -112,6 +112,7 @@ export default async function ProjectDetailPage({ params }: Props) {
       discountType={projDiscountType}
       discountPercent={Number(project.discount_percent) || 0}
       discountAmount={Number(project.discount_amount) || 0}
+      additionalDiscount={Number(project.additional_discount) || 0}
       taxPercent={Number(project.tax_percent) || 0}
       fulfillmentType={project.fulfillment_type}
     >
@@ -219,6 +220,7 @@ export default async function ProjectDetailPage({ params }: Props) {
               discountPercent={Number(project.discount_percent) || 0}
               discountType={projDiscountType}
               discountAmount={Number(project.discount_amount) || 0}
+              additionalDiscount={Number(project.additional_discount) || 0}
               itemsTotal={totalRetail}
               deliveryTotal={totalServices}
               myCost={admin ? totalMyCost : undefined}
@@ -291,6 +293,7 @@ export default async function ProjectDetailPage({ params }: Props) {
           discountType={projDiscountType}
           discountPercent={Number(project.discount_percent) || 0}
           discountAmount={Number(project.discount_amount) || 0}
+          additionalDiscount={Number(project.additional_discount) || 0}
           taxPercent={Number(project.tax_percent) || 0}
           myCost={admin ? totalMyCost : undefined}
           myShipping={admin ? totalMyShipping : undefined}

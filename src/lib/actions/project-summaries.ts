@@ -27,6 +27,7 @@ export async function getProjectSummaries(
     discount_percent: number;
     discount_type: DiscountType;
     discount_amount: number;
+    additional_discount: number;
   }[]
 ): Promise<Record<string, ProjectSummary>> {
   if (projects.length === 0) return {};
@@ -104,6 +105,7 @@ export async function getProjectSummaries(
       discountPercent: proj.discount_percent,
       discountValue: proj.discount_amount,
       taxPercent: proj.tax_percent,
+      additionalDiscount: proj.additional_discount,
     });
 
     const totalPaidCents = paymentsByProject.get(pid) ?? 0;

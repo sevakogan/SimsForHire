@@ -88,6 +88,39 @@ export async function updateClient(
   return { error: null };
 }
 
+/**
+ * Portal-safe: update the client address by a logged-in portal user.
+ * Validates the user is linked to the client via their profile.client_id.
+ */
+export async function updateClientAddressByPortalUser(
+  clientId: string,
+  address: string | null
+): Promise<{ error: string | null }> {
+  const supabase = await createSupabaseServer();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: "Not authenticated" };
+
+  // Verify the user is linked to this client
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("client_id")
+    .eq("id", user.id)
+    .single();
+
+  if (!profile || profile.client_id !== clientId) {
+    return { error: "You are not authorized to update this client" };
+  }
+
+  const { error } = await supabase
+    .from("clients")
+    .update({ address: address || null })
+    .eq("id", clientId);
+
+  if (error) return { error: error.message };
+  revalidatePath("/share", "layout");
+  return { error: null };
+}
+
 export async function deleteClient(
   id: string
 ): Promise<{ error: string | null }> {
