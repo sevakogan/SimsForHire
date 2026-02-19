@@ -118,7 +118,7 @@ export function DashboardClients({ clients, showProfit = true }: DashboardClient
 
 function CardsView({ clients, showProfit = true }: { clients: DashboardClient[]; showProfit?: boolean }) {
   return (
-    <div className="flex flex-wrap gap-4">
+    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 sm:gap-4">
       {clients.map((client) => {
         const initials = getInitials(client.name);
         const colorClass = getAvatarColor(client.name);
@@ -128,8 +128,7 @@ function CardsView({ clients, showProfit = true }: { clients: DashboardClient[];
           <Link
             key={client.id}
             href={`/clients/${client.id}`}
-            className="group relative w-full overflow-hidden rounded-xl border border-border/60 bg-white shadow-sm transition-all hover:shadow-lg hover:border-primary/20 hover:-translate-y-0.5 sm:w-[350px]"
-            style={{ aspectRatio: "3.5 / 2" }}
+            className="group relative overflow-hidden rounded-xl border border-border/60 bg-white shadow-sm transition-all hover:shadow-lg hover:border-primary/20 hover:-translate-y-0.5"
           >
             {/* Left accent stripe */}
             <div className={`absolute inset-y-0 left-0 w-1.5 bg-gradient-to-b ${colorClass}`} />
