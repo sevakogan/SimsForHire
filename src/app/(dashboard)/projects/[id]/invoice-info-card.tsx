@@ -322,7 +322,7 @@ export function InvoiceInfoCard({
 
       {/* Row 3: Discount (left) + Tax (right) */}
       <div className="border-t border-gray-100 px-4 py-3">
-        <div className="flex items-center gap-3 flex-wrap">
+        <div className="flex items-center gap-3">
           {/* Discount section — left */}
           <div className="flex items-center gap-2 min-w-0">
             <svg className="h-4 w-4 text-emerald-500 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
@@ -408,28 +408,6 @@ export function InvoiceInfoCard({
             </div>
           </div>
 
-          {/* Additional Discount — fixed $ */}
-          <div className="flex items-center gap-2 min-w-0">
-            <span className="text-[10px] font-semibold uppercase tracking-wider text-orange-600 shrink-0">
-              Addtl
-            </span>
-            <div className="flex items-center gap-1">
-              <span className="text-xs font-medium text-orange-500">$</span>
-              <input
-                type="number"
-                value={localAdditionalDiscount}
-                onChange={handleAdditionalDiscountInput}
-                onBlur={handleAdditionalDiscountBlur}
-                onKeyDown={(e) => { if (e.key === "Enter") e.currentTarget.blur(); }}
-                placeholder="0.00"
-                min={0}
-                step="0.01"
-                disabled={readOnly}
-                className={`${inputBase} w-24 !border-orange-200 focus:!border-orange-400 focus:!ring-orange-400/20 ${readOnly ? "opacity-60 cursor-not-allowed" : ""}`}
-              />
-            </div>
-          </div>
-
           {/* Tax section — pushed right */}
           <div className="flex items-center gap-2 ml-auto">
             <span className="text-[10px] font-semibold uppercase tracking-wider text-gray-400 shrink-0">
@@ -449,6 +427,32 @@ export function InvoiceInfoCard({
               className={`${inputBase} w-16 ${readOnly ? "opacity-60 cursor-not-allowed" : ""}`}
             />
             <span className="text-xs font-medium text-gray-400">%</span>
+          </div>
+        </div>
+
+        {/* Additional Discount — below the discount row */}
+        <div className="flex items-center gap-2 mt-2.5 pl-6">
+          <svg className="h-4 w-4 text-orange-400 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9.568 3H5.25A2.25 2.25 0 0 0 3 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 0 0 5.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 0 0 9.568 3Z" />
+            <path strokeLinecap="round" strokeLinejoin="round" d="M6 6h.008v.008H6V6Z" />
+          </svg>
+          <span className="text-[10px] font-semibold uppercase tracking-wider text-orange-600 shrink-0">
+            Additional Discount
+          </span>
+          <div className="flex items-center gap-1">
+            <span className="text-xs font-medium text-orange-500">$</span>
+            <input
+              type="number"
+              value={localAdditionalDiscount}
+              onChange={handleAdditionalDiscountInput}
+              onBlur={handleAdditionalDiscountBlur}
+              onKeyDown={(e) => { if (e.key === "Enter") e.currentTarget.blur(); }}
+              placeholder="0.00"
+              min={0}
+              step="0.01"
+              disabled={readOnly}
+              className={`${inputBase} w-24 !border-orange-200 focus:!border-orange-400 focus:!ring-orange-400/20 ${readOnly ? "opacity-60 cursor-not-allowed" : ""}`}
+            />
           </div>
         </div>
       </div>
