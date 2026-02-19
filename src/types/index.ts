@@ -24,6 +24,11 @@ export interface Client {
   phone: string | null;
   email: string | null;
   address: string | null;
+  company_name: string | null;
+  company_phone: string | null;
+  company_email: string | null;
+  website: string | null;
+  instagram: string | null;
   created_by: string | null;
   created_at: string;
   updated_at: string;

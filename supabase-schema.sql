@@ -44,6 +44,11 @@ CREATE TABLE clients (
   phone TEXT,
   email TEXT,
   address TEXT,
+  company_name TEXT,
+  company_phone TEXT,
+  company_email TEXT,
+  website TEXT,
+  instagram TEXT,
   created_by UUID REFERENCES profiles(id),
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()

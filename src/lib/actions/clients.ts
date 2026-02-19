@@ -35,6 +35,11 @@ export async function createClient(input: {
   phone?: string;
   email?: string;
   address?: string;
+  company_name?: string;
+  company_phone?: string;
+  company_email?: string;
+  website?: string;
+  instagram?: string;
 }): Promise<{ id: string | null; error: string | null }> {
   const supabase = await createSupabaseServer();
 
@@ -51,6 +56,11 @@ export async function createClient(input: {
       phone: input.phone ?? null,
       email: input.email ?? null,
       address: input.address ?? null,
+      company_name: input.company_name ?? null,
+      company_phone: input.company_phone ?? null,
+      company_email: input.company_email ?? null,
+      website: input.website ?? null,
+      instagram: input.instagram ?? null,
       created_by: user.id,
     })
     .select("id")
@@ -69,6 +79,11 @@ export async function updateClient(
     phone?: string | null;
     email?: string | null;
     address?: string | null;
+    company_name?: string | null;
+    company_phone?: string | null;
+    company_email?: string | null;
+    website?: string | null;
+    instagram?: string | null;
   }
 ): Promise<{ error: string | null }> {
   const supabase = await createSupabaseServer();
@@ -78,6 +93,11 @@ export async function updateClient(
     phone: input.phone || null,
     email: input.email || null,
     address: input.address || null,
+    company_name: input.company_name || null,
+    company_phone: input.company_phone || null,
+    company_email: input.company_email || null,
+    website: input.website || null,
+    instagram: input.instagram || null,
   };
 
   const { error } = await supabase

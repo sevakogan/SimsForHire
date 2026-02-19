@@ -10,6 +10,7 @@ interface CustomizationsSidebarProps {
 }
 
 const COLLAPSED_KEY = "customizations-sidebar-collapsed";
+const CATALOG_OPEN_KEY = "customizations-catalog-open";
 
 interface NavItem {
   label: string;
@@ -17,7 +18,13 @@ interface NavItem {
   icon: React.ReactNode;
 }
 
-function getNavItems(isAdmin: boolean): NavItem[] {
+interface CatalogSubItem {
+  label: string;
+  href: string;
+  comingSoon?: boolean;
+}
+
+function getTopNavItems(isAdmin: boolean): NavItem[] {
   const items: NavItem[] = [];
 
   if (isAdmin) {
@@ -42,27 +49,22 @@ function getNavItems(isAdmin: boolean): NavItem[] {
     });
   }
 
-  items.push({
-    label: "Products",
-    href: "/customizations/products",
-    icon: (
-      <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" />
-      </svg>
-    ),
-  });
-
-  items.push({
-    label: "Services",
-    href: "/customizations/services",
-    icon: (
-      <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M11.42 15.17 17.25 21A2.652 2.652 0 0 0 21 17.25l-5.877-5.877M11.42 15.17l2.496-3.03c.317-.384.74-.626 1.208-.766M11.42 15.17l-4.655 5.653a2.548 2.548 0 1 1-3.586-3.586l6.837-5.63m5.108-.233c.55-.164 1.163-.188 1.743-.14a4.5 4.5 0 0 0 4.486-6.336l-3.276 3.277a3.004 3.004 0 0 1-2.25-2.25l3.276-3.276a4.5 4.5 0 0 0-6.336 4.486c.091 1.076-.071 2.264-.904 2.95l-.102.085m-1.745 1.437L5.909 7.5H4.5L2.25 3.75l1.5-1.5L7.5 4.5v1.409l4.26 4.26m-1.745 1.437 1.745-1.437m6.615 8.206L15.75 15.75M4.867 19.125h.008v.008h-.008v-.008Z" />
-      </svg>
-    ),
-  });
-
   return items;
+}
+
+const CATALOG_SUB_ITEMS: CatalogSubItem[] = [
+  { label: "Products", href: "/customizations/products" },
+  { label: "Bundles", href: "/customizations/bundles", comingSoon: true },
+  { label: "Services", href: "/customizations/services" },
+];
+
+/** The catalog icon (box/package) */
+function CatalogIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className ?? "h-5 w-5"} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" />
+    </svg>
+  );
 }
 
 export function CustomizationsSidebar({
@@ -71,10 +73,13 @@ export function CustomizationsSidebar({
 }: CustomizationsSidebarProps) {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(true);
+  const [catalogOpen, setCatalogOpen] = useState(true);
 
   useEffect(() => {
     const saved = localStorage.getItem(COLLAPSED_KEY);
     if (saved === "false") setCollapsed(false);
+    const savedCatalog = localStorage.getItem(CATALOG_OPEN_KEY);
+    if (savedCatalog === "false") setCatalogOpen(false);
   }, []);
 
   function toggleCollapsed() {
@@ -85,9 +90,22 @@ export function CustomizationsSidebar({
     });
   }
 
-  const navItems = getNavItems(isAdmin);
+  function toggleCatalog() {
+    setCatalogOpen((prev) => {
+      const next = !prev;
+      localStorage.setItem(CATALOG_OPEN_KEY, String(next));
+      return next;
+    });
+  }
 
-  function isActive(item: NavItem): boolean {
+  const topNavItems = getTopNavItems(isAdmin);
+
+  /** Is any catalog sub-item active? */
+  const isCatalogActive = CATALOG_SUB_ITEMS.some(
+    (sub) => !sub.comingSoon && pathname.startsWith(sub.href)
+  );
+
+  function isTopItemActive(item: NavItem): boolean {
     return pathname.startsWith(item.href);
   }
 
@@ -130,8 +148,9 @@ export function CustomizationsSidebar({
 
       {/* Navigation */}
       <nav className="flex-1 space-y-0.5 px-2 py-3">
-        {navItems.map((item) => {
-          const active = isActive(item);
+        {/* Top-level items (Tags, Merchants) */}
+        {topNavItems.map((item) => {
+          const active = isTopItemActive(item);
           return (
             <Link
               key={item.href}
@@ -148,6 +167,82 @@ export function CustomizationsSidebar({
             </Link>
           );
         })}
+
+        {/* Catalog section (Products parent with sub-items) */}
+        {collapsed ? (
+          /* Collapsed: show single icon that links to products */
+          <Link
+            href="/customizations/products"
+            className={`flex items-center justify-center rounded-lg px-2 py-2.5 text-sm font-medium transition-colors ${
+              isCatalogActive
+                ? "bg-primary/10 text-primary"
+                : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+            }`}
+            title="Catalog"
+          >
+            <CatalogIcon />
+          </Link>
+        ) : (
+          <div>
+            {/* Catalog header — toggle sub-items */}
+            <button
+              type="button"
+              onClick={toggleCatalog}
+              className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
+                isCatalogActive
+                  ? "text-primary"
+                  : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+              }`}
+            >
+              <CatalogIcon />
+              <span className="flex-1 text-left">Catalog</span>
+              <svg
+                className={`h-3.5 w-3.5 shrink-0 text-gray-400 transition-transform ${catalogOpen ? "rotate-180" : ""}`}
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={2}
+                stroke="currentColor"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+              </svg>
+            </button>
+
+            {/* Sub-items */}
+            {catalogOpen && (
+              <div className="ml-5 mt-0.5 space-y-0.5 border-l border-gray-200 pl-3">
+                {CATALOG_SUB_ITEMS.map((sub) => {
+                  const subActive = !sub.comingSoon && pathname.startsWith(sub.href);
+                  return (
+                    <div key={sub.href}>
+                      {sub.comingSoon ? (
+                        <span
+                          className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-gray-300 cursor-default"
+                          title="Coming soon"
+                        >
+                          <span>{sub.label}</span>
+                          <span className="rounded-full bg-gray-100 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-gray-400">
+                            Soon
+                          </span>
+                        </span>
+                      ) : (
+                        <Link
+                          href={sub.href}
+                          className={`flex items-center rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                            subActive
+                              ? "bg-primary/10 text-primary"
+                              : "text-gray-500 hover:bg-gray-100 hover:text-gray-900"
+                          }`}
+                        >
+                          {sub.label}
+                        </Link>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
       </nav>
 
       {/* Back link */}
@@ -168,6 +263,25 @@ export function CustomizationsSidebar({
     </>
   );
 
+  /* All mobile nav items (flat list for bottom tabs) */
+  const mobileItems: { label: string; href: string; icon: React.ReactNode }[] = [
+    ...getTopNavItems(isAdmin),
+    {
+      label: "Products",
+      href: "/customizations/products",
+      icon: <CatalogIcon />,
+    },
+    {
+      label: "Services",
+      href: "/customizations/services",
+      icon: (
+        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M11.42 15.17 17.25 21A2.652 2.652 0 0 0 21 17.25l-5.877-5.877M11.42 15.17l2.496-3.03c.317-.384.74-.626 1.208-.766M11.42 15.17l-4.655 5.653a2.548 2.548 0 1 1-3.586-3.586l6.837-5.63m5.108-.233c.55-.164 1.163-.188 1.743-.14a4.5 4.5 0 0 0 4.486-6.336l-3.276 3.277a3.004 3.004 0 0 1-2.25-2.25l3.276-3.276a4.5 4.5 0 0 0-6.336 4.486c.091 1.076-.071 2.264-.904 2.95l-.102.085m-1.745 1.437L5.909 7.5H4.5L2.25 3.75l1.5-1.5L7.5 4.5v1.409l4.26 4.26m-1.745 1.437 1.745-1.437m6.615 8.206L15.75 15.75M4.867 19.125h.008v.008h-.008v-.008Z" />
+        </svg>
+      ),
+    },
+  ];
+
   return (
     <div className="flex min-h-[calc(100vh-64px)]">
       {/* Desktop sidebar */}
@@ -181,8 +295,8 @@ export function CustomizationsSidebar({
 
       {/* Mobile nav tabs */}
       <div className="fixed inset-x-0 bottom-0 z-30 flex h-14 items-center justify-around border-t border-gray-200 bg-white sm:hidden">
-        {navItems.map((item) => {
-          const active = isActive(item);
+        {mobileItems.map((item) => {
+          const active = pathname.startsWith(item.href);
           return (
             <Link
               key={item.href}

@@ -17,6 +17,7 @@ interface AllProjectsViewProps {
   projects: ProjectWithClient[];
   noteCounts: Record<string, number>;
   summaries: Record<string, ProjectSummary>;
+  clients?: { id: string; name: string }[];
 }
 
 const STATUS_FILTERS: { label: string; value: ProjectStatus | "" }[] = [
@@ -37,10 +38,12 @@ const ARCHIVE_ONLY_STATUSES: ProjectStatus[] = [
   "paid", "preparing", "shipped", "received", "completed",
 ];
 
-export function AllProjectsView({ projects, noteCounts, summaries }: AllProjectsViewProps) {
+export function AllProjectsView({ projects, noteCounts, summaries, clients }: AllProjectsViewProps) {
   const router = useRouter();
   const [view, setView] = useState<ViewMode>("list");
   const [statusFilter, setStatusFilter] = useState<ProjectStatus | "">("");
+  const [clientFilter, setClientFilter] = useState<string>("");
+  const [clientDropdownOpen, setClientDropdownOpen] = useState(false);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [confirmArchiveId, setConfirmArchiveId] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
@@ -56,13 +59,18 @@ export function AllProjectsView({ projects, noteCounts, summaries }: AllProjects
     [projects]
   );
 
-  const filtered = useMemo(
-    () =>
-      statusFilter === ""
-        ? activeProjects
-        : activeProjects.filter((p) => p.status === statusFilter),
-    [activeProjects, statusFilter]
-  );
+  const filtered = useMemo(() => {
+    let result = activeProjects;
+    if (statusFilter !== "") {
+      result = result.filter((p) => p.status === statusFilter);
+    }
+    if (clientFilter !== "") {
+      result = result.filter((p) => p.client_id === clientFilter);
+    }
+    return result;
+  }, [activeProjects, statusFilter, clientFilter]);
+
+  const selectedClientName = clients?.find((c) => c.id === clientFilter)?.name ?? "";
 
   async function handleDuplicate(projectId: string) {
     setActionLoading(projectId);
@@ -108,20 +116,93 @@ export function AllProjectsView({ projects, noteCounts, summaries }: AllProjects
     <div className="space-y-3">
       {/* Filter + View toggle */}
       <div className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-1 overflow-x-auto">
-          {STATUS_FILTERS.map((f) => (
-            <button
-              key={f.value}
-              onClick={() => setStatusFilter(f.value)}
-              className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium transition-colors ${
-                statusFilter === f.value
-                  ? "bg-primary text-white"
-                  : "bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground"
-              }`}
-            >
-              {f.label}
-            </button>
-          ))}
+        <div className="flex items-center gap-2 overflow-x-auto min-w-0">
+          {/* Status pills */}
+          <div className="flex items-center gap-1">
+            {STATUS_FILTERS.map((f) => (
+              <button
+                key={f.value}
+                onClick={() => setStatusFilter(f.value)}
+                className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+                  statusFilter === f.value
+                    ? "bg-primary text-white"
+                    : "bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground"
+                }`}
+              >
+                {f.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Client filter dropdown */}
+          {clients && clients.length > 0 && (
+            <div className="relative shrink-0">
+              <button
+                onClick={() => setClientDropdownOpen((prev) => !prev)}
+                className={`flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition-colors border ${
+                  clientFilter
+                    ? "border-primary/30 bg-primary/5 text-primary"
+                    : "border-border bg-white text-muted-foreground hover:bg-muted hover:text-foreground"
+                }`}
+              >
+                <svg className="h-3 w-3 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
+                </svg>
+                <span className="truncate max-w-[120px]">
+                  {clientFilter ? selectedClientName : "Client"}
+                </span>
+                <svg className={`h-3 w-3 shrink-0 transition-transform ${clientDropdownOpen ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+                </svg>
+              </button>
+
+              {clientDropdownOpen && (
+                <>
+                  {/* Backdrop to close dropdown */}
+                  <div className="fixed inset-0 z-40" onClick={() => setClientDropdownOpen(false)} />
+                  <div className="absolute left-0 top-full z-50 mt-1 w-56 rounded-xl border border-border bg-white py-1 shadow-lg">
+                    {/* All clients option */}
+                    <button
+                      onClick={() => { setClientFilter(""); setClientDropdownOpen(false); }}
+                      className={`flex w-full items-center gap-2 px-3 py-2 text-xs transition-colors ${
+                        clientFilter === ""
+                          ? "bg-primary/5 text-primary font-semibold"
+                          : "text-foreground hover:bg-muted/50"
+                      }`}
+                    >
+                      All Clients
+                      {clientFilter === "" && (
+                        <svg className="ml-auto h-3.5 w-3.5 text-primary" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+                        </svg>
+                      )}
+                    </button>
+                    <div className="my-1 border-t border-border/50" />
+                    <div className="max-h-60 overflow-y-auto">
+                      {clients.map((c) => (
+                        <button
+                          key={c.id}
+                          onClick={() => { setClientFilter(c.id); setClientDropdownOpen(false); }}
+                          className={`flex w-full items-center gap-2 px-3 py-2 text-xs transition-colors ${
+                            clientFilter === c.id
+                              ? "bg-primary/5 text-primary font-semibold"
+                              : "text-foreground hover:bg-muted/50"
+                          }`}
+                        >
+                          <span className="truncate">{c.name}</span>
+                          {clientFilter === c.id && (
+                            <svg className="ml-auto h-3.5 w-3.5 shrink-0 text-primary" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+                            </svg>
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
         </div>
         <ViewToggle value={view} onChange={setView} />
       </div>
@@ -131,8 +212,16 @@ export function AllProjectsView({ projects, noteCounts, summaries }: AllProjects
           <p className="text-sm text-muted-foreground">
             {activeProjects.length === 0
               ? "No projects yet."
-              : "No projects match this filter."}
+              : "No projects match the selected filters."}
           </p>
+          {(statusFilter !== "" || clientFilter !== "") && (
+            <button
+              onClick={() => { setStatusFilter(""); setClientFilter(""); }}
+              className="mt-2 text-xs text-primary hover:underline"
+            >
+              Clear filters
+            </button>
+          )}
         </div>
       ) : view === "list" ? (
         <div className="space-y-2">
