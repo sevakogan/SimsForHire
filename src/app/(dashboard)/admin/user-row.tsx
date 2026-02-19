@@ -16,6 +16,52 @@ import { buttonStyles, formStyles } from "@/components/ui/form-styles";
 import type { ProfileWithClient } from "@/lib/actions/users";
 import type { Client, UserRole } from "@/types";
 
+/* ─── Shared avatar helper ─── */
+
+function UserAvatar({
+  user,
+  size = "md",
+}: {
+  user: ProfileWithClient;
+  size?: "sm" | "md" | "lg";
+}) {
+  const dims = { sm: "h-7 w-7", md: "h-9 w-9", lg: "h-11 w-11" }[size];
+  const text = { sm: "text-[9px]", md: "text-xs", lg: "text-sm" }[size];
+  const initials = (user.full_name ?? user.email)
+    .split(" ")
+    .map((w) => w[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+
+  const colorMap: Record<string, string> = {
+    admin: "bg-purple-100 text-purple-700",
+    collaborator: "bg-indigo-100 text-indigo-700",
+    employee: "bg-emerald-100 text-emerald-700",
+    client: "bg-blue-100 text-blue-700",
+  };
+  const bg = colorMap[user.role] ?? "bg-gray-100 text-gray-600";
+
+  if (user.avatar_url) {
+    return (
+      <img
+        src={user.avatar_url}
+        alt={user.full_name ?? ""}
+        className={`${dims} rounded-full object-cover`}
+        referrerPolicy="no-referrer"
+      />
+    );
+  }
+
+  return (
+    <div className={`flex ${dims} items-center justify-center rounded-full ${bg} ${text} font-bold`}>
+      {initials}
+    </div>
+  );
+}
+
+/* ─── Main UserRow ─── */
+
 interface Props {
   user: ProfileWithClient;
   clients: Client[];
@@ -89,25 +135,25 @@ export function UserRow({
   if (confirmDelete) {
     return (
       <div
-        className={`flex items-center justify-between px-4 py-2.5 bg-red-50 ${
+        className={`flex items-center justify-between px-4 py-3 bg-red-50 ${
           showBorder ? "border-b border-red-100" : ""
         }`}
       >
         <span className="text-sm text-red-600">
-          Delete <span className="font-medium">{user.full_name ?? user.email}</span>?
+          Delete <span className="font-semibold">{user.full_name ?? user.email}</span>?
         </span>
         <div className="flex items-center gap-2">
           <button
             onClick={handleDelete}
             disabled={loading}
-            className={`${buttonStyles.small} bg-red-600 text-white hover:bg-red-700`}
+            className="rounded-lg bg-red-600 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-red-700 disabled:opacity-50"
           >
             {loading ? "..." : "Delete"}
           </button>
           <button
             onClick={() => setConfirmDelete(false)}
             disabled={loading}
-            className={`${buttonStyles.small} bg-white text-muted-foreground hover:bg-muted`}
+            className="rounded-lg bg-white px-3 py-1.5 text-xs font-medium text-gray-600 border border-gray-200 transition-colors hover:bg-gray-50 disabled:opacity-50"
           >
             Cancel
           </button>
@@ -118,28 +164,31 @@ export function UserRow({
 
   return (
     <div
-      className={`flex items-center gap-3 px-4 py-2.5 transition-colors hover:bg-muted/30 ${
-        showBorder ? "border-b border-border/40" : ""
+      className={`group flex items-center gap-3 px-4 py-3 transition-colors hover:bg-gray-50/80 ${
+        showBorder ? "border-b border-gray-100" : ""
       }`}
     >
+      {/* Avatar */}
+      <UserAvatar user={user} />
+
       {/* Name + Email */}
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
-          <p className="truncate text-sm font-medium text-foreground">
+          <p className="truncate text-sm font-semibold text-foreground">
             {user.full_name ?? "--"}
           </p>
           {isSelf && (
-            <span className="shrink-0 text-[10px] font-medium text-primary bg-primary/10 rounded px-1.5 py-0.5">
+            <span className="shrink-0 rounded-md bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold text-primary">
               you
             </span>
           )}
         </div>
-        <p className="truncate text-xs text-muted-foreground">{user.email}</p>
+        <p className="truncate text-xs text-gray-400">{user.email}</p>
       </div>
 
       {/* Client name (for client users) */}
       {showClient && (
-        <p className="hidden shrink-0 text-xs text-muted-foreground sm:block w-28 truncate">
+        <p className="hidden shrink-0 text-xs font-medium text-gray-500 sm:block w-28 truncate">
           {user.client_name ?? "--"}
         </p>
       )}
@@ -157,39 +206,39 @@ export function UserRow({
       {/* Actions */}
       <div className="flex shrink-0 items-center gap-1.5">
         {isPending ? (
-          // Pending: Client / Employee / Decline
-          <>
+          // Pending: approve buttons
+          <div className="flex items-center gap-1.5">
             <button
               onClick={handleApproveAsClient}
               disabled={loading}
-              className={`${buttonStyles.small} bg-blue-50 text-blue-700 hover:bg-blue-100`}
+              className="rounded-lg bg-blue-50 px-3 py-1.5 text-xs font-medium text-blue-700 transition-colors hover:bg-blue-100 disabled:opacity-50"
             >
               Client
             </button>
             <button
               onClick={handleApproveAsEmployee}
               disabled={loading}
-              className={`${buttonStyles.small} bg-green-50 text-green-700 hover:bg-green-100`}
+              className="rounded-lg bg-emerald-50 px-3 py-1.5 text-xs font-medium text-emerald-700 transition-colors hover:bg-emerald-100 disabled:opacity-50"
             >
               Employee
             </button>
             <button
               onClick={handleDeny}
               disabled={loading}
-              className={`${buttonStyles.small} bg-red-50 text-red-700 hover:bg-red-100`}
+              className="rounded-lg bg-red-50 px-3 py-1.5 text-xs font-medium text-red-600 transition-colors hover:bg-red-100 disabled:opacity-50"
             >
               Decline
             </button>
-          </>
+          </div>
         ) : (
-          // Approved/Denied: role selector (disabled for self)
+          // Approved/Denied: role selector
           <>
             {!isSelf && (
               <select
                 onChange={handleRoleChange}
                 defaultValue={user.role}
                 disabled={loading}
-                className={`${formStyles.select} w-auto py-1 text-xs`}
+                className="rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-xs font-medium text-foreground transition-colors hover:border-gray-300 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
               >
                 <option value="client">client</option>
                 <option value="employee">employee</option>
@@ -203,7 +252,7 @@ export function UserRow({
                 onChange={handleAssignClient}
                 defaultValue={user.client_id ?? ""}
                 disabled={loading}
-                className={`${formStyles.select} hidden w-auto py-1 text-xs sm:block`}
+                className="hidden rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-xs font-medium text-foreground transition-colors hover:border-gray-300 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 sm:block"
               >
                 <option value="">Assign client...</option>
                 {clients.map((c) => (
@@ -213,17 +262,15 @@ export function UserRow({
                 ))}
               </select>
             )}
-
-            {/* Employee client assignment is handled by EmployeeCard */}
           </>
         )}
 
-        {/* Delete button — always on the right, hidden for self */}
+        {/* Delete button — hidden for self */}
         {!isSelf && (
           <button
             onClick={() => setConfirmDelete(true)}
             disabled={loading}
-            className="ml-1 rounded-md p-1.5 text-muted-foreground/50 transition-colors hover:bg-red-50 hover:text-red-600"
+            className="ml-0.5 rounded-lg p-1.5 text-gray-300 transition-colors hover:bg-red-50 hover:text-red-500 opacity-0 group-hover:opacity-100"
             title="Delete user"
           >
             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
@@ -313,23 +360,12 @@ export function EmployeeCard({
     setConfirmDelete(false);
   }
 
-  const meta = user.full_name
-    ? user.full_name
-        .split(" ")
-        .map((w) => w[0])
-        .join("")
-        .slice(0, 2)
-        .toUpperCase()
-    : "??";
-
   return (
-    <div className="rounded-xl border border-border bg-white shadow-sm transition-shadow hover:shadow-md">
+    <div className="group rounded-xl border border-gray-200/80 bg-white shadow-sm transition-shadow hover:shadow-md overflow-hidden">
       {/* Header row */}
       <div className="flex items-center gap-3 px-4 py-3 sm:px-5">
         {/* Avatar */}
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-xs font-semibold text-emerald-700">
-          {meta}
-        </div>
+        <UserAvatar user={user} size="lg" />
 
         {/* Name + email */}
         <div className="min-w-0 flex-1">
@@ -338,12 +374,12 @@ export function EmployeeCard({
               {user.full_name ?? "--"}
             </p>
             {isSelf && (
-              <span className="shrink-0 rounded bg-primary/10 px-1.5 py-0.5 text-[10px] font-medium text-primary">
+              <span className="shrink-0 rounded-md bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold text-primary">
                 you
               </span>
             )}
           </div>
-          <p className="truncate text-xs text-muted-foreground">{user.email}</p>
+          <p className="truncate text-xs text-gray-400">{user.email}</p>
         </div>
 
         {/* Badges */}
@@ -363,7 +399,7 @@ export function EmployeeCard({
               onChange={handleRoleChange}
               defaultValue={user.role}
               disabled={loading}
-              className={`${formStyles.select} w-auto py-1 text-xs`}
+              className="rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-xs font-medium text-foreground transition-colors hover:border-gray-300 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
             >
               <option value="client">client</option>
               <option value="employee">employee</option>
@@ -375,7 +411,7 @@ export function EmployeeCard({
             <button
               onClick={() => setConfirmDelete(true)}
               disabled={loading}
-              className="rounded-md p-1.5 text-muted-foreground/50 transition-colors hover:bg-red-50 hover:text-red-600"
+              className="rounded-lg p-1.5 text-gray-300 transition-colors hover:bg-red-50 hover:text-red-500 opacity-0 group-hover:opacity-100"
               title="Delete user"
             >
               <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
@@ -388,14 +424,14 @@ export function EmployeeCard({
               <button
                 onClick={handleDelete}
                 disabled={loading}
-                className={`${buttonStyles.small} bg-red-600 text-white hover:bg-red-700`}
+                className="rounded-lg bg-red-600 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-red-700 disabled:opacity-50"
               >
                 {loading ? "..." : "Delete"}
               </button>
               <button
                 onClick={() => setConfirmDelete(false)}
                 disabled={loading}
-                className={`${buttonStyles.small} bg-white text-muted-foreground hover:bg-muted`}
+                className="rounded-lg bg-white px-3 py-1.5 text-xs font-medium text-gray-600 border border-gray-200 transition-colors hover:bg-gray-50 disabled:opacity-50"
               >
                 Cancel
               </button>
@@ -405,9 +441,9 @@ export function EmployeeCard({
       </div>
 
       {/* Client assignments area */}
-      <div className="border-t border-border/50 px-4 py-3 sm:px-5">
+      <div className="border-t border-gray-100 px-4 py-3 sm:px-5">
         <div className="flex items-start gap-2">
-          <span className="mt-0.5 shrink-0 text-xs font-medium text-muted-foreground">
+          <span className="mt-0.5 shrink-0 text-[10px] font-bold uppercase tracking-wider text-gray-400">
             Clients
           </span>
           <div className="flex flex-1 flex-wrap items-center gap-1.5">
@@ -415,7 +451,7 @@ export function EmployeeCard({
             {assignedClients.map((c) => (
               <span
                 key={c.id}
-                className="inline-flex items-center gap-1 rounded-full bg-emerald-50 py-0.5 pl-2.5 pr-1 text-xs font-medium text-emerald-700 transition-colors"
+                className="inline-flex items-center gap-1 rounded-full bg-emerald-50 py-0.5 pl-2.5 pr-1 text-xs font-medium text-emerald-700 border border-emerald-100 transition-colors"
               >
                 {c.name}
                 {!isSelf && (
@@ -435,7 +471,7 @@ export function EmployeeCard({
 
             {/* Empty state */}
             {assignedClients.length === 0 && (
-              <span className="text-xs italic text-muted-foreground/60">
+              <span className="text-xs italic text-gray-300">
                 No clients assigned
               </span>
             )}
@@ -446,7 +482,7 @@ export function EmployeeCard({
                 <button
                   onClick={() => setDropdownOpen(!dropdownOpen)}
                   disabled={saving}
-                  className="inline-flex items-center gap-0.5 rounded-full border border-dashed border-border px-2 py-0.5 text-xs text-muted-foreground transition-colors hover:border-primary/40 hover:bg-primary/5 hover:text-primary"
+                  className="inline-flex items-center gap-0.5 rounded-full border border-dashed border-gray-300 px-2 py-0.5 text-xs font-medium text-gray-400 transition-all hover:border-primary/40 hover:bg-primary/5 hover:text-primary"
                 >
                   <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
@@ -456,7 +492,7 @@ export function EmployeeCard({
                 </button>
 
                 {dropdownOpen && (
-                  <div className="absolute left-0 top-full z-50 mt-1 w-52 overflow-hidden rounded-lg border border-border bg-white shadow-xl">
+                  <div className="absolute left-0 top-full z-50 mt-1 w-52 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-xl">
                     <div className="max-h-48 overflow-y-auto py-1">
                       {unassignedClients.map((c) => (
                         <button
@@ -466,7 +502,7 @@ export function EmployeeCard({
                             setDropdownOpen(false);
                           }}
                           disabled={saving}
-                          className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-foreground transition-colors hover:bg-muted/50"
+                          className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-foreground transition-colors hover:bg-gray-50"
                         >
                           <svg className="h-3.5 w-3.5 shrink-0 text-emerald-500" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />

@@ -14,6 +14,8 @@ import { EditableProjectName } from "./editable-project-name";
 import { EditableCustomerCard } from "./editable-customer-card";
 import { EditInvoiceButton } from "./edit-invoice-button";
 import { isEditLocked, isContractLocked } from "@/lib/constants/project-statuses";
+import { AssigneeDropdown } from "@/components/projects/assignee-dropdown";
+import { getAssignableUsers } from "@/lib/actions/projects";
 import type { Profile, Item, DiscountType } from "@/types";
 import { isAdminRole, isEmployeeRole } from "@/types";
 
@@ -54,21 +56,28 @@ export default async function ProjectDetailPage({ params }: Props) {
 
   const client = await getClientById(project.client_id);
 
-  // Fetch creator profile (for "Created by" display)
-  let creator: { full_name: string | null; avatar_url: string | null } | null = null;
-  if (project.created_by) {
-    const { data: creatorProfile } = await supabase
-      .from("profiles")
-      .select("full_name, avatar_url")
-      .eq("id", project.created_by)
-      .single();
-    creator = creatorProfile;
-  }
+  // Fetch creator profile, assignee profile, and assignable users in parallel
+  const profileIdsToFetch = [project.created_by, project.assigned_to].filter(Boolean) as string[];
+  const profileMapPromise = profileIdsToFetch.length > 0
+    ? supabase
+        .from("profiles")
+        .select("id, full_name, avatar_url")
+        .in("id", profileIdsToFetch)
+        .then(({ data }) => {
+          const map = new Map<string, { full_name: string | null; avatar_url: string | null }>();
+          for (const p of data ?? []) map.set(p.id, p);
+          return map;
+        })
+    : Promise.resolve(new Map<string, { full_name: string | null; avatar_url: string | null }>());
 
-  const [items, noteCount] = await Promise.all([
+  const [profileMap, assignableUsers, items, noteCount] = await Promise.all([
+    profileMapPromise,
+    admin ? getAssignableUsers() : Promise.resolve([]),
     admin ? getItems(id) : getItemsForClient(id),
     canEdit ? getUnreadNoteCount(id) : Promise.resolve(0),
   ]);
+
+  const creator = project.created_by ? profileMap.get(project.created_by) ?? null : null;
 
   // Split retail totals by category: products vs services
   const totalRetail = items.reduce(
@@ -157,29 +166,49 @@ export default async function ProjectDetailPage({ params }: Props) {
           <EditableProjectName projectId={project.id} name={project.name} isAdmin={admin} readOnly={editLocked || employee} />
           {!canEdit && <Badge variant={project.status}>{project.status}</Badge>}
         </div>
-        {/* Created by */}
-        {creator && canEdit && (
-          <div className="flex items-center gap-2 mt-1.5">
-            {creator.avatar_url ? (
-              <img
-                src={creator.avatar_url}
-                alt={creator.full_name ?? "Creator"}
-                className="h-5 w-5 rounded-full object-cover"
-                referrerPolicy="no-referrer"
-              />
-            ) : (
-              <div className="flex h-5 w-5 items-center justify-center rounded-full bg-gray-100 text-[9px] font-semibold text-gray-500">
-                {(creator.full_name ?? "?")
-                  .split(" ")
-                  .map((w) => w[0])
-                  .join("")
-                  .slice(0, 2)
-                  .toUpperCase()}
+        {/* Created by + Assigned to */}
+        {canEdit && (
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1.5">
+            {/* Created by */}
+            {creator && (
+              <div className="flex items-center gap-1.5">
+                {creator.avatar_url ? (
+                  <img
+                    src={creator.avatar_url}
+                    alt={creator.full_name ?? "Creator"}
+                    className="h-5 w-5 rounded-full object-cover"
+                    referrerPolicy="no-referrer"
+                  />
+                ) : (
+                  <div className="flex h-5 w-5 items-center justify-center rounded-full bg-gray-100 text-[9px] font-semibold text-gray-500">
+                    {(creator.full_name ?? "?")
+                      .split(" ")
+                      .map((w) => w[0])
+                      .join("")
+                      .slice(0, 2)
+                      .toUpperCase()}
+                  </div>
+                )}
+                <span className="text-xs text-muted-foreground">
+                  Created by <span className="font-medium text-foreground">{creator.full_name ?? "Unknown"}</span>
+                </span>
               </div>
             )}
-            <span className="text-xs text-muted-foreground">
-              Created by <span className="font-medium text-foreground">{creator.full_name ?? "Unknown"}</span>
-            </span>
+
+            {/* Assigned to */}
+            {admin && (
+              <div className="flex items-center gap-1.5">
+                <span className="text-xs text-muted-foreground/60">|</span>
+                <svg className="h-3.5 w-3.5 text-gray-400" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
+                </svg>
+                <AssigneeDropdown
+                  projectId={project.id}
+                  currentAssigneeId={project.assigned_to}
+                  assignableUsers={assignableUsers}
+                />
+              </div>
+            )}
           </div>
         )}
         {!canEdit && project.invoice_number && (

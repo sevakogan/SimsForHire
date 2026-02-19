@@ -38,22 +38,11 @@ export async function PATCH(
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  // Check if contract is signed — if so, invoice is permanently locked
-  const { data: project } = await supabase
-    .from("projects")
-    .select("contract_signed_at")
-    .eq("id", id)
-    .single();
-
-  if (project?.contract_signed_at) {
-    return NextResponse.json(
-      { error: "Invoice is locked — the purchase agreement has been signed" },
-      { status: 403 }
-    );
-  }
-
   // Parse body — accept only the invoice-card fields
   const body = await request.json();
+
+  // Fields exempt from contract-signed lock
+  const LOCK_EXEMPT = new Set(["notes", "assigned_to"]);
 
   const ALLOWED_FIELDS: Record<string, "string" | "number" | "nullable_string"> = {
     invoice_number: "nullable_string",
@@ -66,6 +55,7 @@ export async function PATCH(
     discount_amount: "number",
     additional_discount: "number",
     shipping_address: "nullable_string",
+    assigned_to: "nullable_string",
   };
 
   const update: Record<string, string | number | null> = {};
@@ -85,6 +75,23 @@ export async function PATCH(
 
   if (Object.keys(update).length === 0) {
     return NextResponse.json({ error: "No valid fields" }, { status: 400 });
+  }
+
+  // Check if contract is signed — if so, only lock-exempt fields may be updated
+  const hasNonExempt = Object.keys(update).some((k) => !LOCK_EXEMPT.has(k));
+  if (hasNonExempt) {
+    const { data: project } = await supabase
+      .from("projects")
+      .select("contract_signed_at")
+      .eq("id", id)
+      .single();
+
+    if (project?.contract_signed_at) {
+      return NextResponse.json(
+        { error: "Invoice is locked — the purchase agreement has been signed" },
+        { status: 403 }
+      );
+    }
   }
 
   const { error } = await supabase

@@ -86,12 +86,14 @@ CREATE TABLE projects (
   contract_signature_data TEXT,
   contract_initials_data TEXT,
   created_by UUID REFERENCES profiles(id),
+  assigned_to UUID REFERENCES profiles(id) ON DELETE SET NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 CREATE INDEX idx_projects_client_id ON projects (client_id);
 CREATE INDEX idx_projects_status ON projects (status);
+CREATE INDEX idx_projects_assigned_to ON projects (assigned_to);
 
 CREATE TRIGGER set_projects_updated_at
   BEFORE UPDATE ON projects FOR EACH ROW EXECUTE FUNCTION update_updated_at();

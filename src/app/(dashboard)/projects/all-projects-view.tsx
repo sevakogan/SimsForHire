@@ -511,19 +511,43 @@ function ProjectListRow({
             {project.client_name}
           </span>
           <span className="text-xs text-muted-foreground/50">·</span>
-          {/* Creator avatar */}
-          {project.creator_avatar ? (
-            <img
-              src={project.creator_avatar}
-              alt={project.creator_name ?? ""}
-              className="h-4 w-4 rounded-full object-cover"
-              referrerPolicy="no-referrer"
-            />
-          ) : project.creator_name ? (
-            <div className="flex h-4 w-4 items-center justify-center rounded-full bg-gray-100 text-[8px] font-semibold text-gray-500">
-              {project.creator_name.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase()}
-            </div>
-          ) : null}
+          {/* Creator + Assignee avatars */}
+          <div className="flex items-center -space-x-1">
+            {project.creator_avatar ? (
+              <img
+                src={project.creator_avatar}
+                alt={project.creator_name ?? ""}
+                className="h-4 w-4 rounded-full object-cover ring-1 ring-white"
+                referrerPolicy="no-referrer"
+                title={`Created by ${project.creator_name ?? "Unknown"}`}
+              />
+            ) : project.creator_name ? (
+              <div
+                className="flex h-4 w-4 items-center justify-center rounded-full bg-gray-100 text-[8px] font-semibold text-gray-500 ring-1 ring-white"
+                title={`Created by ${project.creator_name}`}
+              >
+                {project.creator_name.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase()}
+              </div>
+            ) : null}
+            {project.assignee_name && (
+              project.assignee_avatar ? (
+                <img
+                  src={project.assignee_avatar}
+                  alt={project.assignee_name}
+                  className="h-4 w-4 rounded-full object-cover ring-1 ring-white"
+                  referrerPolicy="no-referrer"
+                  title={`Assigned to ${project.assignee_name}`}
+                />
+              ) : (
+                <div
+                  className="flex h-4 w-4 items-center justify-center rounded-full bg-primary/10 text-[8px] font-bold text-primary ring-1 ring-white"
+                  title={`Assigned to ${project.assignee_name}`}
+                >
+                  {project.assignee_name.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase()}
+                </div>
+              )
+            )}
+          </div>
           <span className="text-[10px] sm:text-xs text-muted-foreground/50 truncate">
             {new Date(project.created_at).toLocaleDateString()}
           </span>
@@ -771,20 +795,49 @@ function ProjectGridCard({
             </span>
           </div>
 
-          {/* Creator */}
-          <div className="flex items-center gap-1">
-            {project.creator_avatar ? (
-              <img
-                src={project.creator_avatar}
-                alt={project.creator_name ?? ""}
-                className="h-3.5 w-3.5 rounded-full object-cover shrink-0"
-                referrerPolicy="no-referrer"
-              />
-            ) : project.creator_name ? (
-              <div className="flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full bg-gray-100 text-[7px] font-semibold text-gray-500">
-                {project.creator_name.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase()}
-              </div>
-            ) : null}
+          {/* Creator + Assignee */}
+          <div className="flex items-center gap-1.5">
+            <div className="flex items-center -space-x-1">
+              {project.creator_avatar ? (
+                <img
+                  src={project.creator_avatar}
+                  alt={project.creator_name ?? ""}
+                  className="h-4 w-4 rounded-full object-cover ring-1 ring-white shrink-0"
+                  referrerPolicy="no-referrer"
+                  title={`Created by ${project.creator_name ?? "Unknown"}`}
+                />
+              ) : project.creator_name ? (
+                <div
+                  className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-gray-100 text-[7px] font-semibold text-gray-500 ring-1 ring-white"
+                  title={`Created by ${project.creator_name}`}
+                >
+                  {project.creator_name.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase()}
+                </div>
+              ) : null}
+              {project.assignee_name && (
+                project.assignee_avatar ? (
+                  <img
+                    src={project.assignee_avatar}
+                    alt={project.assignee_name}
+                    className="h-4 w-4 rounded-full object-cover ring-1 ring-white shrink-0"
+                    referrerPolicy="no-referrer"
+                    title={`Assigned to ${project.assignee_name}`}
+                  />
+                ) : (
+                  <div
+                    className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[7px] font-bold text-primary ring-1 ring-white"
+                    title={`Assigned to ${project.assignee_name}`}
+                  >
+                    {project.assignee_name.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase()}
+                  </div>
+                )
+              )}
+            </div>
+            {project.assignee_name && (
+              <span className="text-[10px] text-muted-foreground/60 truncate">
+                {project.assignee_name}
+              </span>
+            )}
           </div>
 
           {/* Financial summary */}

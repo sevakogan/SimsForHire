@@ -28,6 +28,8 @@ export interface ProjectWithClient extends Project {
   client_name: string;
   creator_name: string | null;
   creator_avatar: string | null;
+  assignee_name: string | null;
+  assignee_avatar: string | null;
 }
 
 export async function getProjectsWithClients(): Promise<ProjectWithClient[]> {
@@ -39,29 +41,34 @@ export async function getProjectsWithClients(): Promise<ProjectWithClient[]> {
 
   if (error) throw new Error(error.message);
 
-  // Batch-fetch creator profiles for all projects with a created_by
-  const creatorIds = [...new Set(
-    (data ?? []).map((p) => p.created_by).filter(Boolean) as string[]
+  // Batch-fetch creator + assignee profiles
+  const profileIds = [...new Set(
+    (data ?? [])
+      .flatMap((p) => [p.created_by, p.assigned_to])
+      .filter(Boolean) as string[]
   )];
-  const creatorMap = new Map<string, { full_name: string | null; avatar_url: string | null }>();
-  if (creatorIds.length > 0) {
+  const profileMap = new Map<string, { full_name: string | null; avatar_url: string | null }>();
+  if (profileIds.length > 0) {
     const { data: profiles } = await supabase
       .from("profiles")
       .select("id, full_name, avatar_url")
-      .in("id", creatorIds);
+      .in("id", profileIds);
     for (const p of profiles ?? []) {
-      creatorMap.set(p.id, { full_name: p.full_name, avatar_url: p.avatar_url });
+      profileMap.set(p.id, { full_name: p.full_name, avatar_url: p.avatar_url });
     }
   }
 
   return (data ?? []).map((p) => {
     const clientData = p.clients as unknown as { name: string } | null;
-    const creator = p.created_by ? creatorMap.get(p.created_by) : null;
+    const creator = p.created_by ? profileMap.get(p.created_by) : null;
+    const assignee = p.assigned_to ? profileMap.get(p.assigned_to) : null;
     return {
       ...p,
       client_name: clientData?.name ?? "Unknown",
       creator_name: creator?.full_name ?? null,
       creator_avatar: creator?.avatar_url ?? null,
+      assignee_name: assignee?.full_name ?? null,
+      assignee_avatar: assignee?.avatar_url ?? null,
       clients: undefined,
     };
   }) as ProjectWithClient[];
@@ -153,12 +160,14 @@ export async function updateProject(
     discount_amount?: number;
     additional_discount?: number;
     shipping_address?: string | null;
+    assigned_to?: string | null;
   }
 ): Promise<{ error: string | null }> {
   const supabase = await createSupabaseServer();
 
-  // Block ALL edits (except notes) when contract is signed
-  const hasNonNoteChanges = Object.keys(input).some((k) => k !== "notes");
+  // Block ALL edits (except notes and assigned_to) when contract is signed
+  const LOCK_EXEMPT = new Set(["notes", "assigned_to"]);
+  const hasNonNoteChanges = Object.keys(input).some((k) => !LOCK_EXEMPT.has(k));
   if (hasNonNoteChanges) {
     const { data: proj } = await supabase
       .from("projects")
@@ -834,4 +843,31 @@ export async function signContract(
   revalidatePath("/projects", "layout");
   revalidatePath("/share", "layout");
   return { error: null };
+}
+
+/* ─── Assignable Users (internal team members) ─── */
+
+export interface AssignableUser {
+  id: string;
+  full_name: string | null;
+  avatar_url: string | null;
+  role: string;
+}
+
+/** Fetch all internal team members (admin, collaborator, employee) who can be assigned to projects */
+export async function getAssignableUsers(): Promise<AssignableUser[]> {
+  const supabase = await createSupabaseServer();
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("id, full_name, avatar_url, role")
+    .in("role", ["admin", "collaborator", "employee"])
+    .eq("status", "approved")
+    .order("full_name", { ascending: true });
+
+  if (error) {
+    console.error("[getAssignableUsers]", error.message);
+    return [];
+  }
+
+  return (data ?? []) as AssignableUser[];
 }

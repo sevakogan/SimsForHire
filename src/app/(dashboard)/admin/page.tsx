@@ -30,10 +30,15 @@ export default async function AdminPage() {
 
   return (
     <div className="space-y-6 sm:space-y-8">
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <h1 className="text-lg font-bold text-foreground sm:text-2xl">
-          Admin
-        </h1>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h1 className="text-xl font-bold text-foreground sm:text-2xl">
+            Team Management
+          </h1>
+          <p className="mt-0.5 text-sm text-gray-400">
+            Manage users, roles, and permissions
+          </p>
+        </div>
         <InviteUserForm />
       </div>
 
