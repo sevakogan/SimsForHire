@@ -2,7 +2,6 @@ import { notFound } from "next/navigation";
 import { getProjectByShareToken } from "@/lib/actions/projects";
 import { getCompanyInfo } from "@/lib/actions/company-info";
 import { ContactForm } from "@/components/portal/contact-form";
-import { PortalAuthGate } from "@/components/portal/portal-auth-gate";
 import Image from "next/image";
 
 export const dynamic = "force-dynamic";
@@ -21,7 +20,7 @@ export default async function AboutPage({ params }: Props) {
   if (!project) notFound();
 
   return (
-    <PortalAuthGate token={token}>
+    <>
       {/* Company Info Header */}
       <div className="mb-8 rounded-2xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6">
         <div className="flex items-start gap-4">
@@ -202,6 +201,6 @@ export default async function AboutPage({ params }: Props) {
           />
         </div>
       </section>
-    </PortalAuthGate>
+    </>
   );
 }
