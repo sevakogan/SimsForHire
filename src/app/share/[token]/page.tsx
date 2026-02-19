@@ -96,77 +96,81 @@ export default async function SharedInvoicePage({ params }: Props) {
 
   return (
     <>
-      {/* Company + Invoice header card */}
-      <div className="mb-6 rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
-        {/* Top section: Company info (left) + Invoice status (right) */}
-        <div className="flex items-start justify-between gap-4 p-5 sm:p-6">
-          {/* Company info — left side */}
-          <div className="flex items-start gap-3 min-w-0">
-            {/* Logo */}
-            {company.logo_url && (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={company.logo_url}
-                alt={company.name}
-                width={48}
-                height={48}
-                className="shrink-0 rounded-lg bg-primary/10 object-contain"
-                style={{
-                  width: `${48 * (company.logo_scale / 100)}px`,
-                  height: `${48 * (company.logo_scale / 100)}px`,
-                }}
-              />
-            )}
-            <div className="min-w-0">
-              <h2 className="text-base font-bold text-gray-900">
-                {company.name}
-              </h2>
-              {company.address && (
-                <p className="mt-0.5 text-xs text-gray-500 whitespace-pre-line">
-                  {company.address}
-                </p>
+      {/* ─── Branded Hero Banner ─── */}
+      <div className="mb-6 rounded-2xl overflow-hidden shadow-sm">
+        <div className="relative bg-gradient-to-br from-slate-900 via-slate-800 to-indigo-950 px-5 py-6 sm:px-8 sm:py-8">
+          {/* Decorative background shapes */}
+          <div className="absolute top-0 right-0 w-64 h-64 rounded-full bg-indigo-500/10 blur-3xl -translate-y-1/2 translate-x-1/4" />
+          <div className="absolute bottom-0 left-0 w-48 h-48 rounded-full bg-purple-500/10 blur-3xl translate-y-1/2 -translate-x-1/4" />
+
+          <div className="relative">
+            {/* Company branding row */}
+            <div className="flex items-center gap-3 sm:gap-4">
+              {company.logo_url && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={company.logo_url}
+                  alt={company.name}
+                  className="shrink-0 rounded-xl bg-white/10 object-contain backdrop-blur-sm ring-1 ring-white/10"
+                  style={{
+                    width: `${52 * (company.logo_scale / 100)}px`,
+                    height: `${52 * (company.logo_scale / 100)}px`,
+                  }}
+                />
               )}
-              <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5">
-                {company.phone && (
-                  <a
-                    href={`tel:${company.phone}`}
-                    className="flex items-center gap-1 text-xs text-gray-500 hover:text-primary transition-colors"
-                  >
-                    <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 0 0 2.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 0 1-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 0 0-1.091-.852H4.5A2.25 2.25 0 0 0 2.25 4.5v2.25Z" />
-                    </svg>
-                    {company.phone}
-                  </a>
-                )}
-                {company.email && (
-                  <a
-                    href={`mailto:${company.email}`}
-                    className="flex items-center gap-1 text-xs text-gray-500 hover:text-primary transition-colors"
-                  >
-                    <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75" />
-                    </svg>
-                    {company.email}
-                  </a>
+              <div className="min-w-0">
+                <h2 className="text-xl font-bold text-white sm:text-2xl tracking-tight">
+                  {company.name}
+                </h2>
+                {company.tagline && (
+                  <p className="mt-0.5 text-sm text-slate-300/90 sm:text-base">
+                    {company.tagline}
+                  </p>
                 )}
               </div>
             </div>
-          </div>
 
-          {/* Status badge — right side */}
-          <StatusBadge
-            status={project.status}
-            contractViewedAt={project.contract_viewed_at ?? null}
-            contractSignedAt={project.contract_signed_at ?? null}
-          />
+            {/* Contact row */}
+            <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1.5">
+              {company.phone && (
+                <a
+                  href={`tel:${company.phone}`}
+                  className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-white transition-colors"
+                >
+                  <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 0 0 2.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 0 1-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 0 0-1.091-.852H4.5A2.25 2.25 0 0 0 2.25 4.5v2.25Z" />
+                  </svg>
+                  {company.phone}
+                </a>
+              )}
+              {company.email && (
+                <a
+                  href={`mailto:${company.email}`}
+                  className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-white transition-colors"
+                >
+                  <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75" />
+                  </svg>
+                  {company.email}
+                </a>
+              )}
+              {company.address && (
+                <span className="flex items-center gap-1.5 text-xs text-slate-400">
+                  <svg className="h-3.5 w-3.5 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
+                  </svg>
+                  <span className="truncate">{company.address.split("\n")[0]}</span>
+                </span>
+              )}
+            </div>
+          </div>
         </div>
 
-        {/* Divider */}
-        <div className="border-t border-gray-100" />
-
-        {/* Invoice details section */}
-        <div className="px-5 py-4 sm:px-6">
-          <div className="flex items-start justify-between gap-3 mb-3">
+        {/* ─── Invoice Details (white card below hero) ─── */}
+        <div className="border border-t-0 border-gray-200 bg-white rounded-b-2xl">
+          {/* Invoice header + status */}
+          <div className="flex items-start justify-between gap-4 px-5 py-4 sm:px-6">
             <div className="min-w-0">
               <h1 className="text-lg font-bold text-gray-900 sm:text-xl">
                 {project.name}
@@ -178,67 +182,77 @@ export default async function SharedInvoicePage({ params }: Props) {
                 </p>
               )}
             </div>
+            <StatusBadge
+              status={project.status}
+              contractViewedAt={project.contract_viewed_at ?? null}
+              contractSignedAt={project.contract_signed_at ?? null}
+            />
           </div>
+
+          {/* Divider */}
+          <div className="border-t border-gray-100" />
 
           {/* Detail grid */}
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
-            {project.invoice_number && (
+          <div className="px-5 py-4 sm:px-6">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
+              {project.invoice_number && (
+                <div>
+                  <p className="text-[10px] font-medium uppercase tracking-wider text-gray-400">
+                    Invoice #
+                  </p>
+                  <p className="mt-0.5 text-sm font-medium text-gray-900">
+                    {project.invoice_number}
+                  </p>
+                </div>
+              )}
+              {project.date_required && (
+                <div>
+                  <p className="text-[10px] font-medium uppercase tracking-wider text-gray-400">
+                    Required By
+                  </p>
+                  <p className="mt-0.5 text-sm text-gray-900">
+                    {new Date(project.date_required).toLocaleDateString("en-US", {
+                      month: "short",
+                      day: "numeric",
+                      year: "numeric",
+                    })}
+                  </p>
+                </div>
+              )}
               <div>
                 <p className="text-[10px] font-medium uppercase tracking-wider text-gray-400">
-                  Invoice #
+                  Items
                 </p>
-                <p className="mt-0.5 text-sm font-medium text-gray-900">
-                  {project.invoice_number}
-                </p>
+                <p className="mt-0.5 text-sm text-gray-900">{totalItems}</p>
               </div>
-            )}
-            {project.date_required && (
-              <div>
-                <p className="text-[10px] font-medium uppercase tracking-wider text-gray-400">
-                  Required By
-                </p>
-                <p className="mt-0.5 text-sm text-gray-900">
-                  {new Date(project.date_required).toLocaleDateString("en-US", {
-                    month: "short",
-                    day: "numeric",
-                    year: "numeric",
-                  })}
-                </p>
-              </div>
-            )}
-            <div>
-              <p className="text-[10px] font-medium uppercase tracking-wider text-gray-400">
-                Items
-              </p>
-              <p className="mt-0.5 text-sm text-gray-900">{totalItems}</p>
+              {totalItems > 0 && (
+                <div>
+                  <p className="text-[10px] font-medium uppercase tracking-wider text-gray-400">
+                    Total
+                  </p>
+                  <p className="mt-0.5 text-sm font-semibold text-gray-900">
+                    {formatCurrency(totals.grandTotal)}
+                  </p>
+                </div>
+              )}
             </div>
-            {totalItems > 0 && (
-              <div>
-                <p className="text-[10px] font-medium uppercase tracking-wider text-gray-400">
-                  Total
-                </p>
-                <p className="mt-0.5 text-sm font-semibold text-gray-900">
-                  {formatCurrency(totals.grandTotal)}
-                </p>
-              </div>
-            )}
           </div>
-        </div>
 
-        {/* Invoice notes — only shown if admin wrote something */}
-        {projectNotes && (
-          <>
-            <div className="border-t border-gray-100" />
-            <div className="px-5 py-4 sm:px-6">
-              <p className="text-[10px] font-medium uppercase tracking-wider text-gray-400 mb-1">
-                Notes
-              </p>
-              <p className="text-sm text-gray-700 whitespace-pre-line leading-relaxed">
-                {projectNotes}
-              </p>
-            </div>
-          </>
-        )}
+          {/* Invoice notes — only shown if admin wrote something */}
+          {projectNotes && (
+            <>
+              <div className="border-t border-gray-100" />
+              <div className="px-5 py-4 sm:px-6">
+                <p className="text-[10px] font-medium uppercase tracking-wider text-gray-400 mb-1">
+                  Notes
+                </p>
+                <p className="text-sm text-gray-700 whitespace-pre-line leading-relaxed">
+                  {projectNotes}
+                </p>
+              </div>
+            </>
+          )}
+        </div>
       </div>
 
       {/* Address editor — only for authenticated portal users */}
