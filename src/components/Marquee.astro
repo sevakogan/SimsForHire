@@ -1,0 +1,16 @@
+---
+import { MARQUEE_ITEMS } from '../data/content'
+
+const doubled = [...MARQUEE_ITEMS, ...MARQUEE_ITEMS]
+---
+
+<div class="relative border-y border-red/30 bg-surface carbon-weave overflow-hidden py-4">
+  <div class="marquee-track flex whitespace-nowrap">
+    {doubled.map((item) => (
+      <span class="inline-flex items-center gap-6 px-6">
+        <span class="font-display text-lg tracking-[0.15em] text-white/80">{item}</span>
+        <span class="text-red text-xs">&#9670;</span>
+      </span>
+    ))}
+  </div>
+</div>

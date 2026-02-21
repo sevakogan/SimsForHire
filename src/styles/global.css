@@ -1,0 +1,225 @@
+@import 'tailwindcss';
+
+/* ──────────────────────────────────────────────
+   THEME TOKENS — Tailwind v4 @theme
+   ────────────────────────────────────────────── */
+@theme {
+  --color-bg: #0A0A0A;
+  --color-surface: #111111;
+  --color-red: #E10600;
+  --color-red-dark: #B30500;
+  --color-white: #FFFFFF;
+  --color-gray-1: #333333;
+  --color-gray-2: #666666;
+  --color-gray-3: #999999;
+
+  --font-display: 'Bebas Neue', sans-serif;
+  --font-body: 'Inter', sans-serif;
+}
+
+/* ──────────────────────────────────────────────
+   BASE RESET
+   ────────────────────────────────────────────── */
+*,
+*::before,
+*::after {
+  border-radius: 0 !important;
+}
+
+html {
+  scroll-behavior: smooth;
+  background-color: var(--color-bg);
+  color: var(--color-white);
+}
+
+body {
+  font-family: var(--font-body);
+  background-color: var(--color-bg);
+  overflow-x: hidden;
+}
+
+::selection {
+  background-color: var(--color-red);
+  color: var(--color-white);
+}
+
+/* ──────────────────────────────────────────────
+   CARBON FIBER TEXTURE
+   ────────────────────────────────────────────── */
+.carbon-weave {
+  background-image:
+    repeating-linear-gradient(
+      45deg,
+      transparent,
+      transparent 2px,
+      rgba(255, 255, 255, 0.02) 2px,
+      rgba(255, 255, 255, 0.02) 4px
+    ),
+    repeating-linear-gradient(
+      -45deg,
+      transparent,
+      transparent 2px,
+      rgba(255, 255, 255, 0.02) 2px,
+      rgba(255, 255, 255, 0.02) 4px
+    );
+}
+
+/* ──────────────────────────────────────────────
+   RACING CARD
+   ────────────────────────────────────────────── */
+.racing-card {
+  background-color: var(--color-surface);
+  border: 1px solid rgba(225, 6, 0, 0.25);
+  border-top: 2px solid var(--color-red);
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.racing-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(225, 6, 0, 0.06), transparent);
+  transition: left 0.5s ease;
+}
+
+.racing-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 30px rgba(225, 6, 0, 0.15);
+}
+
+.racing-card:hover::before {
+  left: 100%;
+}
+
+/* ──────────────────────────────────────────────
+   SPEED LINES — pseudo-element for hero
+   ────────────────────────────────────────────── */
+.speed-lines::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: -10%;
+  width: 120%;
+  height: 200px;
+  transform: translateY(-50%) skewY(-2deg);
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 8px,
+    rgba(225, 6, 0, 0.03) 8px,
+    rgba(225, 6, 0, 0.03) 10px
+  );
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ──────────────────────────────────────────────
+   DIAGONAL CLIP-PATH DIVIDER
+   ────────────────────────────────────────────── */
+.clip-diagonal-top {
+  clip-path: polygon(0 6%, 100% 0%, 100% 100%, 0% 100%);
+}
+
+.clip-diagonal-bottom {
+  clip-path: polygon(0 0%, 100% 0%, 100% 94%, 0% 100%);
+}
+
+/* ──────────────────────────────────────────────
+   SCROLL REVEAL
+   ────────────────────────────────────────────── */
+[data-reveal] {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity 0.7s ease-out, transform 0.7s ease-out;
+}
+
+[data-reveal].revealed {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ──────────────────────────────────────────────
+   MARQUEE
+   ────────────────────────────────────────────── */
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.marquee-track {
+  animation: marquee 20s linear infinite;
+}
+
+/* ──────────────────────────────────────────────
+   HERO ENTRANCE
+   ────────────────────────────────────────────── */
+@keyframes heroSlideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-40px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.hero-animate {
+  animation: heroSlideIn 0.8s ease-out both;
+}
+
+/* ──────────────────────────────────────────────
+   WATERMARK NUMBER
+   ────────────────────────────────────────────── */
+.watermark {
+  position: absolute;
+  font-family: var(--font-display);
+  font-size: clamp(6rem, 15vw, 12rem);
+  font-weight: bold;
+  color: rgba(255, 255, 255, 0.02);
+  pointer-events: none;
+  user-select: none;
+  line-height: 1;
+}
+
+/* ──────────────────────────────────────────────
+   RED ACCENT LINE
+   ────────────────────────────────────────────── */
+.red-line {
+  width: 60px;
+  height: 3px;
+  background-color: var(--color-red);
+}
+
+/* ──────────────────────────────────────────────
+   PARALLAX
+   ────────────────────────────────────────────── */
+[data-parallax] {
+  will-change: transform;
+}
+
+/* Floating red orb ambient decoration */
+.parallax-orb {
+  position: absolute;
+  border-radius: 50% !important;
+  pointer-events: none;
+  filter: blur(80px);
+  opacity: 0.04;
+  will-change: transform;
+}
+
+/* Hero parallax layers */
+.hero-bg-layer {
+  will-change: transform;
+  transition: none;
+}
+
+.hero-content-layer {
+  will-change: transform;
+  transition: none;
+}

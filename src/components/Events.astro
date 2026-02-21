@@ -1,0 +1,265 @@
+---
+import { EVENTS } from '../data/content'
+
+// Build a global image counter for placeholder numbering
+let imageCounter = 0
+---
+
+<section id="events" class="relative py-24 px-6 md:px-16 lg:px-24 max-w-7xl mx-auto overflow-hidden">
+  <!-- Floating orb -->
+  <div class="parallax-orb w-[350px] h-[350px] bg-red right-0 top-1/2" data-parallax="-0.07"></div>
+
+  <!-- Section header -->
+  <div data-reveal class="mb-20 relative z-10">
+    <span class="text-xs uppercase tracking-[0.3em] text-red font-body">Track Record</span>
+    <h2 class="font-display text-5xl md:text-7xl text-white mt-2">PREVIOUS EVENTS</h2>
+    <div class="red-line mt-4"></div>
+  </div>
+
+  <!-- Events stack -->
+  <div class="flex flex-col gap-32 relative z-10">
+    {EVENTS.map((event, eventIndex) => {
+      const isEven = eventIndex % 2 === 0
+      const eventNumber = String(eventIndex + 1).padStart('2', '0')
+
+      return (
+        <article data-reveal class="event-block relative">
+          <!-- Watermark number -->
+          <span class="watermark -top-8 right-0 md:right-8">{eventNumber}</span>
+
+          <!-- Event header bar -->
+          <div class="flex flex-wrap items-center gap-4 mb-8">
+            <span class="inline-block text-[10px] uppercase tracking-[0.3em] text-red bg-red/10 px-3 py-1.5 border border-red/30">
+              {event.type}
+            </span>
+            <span class="text-[10px] uppercase tracking-[0.3em] text-gray-2">
+              {event.date}
+            </span>
+            <div class="hidden md:block flex-1 h-px bg-gray-1/40"></div>
+            {'stats' in event && event.stats && (
+              <div class="flex gap-6">
+                <div class="text-center">
+                  <span class="font-display text-lg text-white">{event.stats.people}</span>
+                  <span class="block text-[9px] uppercase tracking-[0.2em] text-gray-2">People</span>
+                </div>
+                <div class="text-center">
+                  <span class="font-display text-lg text-white">{event.stats.sims}</span>
+                  <span class="block text-[9px] uppercase tracking-[0.2em] text-gray-2">Sims</span>
+                </div>
+                <div class="text-center">
+                  <span class="font-display text-lg text-white">{event.stats.days}</span>
+                  <span class="block text-[9px] uppercase tracking-[0.2em] text-gray-2">{Number(event.stats.days) === 1 ? 'Day' : 'Days'}</span>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <!-- Title + venue -->
+          <h3 class="font-display text-4xl md:text-6xl text-white mb-1">{event.name}</h3>
+          {'venue' in event && event.venue && (
+            <span class="text-red text-sm font-display tracking-wider block mb-6">
+              {event.venue}
+            </span>
+          )}
+
+          <!-- Bento image grid — alternates layout per event -->
+          {'images' in event && event.images && (
+            <div class:list={[
+              'event-gallery mb-8',
+              isEven ? 'event-gallery--layout-a' : 'event-gallery--layout-b',
+            ]}>
+              {event.images.map((img: { src: string; alt: string }, imgIndex: number) => {
+                imageCounter++
+                const num = imageCounter
+                return (
+                  <div
+                    class="event-gallery__cell overflow-hidden relative group"
+                    data-parallax={imgIndex < 2 ? '0.03' : '0'}
+                  >
+                    {/* Numbered placeholder overlay */}
+                    <div class="event-img-placeholder absolute inset-0 bg-surface border border-gray-1/30 flex flex-col items-center justify-center z-10 pointer-events-none transition-opacity duration-500"
+                         data-placeholder={num}>
+                      <span class="font-display text-5xl md:text-6xl text-red/60">#{num}</span>
+                      <span class="text-gray-2 text-[10px] uppercase tracking-[0.2em] mt-2">{event.name}</span>
+                    </div>
+                    <img
+                      src={img.src}
+                      alt={img.alt}
+                      class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                      loading="lazy"
+                      onerror="this.style.opacity='0'"
+                      onload="this.parentElement.querySelector('.event-img-placeholder').style.opacity='0'"
+                    />
+                  </div>
+                )
+              })}
+            </div>
+          )}
+
+          <!-- Description -->
+          <p class="text-gray-3 text-sm leading-relaxed max-w-3xl">{event.description}</p>
+
+          <!-- Bottom divider -->
+          {eventIndex < EVENTS.length - 1 && (
+            <div class="mt-16 flex items-center gap-4">
+              <div class="flex-1 h-px bg-gradient-to-r from-red/40 to-transparent"></div>
+              <span class="text-[8px] uppercase tracking-[0.4em] text-gray-2">◆</span>
+              <div class="flex-1 h-px bg-gradient-to-l from-red/40 to-transparent"></div>
+            </div>
+          )}
+        </article>
+      )
+    })}
+  </div>
+</section>
+
+<style>
+  /* ──────────────────────────────────────────────
+     BENTO GALLERY GRID — Layout A (even events)
+     Hero image spans left 2 rows, 4 smaller on right
+     ────────────────────────────────────────────── */
+  .event-gallery--layout-a {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: 200px 200px 200px;
+    gap: 4px;
+  }
+
+  .event-gallery--layout-a .event-gallery__cell:nth-child(1) {
+    grid-column: 1 / 3;
+    grid-row: 1 / 3;
+  }
+  .event-gallery--layout-a .event-gallery__cell:nth-child(2) {
+    grid-column: 3;
+    grid-row: 1;
+  }
+  .event-gallery--layout-a .event-gallery__cell:nth-child(3) {
+    grid-column: 3;
+    grid-row: 2;
+  }
+  .event-gallery--layout-a .event-gallery__cell:nth-child(4) {
+    grid-column: 1;
+    grid-row: 3;
+  }
+  .event-gallery--layout-a .event-gallery__cell:nth-child(5) {
+    grid-column: 2;
+    grid-row: 3;
+  }
+  .event-gallery--layout-a .event-gallery__cell:nth-child(6) {
+    grid-column: 3;
+    grid-row: 3;
+  }
+
+  /* ──────────────────────────────────────────────
+     BENTO GALLERY GRID — Layout B (odd events)
+     Hero image spans right 2 rows, 4 smaller on left
+     ────────────────────────────────────────────── */
+  .event-gallery--layout-b {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: 200px 200px 200px;
+    gap: 4px;
+  }
+
+  .event-gallery--layout-b .event-gallery__cell:nth-child(1) {
+    grid-column: 1;
+    grid-row: 1;
+  }
+  .event-gallery--layout-b .event-gallery__cell:nth-child(2) {
+    grid-column: 1;
+    grid-row: 2;
+  }
+  .event-gallery--layout-b .event-gallery__cell:nth-child(3) {
+    grid-column: 2 / 4;
+    grid-row: 1 / 3;
+  }
+  .event-gallery--layout-b .event-gallery__cell:nth-child(4) {
+    grid-column: 1;
+    grid-row: 3;
+  }
+  .event-gallery--layout-b .event-gallery__cell:nth-child(5) {
+    grid-column: 2;
+    grid-row: 3;
+  }
+  .event-gallery--layout-b .event-gallery__cell:nth-child(6) {
+    grid-column: 3;
+    grid-row: 3;
+  }
+
+  /* ──────────────────────────────────────────────
+     RESPONSIVE — Stack on mobile
+     ────────────────────────────────────────────── */
+  @media (max-width: 768px) {
+    .event-gallery--layout-a,
+    .event-gallery--layout-b {
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: auto;
+    }
+
+    .event-gallery--layout-a .event-gallery__cell:nth-child(1),
+    .event-gallery--layout-b .event-gallery__cell:nth-child(3) {
+      grid-column: 1 / 3;
+      grid-row: auto;
+    }
+
+    .event-gallery--layout-a .event-gallery__cell:nth-child(n+2),
+    .event-gallery--layout-b .event-gallery__cell:nth-child(1),
+    .event-gallery--layout-b .event-gallery__cell:nth-child(2),
+    .event-gallery--layout-b .event-gallery__cell:nth-child(n+4) {
+      grid-column: auto;
+      grid-row: auto;
+    }
+
+    .event-gallery__cell {
+      aspect-ratio: 16 / 10;
+    }
+  }
+
+  /* ──────────────────────────────────────────────
+     RED CORNER ACCENTS on gallery cells
+     ────────────────────────────────────────────── */
+  .event-gallery__cell::before,
+  .event-gallery__cell::after {
+    content: '';
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    border-color: var(--color-red);
+    opacity: 0;
+    transition: opacity 0.4s ease;
+    z-index: 20;
+    pointer-events: none;
+  }
+
+  .event-gallery__cell::before {
+    top: 8px;
+    left: 8px;
+    border-top: 2px solid;
+    border-left: 2px solid;
+  }
+
+  .event-gallery__cell::after {
+    bottom: 8px;
+    right: 8px;
+    border-bottom: 2px solid;
+    border-left: 0;
+    border-right: 2px solid;
+  }
+
+  .event-gallery__cell:hover::before,
+  .event-gallery__cell:hover::after {
+    opacity: 1;
+  }
+
+  /* ──────────────────────────────────────────────
+     SCAN LINE OVERLAY on hover
+     ────────────────────────────────────────────── */
+  .event-gallery__cell {
+    position: relative;
+  }
+
+  .event-gallery__cell > img {
+    position: relative;
+    z-index: 1;
+  }
+</style>

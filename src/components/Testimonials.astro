@@ -1,0 +1,82 @@
+---
+import { TESTIMONIALS } from '../data/content'
+---
+
+<section class="relative py-24 px-6 md:px-16 lg:px-24 bg-surface">
+  <div class="max-w-3xl mx-auto text-center">
+    <!-- Section header -->
+    <div data-reveal>
+      <span class="text-xs uppercase tracking-[0.3em] text-red font-body">Testimonials</span>
+      <h2 class="font-display text-5xl md:text-7xl text-white mt-2 mb-12">WHAT THEY SAY</h2>
+    </div>
+
+    <!-- Testimonial carousel -->
+    <div data-reveal class="relative">
+      <!-- Red quote mark -->
+      <span class="font-display text-6xl text-red leading-none block mb-6">&ldquo;</span>
+
+      <!-- Quote container -->
+      <div id="testimonial-container" class="min-h-[180px]">
+        {TESTIMONIALS.map((t, i) => (
+          <div
+            class:list={[
+              'testimonial-slide absolute inset-0 transition-opacity duration-500',
+              i === 0 ? 'opacity-100' : 'opacity-0 pointer-events-none',
+            ]}
+            data-index={i}
+          >
+            <p class="text-white/80 text-lg md:text-xl italic leading-relaxed mb-8">
+              {t.quote}
+            </p>
+            <div class="red-line mx-auto mb-4"></div>
+            <p class="font-display text-lg text-white">{t.author}</p>
+            <p class="text-xs text-gray-2 uppercase tracking-[0.2em] mt-1">{t.role}</p>
+          </div>
+        ))}
+      </div>
+
+      <!-- Dot indicators -->
+      <div class="flex justify-center gap-3 mt-8">
+        {TESTIMONIALS.map((_, i) => (
+          <button
+            class:list={[
+              'testimonial-dot w-2 h-2 transition-all',
+              i === 0 ? 'bg-red w-6' : 'bg-gray-1',
+            ]}
+            data-dot={i}
+            aria-label={`Show testimonial ${i + 1}`}
+          />
+        ))}
+      </div>
+    </div>
+  </div>
+</section>
+
+<script define:vars={{ count: TESTIMONIALS.length }}>
+  let current = 0
+  const slides = document.querySelectorAll('.testimonial-slide')
+  const dots = document.querySelectorAll('.testimonial-dot')
+
+  function goTo(index) {
+    slides[current].classList.add('opacity-0', 'pointer-events-none')
+    slides[current].classList.remove('opacity-100')
+    dots[current].classList.remove('bg-red', 'w-6')
+    dots[current].classList.add('bg-gray-1')
+
+    current = index
+    slides[current].classList.remove('opacity-0', 'pointer-events-none')
+    slides[current].classList.add('opacity-100')
+    dots[current].classList.add('bg-red', 'w-6')
+    dots[current].classList.remove('bg-gray-1')
+  }
+
+  // Dot click
+  dots.forEach((dot, i) => {
+    dot.addEventListener('click', () => goTo(i))
+  })
+
+  // Auto-rotate
+  setInterval(() => {
+    goTo((current + 1) % count)
+  }, 5000)
+</script>

@@ -1,0 +1,80 @@
+---
+import { FLEET } from '../data/content'
+---
+
+<section id="fleet" class="relative py-24 px-6 md:px-16 lg:px-24 max-w-7xl mx-auto">
+  <!-- Floating orb -->
+  <div class="parallax-orb w-[400px] h-[400px] bg-red -left-48 top-1/3" data-parallax="-0.08"></div>
+
+  <!-- Section header -->
+  <div data-reveal class="mb-16 relative z-10">
+    <span class="text-xs uppercase tracking-[0.3em] text-red font-body">Our Rigs</span>
+    <h2 class="font-display text-5xl md:text-7xl text-white mt-2">THE FLEET</h2>
+    <div class="red-line mt-4"></div>
+  </div>
+
+  <!-- Fleet cards -->
+  <div class="flex flex-col gap-12 relative z-10">
+    {FLEET.map((rig) => (
+      <div data-reveal class="racing-card p-8 md:p-12 relative">
+        <!-- Watermark number — floats at different speed -->
+        <span class="watermark top-4 right-8" data-parallax="-0.12">{rig.number}</span>
+
+        <div class="relative z-10 grid md:grid-cols-2 gap-8 items-center">
+          <!-- Image -->
+          <div class="overflow-hidden">
+            {'image' in rig && rig.image ? (
+              <img
+                src={rig.image}
+                alt={rig.name}
+                class="w-full aspect-video object-cover border border-gray-1/30"
+                data-parallax="0.05"
+                loading="lazy"
+              />
+            ) : (
+              <div class="bg-bg border border-gray-1/30 aspect-video flex items-center justify-center" data-parallax="0.05">
+                <span class="text-gray-2 text-sm uppercase tracking-wider">Simulator Image</span>
+              </div>
+            )}
+          </div>
+
+          <!-- Info -->
+          <div>
+            <span class="inline-block border border-red text-red text-[10px] uppercase tracking-[0.3em] px-3 py-1 mb-4">
+              {rig.tag}
+            </span>
+            <h3 class="font-display text-3xl md:text-4xl text-white mb-4">{rig.name}</h3>
+            <p class="text-gray-3 text-sm leading-relaxed mb-6">{rig.description}</p>
+
+            <!-- Equipment list (if available) -->
+            {'equipment' in rig && rig.equipment && (
+              <div class="mb-8">
+                <span class="text-[10px] uppercase tracking-[0.3em] text-gray-2 block mb-3">Equipment</span>
+                <ul class="grid grid-cols-1 gap-1.5">
+                  {rig.equipment.map((item: string) => (
+                    <li class="flex items-start gap-2 text-gray-3 text-xs">
+                      <span class="text-red mt-0.5 text-[8px]">&#9670;</span>
+                      <span>{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            <!-- Specs -->
+            <div class:list={['grid gap-4', rig.specs.length === 2 ? 'grid-cols-2' : 'grid-cols-3']}>
+              {rig.specs.map((spec) => (
+                <div class="text-center">
+                  <span class="font-display text-3xl text-white">{spec.value}</span>
+                  <span class="block text-[10px] uppercase tracking-[0.2em] text-gray-2 mt-1">
+                    {spec.label}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    ))}
+  </div>
+</section>

@@ -1,0 +1,105 @@
+---
+import { SITE, NAV_LINKS } from '../data/content'
+---
+
+<nav
+  id="navbar"
+  class="fixed top-0 left-0 w-full z-50 transition-all duration-300"
+>
+  <div class="max-w-7xl mx-auto px-6 flex items-center justify-between h-16">
+    <!-- Logo -->
+    <a href="#" class="font-display text-2xl tracking-tight text-white">
+      {SITE.name}
+    </a>
+
+    <!-- Desktop links -->
+    <div class="hidden md:flex items-center gap-8">
+      {NAV_LINKS.map((link) => (
+        <a
+          href={link.href}
+          class="text-xs uppercase tracking-[0.2em] text-gray-3 hover:text-white transition-colors"
+        >
+          {link.label}
+        </a>
+      ))}
+      <a
+        href="#contact"
+        class="border border-red text-red text-xs uppercase tracking-[0.2em] px-5 py-2 hover:bg-red hover:text-white transition-all"
+      >
+        BOOK NOW
+      </a>
+    </div>
+
+    <!-- Mobile hamburger -->
+    <button
+      id="menu-toggle"
+      class="md:hidden flex flex-col gap-1.5 p-2"
+      aria-label="Toggle menu"
+    >
+      <span class="block w-6 h-px bg-white transition-all" id="bar-1"></span>
+      <span class="block w-6 h-px bg-white transition-all" id="bar-2"></span>
+      <span class="block w-4 h-px bg-white transition-all ml-auto" id="bar-3"></span>
+    </button>
+  </div>
+
+  <!-- Mobile overlay -->
+  <div
+    id="mobile-menu"
+    class="fixed inset-0 bg-bg/98 flex flex-col items-center justify-center gap-8 transition-opacity duration-300 opacity-0 pointer-events-none md:hidden z-40"
+  >
+    {NAV_LINKS.map((link) => (
+      <a
+        href={link.href}
+        class="mobile-link font-display text-4xl text-white hover:text-red transition-colors"
+      >
+        {link.label}
+      </a>
+    ))}
+    <a
+      href="#contact"
+      class="mobile-link border border-red text-red font-display text-2xl px-8 py-3 hover:bg-red hover:text-white transition-all mt-4"
+    >
+      BOOK NOW
+    </a>
+  </div>
+</nav>
+
+<script>
+  const navbar = document.getElementById('navbar')!
+  const toggle = document.getElementById('menu-toggle')!
+  const menu = document.getElementById('mobile-menu')!
+  let open = false
+
+  // Scroll effect
+  window.addEventListener('scroll', () => {
+    if (window.scrollY > 50) {
+      navbar.classList.add('bg-bg/95', 'backdrop-blur-md', 'border-b', 'border-red/20')
+    } else {
+      navbar.classList.remove('bg-bg/95', 'backdrop-blur-md', 'border-b', 'border-red/20')
+    }
+  })
+
+  // Mobile toggle
+  toggle.addEventListener('click', () => {
+    open = !open
+    if (open) {
+      menu.classList.remove('opacity-0', 'pointer-events-none')
+      menu.classList.add('opacity-100', 'pointer-events-auto')
+      document.body.style.overflow = 'hidden'
+    } else {
+      menu.classList.add('opacity-0', 'pointer-events-none')
+      menu.classList.remove('opacity-100', 'pointer-events-auto')
+      document.body.style.overflow = ''
+    }
+  })
+
+  // Close on link click
+  menu.querySelectorAll('a').forEach((link) => {
+    link.addEventListener('click', () => {
+      open = false
+      menu.classList.add('opacity-0', 'pointer-events-none')
+      menu.classList.remove('opacity-100', 'pointer-events-auto')
+      document.body.style.overflow = ''
+    })
+  })
+</script>
