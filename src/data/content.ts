@@ -218,6 +218,6 @@ export const TESTIMONIALS = [
 
 export const CONTACT = {
   email: 'hello@simsforhire.com',
-  phone: '(305) 555-RACE',
+  phone: '(754) 228-5654',
   location: 'Miami, FL',
 } as const

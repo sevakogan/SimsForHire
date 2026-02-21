@@ -47,9 +47,11 @@ export async function sendConfirmationEmail(
         </p>
 
         <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #333;">
-          <p style="color: #666; font-size: 12px; margin: 0;">
-            SimsForHire — Premium Racing Simulators for Events<br/>
-            Miami, FL | hello@simsforhire.com
+          <p style="color: #666; font-size: 12px; margin: 0; line-height: 1.8;">
+            <strong style="color: #999;">SimsForHire</strong> — Premium Racing Simulators for Events<br/>
+            <a href="https://simsforhire.com" style="color: #E10600; text-decoration: none;">simsforhire.com</a><br/>
+            <a href="tel:+17542285654" style="color: #999; text-decoration: none;">(754) 228-5654</a><br/>
+            Miami, FL | <a href="mailto:hello@simsforhire.com" style="color: #999; text-decoration: none;">hello@simsforhire.com</a>
           </p>
         </div>
       </div>
