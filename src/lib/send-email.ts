@@ -1,24 +1,29 @@
 import { Resend } from 'resend'
 import type { ContactFormData } from './validate'
 
-export async function sendConfirmationEmail(
-  data: ContactFormData,
-): Promise<void> {
+function createResendClient(): { resend: Resend; from: string } | null {
   const apiKey = import.meta.env.RESEND_API_KEY
   const fromEmail = import.meta.env.RESEND_FROM_EMAIL
 
   if (!apiKey) {
     console.warn('[Email] RESEND_API_KEY not set — skipping')
-    return
+    return null
   }
 
-  const resend = new Resend(apiKey)
+  return {
+    resend: new Resend(apiKey),
+    from: fromEmail || 'SimsForHire <onboarding@resend.dev>',
+  }
+}
 
-  // Use Resend's onboarding address if no verified domain yet
-  const from = fromEmail || 'SimsForHire <onboarding@resend.dev>'
+export async function sendConfirmationEmail(
+  data: ContactFormData,
+): Promise<void> {
+  const client = createResendClient()
+  if (!client) return
 
-  const { error } = await resend.emails.send({
-    from,
+  const { error } = await client.resend.emails.send({
+    from: client.from,
     to: data.email,
     subject: 'We got your inquiry — SimsForHire',
     html: `
@@ -52,7 +57,65 @@ export async function sendConfirmationEmail(
   })
 
   if (error) {
-    console.error('[Email] Resend failed:', error)
-    throw new Error(`Email send failed: ${error.message}`)
+    console.error('[Email] Confirmation email failed:', error)
+    throw new Error(`Confirmation email failed: ${error.message}`)
+  }
+}
+
+export async function sendLeadNotificationEmail(
+  data: ContactFormData,
+): Promise<void> {
+  const client = createResendClient()
+  if (!client) return
+
+  const leadsEmail =
+    import.meta.env.RESEND_LEADS_EMAIL || 'hi+leads@simsforhire.com'
+
+  const details = [
+    `<strong>Name:</strong> ${data.name}`,
+    `<strong>Email:</strong> <a href="mailto:${data.email}" style="color: #E10600;">${data.email}</a>`,
+    data.phone ? `<strong>Phone:</strong> <a href="tel:${data.phone}" style="color: #E10600;">${data.phone}</a>` : null,
+    data.eventType ? `<strong>Event Type:</strong> ${data.eventType}` : null,
+    data.eventDate ? `<strong>Event Date:</strong> ${data.eventDate}` : null,
+    data.guestCount
+      ? `<strong>Expected Guests:</strong> ${data.guestCount}`
+      : null,
+  ]
+    .filter(Boolean)
+    .join('<br/>')
+
+  const { error } = await client.resend.emails.send({
+    from: client.from,
+    to: leadsEmail,
+    subject: `New Lead: ${data.name}${data.eventType ? ` — ${data.eventType}` : ''}`,
+    replyTo: data.email,
+    html: `
+      <div style="font-family: 'Helvetica Neue', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 30px; background: #f9f9f9;">
+        <h2 style="margin: 0 0 20px; color: #0A0A0A; font-size: 20px;">🏁 New Event Inquiry</h2>
+
+        <div style="background: #fff; border: 1px solid #e0e0e0; border-left: 4px solid #E10600; padding: 20px; margin-bottom: 20px;">
+          <p style="margin: 0; font-size: 14px; line-height: 2; color: #333;">
+            ${details}
+          </p>
+        </div>
+
+        <div style="background: #fff; border: 1px solid #e0e0e0; padding: 20px; margin-bottom: 20px;">
+          <p style="margin: 0 0 8px; font-size: 12px; font-weight: bold; color: #999; text-transform: uppercase; letter-spacing: 1px;">Message</p>
+          <p style="margin: 0; font-size: 14px; line-height: 1.6; color: #333;">
+            ${data.message.replace(/\n/g, '<br/>')}
+          </p>
+        </div>
+
+        <p style="font-size: 11px; color: #999; margin: 0;">
+          Submitted via simsforhire.com • ${new Date().toLocaleString('en-US', { timeZone: 'America/New_York' })} ET
+          <br/>Reply to this email to respond directly to ${data.name}.
+        </p>
+      </div>
+    `,
+  })
+
+  if (error) {
+    console.error('[Email] Lead notification failed:', error)
+    throw new Error(`Lead notification failed: ${error.message}`)
   }
 }

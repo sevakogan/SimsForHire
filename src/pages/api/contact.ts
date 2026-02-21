@@ -3,7 +3,7 @@ export const prerender = false
 import type { APIRoute } from 'astro'
 import { validateContactForm } from '../../lib/validate'
 import { notifySlack } from '../../lib/notify-slack'
-import { sendConfirmationEmail } from '../../lib/send-email'
+import { sendConfirmationEmail, sendLeadNotificationEmail } from '../../lib/send-email'
 import { sendSmsNotification } from '../../lib/send-sms'
 
 export const POST: APIRoute = async ({ request }) => {
@@ -39,11 +39,13 @@ export const POST: APIRoute = async ({ request }) => {
 
   // Fire all three notifications concurrently
   // We use allSettled so one failure doesn't block the others
-  const [slackResult, emailResult, smsResult] = await Promise.allSettled([
-    notifySlack(data),
-    sendConfirmationEmail(data),
-    sendSmsNotification(data),
-  ])
+  const [slackResult, emailResult, leadEmailResult, smsResult] =
+    await Promise.allSettled([
+      notifySlack(data),
+      sendConfirmationEmail(data),
+      sendLeadNotificationEmail(data),
+      sendSmsNotification(data),
+    ])
 
   // Log any failures (but still return 200 to the user)
   const failures: string[] = []
@@ -53,8 +55,12 @@ export const POST: APIRoute = async ({ request }) => {
     failures.push('slack')
   }
   if (emailResult.status === 'rejected') {
-    console.error('[API] Email failed:', emailResult.reason)
+    console.error('[API] Confirmation email failed:', emailResult.reason)
     failures.push('email')
+  }
+  if (leadEmailResult.status === 'rejected') {
+    console.error('[API] Lead email failed:', leadEmailResult.reason)
+    failures.push('lead-email')
   }
   if (smsResult.status === 'rejected') {
     console.error('[API] SMS failed:', smsResult.reason)
@@ -62,8 +68,8 @@ export const POST: APIRoute = async ({ request }) => {
   }
 
   // Return success to user regardless (their submission was received)
-  // Only fail if ALL three notifications failed
-  if (failures.length === 3) {
+  // Only fail if ALL notifications failed
+  if (failures.length === 4) {
     return new Response(
       JSON.stringify({
         error: 'Failed to process submission. Please try again.',
