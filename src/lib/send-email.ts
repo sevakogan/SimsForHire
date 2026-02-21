@@ -32,26 +32,26 @@ export async function sendConfirmationEmail(
           <h1 style="font-size: 24px; margin: 0; letter-spacing: 2px;">SIMSFORHIRE</h1>
         </div>
 
-        <p style="color: #999; font-size: 14px; line-height: 1.8;">
+        <p style="color: #DDD; font-size: 14px; line-height: 1.8;">
           Hey ${data.name},
         </p>
 
-        <p style="color: #999; font-size: 14px; line-height: 1.8;">
+        <p style="color: #DDD; font-size: 14px; line-height: 1.8;">
           Thanks for reaching out! We received your inquiry and our team is already on it. You can expect to hear back from us within <strong style="color: #FFF;">24 hours</strong>.
         </p>
 
-        ${data.eventType ? `<p style="color: #999; font-size: 14px; line-height: 1.8;">We'll put together a custom package for your <strong style="color: #E10600;">${data.eventType}</strong>${data.eventDate ? ` on ${data.eventDate}` : ''}.</p>` : ''}
+        ${data.eventType ? `<p style="color: #DDD; font-size: 14px; line-height: 1.8;">We'll put together a custom package for your <strong style="color: #E10600;">${data.eventType}</strong>${data.eventDate ? ` on ${data.eventDate}` : ''}.</p>` : ''}
 
-        <p style="color: #999; font-size: 14px; line-height: 1.8;">
+        <p style="color: #DDD; font-size: 14px; line-height: 1.8;">
           In the meantime, check out our previous events at <a href="https://simsforhire.com/#events" style="color: #E10600; text-decoration: none;">simsforhire.com</a>.
         </p>
 
         <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #333;">
-          <p style="color: #666; font-size: 12px; margin: 0; line-height: 1.8;">
-            <strong style="color: #999;">SimsForHire</strong> — Premium Racing Simulators for Events<br/>
+          <p style="color: #AAA; font-size: 12px; margin: 0; line-height: 1.8;">
+            <strong style="color: #DDD;">SimsForHire</strong> — Premium Racing Simulators for Events<br/>
             <a href="https://simsforhire.com" style="color: #E10600; text-decoration: none;">simsforhire.com</a><br/>
-            <a href="tel:+17542285654" style="color: #999; text-decoration: none;">(754) 228-5654</a><br/>
-            Miami, FL | <a href="mailto:hello@simsforhire.com" style="color: #999; text-decoration: none;">hello@simsforhire.com</a>
+            <a href="tel:+17542285654" style="color: #CCC; text-decoration: none;">(754) 228-5654</a><br/>
+            Miami, FL | <a href="mailto:hello@simsforhire.com" style="color: #CCC; text-decoration: none;">hello@simsforhire.com</a>
           </p>
         </div>
       </div>
