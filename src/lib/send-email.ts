@@ -1,27 +1,25 @@
-import sgMail from '@sendgrid/mail'
+import { Resend } from 'resend'
 import type { ContactFormData } from './validate'
 
 export async function sendConfirmationEmail(
   data: ContactFormData,
 ): Promise<void> {
-  const apiKey = import.meta.env.SENDGRID_API_KEY
-  const fromEmail = import.meta.env.SENDGRID_FROM_EMAIL
+  const apiKey = import.meta.env.RESEND_API_KEY
+  const fromEmail = import.meta.env.RESEND_FROM_EMAIL
 
-  if (!apiKey || !fromEmail) {
-    console.warn(
-      '[Email] SENDGRID_API_KEY or SENDGRID_FROM_EMAIL not set — skipping',
-    )
+  if (!apiKey) {
+    console.warn('[Email] RESEND_API_KEY not set — skipping')
     return
   }
 
-  sgMail.setApiKey(apiKey)
+  const resend = new Resend(apiKey)
 
-  const msg = {
+  // Use Resend's onboarding address if no verified domain yet
+  const from = fromEmail || 'SimsForHire <onboarding@resend.dev>'
+
+  const { error } = await resend.emails.send({
+    from,
     to: data.email,
-    from: {
-      email: fromEmail,
-      name: 'SimsForHire',
-    },
     subject: 'We got your inquiry — SimsForHire',
     html: `
       <div style="font-family: 'Helvetica Neue', Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #0A0A0A; color: #FFFFFF; padding: 40px;">
@@ -51,13 +49,10 @@ export async function sendConfirmationEmail(
         </div>
       </div>
     `,
-  }
+  })
 
-  const response = await sgMail.send(msg)
-  const statusCode = response[0]?.statusCode
-
-  if (!statusCode || statusCode >= 400) {
-    console.error('[Email] SendGrid failed:', statusCode)
-    throw new Error(`Email send failed: ${statusCode}`)
+  if (error) {
+    console.error('[Email] Resend failed:', error)
+    throw new Error(`Email send failed: ${error.message}`)
   }
 }

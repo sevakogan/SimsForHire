@@ -10,9 +10,9 @@
   },
   "dependencies": {
     "@astrojs/vercel": "^9.0.4",
-    "@sendgrid/mail": "^8.1.6",
     "@tailwindcss/vite": "^4.2.0",
     "astro": "^5.17.1",
+    "resend": "^6.9.2",
     "tailwindcss": "^4.2.0",
     "twilio": "^5.12.2"
   }
