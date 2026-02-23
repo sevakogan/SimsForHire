@@ -4,9 +4,22 @@ import { SITE } from '../data/content'
 
 interface Props {
   title?: string
+  ogTitle?: string
+  ogSubtitle?: string
+  description?: string
 }
 
-const { title = `${SITE.name} — ${SITE.tagline}` } = Astro.props
+const {
+  title = `${SITE.name} — ${SITE.tagline}`,
+  ogTitle,
+  ogSubtitle,
+  description = 'Full-motion racing simulators delivered, set up, and operated anywhere in Miami. Corporate events, private parties, brand activations.',
+} = Astro.props
+
+const ogParams = new URLSearchParams()
+if (ogTitle) ogParams.set('title', ogTitle)
+if (ogSubtitle) ogParams.set('subtitle', ogSubtitle)
+const ogImageUrl = `${SITE.url}/api/og${ogParams.toString() ? `?${ogParams.toString()}` : ''}`
 ---
 
 <!doctype html>
@@ -14,23 +27,23 @@ const { title = `${SITE.name} — ${SITE.tagline}` } = Astro.props
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="Full-motion racing simulators delivered, set up, and operated anywhere in Miami. Corporate events, private parties, brand activations." />
+    <meta name="description" content={description} />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 
     <!-- Open Graph / Social Share -->
     <meta property="og:type" content="website" />
     <meta property="og:url" content={SITE.url} />
     <meta property="og:title" content={title} />
-    <meta property="og:description" content="Full-motion racing simulators delivered, set up, and operated anywhere in Miami. Corporate events, private parties, brand activations." />
-    <meta property="og:image" content={`${SITE.url}/og-card.jpg`} />
+    <meta property="og:description" content={description} />
+    <meta property="og:image" content={ogImageUrl} />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
 
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content={title} />
-    <meta name="twitter:description" content="Full-motion racing simulators delivered, set up, and operated anywhere in Miami. Corporate events, private parties, brand activations." />
-    <meta name="twitter:image" content={`${SITE.url}/og-card.jpg`} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={ogImageUrl} />
 
     <!-- Google Fonts: Bebas Neue + Inter -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />

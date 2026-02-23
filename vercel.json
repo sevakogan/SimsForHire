@@ -1,12 +1,12 @@
 {
   "rewrites": [
     {
-      "source": "/races/live",
-      "destination": "https://s4m-leaderboard.vercel.app/races/live"
+      "source": "/races/live/porsche",
+      "destination": "https://s4m-leaderboard.vercel.app/races/live/porsche"
     },
     {
-      "source": "/races/live/:path*",
-      "destination": "https://s4m-leaderboard.vercel.app/races/live/:path*"
+      "source": "/races/live/porsche/:path*",
+      "destination": "https://s4m-leaderboard.vercel.app/races/live/porsche/:path*"
     }
   ]
 }

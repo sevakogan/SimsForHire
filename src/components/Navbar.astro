@@ -1,5 +1,17 @@
 ---
 import { SITE, NAV_LINKS } from '../data/content'
+
+interface Props {
+  isSubpage?: boolean
+}
+
+const { isSubpage = false } = Astro.props
+
+function resolveHref(href: string): string {
+  if (href.startsWith('/')) return href
+  if (isSubpage) return `/${href}`
+  return href
+}
 ---
 
 <nav
@@ -8,7 +20,7 @@ import { SITE, NAV_LINKS } from '../data/content'
 >
   <div class="max-w-7xl mx-auto px-6 flex items-center justify-between h-16">
     <!-- Logo -->
-    <a href="#" class="font-display text-2xl tracking-tight text-white">
+    <a href={isSubpage ? '/' : '#'} class="font-display text-2xl tracking-tight text-white">
       {SITE.name}
     </a>
 
@@ -16,15 +28,15 @@ import { SITE, NAV_LINKS } from '../data/content'
     <div class="hidden md:flex items-center gap-8">
       {NAV_LINKS.map((link) => (
         <a
-          href={link.href}
+          href={resolveHref(link.href)}
           class="text-xs uppercase tracking-[0.2em] text-gray-3 hover:text-white transition-colors"
         >
           {link.label}
         </a>
       ))}
       <a
-        href="#contact"
-        class="border border-red text-red text-xs uppercase tracking-[0.2em] px-5 py-2 hover:bg-red hover:text-white transition-all"
+        href={resolveHref('#contact')}
+        class="bg-red text-white text-xs uppercase tracking-[0.2em] px-5 py-2 hover:bg-red-dark transition-all"
       >
         BOOK NOW
       </a>
@@ -49,15 +61,15 @@ import { SITE, NAV_LINKS } from '../data/content'
   >
     {NAV_LINKS.map((link) => (
       <a
-        href={link.href}
+        href={resolveHref(link.href)}
         class="mobile-link font-display text-4xl text-white hover:text-red transition-colors"
       >
         {link.label}
       </a>
     ))}
     <a
-      href="#contact"
-      class="mobile-link border border-red text-red font-display text-2xl px-8 py-3 hover:bg-red hover:text-white transition-all mt-4"
+      href={resolveHref('#contact')}
+      class="mobile-link bg-red text-white font-display text-2xl px-8 py-3 hover:bg-red-dark transition-all mt-4"
     >
       BOOK NOW
     </a>

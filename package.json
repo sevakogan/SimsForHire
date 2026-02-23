@@ -10,9 +10,11 @@
   },
   "dependencies": {
     "@astrojs/vercel": "^9.0.4",
+    "@resvg/resvg-wasm": "^2.6.2",
     "@tailwindcss/vite": "^4.2.0",
     "astro": "^5.17.1",
     "resend": "^6.9.2",
+    "satori": "^0.19.2",
     "tailwindcss": "^4.2.0",
     "twilio": "^5.12.2"
   }
