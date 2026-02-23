@@ -1,0 +1,82 @@
+---
+import type { RaceSession } from '../data/races'
+
+interface Props {
+  session: RaceSession
+}
+
+const { session } = Astro.props
+const hasResults = session.leaderboard.length > 0
+---
+
+<div class="mb-12">
+  <!-- Session header -->
+  <div class="flex flex-wrap items-center gap-4 mb-6">
+    <h3 class="font-display text-3xl md:text-4xl text-white">{session.name}</h3>
+    <div class="flex flex-wrap items-center gap-3">
+      <span class="text-[10px] uppercase tracking-[0.3em] text-red bg-red/10 px-3 py-1.5 border border-red/30">
+        {session.track}
+      </span>
+      <span class="text-[10px] uppercase tracking-[0.3em] text-gray-3 bg-gray-1/20 px-3 py-1.5 border border-gray-1/30">
+        {session.game}
+      </span>
+      <span class="text-[10px] uppercase tracking-[0.3em] text-gray-3 bg-gray-1/20 px-3 py-1.5 border border-gray-1/30">
+        {session.car}
+      </span>
+    </div>
+  </div>
+
+  {hasResults ? (
+    <!-- Leaderboard table -->
+    <div class="border border-gray-1/30 overflow-x-auto">
+      <table class="leaderboard-table">
+        <thead>
+          <tr class="bg-bg">
+            <th class="w-16">POS</th>
+            <th>DRIVER</th>
+            <th>BEST LAP</th>
+            <th class="hidden sm:table-cell">GAP</th>
+            <th class="hidden md:table-cell">SIMULATOR</th>
+          </tr>
+        </thead>
+        <tbody>
+          {session.leaderboard.map((entry, i) => (
+            <tr class={i % 2 === 0 ? 'bg-surface' : 'bg-bg'}>
+              <td>
+                <span
+                  class={
+                    entry.position === 1
+                      ? 'pos-badge pos-1'
+                      : entry.position <= 3
+                        ? 'pos-badge pos-podium'
+                        : 'pos-badge pos-default'
+                  }
+                >
+                  {entry.position}
+                </span>
+              </td>
+              <td class="text-white font-medium">{entry.driver}</td>
+              <td class="text-white [font-variant-numeric:tabular-nums]">
+                {entry.bestLap}
+              </td>
+              <td class="hidden sm:table-cell text-red [font-variant-numeric:tabular-nums]">
+                {entry.position === 1 ? '—' : entry.gapToLeader}
+              </td>
+              <td class="hidden md:table-cell text-gray-3">
+                {entry.simulator}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  ) : (
+    <!-- Empty state -->
+    <div class="border border-gray-1/30 bg-surface py-16 flex flex-col items-center justify-center gap-3">
+      <span class="font-display text-2xl text-gray-2">RESULTS COMING SOON</span>
+      <span class="text-xs uppercase tracking-[0.2em] text-gray-3">
+        Leaderboard times will be posted after the event
+      </span>
+    </div>
+  )}
+</div>

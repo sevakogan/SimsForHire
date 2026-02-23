@@ -1,0 +1,214 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro'
+import Navbar from '../../components/Navbar.astro'
+import Footer from '../../components/Footer.astro'
+import Leaderboard from '../../components/Leaderboard.astro'
+import { RACE_EVENTS } from '../../data/races'
+import type { RaceEvent } from '../../data/races'
+
+export function getStaticPaths() {
+  return RACE_EVENTS.map((event) => ({
+    params: { slug: event.slug },
+    props: { event },
+  }))
+}
+
+interface Props {
+  event: RaceEvent
+}
+
+const { event } = Astro.props
+const hasSessions = event.sessions.length > 0
+---
+
+<BaseLayout title={`${event.name} Results — SIMSFORHIRE`} ogTitle={event.name} ogSubtitle={`Race results and leaderboard times — ${event.venue}`}>
+  <Navbar isSubpage />
+
+  <!-- Event header -->
+  <section class="pt-32 pb-12 px-6 md:px-16 lg:px-24 relative overflow-hidden">
+    <!-- Ambient orb -->
+    <div class="parallax-orb w-96 h-96 bg-red -top-24 -left-24" data-parallax="-0.06"></div>
+
+    <div class="max-w-7xl mx-auto">
+      <!-- Back link -->
+      <a
+        href="/races"
+        class="inline-flex items-center gap-2 text-xs uppercase tracking-[0.15em] text-red hover:text-white transition-colors mb-8"
+        data-reveal
+      >
+        ← Back to Results
+      </a>
+
+      <!-- Type badge + date -->
+      <div class="flex items-center gap-3 mb-4" data-reveal>
+        <span class="text-[10px] uppercase tracking-[0.3em] text-red bg-red/10 px-3 py-1.5 border border-red/30">
+          {event.type}
+        </span>
+        <span class="text-[10px] uppercase tracking-[0.3em] text-gray-2">
+          {event.date}
+        </span>
+      </div>
+
+      <!-- Event name -->
+      <h1
+        class="font-display text-5xl md:text-7xl lg:text-8xl text-white leading-[0.9] mb-3"
+        data-reveal
+      >
+        {event.name}
+      </h1>
+
+      <!-- Venue -->
+      <p class="text-sm uppercase tracking-[0.15em] text-red mb-6" data-reveal>
+        {event.venue}
+      </p>
+
+      <div class="red-line mb-6" data-reveal></div>
+
+      <!-- Description -->
+      <p class="text-gray-3 text-sm md:text-base max-w-2xl mb-8" data-reveal>
+        {event.description}
+      </p>
+
+      <!-- Stats row -->
+      {event.stats && (
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-2xl" data-reveal>
+          <div class="border-l-2 border-red pl-4">
+            <p class="font-display text-3xl text-white">{event.stats.totalDrivers}</p>
+            <p class="text-[10px] uppercase tracking-[0.2em] text-gray-2">Total Drivers</p>
+          </div>
+          <div class="border-l-2 border-red pl-4">
+            <p class="font-display text-3xl text-white">{event.stats.totalLaps}</p>
+            <p class="text-[10px] uppercase tracking-[0.2em] text-gray-2">Total Laps</p>
+          </div>
+          <div class="border-l-2 border-red pl-4">
+            <p class="font-display text-3xl text-white">{event.stats.fastestLap}</p>
+            <p class="text-[10px] uppercase tracking-[0.2em] text-gray-2">Fastest Lap</p>
+          </div>
+          <div class="border-l-2 border-red pl-4">
+            <p class="font-display text-3xl text-white">{event.stats.fastestDriver}</p>
+            <p class="text-[10px] uppercase tracking-[0.2em] text-gray-2">Fastest Driver</p>
+          </div>
+        </div>
+      )}
+    </div>
+  </section>
+
+  <!-- Sessions + Leaderboards -->
+  <section class="pb-24 px-6 md:px-16 lg:px-24">
+    <div class="max-w-7xl mx-auto">
+      {hasSessions ? (
+        event.sessions.map((session) => (
+          <div data-reveal>
+            <Leaderboard session={session} />
+          </div>
+        ))
+      ) : (
+        <div
+          class="border border-gray-1/30 bg-surface py-20 flex flex-col items-center justify-center gap-4"
+          data-reveal
+        >
+          <span class="font-display text-3xl md:text-4xl text-gray-2">
+            RESULTS COMING SOON
+          </span>
+          <span class="text-xs uppercase tracking-[0.2em] text-gray-3 text-center max-w-md">
+            Sessions and leaderboard times will be posted after the event
+          </span>
+          <a
+            href="/races"
+            class="mt-4 text-xs uppercase tracking-[0.15em] text-red hover:text-white transition-colors"
+          >
+            ← Browse other events
+          </a>
+        </div>
+      )}
+    </div>
+  </section>
+
+  <Footer isSubpage />
+
+  <!-- Admin access button (only for events with live leaderboard) -->
+  {event.slug === 'porsche' && (
+    <button
+      id="admin-gate"
+      class="fixed bottom-6 right-6 z-50 text-[10px] uppercase tracking-[0.2em] text-gray-3/40 hover:text-gray-3/70 transition-colors duration-300 bg-transparent border-none cursor-pointer px-3 py-2"
+      aria-label="Admin access"
+    >
+      Admin
+    </button>
+
+    <div
+      id="admin-modal"
+      class="fixed inset-0 z-[9999] hidden items-center justify-center bg-black/80 backdrop-blur-sm"
+    >
+      <div class="bg-surface border border-gray-1/30 p-8 w-full max-w-xs flex flex-col gap-4">
+        <p class="text-xs uppercase tracking-[0.2em] text-gray-2 text-center">Enter Admin PIN</p>
+        <input
+          id="admin-pin"
+          type="password"
+          maxlength="4"
+          inputmode="numeric"
+          pattern="[0-9]*"
+          class="w-full bg-black/50 border border-gray-1/30 text-white text-center text-lg tracking-[0.5em] py-3 px-4 focus:outline-none focus:border-red transition-colors"
+          placeholder="••••"
+          autocomplete="off"
+        />
+        <p id="admin-error" class="text-red text-[10px] uppercase tracking-[0.15em] text-center hidden">
+          Incorrect PIN
+        </p>
+        <div class="flex gap-3">
+          <button
+            id="admin-cancel"
+            class="flex-1 text-[10px] uppercase tracking-[0.15em] text-gray-3 hover:text-white border border-gray-1/30 py-2.5 bg-transparent cursor-pointer transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            id="admin-submit"
+            class="flex-1 text-[10px] uppercase tracking-[0.15em] text-black bg-red hover:bg-white py-2.5 border-none cursor-pointer transition-colors font-bold"
+          >
+            Enter
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const gate = document.getElementById('admin-gate')
+      const modal = document.getElementById('admin-modal')
+      const pin = document.getElementById('admin-pin') as HTMLInputElement
+      const error = document.getElementById('admin-error')
+      const cancel = document.getElementById('admin-cancel')
+      const submit = document.getElementById('admin-submit')
+
+      function openModal() {
+        modal?.classList.remove('hidden')
+        modal?.classList.add('flex')
+        pin?.focus()
+        if (error) error.classList.add('hidden')
+        if (pin) pin.value = ''
+      }
+
+      function closeModal() {
+        modal?.classList.add('hidden')
+        modal?.classList.remove('flex')
+        if (pin) pin.value = ''
+        if (error) error.classList.add('hidden')
+      }
+
+      function attempt() {
+        if (pin?.value === '2920') {
+          window.location.href = '/races/live/porsche'
+        } else {
+          if (error) error.classList.remove('hidden')
+          if (pin) { pin.value = ''; pin.focus() }
+        }
+      }
+
+      gate?.addEventListener('click', openModal)
+      cancel?.addEventListener('click', closeModal)
+      submit?.addEventListener('click', attempt)
+      modal?.addEventListener('click', (e) => { if (e.target === modal) closeModal() })
+      pin?.addEventListener('keydown', (e) => { if (e.key === 'Enter') attempt() })
+    </script>
+  )}
+</BaseLayout>
