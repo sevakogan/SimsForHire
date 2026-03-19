@@ -49,11 +49,10 @@ export const POST: APIRoute = async ({ request }) => {
 
   const cookies = setAuthCookies(data.session.access_token, data.session.refresh_token)
 
-  return new Response(JSON.stringify({ success: true }), {
-    status: 200,
-    headers: {
-      'Content-Type': 'application/json',
-      'Set-Cookie': cookies.join(', '),
-    },
-  })
+  const headers = new Headers({ 'Content-Type': 'application/json' })
+  for (const cookie of cookies) {
+    headers.append('Set-Cookie', cookie)
+  }
+
+  return new Response(JSON.stringify({ success: true }), { status: 200, headers })
 }

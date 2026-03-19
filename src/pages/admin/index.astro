@@ -159,6 +159,17 @@ if (auth.authorized) {
         <div id="login-error" class="error-msg"></div>
       </form>
 
+      <button id="forgot-btn" style="display:block;width:100%;margin-top:16px;padding:12px;border:1px solid #E5E5E7;border-radius:10px;font-size:14px;font-weight:500;font-family:inherit;color:#86868B;background:transparent;cursor:pointer;transition:all 0.2s;" onmouseover="this.style.borderColor='#1D1D1F';this.style.color='#1D1D1F'" onmouseout="this.style.borderColor='#E5E5E7';this.style.color='#86868B'">Forgot Password?</button>
+      <div id="reset-form" style="display:none;margin-top:16px;padding:16px;background:#F0F7FF;border:1px solid #D4E5F7;border-radius:10px;">
+        <p style="font-size:13px;color:#1D1D1F;margin-bottom:12px;font-weight:500;">Reset your password</p>
+        <input type="email" id="reset-email" placeholder="Your email address" style="width:100%;padding:10px 14px;border:1px solid #D4E5F7;border-radius:8px;font-size:14px;font-family:inherit;outline:none;margin-bottom:10px;box-sizing:border-box;" />
+        <div style="display:flex;gap:8px;">
+          <button id="send-reset" style="flex:2;padding:10px;border:none;border-radius:8px;font-size:13px;font-weight:500;font-family:inherit;background:#2563EB;color:white;cursor:pointer;">Send Reset Link</button>
+          <button id="cancel-reset" style="flex:1;padding:10px;border:1px solid #D4E5F7;border-radius:8px;font-size:13px;font-weight:500;font-family:inherit;background:white;color:#86868B;cursor:pointer;">Cancel</button>
+        </div>
+        <p id="reset-status" style="font-size:12px;margin-top:8px;display:none;"></p>
+      </div>
+
       <a href="/" class="back-link">← Back to simsforhire.com</a>
     </div>
 
@@ -193,6 +204,54 @@ if (auth.authorized) {
         } finally {
           btn.disabled = false
           btn.textContent = 'Sign In'
+        }
+      })
+
+      // Forgot password
+      const forgotBtn = document.getElementById('forgot-btn')!
+      const resetForm = document.getElementById('reset-form')!
+      const cancelReset = document.getElementById('cancel-reset')!
+      const sendReset = document.getElementById('send-reset')!
+      const resetStatus = document.getElementById('reset-status')!
+
+      forgotBtn.addEventListener('click', () => {
+        forgotBtn.style.display = 'none'
+        resetForm.style.display = 'block'
+        const loginEmail = (document.getElementById('email') as HTMLInputElement).value
+        if (loginEmail) (document.getElementById('reset-email') as HTMLInputElement).value = loginEmail
+      })
+
+      cancelReset.addEventListener('click', () => {
+        resetForm.style.display = 'none'
+        forgotBtn.style.display = 'block'
+        resetStatus.style.display = 'none'
+      })
+
+      sendReset.addEventListener('click', async () => {
+        const email = (document.getElementById('reset-email') as HTMLInputElement).value
+        if (!email.includes('@')) { resetStatus.textContent = 'Enter a valid email'; resetStatus.style.color = '#FF3B30'; resetStatus.style.display = 'block'; return }
+
+        sendReset.textContent = 'Sending...'
+        try {
+          const res = await fetch('https://fzbadqjwyapipvwekgmu.supabase.co/auth/v1/recover', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ6YmFkcWp3eWFwaXB2d2VrZ211Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEwMTc4NzksImV4cCI6MjA4NjU5Mzg3OX0.LjpcZaVTjDXdsZPlsZy2GON1MM_LxkMytKBMNCNQ4Zg' },
+            body: JSON.stringify({ email }),
+          })
+          resetStatus.style.display = 'block'
+          if (res.ok) {
+            resetStatus.textContent = 'Reset link sent! Check your email.'
+            resetStatus.style.color = '#30D158'
+          } else {
+            resetStatus.textContent = 'Could not send reset email'
+            resetStatus.style.color = '#FF3B30'
+          }
+        } catch {
+          resetStatus.textContent = 'Error sending reset email'
+          resetStatus.style.color = '#FF3B30'
+          resetStatus.style.display = 'block'
+        } finally {
+          sendReset.textContent = 'Send Reset Link'
         }
       })
     </script>
