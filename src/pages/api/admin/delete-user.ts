@@ -16,19 +16,28 @@ export const POST: APIRoute = async ({ request }) => {
     return new Response(JSON.stringify({ error: 'User ID is required' }), { status: 400 })
   }
 
-  // Prevent self-deletion
   if (userId === auth.userId) {
     return new Response(JSON.stringify({ error: 'Cannot delete your own account' }), { status: 400 })
   }
 
   const supabase = createServiceClient()
 
-  // Delete profile first, then auth user
-  await supabase.from('admin_profiles').delete().eq('user_id', userId)
+  // Delete profile first (in case cascade isn't set up)
+  const { error: profileErr } = await supabase
+    .from('admin_profiles')
+    .delete()
+    .eq('user_id', userId)
+
+  if (profileErr) {
+    console.error('[Delete User] Profile delete error:', profileErr.message)
+  }
+
+  // Delete auth user
   const { error } = await supabase.auth.admin.deleteUser(userId)
 
   if (error) {
-    return new Response(JSON.stringify({ error: error.message }), { status: 500 })
+    console.error('[Delete User] Auth delete error:', error.message)
+    return new Response(JSON.stringify({ error: `Failed to delete user: ${error.message}` }), { status: 500 })
   }
 
   return new Response(JSON.stringify({ ok: true }))
