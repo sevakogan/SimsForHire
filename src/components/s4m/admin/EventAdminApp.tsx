@@ -62,6 +62,10 @@ export function EventAdminApp({ event, config, tab }: EventAdminAppProps) {
               </div>
             </div>
             <div style={{ display: 'flex', gap: '8px' }}>
+              <a href="/admin/events" style={{
+                padding: '7px 14px', fontSize: '12px', fontWeight: 500, color: 'white',
+                background: '#1D1D1F', borderRadius: '8px', textDecoration: 'none',
+              }}>Admin Panel</a>
               <a href={`/live/${event.slug}/leaderboard/tv`} style={{
                 padding: '7px 14px', fontSize: '12px', fontWeight: 500, color: '#1D1D1F',
                 border: '1px solid #E5E5E7', borderRadius: '8px', textDecoration: 'none',
