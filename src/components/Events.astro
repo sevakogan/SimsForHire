@@ -1,265 +1,135 @@
 ---
 import { EVENTS } from '../data/content'
 
-// Build a global image counter for placeholder numbering
-let imageCounter = 0
+const stripEvents = [...EVENTS, ...EVENTS]
 ---
 
-<section id="events" class="relative py-24 px-6 md:px-16 lg:px-24 max-w-7xl mx-auto overflow-hidden">
-  <!-- Floating orb -->
-  <div class="parallax-orb w-[350px] h-[350px] bg-red right-0 top-1/2" data-parallax="-0.07"></div>
+<section id="events" class="py-16 md:py-24 overflow-hidden">
+  <!-- Section label -->
+  <div class="px-6 md:px-16 lg:px-24 max-w-7xl mx-auto mb-8 flex items-center justify-between">
+    <p class="text-[10px] uppercase tracking-[0.4em] text-red" data-reveal>Past Events</p>
 
-  <!-- Section header -->
-  <div data-reveal class="mb-20 relative z-10">
-    <span class="text-xs uppercase tracking-[0.3em] text-red font-body">Track Record</span>
-    <h2 class="font-display text-5xl md:text-7xl text-white mt-2">PREVIOUS EVENTS</h2>
-    <div class="red-line mt-4"></div>
+    <!-- Speed arrows -->
+    <div class="flex items-center gap-3" data-reveal>
+      <button id="strip-slower" class="text-gray-dim hover:text-white transition-colors p-1" aria-label="Slow down">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+        </svg>
+      </button>
+      <span id="strip-speed-label" class="text-gray-dim text-[10px] uppercase tracking-wider w-8 text-center">1x</span>
+      <button id="strip-faster" class="text-gray-dim hover:text-white transition-colors p-1" aria-label="Speed up">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+        </svg>
+      </button>
+    </div>
   </div>
 
-  <!-- Events stack -->
-  <div class="flex flex-col gap-32 relative z-10">
-    {EVENTS.map((event, eventIndex) => {
-      const isEven = eventIndex % 2 === 0
-      const eventNumber = String(eventIndex + 1).padStart('2', '0')
+  <!-- Continuous scrolling strip — big cards -->
+  <div class="relative" data-reveal>
+    <div id="event-strip" class="event-strip-track flex gap-5 w-max">
+      {stripEvents.map((event) => (
+        <a
+          href={`/events/${event.slug}`}
+          class="event-card relative w-[400px] md:w-[560px] lg:w-[640px] h-[280px] md:h-[380px] lg:h-[420px] flex-shrink-0 overflow-hidden group block"
+          data-video-id={'videoId' in event ? event.videoId : undefined}
+        >
+          {'videoId' in event && event.videoId ? (
+            <iframe
+              class="event-video absolute inset-0 w-full h-full pointer-events-none"
+              src={`https://www.youtube-nocookie.com/embed/${event.videoId}?autoplay=1&mute=1&loop=1&playlist=${event.videoId}&controls=0&showinfo=0&rel=0&modestbranding=1&playsinline=1&enablejsapi=1&iv_load_policy=3&disablekb=1`}
+              title={event.name}
+              style="border: none; transform: scale(1.5); transform-origin: center;"
+              allow="autoplay; encrypted-media"
+            ></iframe>
+          ) : 'images' in event && event.images && event.images[0] ? (
+            <img
+              src={event.images[0].src}
+              alt={event.images[0].alt}
+              class="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+              loading="lazy"
+              onerror="this.style.display='none'"
+            />
+          ) : (
+            <div class="absolute inset-0 bg-surface"></div>
+          )}
 
-      return (
-        <article data-reveal class="event-block relative">
-          <!-- Watermark number -->
-          <span class="watermark -top-8 right-0 md:right-8">{eventNumber}</span>
+          <!-- Overlay -->
+          <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent z-[2]"></div>
 
-          <!-- Event header bar -->
-          <div class="flex flex-wrap items-center gap-4 mb-8">
-            <span class="inline-block text-[10px] uppercase tracking-[0.3em] text-red bg-red/10 px-3 py-1.5 border border-red/30">
-              {event.type}
-            </span>
-            <span class="text-[10px] uppercase tracking-[0.3em] text-gray-2">
-              {event.date}
-            </span>
-            <div class="hidden md:block flex-1 h-px bg-gray-1/40"></div>
-            {'stats' in event && event.stats && (
-              <div class="flex gap-6">
-                <div class="text-center">
-                  <span class="font-display text-lg text-white">{event.stats.people}</span>
-                  <span class="block text-[9px] uppercase tracking-[0.2em] text-gray-2">People</span>
-                </div>
-                <div class="text-center">
-                  <span class="font-display text-lg text-white">{event.stats.sims}</span>
-                  <span class="block text-[9px] uppercase tracking-[0.2em] text-gray-2">Sims</span>
-                </div>
-                <div class="text-center">
-                  <span class="font-display text-lg text-white">{event.stats.days}</span>
-                  <span class="block text-[9px] uppercase tracking-[0.2em] text-gray-2">{Number(event.stats.days) === 1 ? 'Day' : 'Days'}</span>
-                </div>
-              </div>
-            )}
+          <!-- Sound indicator -->
+          {'videoId' in event && event.videoId && (
+            <div class="absolute top-4 left-4 z-10 bg-black/70 backdrop-blur-sm px-2.5 py-1.5 flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+              <svg class="w-3.5 h-3.5 text-red" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M11.999 3.002a1 1 0 0 1 1 1v15.996a1 1 0 0 1-1.625.78L5.87 16.5H2.999a1 1 0 0 1-1-1v-7a1 1 0 0 1 1-1h2.873l5.5-4.276a1 1 0 0 1 1.626.78zM15.5 8.5a.75.75 0 0 1 1.06 0 4.5 4.5 0 0 1 0 6.364.75.75 0 1 1-1.06-1.06 3 3 0 0 0 0-4.243.75.75 0 0 1 0-1.06z"/>
+              </svg>
+              <span class="text-[9px] uppercase tracking-wider text-white">Sound on</span>
+            </div>
+          )}
+
+          <!-- Stats badge -->
+          {'stats' in event && event.stats && (
+            <div class="absolute top-4 right-4 bg-black/70 backdrop-blur-sm px-3 py-1.5 z-10">
+              <span class="font-display text-lg text-white">{event.stats.people}</span>
+              <span class="text-[9px] uppercase tracking-wider text-gray ml-1">guests</span>
+            </div>
+          )}
+
+          <!-- Text -->
+          <div class="absolute bottom-0 left-0 right-0 p-6 md:p-8 z-[3]">
+            <span class="text-[10px] uppercase tracking-[0.3em] text-red">{event.type}</span>
+            <h3 class="font-display text-3xl md:text-4xl text-white mt-1">{event.name}</h3>
+            <p class="text-gray text-xs mt-1">{event.date}</p>
           </div>
-
-          <!-- Title + venue -->
-          <h3 class="font-display text-4xl md:text-6xl text-white mb-1">{event.name}</h3>
-          {'venue' in event && event.venue && (
-            <span class="text-red text-sm font-display tracking-wider block mb-6">
-              {event.venue}
-            </span>
-          )}
-
-          <!-- Bento image grid — alternates layout per event -->
-          {'images' in event && event.images && (
-            <div class:list={[
-              'event-gallery mb-8',
-              isEven ? 'event-gallery--layout-a' : 'event-gallery--layout-b',
-            ]}>
-              {event.images.map((img: { src: string; alt: string }, imgIndex: number) => {
-                imageCounter++
-                const num = imageCounter
-                return (
-                  <div
-                    class="event-gallery__cell overflow-hidden relative group"
-                    data-parallax={imgIndex < 2 ? '0.03' : '0'}
-                  >
-                    {/* Numbered placeholder overlay */}
-                    <div class="event-img-placeholder absolute inset-0 bg-surface border border-gray-1/30 flex flex-col items-center justify-center z-10 pointer-events-none transition-opacity duration-500"
-                         data-placeholder={num}>
-                      <span class="font-display text-5xl md:text-6xl text-red/60">#{num}</span>
-                      <span class="text-gray-2 text-[10px] uppercase tracking-[0.2em] mt-2">{event.name}</span>
-                    </div>
-                    <img
-                      src={img.src}
-                      alt={img.alt}
-                      class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
-                      loading="lazy"
-                      onerror="this.style.opacity='0'"
-                      onload="this.parentElement.querySelector('.event-img-placeholder').style.opacity='0'"
-                    />
-                  </div>
-                )
-              })}
-            </div>
-          )}
-
-          <!-- Description -->
-          <p class="text-gray-3 text-sm leading-relaxed max-w-3xl">{event.description}</p>
-
-          <!-- Bottom divider -->
-          {eventIndex < EVENTS.length - 1 && (
-            <div class="mt-16 flex items-center gap-4">
-              <div class="flex-1 h-px bg-gradient-to-r from-red/40 to-transparent"></div>
-              <span class="text-[8px] uppercase tracking-[0.4em] text-gray-2">◆</span>
-              <div class="flex-1 h-px bg-gradient-to-l from-red/40 to-transparent"></div>
-            </div>
-          )}
-        </article>
-      )
-    })}
+        </a>
+      ))}
+    </div>
   </div>
 </section>
 
-<style>
-  /* ──────────────────────────────────────────────
-     BENTO GALLERY GRID — Layout A (even events)
-     Hero image spans left 2 rows, 4 smaller on right
-     ────────────────────────────────────────────── */
-  .event-gallery--layout-a {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    grid-template-rows: 200px 200px 200px;
-    gap: 4px;
+<script>
+  // Speed control for the CSS animation
+  const strip = document.getElementById('event-strip')!
+  const slowerBtn = document.getElementById('strip-slower')!
+  const fasterBtn = document.getElementById('strip-faster')!
+  const speedLabel = document.getElementById('strip-speed-label')!
+
+  const speeds = [
+    { label: '0.5x', duration: '50s' },
+    { label: '1x', duration: '30s' },
+    { label: '2x', duration: '15s' },
+    { label: '3x', duration: '10s' },
+  ]
+  let speedIndex = 1
+
+  function applySpeed() {
+    strip.style.animationDuration = speeds[speedIndex].duration
+    speedLabel.textContent = speeds[speedIndex].label
   }
 
-  .event-gallery--layout-a .event-gallery__cell:nth-child(1) {
-    grid-column: 1 / 3;
-    grid-row: 1 / 3;
-  }
-  .event-gallery--layout-a .event-gallery__cell:nth-child(2) {
-    grid-column: 3;
-    grid-row: 1;
-  }
-  .event-gallery--layout-a .event-gallery__cell:nth-child(3) {
-    grid-column: 3;
-    grid-row: 2;
-  }
-  .event-gallery--layout-a .event-gallery__cell:nth-child(4) {
-    grid-column: 1;
-    grid-row: 3;
-  }
-  .event-gallery--layout-a .event-gallery__cell:nth-child(5) {
-    grid-column: 2;
-    grid-row: 3;
-  }
-  .event-gallery--layout-a .event-gallery__cell:nth-child(6) {
-    grid-column: 3;
-    grid-row: 3;
-  }
+  fasterBtn.addEventListener('click', () => {
+    if (speedIndex < speeds.length - 1) speedIndex++
+    applySpeed()
+  })
 
-  /* ──────────────────────────────────────────────
-     BENTO GALLERY GRID — Layout B (odd events)
-     Hero image spans right 2 rows, 4 smaller on left
-     ────────────────────────────────────────────── */
-  .event-gallery--layout-b {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    grid-template-rows: 200px 200px 200px;
-    gap: 4px;
-  }
+  slowerBtn.addEventListener('click', () => {
+    if (speedIndex > 0) speedIndex--
+    applySpeed()
+  })
 
-  .event-gallery--layout-b .event-gallery__cell:nth-child(1) {
-    grid-column: 1;
-    grid-row: 1;
-  }
-  .event-gallery--layout-b .event-gallery__cell:nth-child(2) {
-    grid-column: 1;
-    grid-row: 2;
-  }
-  .event-gallery--layout-b .event-gallery__cell:nth-child(3) {
-    grid-column: 2 / 4;
-    grid-row: 1 / 3;
-  }
-  .event-gallery--layout-b .event-gallery__cell:nth-child(4) {
-    grid-column: 1;
-    grid-row: 3;
-  }
-  .event-gallery--layout-b .event-gallery__cell:nth-child(5) {
-    grid-column: 2;
-    grid-row: 3;
-  }
-  .event-gallery--layout-b .event-gallery__cell:nth-child(6) {
-    grid-column: 3;
-    grid-row: 3;
-  }
+  // Pause on hover
+  strip.addEventListener('mouseenter', () => { strip.style.animationPlayState = 'paused' })
+  strip.addEventListener('mouseleave', () => { strip.style.animationPlayState = 'running' })
 
-  /* ──────────────────────────────────────────────
-     RESPONSIVE — Stack on mobile
-     ────────────────────────────────────────────── */
-  @media (max-width: 768px) {
-    .event-gallery--layout-a,
-    .event-gallery--layout-b {
-      grid-template-columns: 1fr 1fr;
-      grid-template-rows: auto;
-    }
-
-    .event-gallery--layout-a .event-gallery__cell:nth-child(1),
-    .event-gallery--layout-b .event-gallery__cell:nth-child(3) {
-      grid-column: 1 / 3;
-      grid-row: auto;
-    }
-
-    .event-gallery--layout-a .event-gallery__cell:nth-child(n+2),
-    .event-gallery--layout-b .event-gallery__cell:nth-child(1),
-    .event-gallery--layout-b .event-gallery__cell:nth-child(2),
-    .event-gallery--layout-b .event-gallery__cell:nth-child(n+4) {
-      grid-column: auto;
-      grid-row: auto;
-    }
-
-    .event-gallery__cell {
-      aspect-ratio: 16 / 10;
-    }
-  }
-
-  /* ──────────────────────────────────────────────
-     RED CORNER ACCENTS on gallery cells
-     ────────────────────────────────────────────── */
-  .event-gallery__cell::before,
-  .event-gallery__cell::after {
-    content: '';
-    position: absolute;
-    width: 20px;
-    height: 20px;
-    border-color: var(--color-red);
-    opacity: 0;
-    transition: opacity 0.4s ease;
-    z-index: 20;
-    pointer-events: none;
-  }
-
-  .event-gallery__cell::before {
-    top: 8px;
-    left: 8px;
-    border-top: 2px solid;
-    border-left: 2px solid;
-  }
-
-  .event-gallery__cell::after {
-    bottom: 8px;
-    right: 8px;
-    border-bottom: 2px solid;
-    border-left: 0;
-    border-right: 2px solid;
-  }
-
-  .event-gallery__cell:hover::before,
-  .event-gallery__cell:hover::after {
-    opacity: 1;
-  }
-
-  /* ──────────────────────────────────────────────
-     SCAN LINE OVERLAY on hover
-     ────────────────────────────────────────────── */
-  .event-gallery__cell {
-    position: relative;
-  }
-
-  .event-gallery__cell > img {
-    position: relative;
-    z-index: 1;
-  }
-</style>
+  // Hover to unmute videos
+  document.querySelectorAll<HTMLElement>('.event-card[data-video-id]').forEach((card) => {
+    const iframe = card.querySelector<HTMLIFrameElement>('.event-video')
+    if (!iframe) return
+    card.addEventListener('mouseenter', () => {
+      iframe.contentWindow?.postMessage(JSON.stringify({ event: 'command', func: 'unMute' }), '*')
+    })
+    card.addEventListener('mouseleave', () => {
+      iframe.contentWindow?.postMessage(JSON.stringify({ event: 'command', func: 'mute' }), '*')
+    })
+  })
+</script>

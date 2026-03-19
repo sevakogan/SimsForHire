@@ -1,0 +1,67 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro'
+import Navbar from '../../components/Navbar.astro'
+import Footer from '../../components/Footer.astro'
+---
+
+<BaseLayout title="Thank You — SimsForHire Leasing" ogTitle="LEASE INQUIRY RECEIVED" ogSubtitle="We'll be in touch within 24 hours">
+  <Navbar isSubpage />
+  <main class="min-h-screen flex items-center justify-center px-6 py-32">
+    <div class="max-w-xl mx-auto text-center">
+
+      <!-- Checkmark -->
+      <div class="w-20 h-20 mx-auto mb-8 border-2 border-red rounded-full flex items-center justify-center">
+        <svg class="w-10 h-10 text-red" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+        </svg>
+      </div>
+
+      <h1 class="font-display text-4xl md:text-6xl text-white tracking-wide mb-4">LEASE INQUIRY RECEIVED</h1>
+      <div class="w-12 h-0.5 bg-red mx-auto mb-6"></div>
+
+      <p class="text-gray text-base leading-relaxed mb-4">
+        Thanks for your interest in leasing a racing simulator! Our team will review your
+        space and requirements, then put together a custom leasing proposal within <strong class="text-white">24 hours</strong>.
+      </p>
+
+      <p class="text-gray text-sm mb-8">
+        We sent a confirmation email with everything you need to know about our leasing programs.
+      </p>
+
+      <!-- What's included reminder -->
+      <div class="border border-gray-border p-6 mb-8 text-left">
+        <p class="text-[10px] uppercase tracking-[0.4em] text-red mb-4">Every Lease Includes</p>
+        <div class="grid grid-cols-2 gap-3">
+          {['Professional hardware', 'Software & content', 'On-site installation', 'Bi-weekly maintenance', 'Remote support', 'Operator training'].map(item => (
+            <div class="flex items-center gap-2">
+              <span class="text-red text-xs">—</span>
+              <p class="text-gray text-sm">{item}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <!-- Urgent CTA -->
+      <div class="bg-red/10 border border-red/20 p-6 mb-8">
+        <p class="text-[10px] uppercase tracking-[0.3em] text-red mb-2">Want to talk now?</p>
+        <a href="tel:7542285654" class="font-display text-2xl md:text-3xl text-white hover:text-red transition-colors">(754) 228-5654</a>
+        <p class="text-gray text-xs mt-1">We'll walk you through the process — no commitment</p>
+      </div>
+
+      <a href="/lease" class="inline-block border border-gray-border text-white px-8 py-3 text-sm font-display uppercase tracking-[0.25em] hover:border-red/40 transition-colors">
+        Back to Leasing
+      </a>
+
+    </div>
+  </main>
+  <Footer />
+</BaseLayout>
+
+<script>
+  window.dataLayer = window.dataLayer || [];
+  window.dataLayer.push({
+    event: 'lease_lead_thankyou',
+    event_category: 'conversion',
+    event_label: 'lease_form_complete',
+  })
+</script>

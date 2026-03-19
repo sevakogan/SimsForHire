@@ -9,13 +9,23 @@
     "astro": "astro"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.80.0",
+    "@astrojs/react": "^5.0.1",
     "@astrojs/vercel": "^9.0.4",
     "@resvg/resvg-wasm": "^2.6.2",
+    "@sendgrid/mail": "^8.1.6",
+    "@supabase/supabase-js": "^2.99.2",
     "@tailwindcss/vite": "^4.2.0",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
     "astro": "^5.17.1",
+    "qrcode.react": "^4.2.0",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
     "resend": "^6.9.2",
     "satori": "^0.19.2",
     "tailwindcss": "^4.2.0",
-    "twilio": "^5.12.2"
+    "twilio": "^5.12.2",
+    "xlsx": "^0.18.5"
   }
 }

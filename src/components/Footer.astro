@@ -1,5 +1,5 @@
 ---
-import { SITE, NAV_LINKS } from '../data/content'
+import { SITE } from '../data/content'
 
 interface Props {
   isSubpage?: boolean
@@ -7,52 +7,33 @@ interface Props {
 
 const { isSubpage = false } = Astro.props
 const year = new Date().getFullYear()
-
-function resolveHref(href: string): string {
-  if (href.startsWith('/')) return href
-  if (isSubpage) return `/${href}`
-  return href
-}
 ---
 
-<footer class="bg-bg border-t border-gray-1/20 py-12 px-6 md:px-16 lg:px-24">
-  <div class="max-w-7xl mx-auto">
-    <!-- Top section -->
-    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-8 mb-8">
-      <!-- Logo -->
-      <div>
-        <a href={isSubpage ? '/' : '#'} class="font-display text-2xl tracking-tight text-white">
-          {SITE.name}
-        </a>
-        <p class="text-gray-2 text-xs mt-2">
-          A <a href="https://shiftarcade.com" target="_blank" rel="noopener noreferrer" class="text-red hover:text-white transition-colors">ShiftArcade</a> company
-        </p>
-      </div>
+<footer class="border-t border-gray-border py-8 px-6 md:px-16 lg:px-24">
+  <div class="max-w-7xl mx-auto flex flex-col items-center gap-6 text-xs text-gray-dim">
+    <!-- Logo -->
+    <a href={isSubpage ? '/' : '#'}>
+      <img src="/images/simsforhire-logo-white.png" alt={SITE.name} class="h-8 w-auto opacity-60" />
+    </a>
 
-      <!-- Nav links -->
-      <div class="flex flex-wrap gap-6">
-        {NAV_LINKS.map((link) => (
-          <a
-            href={resolveHref(link.href)}
-            class="text-xs uppercase tracking-[0.2em] text-gray-2 hover:text-white transition-colors"
-          >
-            {link.label}
-          </a>
-        ))}
-      </div>
+    <p>&copy; {year} {SITE.name}. A <a href="https://shiftarcade.com" target="_blank" rel="noopener noreferrer" class="text-gray hover:text-white transition-colors">ShiftArcade</a> company.</p>
+
+    <div class="flex items-center gap-4">
+      {[
+        { label: 'Instagram', href: 'https://instagram.com/simsforhire' },
+        { label: 'TikTok', href: 'https://tiktok.com/@simsforhire' },
+        { label: 'YouTube', href: 'https://youtube.com/@simsforhire' },
+      ].map((s) => (
+        <a href={s.href} target="_blank" rel="noopener noreferrer" class="text-gray-dim hover:text-red transition-colors">{s.label}</a>
+      ))}
     </div>
 
-    <!-- Red accent line -->
-    <div class="w-full h-px bg-gradient-to-r from-red/50 via-red to-red/50 mb-8"></div>
-
-    <!-- Bottom -->
-    <div class="flex flex-col md:flex-row justify-between items-center gap-4">
-      <p class="text-gray-2 text-xs">
-        &copy; {year} {SITE.name}. All rights reserved.
-      </p>
-      <p class="text-gray-2 text-xs">
-        Miami, FL
-      </p>
+    <div class="flex items-center gap-3">
+      <a href="/privacy-policy" class="hover:text-white transition-colors">Privacy</a>
+      <span class="text-gray-border">|</span>
+      <a href="/terms-and-conditions" class="hover:text-white transition-colors">Terms</a>
+      <span class="text-gray-border">|</span>
+      <a href="/races" class="hover:text-white transition-colors">Races</a>
     </div>
   </div>
 </footer>

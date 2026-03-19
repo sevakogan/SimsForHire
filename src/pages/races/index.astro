@@ -5,94 +5,99 @@ import Footer from '../../components/Footer.astro'
 import { RACE_EVENTS } from '../../data/races'
 ---
 
-<BaseLayout title="Race Results — SIMSFORHIRE" ogTitle="THE LEADERBOARDS" ogSubtitle="Every event. Every lap. Every driver ranked.">
+<BaseLayout title="Race Results — SimsForHire" ogTitle="The Leaderboards" ogSubtitle="Every event. Every lap. Every driver ranked.">
   <Navbar isSubpage />
 
-  <!-- Page header -->
-  <section class="pt-32 pb-16 px-6 md:px-16 lg:px-24 relative overflow-hidden">
-    <!-- Ambient orbs -->
-    <div class="parallax-orb w-96 h-96 bg-red -top-24 -right-24" data-parallax="-0.06"></div>
-
-    <div class="max-w-7xl mx-auto">
-      <p
-        class="text-[10px] uppercase tracking-[0.4em] text-red mb-4"
-        data-reveal
-      >
-        Race Results
-      </p>
-      <h1
-        class="font-display text-6xl md:text-8xl lg:text-9xl text-white leading-[0.9]"
-        data-reveal
-      >
-        THE<br />LEADERBOARDS
-      </h1>
-      <div class="red-line mt-6 mb-6" data-reveal></div>
-      <p class="text-gray-3 text-sm md:text-base max-w-xl" data-reveal>
-        Every event. Every lap. Every driver ranked. Select an event below to view the full race results and leaderboard times.
-      </p>
-    </div>
-  </section>
-
-  <!-- Event cards grid -->
-  <section class="pb-24 px-6 md:px-16 lg:px-24">
-    <div class="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6">
-      {RACE_EVENTS.map((event) => (
-        <a
-          href={`/races/${event.slug}`}
-          class="racing-card block p-8 group"
-          data-reveal
-        >
-          <!-- Type badge + date -->
-          <div class="flex items-center gap-3 mb-4">
-            <span class="text-[10px] uppercase tracking-[0.3em] text-red bg-red/10 px-3 py-1.5 border border-red/30">
-              {event.type}
-            </span>
-            <span class="text-[10px] uppercase tracking-[0.3em] text-gray-2">
-              {event.date}
-            </span>
+  <!-- Dark wrapper for race pages -->
+  <div class="bg-bg">
+    <!-- Page header -->
+    <section class="pt-32 pb-16 px-6 md:px-16 lg:px-24">
+      <div class="max-w-[980px] mx-auto">
+        <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-8">
+          <div>
+            <p class="text-red text-sm font-medium mb-3" data-reveal>Race Results</p>
+            <h1
+              class="font-display text-[clamp(3rem,8vw,5.5rem)] font-bold text-white leading-[1.05] tracking-tight"
+              data-reveal
+            >
+              The<br />Leaderboards
+            </h1>
+            <p class="text-gray text-base font-light max-w-xl mt-4" data-reveal>
+              Every event. Every lap. Every driver ranked. Select an event below to view the full race results and leaderboard times.
+            </p>
           </div>
+          <a
+            href="/admin/events"
+            class="inline-flex items-center justify-center bg-[#E8D800] text-black text-xs font-semibold  px-8 py-3 hover:bg-[#d4c600] transition-colors whitespace-nowrap mb-2"
+            data-reveal
+          >
+            Unlock Dashboard
+          </a>
+        </div>
+      </div>
+    </section>
 
-          <!-- Event name -->
-          <h2 class="font-display text-3xl md:text-4xl text-white mb-2 group-hover:text-red transition-colors">
-            {event.name}
-          </h2>
-
-          <!-- Venue -->
-          <p class="text-xs uppercase tracking-[0.2em] text-gray-3 mb-6">
-            {event.venue}
-          </p>
-
-          <!-- Description -->
-          <p class="text-gray-3 text-sm mb-8 line-clamp-2">
-            {event.description}
-          </p>
-
-          <!-- Stats row -->
-          {event.stats && (
-            <div class="grid grid-cols-4 gap-4 border-t border-gray-1/30 pt-6">
-              <div>
-                <p class="font-display text-xl text-white">{event.stats.totalDrivers}</p>
-                <p class="text-[9px] uppercase tracking-[0.2em] text-gray-2">Drivers</p>
-              </div>
-              <div>
-                <p class="font-display text-xl text-white">{event.stats.totalLaps}</p>
-                <p class="text-[9px] uppercase tracking-[0.2em] text-gray-2">Laps</p>
-              </div>
-              <div>
-                <p class="font-display text-xl text-white">{event.stats.fastestLap}</p>
-                <p class="text-[9px] uppercase tracking-[0.2em] text-gray-2">Fastest</p>
-              </div>
-              <div class="flex items-center justify-end">
-                <span class="text-xs uppercase tracking-[0.15em] text-red group-hover:translate-x-1 transition-transform">
-                  View Results →
-                </span>
-              </div>
+    <!-- Event cards grid -->
+    <section class="pb-24 px-6 md:px-16 lg:px-24">
+      <div class="max-w-[980px] mx-auto grid grid-cols-1 md:grid-cols-2 gap-5">
+        {RACE_EVENTS.map((event) => (
+          <a
+            href={`/races/${event.slug}`}
+            class="block p-8 border border-white/10  group hover:border-red/40 transition-colors"
+            data-reveal
+          >
+            <!-- Type badge + date -->
+            <div class="flex items-center gap-3 mb-4">
+              <span class="text-xs text-red bg-red/10  px-3 py-1">
+                {event.type}
+              </span>
+              <span class="text-gray text-xs">
+                {event.date}
+              </span>
             </div>
-          )}
-        </a>
-      ))}
-    </div>
-  </section>
+
+            <!-- Event name -->
+            <h2 class="font-display text-2xl md:text-3xl font-semibold text-white mb-2 group-hover:text-red transition-colors tracking-tight">
+              {event.name}
+            </h2>
+
+            <!-- Venue -->
+            <p class="text-gray text-sm mb-6">
+              {event.venue}
+            </p>
+
+            <!-- Description -->
+            <p class="text-gray text-sm font-light mb-8 line-clamp-2">
+              {event.description}
+            </p>
+
+            <!-- Stats row -->
+            {event.stats && (
+              <div class="grid grid-cols-4 gap-4 border-t border-white/10 pt-6">
+                <div>
+                  <p class="font-display text-lg font-semibold text-white">{event.stats.totalDrivers}</p>
+                  <p class="text-gray text-xs">Drivers</p>
+                </div>
+                <div>
+                  <p class="font-display text-lg font-semibold text-white">{event.stats.totalLaps}</p>
+                  <p class="text-gray text-xs">Laps</p>
+                </div>
+                <div>
+                  <p class="font-display text-lg font-semibold text-white">{event.stats.fastestLap}</p>
+                  <p class="text-gray text-xs">Fastest</p>
+                </div>
+                <div class="flex items-center justify-end">
+                  <span class="text-xs text-red group-hover:translate-x-1 transition-transform">
+                    View →
+                  </span>
+                </div>
+              </div>
+            )}
+          </a>
+        ))}
+      </div>
+    </section>
+  </div>
 
   <Footer isSubpage />
 </BaseLayout>

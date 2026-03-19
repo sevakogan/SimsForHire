@@ -1,0 +1,174 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro'
+import Navbar from '../components/Navbar.astro'
+import Footer from '../components/Footer.astro'
+import { CONTACT } from '../data/content'
+
+const lastUpdated = 'March 5, 2026'
+---
+
+<BaseLayout
+  title="Terms and Conditions — SimsForHire"
+  description="SimsForHire terms and conditions. Review the terms governing our services, SMS messaging program, and website use."
+>
+  <Navbar isSubpage />
+
+  <!-- Header -->
+  <section class="pt-32 pb-12 px-6">
+    <div class="max-w-[680px] mx-auto" data-reveal>
+      <p class="text-red text-sm font-medium mb-3">Legal</p>
+      <h1 class="font-display text-[clamp(2.5rem,5vw,3.5rem)] font-semibold text-white tracking-tight">
+        Terms & Conditions
+      </h1>
+      <p class="text-gray text-sm mt-3">Last updated: {lastUpdated}</p>
+    </div>
+  </section>
+
+  <!-- Content -->
+  <section class="pb-24 px-6">
+    <div class="max-w-[680px] mx-auto space-y-12">
+
+      <!-- Introduction -->
+      <div class="bg-surface  p-6 md:p-8" data-reveal>
+        <p class="text-gray text-sm leading-relaxed">
+          These Terms and Conditions ("Terms") govern your use of the SimsForHire website at
+          <a href="https://simsforhire.com" class="text-red hover:underline">simsforhire.com</a>,
+          our services, and our SMS messaging program. SimsForHire is a brand of TheLevelTeam LLC. By using our
+          website, booking our services, or opting in to receive text messages, you agree to be bound by these
+          Terms. If you do not agree, please do not use our website or services.
+        </p>
+      </div>
+
+      <!-- About Our Services -->
+      <div data-reveal>
+        <h2 class="font-display text-xl font-semibold text-white mb-4">About Our Services</h2>
+        <p class="text-gray text-sm leading-relaxed">
+          SimsForHire provides premium full-motion and static racing simulator rental services for
+          corporate events, private parties, trade shows, and brand activations in Miami, FL. Our services
+          include delivery, setup, on-site operation, and teardown of professional racing simulator equipment.
+        </p>
+      </div>
+
+      <!-- SMS Messaging Program -->
+      <div class="bg-surface  p-6 md:p-8 border-l-4 border-red" data-reveal>
+        <h2 class="font-display text-xl font-semibold text-white mb-4">SMS Messaging Program</h2>
+        <p class="text-gray text-sm leading-relaxed mb-6">
+          By providing your phone number and checking the SMS consent checkbox when submitting a booking
+          inquiry through our website at simsforhire.com, you agree to the following terms regarding
+          our SMS messaging program:
+        </p>
+
+        <div class="space-y-5">
+          {[
+            { title: 'Program Name', text: 'SimsForHire Booking Alerts' },
+            { title: 'Program Description', text: 'You will receive text messages related to your simulator rental booking, including booking confirmations, event reminders, and delivery scheduling updates.' },
+            { title: 'Message Frequency', text: 'Message frequency varies. You will typically receive 1–5 messages per booking, depending on event logistics and scheduling.' },
+            { title: 'Message & Data Rates', text: 'Message and data rates may apply. Check with your wireless carrier for details about your messaging plan.' },
+            { title: 'Supported Carriers', text: 'Our SMS program is compatible with most major U.S. wireless carriers including AT&T, T-Mobile, Verizon, and others. Carriers are not liable for delayed or undelivered messages.' },
+            { title: 'No Third-Party Sharing', text: 'We will not share your phone number or SMS opt-in consent with any third parties for marketing purposes.' },
+          ].map((item) => (
+            <div class="border-l-2 border-gray-border pl-5">
+              <h3 class="text-white text-sm font-medium mb-1">{item.title}</h3>
+              <p class="text-gray text-sm leading-relaxed">{item.text}</p>
+            </div>
+          ))}
+
+          <div class="border-l-2 border-gray-border pl-5">
+            <h3 class="text-white text-sm font-medium mb-1">Opt-Out</h3>
+            <p class="text-gray text-sm leading-relaxed">
+              You can opt out at any time by replying <strong class="text-white">STOP</strong> to any message. After opting out, you will receive a one-time confirmation message.
+            </p>
+          </div>
+
+          <div class="border-l-2 border-gray-border pl-5">
+            <h3 class="text-white text-sm font-medium mb-1">Help</h3>
+            <p class="text-gray text-sm leading-relaxed">
+              For help, reply <strong class="text-white">HELP</strong> to any message, or contact us at
+              <a href={`mailto:${CONTACT.email}`} class="text-red hover:underline">{CONTACT.email}</a>
+              or <a href={`tel:${CONTACT.phone.replace(/[^\d+]/g, '')}`} class="text-red hover:underline">{CONTACT.phone}</a>.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Website Use -->
+      <div data-reveal>
+        <h2 class="font-display text-xl font-semibold text-white mb-4">Website Use</h2>
+        <p class="text-gray text-sm leading-relaxed mb-4">
+          By accessing our website, you agree to use it lawfully. You may not:
+        </p>
+        <ul class="space-y-3 text-gray text-sm leading-relaxed">
+          <li class="flex items-start gap-3">
+            <span class="text-gray-dim mt-1 text-xs">&#8226;</span>
+            <span>Use the website for any unlawful purpose or in violation of any applicable laws.</span>
+          </li>
+          <li class="flex items-start gap-3">
+            <span class="text-gray-dim mt-1 text-xs">&#8226;</span>
+            <span>Attempt to gain unauthorized access to any part of the website, server, or connected systems.</span>
+          </li>
+          <li class="flex items-start gap-3">
+            <span class="text-gray-dim mt-1 text-xs">&#8226;</span>
+            <span>Reproduce, duplicate, or copy any content from the website without prior written permission.</span>
+          </li>
+        </ul>
+      </div>
+
+      <!-- Remaining sections -->
+      {[
+        { title: 'Intellectual Property', text: 'All content on this website — including text, graphics, logos, images, and software — is the property of SimsForHire (TheLevelTeam LLC) or its licensors and is protected by applicable intellectual property laws.' },
+        { title: 'Limitation of Liability', text: 'SimsForHire (TheLevelTeam LLC) provides its website and services on an "as is" basis. To the fullest extent permitted by law, we disclaim all warranties, express or implied. SimsForHire shall not be liable for any indirect, incidental, special, or consequential damages arising from the use of our website or services. Use of our racing simulators is at your own risk; participants should follow all safety instructions provided by our on-site operators.' },
+        { title: 'Changes to These Terms', text: 'We may update these Terms from time to time. Changes will be posted on this page with an updated "Last updated" date. Your continued use of our website or services after any changes constitutes acceptance of the revised Terms.' },
+        { title: 'Governing Law', text: 'These Terms shall be governed by and construed in accordance with the laws of the State of Florida, without regard to its conflict of law provisions. Any disputes arising from these Terms shall be resolved in the courts of Miami-Dade County, Florida.' },
+      ].map((section) => (
+        <div data-reveal>
+          <h2 class="font-display text-xl font-semibold text-white mb-4">{section.title}</h2>
+          <p class="text-gray text-sm leading-relaxed">{section.text}</p>
+        </div>
+      ))}
+
+      <!-- Bookings -->
+      <div data-reveal>
+        <h2 class="font-display text-xl font-semibold text-white mb-4">Bookings & Payments</h2>
+        <ul class="space-y-3 text-gray text-sm leading-relaxed">
+          <li class="flex items-start gap-3">
+            <span class="text-gray-dim mt-1 text-xs">&#8226;</span>
+            <span>All bookings are subject to availability and confirmation by SimsForHire.</span>
+          </li>
+          <li class="flex items-start gap-3">
+            <span class="text-gray-dim mt-1 text-xs">&#8226;</span>
+            <span>Pricing, availability, and service details are subject to change without notice.</span>
+          </li>
+          <li class="flex items-start gap-3">
+            <span class="text-gray-dim mt-1 text-xs">&#8226;</span>
+            <span>Cancellation and refund policies will be communicated at the time of booking.</span>
+          </li>
+        </ul>
+      </div>
+
+      <!-- Contact -->
+      <div class="bg-surface  p-6 md:p-8" data-reveal>
+        <h2 class="font-display text-xl font-semibold text-white mb-4">Contact Us</h2>
+        <p class="text-gray text-sm leading-relaxed mb-4">
+          If you have questions about these Terms, contact us:
+        </p>
+        <div class="space-y-2 text-sm">
+          <p>
+            <span class="text-gray text-xs">Email</span><br />
+            <a href={`mailto:${CONTACT.email}`} class="text-red hover:underline">{CONTACT.email}</a>
+          </p>
+          <p>
+            <span class="text-gray text-xs">Phone</span><br />
+            <a href={`tel:${CONTACT.phone.replace(/[^\d+]/g, '')}`} class="text-red hover:underline">{CONTACT.phone}</a>
+          </p>
+          <p>
+            <span class="text-gray text-xs">Location</span><br />
+            <span class="text-white">{CONTACT.location}</span>
+          </p>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <Footer isSubpage />
+</BaseLayout>

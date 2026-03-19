@@ -1,0 +1,143 @@
+---
+export const prerender = false
+
+import AdminLayout from '../../layouts/AdminLayout.astro'
+import { requireAuth } from '../../lib/admin-auth'
+import { createServiceClient } from '../../lib/supabase'
+
+const auth = await requireAuth(Astro.request)
+if (!auth.authorized) return Astro.redirect('/admin')
+
+const supabase = createServiceClient()
+
+const [totalRes, newRes, rentRes, leaseRes, popupRes, contactedRes, closedRes, recentRes, weekRes] = await Promise.all([
+  supabase.from('leads').select('id', { count: 'exact', head: true }),
+  supabase.from('leads').select('id', { count: 'exact', head: true }).eq('status', 'new'),
+  supabase.from('leads').select('id', { count: 'exact', head: true }).eq('source', 'rent'),
+  supabase.from('leads').select('id', { count: 'exact', head: true }).eq('source', 'lease'),
+  supabase.from('leads').select('id', { count: 'exact', head: true }).eq('source', 'popup'),
+  supabase.from('leads').select('id', { count: 'exact', head: true }).eq('status', 'contacted'),
+  supabase.from('leads').select('id', { count: 'exact', head: true }).eq('status', 'closed'),
+  supabase.from('leads').select('*').order('created_at', { ascending: false }).limit(8),
+  supabase.from('leads').select('id', { count: 'exact', head: true }).gte('created_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()),
+])
+
+const total = totalRes.count ?? 0
+const newCount = newRes.count ?? 0
+const weekCount = weekRes.count ?? 0
+const contactedCount = contactedRes.count ?? 0
+const closedCount = closedRes.count ?? 0
+const rentCount = rentRes.count ?? 0
+const leaseCount = leaseRes.count ?? 0
+const popupCount = popupRes.count ?? 0
+const recentLeads = recentRes.data ?? []
+
+function statusStyle(status: string) {
+  if (status === 'new') return { bg: 'rgba(225,6,0,0.08)', color: '#E10600', label: 'New' }
+  if (status === 'contacted') return { bg: 'rgba(255,159,10,0.08)', color: '#FF9F0A', label: 'Contacted' }
+  return { bg: 'rgba(48,209,88,0.08)', color: '#30D158', label: 'Closed' }
+}
+
+function timeAgo(date: string): string {
+  const diff = Date.now() - new Date(date).getTime()
+  const mins = Math.floor(diff / 60000)
+  if (mins < 60) return `${mins}m`
+  const hrs = Math.floor(mins / 60)
+  if (hrs < 24) return `${hrs}h`
+  return `${Math.floor(hrs / 24)}d`
+}
+---
+
+<AdminLayout title="Dashboard — SimsForHire Admin" active="dashboard">
+
+  <!-- Header -->
+  <div style="margin-bottom: 40px;">
+    <h1 style="font-size: 32px; font-weight: 600; letter-spacing: -0.5px;">Dashboard</h1>
+    <p style="font-size: 15px; color: var(--admin-secondary); margin-top: 4px;">Overview of your leads and performance</p>
+  </div>
+
+  <!-- Primary Stats -->
+  <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 32px;">
+    {[
+      { label: 'Total Leads', value: total },
+      { label: 'This Week', value: weekCount },
+      { label: 'Awaiting Response', value: newCount },
+      { label: 'Closed', value: closedCount },
+    ].map(stat => (
+      <div style="background: var(--admin-surface); border: 1px solid var(--admin-border); border-radius: 14px; padding: 24px;">
+        <p style="font-size: 12px; color: var(--admin-secondary); letter-spacing: 0.5px; margin-bottom: 8px;">{stat.label}</p>
+        <p style="font-size: 36px; font-weight: 600; letter-spacing: -1px; color: var(--admin-text);">{stat.value}</p>
+      </div>
+    ))}
+  </div>
+
+  <!-- Source Breakdown -->
+  <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 40px;">
+    {[
+      { label: 'Event Rentals', value: rentCount, icon: '🏁' },
+      { label: 'Lease Inquiries', value: leaseCount, icon: '🏢' },
+      { label: 'Popup Leads', value: popupCount, icon: '⏱' },
+    ].map(stat => (
+      <div style="background: var(--admin-surface); border: 1px solid var(--admin-border); border-radius: 14px; padding: 20px; display: flex; align-items: center; gap: 16px;">
+        <div style="width: 40px; height: 40px; background: var(--admin-bg); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0;">{stat.icon}</div>
+        <div>
+          <p style="font-size: 12px; color: var(--admin-secondary);">{stat.label}</p>
+          <p style="font-size: 24px; font-weight: 600; letter-spacing: -0.5px;">{stat.value}</p>
+        </div>
+      </div>
+    ))}
+  </div>
+
+  <!-- Recent Leads -->
+  <div style="background: var(--admin-surface); border: 1px solid var(--admin-border); border-radius: 14px; overflow: hidden;">
+    <div style="padding: 20px 24px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--admin-border);">
+      <h2 style="font-size: 17px; font-weight: 600;">Recent Leads</h2>
+      <a href="/admin/leads" style="font-size: 13px; color: var(--admin-red); text-decoration: none; font-weight: 500;">View all →</a>
+    </div>
+
+    {recentLeads.length === 0 ? (
+      <div style="padding: 64px 24px; text-align: center;">
+        <p style="color: var(--admin-tertiary); font-size: 15px;">No leads yet</p>
+        <p style="color: var(--admin-tertiary); font-size: 13px; margin-top: 4px;">They'll appear here when forms are submitted</p>
+      </div>
+    ) : (
+      <div>
+        {recentLeads.map((lead: any, i: number) => {
+          const s = statusStyle(lead.status)
+          return (
+            <div style={`padding: 16px 24px; display: flex; align-items: center; gap: 16px; ${i < recentLeads.length - 1 ? 'border-bottom: 1px solid var(--admin-border);' : ''} transition: background 0.15s;`}
+              onmouseover="this.style.background='rgba(0,0,0,0.015)'"
+              onmouseout="this.style.background='transparent'"
+            >
+              <!-- Status badge -->
+              <span style={`font-size: 11px; font-weight: 500; padding: 3px 10px; border-radius: 20px; background: ${s.bg}; color: ${s.color}; white-space: nowrap;`}>
+                {s.label}
+              </span>
+
+              <!-- Name + email -->
+              <div style="flex: 1; min-width: 0;">
+                <p style="font-size: 14px; font-weight: 500; color: var(--admin-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                  {lead.name || lead.email}
+                </p>
+                {lead.name && (
+                  <p style="font-size: 12px; color: var(--admin-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{lead.email}</p>
+                )}
+              </div>
+
+              <!-- Source -->
+              <span style="font-size: 11px; color: var(--admin-tertiary); text-transform: uppercase; letter-spacing: 0.5px; flex-shrink: 0;">
+                {lead.source}
+              </span>
+
+              <!-- Time -->
+              <span style="font-size: 12px; color: var(--admin-tertiary); flex-shrink: 0; min-width: 28px; text-align: right;">
+                {timeAgo(lead.created_at)}
+              </span>
+            </div>
+          )
+        })}
+      </div>
+    )}
+  </div>
+
+</AdminLayout>

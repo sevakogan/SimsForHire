@@ -1,0 +1,130 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro'
+import Navbar from '../../components/Navbar.astro'
+import Footer from '../../components/Footer.astro'
+import { EVENTS } from '../../data/content'
+
+export function getStaticPaths() {
+  return EVENTS.map((event) => ({
+    params: { slug: event.slug },
+    props: { event },
+  }))
+}
+
+type EventType = (typeof EVENTS)[number]
+
+interface Props {
+  event: EventType
+}
+
+const { event } = Astro.props
+---
+
+<BaseLayout
+  title={`${event.name} — SimsForHire`}
+  ogTitle={event.name}
+  ogSubtitle={`${event.type} — ${event.venue}`}
+>
+  <Navbar isSubpage />
+
+  <!-- Hero -->
+  <section class="pt-28 pb-12 px-6 md:px-16 lg:px-24">
+    <div class="max-w-7xl mx-auto">
+      <!-- Back -->
+      <a href="/" class="inline-flex items-center gap-2 text-gray text-sm hover:text-red transition-colors mb-8">
+        ← Back to Home
+      </a>
+
+      <!-- Event type -->
+      <span class="inline-block text-[10px] uppercase tracking-[0.3em] text-red bg-red/15 px-3 py-1 border border-red/30 mb-4">
+        {event.type}
+      </span>
+
+      <!-- Title -->
+      <h1 class="font-display text-[clamp(3rem,8vw,7rem)] text-white leading-[0.9] tracking-wide mb-4">
+        {event.name}
+      </h1>
+
+      <!-- Venue -->
+      <p class="text-gray text-base mb-8">{event.venue}</p>
+
+      <!-- Description -->
+      <p class="text-gray text-base leading-relaxed max-w-3xl mb-6">
+        {event.description}
+      </p>
+
+      <!-- Stats -->
+      {'stats' in event && event.stats && (
+        <div class="flex gap-8 mb-4">
+          <div>
+            <span class="font-display text-2xl text-white">{event.stats.people}</span>
+            <span class="text-gray text-xs ml-1">guests</span>
+          </div>
+          <div>
+            <span class="font-display text-2xl text-white">{event.stats.sims}</span>
+            <span class="text-gray text-xs ml-1">simulators</span>
+          </div>
+          <div>
+            <span class="font-display text-2xl text-white">{event.stats.days}</span>
+            <span class="text-gray text-xs ml-1">{Number(event.stats.days) === 1 ? 'day' : 'days'}</span>
+          </div>
+        </div>
+      )}
+    </div>
+  </section>
+
+  <!-- Photo grid — portfolio style -->
+  <section class="pb-16 px-6 md:px-16 lg:px-24">
+    <div class="max-w-7xl mx-auto">
+      {'images' in event && event.images && (
+        <div class="grid grid-cols-2 md:grid-cols-3 gap-2 md:gap-3">
+          {event.images.map((img: { src: string; alt: string }, i: number) => (
+            <div class:list={[
+              'overflow-hidden group',
+              i === 0 ? 'col-span-2 row-span-2' : '',
+            ]}>
+              <img
+                src={img.src}
+                alt={img.alt}
+                class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                loading={i < 4 ? 'eager' : 'lazy'}
+                onerror="this.parentElement.style.display='none'"
+              />
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="py-20 px-6 md:px-16 lg:px-24 border-t border-gray-border">
+    <div class="max-w-3xl mx-auto text-center" data-reveal>
+      <h2 class="font-display text-4xl md:text-6xl text-white tracking-wide mb-4">
+        WANT THIS AT YOUR EVENT?
+      </h2>
+      <p class="text-gray text-base mb-10">
+        We bring professional racing simulators to any venue in Miami. Your event, our rigs, unforgettable experience.
+      </p>
+      <div class="flex flex-wrap justify-center gap-5">
+        <a
+          href="tel:7542285654"
+          class="inline-flex items-center gap-3 bg-red text-white px-10 py-4 text-sm font-display uppercase tracking-[0.25em] hover:bg-red-hover hover:shadow-[0_0_30px_rgba(225,6,0,0.3)] transition-all"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 01-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 00-1.091-.852H4.5A2.25 2.25 0 002.25 4.5v2.25z" />
+          </svg>
+          Call Now
+        </a>
+        <a
+          href="/#contact"
+          class="inline-block border border-white/20 text-white/80 px-10 py-4 text-sm font-display uppercase tracking-[0.25em] hover:border-red hover:text-red transition-all"
+        >
+          Send Inquiry
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <Footer isSubpage />
+</BaseLayout>

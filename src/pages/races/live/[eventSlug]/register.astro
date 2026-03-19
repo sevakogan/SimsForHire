@@ -1,0 +1,63 @@
+---
+export const prerender = false
+
+import { createServiceClient } from '../../../../lib/supabase'
+import { resolveEventSlug } from '../../../../lib/s4m/event-helpers'
+import { getThemeVariables } from '../../../../lib/s4m/themes'
+import { EventProvider } from '../../../../components/s4m/EventProvider'
+import { ToastProvider } from '../../../../components/s4m/Toast'
+import { RegisterForm } from '../../../../components/s4m/RegisterForm'
+
+const { eventSlug } = Astro.params
+const eventId = await resolveEventSlug(eventSlug!)
+if (!eventId) return Astro.redirect('/races')
+
+const supabase = createServiceClient()
+const [{ data: event }, { data: config }] = await Promise.all([
+  supabase.from('live_events').select('*').eq('id', eventId).single(),
+  supabase.from('event_config').select('*').eq('event_id', eventId).single(),
+])
+
+if (!event || !config) return Astro.redirect('/races')
+
+const themeVars = getThemeVariables(event.theme || 'default')
+const styleVars = Object.entries(themeVars).map(([k, v]) => `${k}:${v}`).join(';')
+---
+
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Register — {config.event_name}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet" />
+</head>
+<body style={styleVars}>
+  <div class="min-h-screen" style="background: var(--light)">
+    <!-- Header -->
+    <div style="background: var(--black)" class="px-6 py-6 text-center">
+      {config.logo_left && <img src={config.logo_left} alt="" class="h-12 mx-auto mb-3 object-contain" />}
+      <div class="font-bold text-[11px] tracking-[3px] uppercase text-white">{config.dealer_name}</div>
+      <div class="font-mono text-[8px] tracking-[2px] text-white/30 mt-1 uppercase">{config.event_name}</div>
+    </div>
+
+    <div class="h-1" style="background: var(--yellow)"></div>
+
+    <!-- Form -->
+    <div class="max-w-md mx-auto px-6 py-10">
+      <h1 class="text-2xl font-bold tracking-tight uppercase mb-2" style="color: var(--black)">
+        Sign the Waiver &amp; Register
+      </h1>
+      <p class="font-mono text-[10px] tracking-[2px] uppercase mb-8" style="color: var(--gray)">
+        Fill in your details to enter the queue
+      </p>
+
+      <EventProvider event={event} config={config} client:load>
+        <ToastProvider client:load>
+          <RegisterForm client:load />
+        </ToastProvider>
+      </EventProvider>
+    </div>
+  </div>
+</body>
+</html>

@@ -2,80 +2,45 @@
 import { CONTACT } from '../data/content'
 ---
 
-<section id="contact" class="relative clip-diagonal-top bg-surface pt-32 pb-24 -mt-8 overflow-hidden">
-  <!-- Subtle red glow — parallax drift -->
-  <div class="absolute inset-0 pointer-events-none" data-parallax="0.06">
-    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-red/5 blur-[120px]"></div>
-  </div>
-
-  <!-- Floating orbs -->
-  <div class="parallax-orb w-[300px] h-[300px] bg-red -right-20 top-1/4" data-parallax="-0.09"></div>
-  <div class="parallax-orb w-[200px] h-[200px] bg-white left-1/4 bottom-1/4" data-parallax="0.07"></div>
-
-  <!-- Watermark — drifts -->
-  <span class="watermark bottom-8 right-8 text-[8rem] md:text-[12rem]" data-parallax="-0.12">CONTACT</span>
-
-  <div class="max-w-4xl mx-auto px-6 md:px-16 lg:px-24 relative z-10">
-    <div data-reveal class="text-center mb-12">
-      <span class="text-xs uppercase tracking-[0.3em] text-red font-body">Let's Talk</span>
-      <h2 class="font-display text-5xl md:text-8xl text-white mt-2 mb-6">GET IN TOUCH</h2>
-      <p class="text-gray-3 text-sm max-w-lg mx-auto">
-        Ready to bring the race to your next event? Fill out the form and our team will get back to you within 24 hours.
+<section id="contact" class="py-24 md:py-32 px-6 md:px-16 lg:px-24 border-t border-gray-border">
+  <div class="max-w-2xl mx-auto">
+    <!-- Heading -->
+    <div class="text-center mb-12" data-reveal>
+      <h2 class="font-display text-5xl md:text-7xl text-white tracking-wide">BOOK YOUR EVENT</h2>
+      <p class="text-gray text-sm mt-4">
+        Tell us about your event and we'll get back to you within 24 hours.
+      </p>
+      <p class="text-red/80 text-xs mt-2 uppercase tracking-widest">
+        48-hour setup available — we operate 24/7
       </p>
     </div>
 
-    <!-- Contact form -->
-    <form id="contact-form" data-reveal class="max-w-2xl mx-auto mb-16">
+    <!-- Form — simplified -->
+    <form id="contact-form" data-reveal>
       <div class="grid sm:grid-cols-2 gap-4 mb-4">
-        <!-- Name -->
-        <div>
-          <label for="name" class="block text-[10px] uppercase tracking-[0.3em] text-gray-2 mb-2">Name *</label>
+        <div class="form-field">
           <input
-            type="text"
-            id="name"
-            name="name"
-            required
-            placeholder="Your name"
-            class="w-full bg-bg border border-gray-1/40 px-4 py-3 text-sm text-white placeholder:text-gray-2/60 focus:border-red focus:outline-none transition-colors"
+            type="text" id="name" name="name" required placeholder="Name *"
+            class="w-full bg-surface border border-gray-border px-4 py-3.5 text-sm text-white placeholder:text-gray-dim transition-all"
           />
+          <span class="field-error text-red text-[10px] mt-1 hidden">Required</span>
         </div>
-
-        <!-- Email -->
-        <div>
-          <label for="email" class="block text-[10px] uppercase tracking-[0.3em] text-gray-2 mb-2">Email *</label>
+        <div class="form-field">
           <input
-            type="email"
-            id="email"
-            name="email"
-            required
-            placeholder="your@email.com"
-            class="w-full bg-bg border border-gray-1/40 px-4 py-3 text-sm text-white placeholder:text-gray-2/60 focus:border-red focus:outline-none transition-colors"
+            type="email" id="email" name="email" required placeholder="Email *"
+            class="w-full bg-surface border border-gray-border px-4 py-3.5 text-sm text-white placeholder:text-gray-dim transition-all"
           />
+          <span class="field-error text-red text-[10px] mt-1 hidden">Valid email required</span>
         </div>
       </div>
 
       <div class="grid sm:grid-cols-2 gap-4 mb-4">
-        <!-- Phone -->
-        <div>
-          <label for="phone" class="block text-[10px] uppercase tracking-[0.3em] text-gray-2 mb-2">Phone</label>
-          <input
-            type="tel"
-            id="phone"
-            name="phone"
-            placeholder="(305) 555-1234"
-            class="w-full bg-bg border border-gray-1/40 px-4 py-3 text-sm text-white placeholder:text-gray-2/60 focus:border-red focus:outline-none transition-colors"
-          />
-        </div>
-
-        <!-- Event type -->
-        <div>
-          <label for="eventType" class="block text-[10px] uppercase tracking-[0.3em] text-gray-2 mb-2">Event Type</label>
+        <div class="form-field">
           <select
-            id="eventType"
-            name="eventType"
-            class="w-full bg-bg border border-gray-1/40 px-4 py-3 text-sm text-white focus:border-red focus:outline-none transition-colors appearance-none"
+            id="eventType" name="eventType"
+            class="w-full bg-surface border border-gray-border px-4 py-3.5 text-sm text-white transition-all appearance-none"
           >
-            <option value="" class="bg-bg text-gray-2">Select type...</option>
+            <option value="" class="bg-bg text-gray-dim">Event Type</option>
             <option value="Corporate Event" class="bg-bg">Corporate Event</option>
             <option value="Private Party" class="bg-bg">Private Party</option>
             <option value="Trade Show" class="bg-bg">Trade Show</option>
@@ -83,79 +48,66 @@ import { CONTACT } from '../data/content'
             <option value="Other" class="bg-bg">Other</option>
           </select>
         </div>
-      </div>
-
-      <div class="grid sm:grid-cols-2 gap-4 mb-4">
-        <!-- Date -->
-        <div>
-          <label for="eventDate" class="block text-[10px] uppercase tracking-[0.3em] text-gray-2 mb-2">Event Date</label>
+        <div class="form-field">
           <input
-            type="date"
-            id="eventDate"
-            name="eventDate"
-            class="w-full bg-bg border border-gray-1/40 px-4 py-3 text-sm text-white focus:border-red focus:outline-none transition-colors"
-          />
-        </div>
-
-        <!-- Expected guests -->
-        <div>
-          <label for="guestCount" class="block text-[10px] uppercase tracking-[0.3em] text-gray-2 mb-2">Expected Guests</label>
-          <input
-            type="text"
-            id="guestCount"
-            name="guestCount"
-            placeholder="e.g. 200"
-            class="w-full bg-bg border border-gray-1/40 px-4 py-3 text-sm text-white placeholder:text-gray-2/60 focus:border-red focus:outline-none transition-colors"
+            type="tel" id="phone" name="phone" placeholder="Phone (optional)"
+            class="w-full bg-surface border border-gray-border px-4 py-3.5 text-sm text-white placeholder:text-gray-dim transition-all"
           />
         </div>
       </div>
 
-      <!-- Message -->
-      <div class="mb-6">
-        <label for="message" class="block text-[10px] uppercase tracking-[0.3em] text-gray-2 mb-2">Message *</label>
+      <div class="mb-4 form-field">
         <textarea
-          id="message"
-          name="message"
-          required
-          rows="4"
-          placeholder="Tell us about your event..."
-          class="w-full bg-bg border border-gray-1/40 px-4 py-3 text-sm text-white placeholder:text-gray-2/60 focus:border-red focus:outline-none transition-colors resize-none"
+          id="message" name="message" rows="3" placeholder="Tell us about your event (optional)"
+          class="w-full bg-surface border border-gray-border px-4 py-3.5 text-sm text-white placeholder:text-gray-dim transition-all resize-none"
         ></textarea>
+      </div>
+
+      <!-- SMS consent -->
+      <div class="mb-6">
+        <label class="flex items-start gap-3 cursor-pointer group">
+          <input type="checkbox" id="smsConsent" name="smsConsent" class="mt-1 w-4 h-4 accent-red flex-shrink-0" />
+          <span class="text-gray-dim text-xs leading-relaxed group-hover:text-gray transition-colors">
+            I agree to receive booking-related texts from SimsForHire.
+            Msg & data rates may apply. Reply <strong class="text-white">STOP</strong> to opt out.
+            <a href="/privacy-policy" target="_blank" class="text-red hover:text-white transition-colors">Privacy</a> &amp;
+            <a href="/terms-and-conditions" target="_blank" class="text-red hover:text-white transition-colors">Terms</a>.
+          </span>
+        </label>
       </div>
 
       <!-- Submit -->
       <button
-        type="submit"
-        id="submit-btn"
-        class="w-full bg-red text-white px-10 py-4 text-sm font-display uppercase tracking-[0.2em] hover:bg-red-dark hover:shadow-[0_0_25px_rgba(225,6,0,0.3)] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+        type="submit" id="submit-btn"
+        class="w-full bg-red text-white py-5 text-sm font-display uppercase tracking-[0.25em] cursor-pointer relative z-10 hover:bg-[#ff1a1a] hover:shadow-[0_0_30px_rgba(225,6,0,0.3)] active:scale-[0.99] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
       >
-        <span id="btn-text">SEND INQUIRY</span>
-        <span id="btn-loading" class="hidden">SENDING...</span>
+        <span id="btn-text">Send Inquiry</span>
+        <span id="btn-loading" class="hidden">Sending...</span>
       </button>
 
       <!-- Status messages -->
       <div id="form-success" class="hidden mt-6 p-4 border border-green-500/30 bg-green-500/10 text-center">
         <p class="text-green-400 text-sm font-display uppercase tracking-wider">Message sent!</p>
-        <p class="text-gray-3 text-xs mt-1">We'll get back to you within 24 hours. Check your email for confirmation.</p>
+        <p class="text-gray text-xs mt-1">We'll get back to you within 24 hours.</p>
       </div>
       <div id="form-error" class="hidden mt-6 p-4 border border-red/30 bg-red/10 text-center">
         <p class="text-red text-sm font-display uppercase tracking-wider">Something went wrong</p>
-        <p class="text-gray-3 text-xs mt-1">Please try again or email us directly at {CONTACT.email}</p>
+        <p class="text-gray text-xs mt-1">Please try again or email us at {CONTACT.email}</p>
       </div>
     </form>
 
     <!-- Contact details -->
-    <div data-reveal class="grid sm:grid-cols-3 gap-8 text-center">
+    <div class="grid grid-cols-3 gap-4 mt-12 text-center" data-reveal>
       <div>
-        <span class="text-[10px] uppercase tracking-[0.3em] text-gray-2 block mb-2">Email</span>
+        <span class="text-[10px] uppercase tracking-[0.25em] text-gray-dim block mb-1">Email</span>
         <a href={`mailto:${CONTACT.email}`} class="text-white text-sm hover:text-red transition-colors">{CONTACT.email}</a>
       </div>
       <div>
-        <span class="text-[10px] uppercase tracking-[0.3em] text-gray-2 block mb-2">Phone</span>
+        <span class="text-[10px] uppercase tracking-[0.25em] text-gray-dim block mb-1">Phone</span>
         <a href={`tel:${CONTACT.phone.replace(/\D/g, '')}`} class="text-white text-sm hover:text-red transition-colors">{CONTACT.phone}</a>
       </div>
       <div>
-        <span class="text-[10px] uppercase tracking-[0.3em] text-gray-2 block mb-2">Location</span>
+        <span class="text-[10px] uppercase tracking-[0.25em] text-gray-dim block mb-1">Location</span>
         <span class="text-white text-sm">{CONTACT.location}</span>
       </div>
     </div>
@@ -165,15 +117,51 @@ import { CONTACT } from '../data/content'
 <script>
   const form = document.getElementById('contact-form') as HTMLFormElement
   const submitBtn = document.getElementById('submit-btn') as HTMLButtonElement
-  const btnText = document.getElementById('btn-text') as HTMLSpanElement
-  const btnLoading = document.getElementById('btn-loading') as HTMLSpanElement
-  const successMsg = document.getElementById('form-success') as HTMLDivElement
-  const errorMsg = document.getElementById('form-error') as HTMLDivElement
+  const btnText = document.getElementById('btn-text')!
+  const btnLoading = document.getElementById('btn-loading')!
+  const successMsg = document.getElementById('form-success')!
+  const errorMsg = document.getElementById('form-error')!
 
-  form?.addEventListener('submit', async (e) => {
+  function getCookie(name: string): string | undefined {
+    const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'))
+    return match?.[2]
+  }
+
+  const requiredFields = form.querySelectorAll<HTMLInputElement | HTMLTextAreaElement>('[required]')
+  requiredFields.forEach((field) => {
+    field.addEventListener('blur', () => {
+      const parent = field.closest('.form-field')
+      if (!parent) return
+      if (!field.value.trim() || (field.type === 'email' && !field.validity.valid)) {
+        parent.classList.add('has-error')
+      } else {
+        parent.classList.remove('has-error')
+      }
+    })
+    field.addEventListener('input', () => {
+      const parent = field.closest('.form-field')
+      if (parent?.classList.contains('has-error') && field.value.trim()) {
+        if (field.type !== 'email' || field.validity.valid) {
+          parent.classList.remove('has-error')
+        }
+      }
+    })
+  })
+
+  form.addEventListener('submit', async (e) => {
     e.preventDefault()
 
-    // Reset states
+    let hasErrors = false
+    requiredFields.forEach((field) => {
+      const parent = field.closest('.form-field')
+      if (!parent) return
+      if (!field.value.trim() || (field.type === 'email' && !field.validity.valid)) {
+        parent.classList.add('has-error')
+        hasErrors = true
+      }
+    })
+    if (hasErrors) return
+
     successMsg.classList.add('hidden')
     errorMsg.classList.add('hidden')
     submitBtn.disabled = true
@@ -183,19 +171,37 @@ import { CONTACT } from '../data/content'
     const formData = new FormData(form)
     const data = Object.fromEntries(formData.entries())
 
+    const eventId = crypto.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(36).slice(2)}`
+
+    if (typeof fbq !== 'undefined') {
+      fbq('track', 'Lead', {
+        content_category: data.eventType || 'General Inquiry',
+        content_name: 'Hire Inquiry Form',
+      }, { eventID: eventId })
+    }
+    window.dataLayer = window.dataLayer || [];
+    window.dataLayer.push({
+      event: 'rent_lead',
+      event_category: 'lead',
+      event_label: 'rent_inquiry_form',
+    })
+
     try {
       const response = await fetch('/api/contact', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
+        body: JSON.stringify({
+          ...data,
+          eventId,
+          sourceUrl: window.location.href,
+          fbc: getCookie('_fbc'),
+          fbp: getCookie('_fbp'),
+        }),
       })
 
-      if (!response.ok) {
-        throw new Error('Failed to submit')
-      }
+      if (!response.ok) throw new Error('Failed')
 
-      successMsg.classList.remove('hidden')
-      form.reset()
+      window.location.href = '/thank-you/rent'
     } catch {
       errorMsg.classList.remove('hidden')
     } finally {

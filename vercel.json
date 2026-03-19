@@ -1,12 +1,3 @@
 {
-  "rewrites": [
-    {
-      "source": "/races/live/:slug",
-      "destination": "https://s4m-leaderboard.vercel.app/races/live/:slug"
-    },
-    {
-      "source": "/races/live/:slug/:path*",
-      "destination": "https://s4m-leaderboard.vercel.app/races/live/:slug/:path*"
-    }
-  ]
+  "rewrites": []
 }

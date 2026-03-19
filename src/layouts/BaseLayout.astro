@@ -1,6 +1,7 @@
 ---
 import '../styles/global.css'
 import { SITE } from '../data/content'
+import TimedPopup from '../components/TimedPopup.astro'
 
 interface Props {
   title?: string
@@ -13,13 +14,14 @@ const {
   title = `${SITE.name} — ${SITE.tagline}`,
   ogTitle,
   ogSubtitle,
-  description = 'Full-motion racing simulators delivered, set up, and operated anywhere in Miami. Corporate events, private parties, brand activations.',
+  description = 'SimsForHire delivers full-motion racing simulators to events across Miami. Corporate events, private parties, brand activations, and trade shows. Professional setup, operation, and teardown — 48-hour turnaround, 24/7 availability.',
 } = Astro.props
 
 const ogParams = new URLSearchParams()
 if (ogTitle) ogParams.set('title', ogTitle)
 if (ogSubtitle) ogParams.set('subtitle', ogSubtitle)
 const ogImageUrl = `${SITE.url}/api/og${ogParams.toString() ? `?${ogParams.toString()}` : ''}`
+const canonicalUrl = SITE.url
 ---
 
 <!doctype html>
@@ -29,34 +31,216 @@ const ogImageUrl = `${SITE.url}/api/og${ogParams.toString() ? `?${ogParams.toStr
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="description" content={description} />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="canonical" href={canonicalUrl} />
 
-    <!-- Open Graph / Social Share -->
+    <!-- SEO: Keywords, Author, Robots -->
+    <meta name="keywords" content="racing simulator rental Miami, sim racing event rental, full motion simulator hire, racing simulator for corporate events, racing simulator private party Miami, brand activation simulator, trade show racing simulator, SimsForHire, sim rig rental, racing entertainment Miami, event entertainment Miami, racing simulator company Miami, full motion racing simulator rental" />
+    <meta name="author" content="SimsForHire — A ShiftArcade Company" />
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+    <meta name="googlebot" content="index, follow" />
+
+    <!-- Geo targeting -->
+    <meta name="geo.region" content="US-FL" />
+    <meta name="geo.placename" content="Miami" />
+    <meta name="geo.position" content="25.7617;-80.1918" />
+    <meta name="ICBM" content="25.7617, -80.1918" />
+
+    <!-- Open Graph -->
     <meta property="og:type" content="website" />
-    <meta property="og:url" content={SITE.url} />
-    <meta property="og:title" content={title} />
+    <meta property="og:url" content={canonicalUrl} />
+    <meta property="og:title" content={ogTitle || title} />
     <meta property="og:description" content={description} />
     <meta property="og:image" content={ogImageUrl} />
-    <meta property="og:image:width" content="1200" />
-    <meta property="og:image:height" content="630" />
+    <meta property="og:image:width" content="1280" />
+    <meta property="og:image:height" content="720" />
+    <meta property="og:site_name" content="SimsForHire" />
+    <meta property="og:locale" content="en_US" />
 
-    <!-- Twitter Card -->
+    <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content={title} />
+    <meta name="twitter:title" content={ogTitle || title} />
     <meta name="twitter:description" content={description} />
     <meta name="twitter:image" content={ogImageUrl} />
+    <meta name="twitter:site" content="@simsforhire" />
 
-    <!-- Google Fonts: Bebas Neue + Inter -->
+    <!-- JSON-LD: Local Business (helps Google, ChatGPT, Perplexity, Bing AI) -->
+    <script type="application/ld+json" is:inline>
+    {
+      "@context": "https://schema.org",
+      "@type": "LocalBusiness",
+      "name": "SimsForHire",
+      "description": "SimsForHire delivers full-motion racing simulators to events across Miami. Professional setup, operation, and teardown for corporate events, private parties, brand activations, and trade shows.",
+      "url": "https://simsforhire.com",
+      "telephone": "+17542285654",
+      "email": "hello@simsforhire.com",
+      "image": "https://img.youtube.com/vi/hBRNvZfHSQE/maxresdefault.jpg",
+      "logo": "https://simsforhire.com/images/simsforhire-logo-white.png",
+      "address": {
+        "@type": "PostalAddress",
+        "addressLocality": "Miami",
+        "addressRegion": "FL",
+        "addressCountry": "US"
+      },
+      "geo": {
+        "@type": "GeoCoordinates",
+        "latitude": 25.7617,
+        "longitude": -80.1918
+      },
+      "areaServed": {
+        "@type": "City",
+        "name": "Miami"
+      },
+      "priceRange": "$$$$",
+      "openingHours": "Mo-Su 00:00-23:59",
+      "sameAs": [
+        "https://instagram.com/simsforhire",
+        "https://tiktok.com/@simsforhire",
+        "https://youtube.com/@simsforhire"
+      ],
+      "hasOfferCatalog": {
+        "@type": "OfferCatalog",
+        "name": "Racing Simulator Rental Services",
+        "itemListElement": [
+          {
+            "@type": "Offer",
+            "itemOffered": {
+              "@type": "Service",
+              "name": "Full-Motion Racing Simulator Rental",
+              "description": "Professional full-motion racing simulators delivered, set up, and operated at your event. Sigma Integrale motion platform, Simucube 2 direct drive, triple 39-inch displays."
+            }
+          },
+          {
+            "@type": "Offer",
+            "itemOffered": {
+              "@type": "Service",
+              "name": "Corporate Event Simulator Package",
+              "description": "Team building and client entertainment with competitive sim racing. Full setup and teardown included."
+            }
+          },
+          {
+            "@type": "Offer",
+            "itemOffered": {
+              "@type": "Service",
+              "name": "Brand Activation Simulator Package",
+              "description": "Custom-branded racing simulator experiences for product launches, festivals, and brand events. White-label wrapping available."
+            }
+          }
+        ]
+      },
+      "aggregateRating": {
+        "@type": "AggregateRating",
+        "ratingValue": "5.0",
+        "reviewCount": "5",
+        "bestRating": "5"
+      }
+    }
+    </script>
+
+    <!-- JSON-LD: FAQ (AI platforms pull these into answers) -->
+    <script type="application/ld+json" is:inline>
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "How does SimsForHire work?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Call us, get a quote, submit a deposit, and we deliver full-motion racing simulators to your venue. We handle setup, operation, and teardown. 48-hour turnaround available, 24/7."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What types of events do you serve?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Corporate events, private parties, brand activations, trade shows, car meets, and festivals. We've activated at Art Basel Miami, Hard Rock Miami International Autodrome, Wynwood Marketplace, and DRT trade shows."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How many simulators can you provide?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "We can deploy up to 8 rigs at a single event — 6 full-motion and 2 non-motion simulators. We've served 3,400+ racers across 5+ events in Miami."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Do you offer white-label branding?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes. We offer full white-label wrapping and custom branding for your event. Your logo, your colors, our rigs."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Where does SimsForHire operate?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "SimsForHire currently serves the Miami, FL metro area including Miami Beach, Wynwood, Brickell, Coral Gables, Fort Lauderdale, and surrounding areas."
+          }
+        }
+      ]
+    }
+    </script>
+
+    <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600&display=swap"
       rel="stylesheet"
     />
+
+    <!-- Google Tag Manager -->
+    <script is:inline>
+      (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+      new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+      j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+      'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+      })(window,document,'script','dataLayer','GTM-TXWT5JDH');
+    </script>
+
+    <!-- Meta Pixel -->
+    <script is:inline define:vars={{ pixelId: import.meta.env.META_PIXEL_ID || '' }}>
+      if (pixelId) {
+        !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+        n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
+        n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
+        t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,
+        document,'script','https://connect.facebook.net/en_US/fbevents.js');
+        fbq('init', pixelId);
+        fbq('track', 'PageView');
+      }
+    </script>
 
     <title>{title}</title>
   </head>
   <body class="bg-bg text-white font-body antialiased">
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-TXWT5JDH" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+
     <slot />
+    <TimedPopup />
+
+    <!-- Store click tracking -->
+    <script>
+      document.querySelectorAll('a[href="/store"]').forEach(link => {
+        link.addEventListener('click', () => {
+          if (typeof (window as any).fbq === 'function') {
+            (window as any).fbq('trackCustom', 'StoreClick', { source: window.location.pathname })
+          }
+          window.dataLayer = window.dataLayer || [];
+          window.dataLayer.push({
+            event: 'store_click',
+            event_category: 'engagement',
+            event_label: 'store_button',
+          })
+        })
+      })
+    </script>
 
     <!-- Scroll reveal observer -->
     <script>
@@ -69,46 +253,12 @@ const ogImageUrl = `${SITE.url}/api/og${ogParams.toString() ? `?${ogParams.toStr
             }
           }
         },
-        { threshold: 0.15 }
+        { threshold: 0.12 }
       )
 
       document.querySelectorAll('[data-reveal]').forEach((el) => {
         observer.observe(el)
       })
-    </script>
-
-    <!-- Parallax scroll engine -->
-    <script>
-      const parallaxEls = document.querySelectorAll<HTMLElement>('[data-parallax]')
-      let ticking = false
-
-      function updateParallax() {
-        const scrollY = window.scrollY
-        const viewH = window.innerHeight
-
-        for (const el of parallaxEls) {
-          const speed = parseFloat(el.dataset.parallax ?? '0')
-          if (speed === 0) continue
-
-          const rect = el.getBoundingClientRect()
-          const elCenter = rect.top + rect.height / 2
-          const offset = (elCenter - viewH / 2) * speed
-
-          el.style.transform = `translateY(${offset}px)`
-        }
-
-        ticking = false
-      }
-
-      window.addEventListener('scroll', () => {
-        if (!ticking) {
-          requestAnimationFrame(updateParallax)
-          ticking = true
-        }
-      }, { passive: true })
-
-      // Run once on load
-      updateParallax()
     </script>
   </body>
 </html>

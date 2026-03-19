@@ -1,0 +1,33 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro'
+import Navbar from '../components/Navbar.astro'
+import Footer from '../components/Footer.astro'
+---
+
+<BaseLayout title="Store — SimsForHire" description="Buy a full-motion racing simulator. Turnkey or custom builds available. Coming soon.">
+  <Navbar isSubpage />
+
+  <section class="min-h-screen flex flex-col items-center justify-center px-6 text-center">
+    <p class="text-[10px] uppercase tracking-[0.4em] text-red mb-4">SimsForHire Store</p>
+    <h1 class="font-display text-5xl md:text-8xl text-white tracking-wide mb-4">COMING SOON</h1>
+    <p class="text-gray text-base max-w-md mb-8">
+      Turnkey and custom-built full-motion racing simulators for sale. Built by the same team that runs Miami's biggest sim racing events.
+    </p>
+    <div class="flex flex-wrap justify-center gap-4">
+      <a
+        href="tel:7542285654"
+        class="inline-flex items-center gap-3 bg-red text-white px-8 py-3 text-sm font-display uppercase tracking-[0.25em] hover:bg-red-hover transition-colors"
+      >
+        Call for Pricing
+      </a>
+      <a
+        href="/"
+        class="border border-gray-border text-gray text-sm px-8 py-3 hover:border-white hover:text-white transition-colors"
+      >
+        Back to Home
+      </a>
+    </div>
+  </section>
+
+  <Footer isSubpage />
+</BaseLayout>

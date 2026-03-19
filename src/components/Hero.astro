@@ -1,10 +1,10 @@
 ---
-import { HERO } from '../data/content'
+import { HERO, STATS } from '../data/content'
 ---
 
 <section id="hero" class="relative h-screen w-full overflow-hidden">
-  <!-- YouTube video background — parallax (moves slower) -->
-  <div class="hero-bg-layer absolute inset-0 pointer-events-none" data-parallax="0.3">
+  <!-- YouTube video background -->
+  <div class="absolute inset-0 pointer-events-none">
     <iframe
       src={`https://www.youtube-nocookie.com/embed/${HERO.videoId}?autoplay=1&mute=1&loop=1&playlist=${HERO.videoId}&controls=0&showinfo=0&rel=0&modestbranding=1&playsinline=1&enablejsapi=1&iv_load_policy=3&disablekb=1`}
       title="SimsForHire Racing Simulators"
@@ -15,75 +15,77 @@ import { HERO } from '../data/content'
     ></iframe>
   </div>
 
-  <!-- Dark overlay — parallax (moves slower) -->
-  <div class="hero-bg-layer absolute inset-0 bg-gradient-to-b from-black/80 via-black/60 to-bg z-[1]" data-parallax="0.3"></div>
+  <!-- Dark overlay -->
+  <div class="absolute inset-0 bg-gradient-to-b from-black/70 via-black/50 to-bg z-[1]"></div>
 
-  <!-- Speed lines decoration -->
-  <div class="speed-lines absolute inset-0 z-[2]" data-parallax="0.15"></div>
+  <!-- Content -->
+  <div class="relative z-10 flex h-full flex-col justify-center px-6 md:px-16 lg:px-24 max-w-7xl mx-auto">
+    <!-- Red accent line -->
+    <div class="w-16 h-1 bg-red mb-8 hero-animate" style="animation-delay: 0.2s;"></div>
 
-  <!-- Floating red orb — drifts on scroll -->
-  <div class="parallax-orb w-[500px] h-[500px] bg-red top-1/4 -right-32 z-[3]" data-parallax="-0.1"></div>
-
-  <!-- Content — left aligned, moves at normal speed -->
-  <div class="hero-content-layer relative z-10 flex h-full flex-col justify-center px-6 md:px-16 lg:px-24 max-w-7xl mx-auto">
-    <!-- Red accent bar -->
-    <div
-      class="red-line hero-animate mb-8"
-      style="animation-delay: 0.2s;"
-    ></div>
-
-    <!-- Heading line 1 -->
-    <h1
-      class="font-display text-6xl md:text-8xl lg:text-[10rem] font-bold text-white leading-[0.9] hero-animate"
-      style="animation-delay: 0.35s;"
-    >
+    <!-- Headline -->
+    <h1 class="font-display text-[clamp(4rem,12vw,11rem)] text-white leading-[0.9] tracking-wide hero-animate" style="animation-delay: 0.35s;">
       {HERO.headingLine1}
     </h1>
-
-    <!-- Heading line 2 — with red accent -->
-    <h1
-      class="font-display text-6xl md:text-8xl lg:text-[10rem] font-bold text-red leading-[0.9] hero-animate"
-      style="animation-delay: 0.5s;"
-    >
+    <h1 class="font-display text-[clamp(4rem,12vw,11rem)] text-red leading-[0.9] tracking-wide hero-animate" style="animation-delay: 0.5s;">
       {HERO.headingLine2}
     </h1>
 
-    <!-- Subtext -->
-    <p
-      class="text-base md:text-lg text-gray-3 mt-8 max-w-xl font-body hero-animate"
-      style="animation-delay: 0.65s;"
-    >
-      {HERO.subtext}
-    </p>
+    <!-- Rotating hooks -->
+    <div class="mt-6 max-w-lg h-12 md:h-8 overflow-hidden relative hero-animate" style="animation-delay: 0.65s;">
+      <div id="hero-rotator" class="flex flex-col transition-transform duration-500 ease-out">
+        <p class="text-white text-sm md:text-lg font-medium h-12 md:h-8 flex items-center">Professional racing simulators. Delivered to your event.</p>
+        <p class="text-white text-sm md:text-lg font-medium h-12 md:h-8 flex items-center">Full-motion rigs. Your venue. We handle everything.</p>
+        <p class="text-white text-sm md:text-lg font-medium h-12 md:h-8 flex items-center">From Art Basel to private parties — we bring the race.</p>
+        <p class="text-white text-sm md:text-lg font-medium h-12 md:h-8 flex items-center">8 rigs at Hard Rock Miami. What's your event?</p>
+        <p class="text-white text-sm md:text-lg font-medium h-12 md:h-8 flex items-center">3,400+ racers served across Miami. You're next.</p>
+      </div>
+    </div>
 
-    <!-- Buttons -->
-    <div
-      class="mt-10 flex gap-4 flex-wrap hero-animate"
-      style="animation-delay: 0.8s;"
-    >
+    <!-- CTAs — phone is primary -->
+    <div class="mt-10 flex flex-wrap items-center gap-5 hero-animate" style="animation-delay: 0.8s;">
       <a
-        href={HERO.ctaPrimary.href}
-        class="bg-red text-white px-10 py-4 text-sm font-display font-semibold uppercase tracking-[0.2em] hover:bg-red-dark hover:shadow-[0_0_25px_rgba(225,6,0,0.3)] transition-all"
+        href="tel:7542285654"
+        class="inline-flex items-center gap-3 bg-red text-white px-10 py-4 text-sm font-display uppercase tracking-[0.25em] hover:bg-red-hover hover:shadow-[0_0_30px_rgba(225,6,0,0.3)] transition-all"
       >
-        {HERO.ctaPrimary.label}
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 01-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 00-1.091-.852H4.5A2.25 2.25 0 002.25 4.5v2.25z" />
+        </svg>
+        Call Now
       </a>
       <a
-        href={HERO.ctaSecondary.href}
-        class="border border-white/20 px-10 py-4 text-sm font-display font-semibold uppercase tracking-[0.2em] text-gray-3 hover:border-red hover:text-red transition-all"
+        href="#contact"
+        class="inline-block border border-white/20 text-white/80 px-10 py-4 text-sm font-display uppercase tracking-[0.25em] hover:border-red hover:text-red transition-all"
       >
-        {HERO.ctaSecondary.label}
+        Send Inquiry
       </a>
     </div>
   </div>
 
-  <!-- Scroll indicator -->
-  <div
-    class="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-3 z-10 hero-animate"
-    style="animation-delay: 1s;"
-  >
-    <span class="text-[8px] tracking-[0.4em] text-white/30 uppercase font-body">
-      SCROLL
-    </span>
-    <div class="w-px h-8 bg-gradient-to-b from-white/20 to-red"></div>
+  <!-- Stats bar — bottom of hero -->
+  <div class="absolute bottom-0 left-0 w-full z-10 border-t border-white/10 bg-bg/60 backdrop-blur-sm">
+    <div class="max-w-7xl mx-auto px-6 md:px-16 lg:px-24 py-5 grid grid-cols-2 md:grid-cols-4 gap-4">
+      {STATS.map((stat, i) => (
+        <div class="text-center hero-stat-animate" style={`animation-delay: ${1.0 + i * 0.1}s;`}>
+          <span class="font-display text-3xl md:text-4xl text-white">{stat.value}</span>
+          <span class="font-display text-3xl md:text-4xl text-red">{stat.suffix}</span>
+          <span class="block text-[10px] uppercase tracking-[0.25em] text-gray mt-1">{stat.label}</span>
+        </div>
+      ))}
+    </div>
   </div>
 </section>
+
+<script>
+  const rotator = document.getElementById('hero-rotator')
+  if (rotator) {
+    const lines = rotator.children.length
+    let index = 0
+    const lineH = rotator.children[0] instanceof HTMLElement ? rotator.children[0].offsetHeight : 40
+
+    setInterval(() => {
+      index = (index + 1) % lines
+      rotator.style.transform = `translateY(-${index * lineH}px)`
+    }, 3000)
+  }
+</script>

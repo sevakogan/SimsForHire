@@ -1,5 +1,12 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-  <rect width="32" height="32" fill="#0A0A0A"/>
-  <rect x="0" y="0" width="32" height="2" fill="#E10600"/>
-  <text x="16" y="22" text-anchor="middle" font-family="Arial Black, sans-serif" font-weight="900" font-size="16" fill="white" letter-spacing="-1">S4H</text>
+  <rect width="32" height="32" rx="6" fill="#0A0A0A"/>
+  <rect x="0" y="0" width="32" height="2.5" rx="1" fill="#E10600"/>
+  <!-- Steering wheel outer ring -->
+  <circle cx="16" cy="17" r="10" fill="none" stroke="#FFFFFF" stroke-width="2.5"/>
+  <!-- Center hub -->
+  <circle cx="16" cy="17" r="3" fill="#E10600"/>
+  <!-- Spokes -->
+  <line x1="16" y1="7" x2="16" y2="14" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round"/>
+  <line x1="8.2" y1="21.5" x2="13.5" y2="18.5" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round"/>
+  <line x1="23.8" y1="21.5" x2="18.5" y2="18.5" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round"/>
 </svg>

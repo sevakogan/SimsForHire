@@ -34,21 +34,6 @@ export interface RaceEvent {
 
 export const RACE_EVENTS: readonly RaceEvent[] = [
   {
-    slug: 'porsche',
-    name: 'Porsche',
-    date: '',
-    venue: '',
-    type: '',
-    description: '',
-    sessions: [],
-    stats: {
-      totalDrivers: '—',
-      totalLaps: '—',
-      fastestLap: '—',
-      fastestDriver: '—',
-    },
-  },
-  {
     slug: 'art-basel-2025',
     name: 'Art Basel Miami',
     date: 'December 2025',

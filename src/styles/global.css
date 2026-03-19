@@ -1,31 +1,25 @@
 @import 'tailwindcss';
 
 /* ──────────────────────────────────────────────
-   THEME TOKENS — Tailwind v4 @theme
+   THEME TOKENS — Dark, high-energy
    ────────────────────────────────────────────── */
 @theme {
   --color-bg: #0A0A0A;
   --color-surface: #111111;
   --color-red: #E10600;
-  --color-red-dark: #B30500;
+  --color-red-hover: #FF1A0E;
   --color-white: #FFFFFF;
-  --color-gray-1: #333333;
-  --color-gray-2: #666666;
-  --color-gray-3: #999999;
+  --color-gray: #888888;
+  --color-gray-dim: #444444;
+  --color-gray-border: #222222;
 
   --font-display: 'Bebas Neue', sans-serif;
   --font-body: 'Inter', sans-serif;
 }
 
 /* ──────────────────────────────────────────────
-   BASE RESET
+   BASE
    ────────────────────────────────────────────── */
-*,
-*::before,
-*::after {
-  border-radius: 0 !important;
-}
-
 html {
   scroll-behavior: smooth;
   background-color: var(--color-bg);
@@ -34,8 +28,10 @@ html {
 
 body {
   font-family: var(--font-body);
-  background-color: var(--color-bg);
+  font-weight: 400;
+  line-height: 1.5;
   overflow-x: hidden;
+  background-color: var(--color-bg);
 }
 
 ::selection {
@@ -43,99 +39,26 @@ body {
   color: var(--color-white);
 }
 
-/* ──────────────────────────────────────────────
-   CARBON FIBER TEXTURE
-   ────────────────────────────────────────────── */
-.carbon-weave {
-  background-image:
-    repeating-linear-gradient(
-      45deg,
-      transparent,
-      transparent 2px,
-      rgba(255, 255, 255, 0.02) 2px,
-      rgba(255, 255, 255, 0.02) 4px
-    ),
-    repeating-linear-gradient(
-      -45deg,
-      transparent,
-      transparent 2px,
-      rgba(255, 255, 255, 0.02) 2px,
-      rgba(255, 255, 255, 0.02) 4px
-    );
-}
-
-/* ──────────────────────────────────────────────
-   RACING CARD
-   ────────────────────────────────────────────── */
-.racing-card {
-  background-color: var(--color-surface);
-  border: 1px solid rgba(225, 6, 0, 0.25);
-  border-top: 2px solid var(--color-red);
-  position: relative;
-  overflow: hidden;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-.racing-card::before {
+/* Noise grain overlay — film texture */
+body::after {
   content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(225, 6, 0, 0.06), transparent);
-  transition: left 0.5s ease;
-}
-
-.racing-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 30px rgba(225, 6, 0, 0.15);
-}
-
-.racing-card:hover::before {
-  left: 100%;
-}
-
-/* ──────────────────────────────────────────────
-   SPEED LINES — pseudo-element for hero
-   ────────────────────────────────────────────── */
-.speed-lines::before {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: -10%;
-  width: 120%;
-  height: 200px;
-  transform: translateY(-50%) skewY(-2deg);
-  background: repeating-linear-gradient(
-    0deg,
-    transparent,
-    transparent 8px,
-    rgba(225, 6, 0, 0.03) 8px,
-    rgba(225, 6, 0, 0.03) 10px
-  );
+  position: fixed;
+  inset: 0;
   pointer-events: none;
-  z-index: 0;
+  z-index: 9999;
+  opacity: 0.03;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 256px 256px;
 }
 
 /* ──────────────────────────────────────────────
-   DIAGONAL CLIP-PATH DIVIDER
-   ────────────────────────────────────────────── */
-.clip-diagonal-top {
-  clip-path: polygon(0 6%, 100% 0%, 100% 100%, 0% 100%);
-}
-
-.clip-diagonal-bottom {
-  clip-path: polygon(0 0%, 100% 0%, 100% 94%, 0% 100%);
-}
-
-/* ──────────────────────────────────────────────
-   SCROLL REVEAL
+   SCROLL REVEAL — CSS-based, no GSAP dependency
    ────────────────────────────────────────────── */
 [data-reveal] {
   opacity: 0;
-  transform: translateY(30px);
-  transition: opacity 0.7s ease-out, transform 0.7s ease-out;
+  transform: translateY(40px);
+  transition: opacity 0.8s cubic-bezier(0.22, 1, 0.36, 1), transform 0.8s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 [data-reveal].revealed {
@@ -143,89 +66,90 @@ body {
   transform: translateY(0);
 }
 
+[data-reveal="slide-left"] {
+  transform: translateX(-80px);
+}
+
+[data-reveal="slide-left"].revealed {
+  transform: translateX(0);
+}
+
+[data-reveal="slide-right"] {
+  transform: translateX(80px);
+}
+
+[data-reveal="slide-right"].revealed {
+  transform: translateX(0);
+}
+
+[data-reveal="scale"] {
+  transform: scale(0.92);
+}
+
+[data-reveal="scale"].revealed {
+  transform: scale(1);
+}
+
+/* Hero entrance — CSS animation, no JS needed */
+@keyframes heroSlideIn {
+  from { opacity: 0; transform: translateX(-50px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+.hero-animate {
+  opacity: 0;
+  animation: heroSlideIn 0.9s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@keyframes heroFadeUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.hero-stat-animate {
+  opacity: 0;
+  animation: heroFadeUp 0.6s ease-out forwards;
+}
+
 /* ──────────────────────────────────────────────
-   MARQUEE
+   EVENT STRIP — horizontal auto-scroll
    ────────────────────────────────────────────── */
-@keyframes marquee {
+@keyframes strip-scroll {
   0% { transform: translateX(0); }
   100% { transform: translateX(-50%); }
 }
 
-.marquee-track {
-  animation: marquee 20s linear infinite;
+.event-strip-track {
+  animation: strip-scroll 30s linear infinite;
+}
+
+.event-strip-track:hover {
+  animation-play-state: paused;
 }
 
 /* ──────────────────────────────────────────────
-   HERO ENTRANCE
+   FORM INPUTS
    ────────────────────────────────────────────── */
-@keyframes heroSlideIn {
-  from {
-    opacity: 0;
-    transform: translateX(-40px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
+input:focus,
+textarea:focus,
+select:focus {
+  border-color: var(--color-red) !important;
+  box-shadow: 0 0 0 1px var(--color-red);
+  outline: none;
 }
 
-.hero-animate {
-  animation: heroSlideIn 0.8s ease-out both;
+.form-field.has-error input,
+.form-field.has-error textarea {
+  border-color: var(--color-red) !important;
+  box-shadow: 0 0 0 1px var(--color-red), 0 0 20px rgba(225, 6, 0, 0.15);
 }
 
-/* ──────────────────────────────────────────────
-   WATERMARK NUMBER
-   ────────────────────────────────────────────── */
-.watermark {
-  position: absolute;
-  font-family: var(--font-display);
-  font-size: clamp(6rem, 15vw, 12rem);
-  font-weight: bold;
-  color: rgba(255, 255, 255, 0.02);
-  pointer-events: none;
-  user-select: none;
-  line-height: 1;
+.form-field.has-error .field-error {
+  display: block;
 }
 
 /* ──────────────────────────────────────────────
-   RED ACCENT LINE
-   ────────────────────────────────────────────── */
-.red-line {
-  width: 60px;
-  height: 3px;
-  background-color: var(--color-red);
-}
-
-/* ──────────────────────────────────────────────
-   PARALLAX
-   ────────────────────────────────────────────── */
-[data-parallax] {
-  will-change: transform;
-}
-
-/* Floating red orb ambient decoration */
-.parallax-orb {
-  position: absolute;
-  border-radius: 50% !important;
-  pointer-events: none;
-  filter: blur(80px);
-  opacity: 0.04;
-  will-change: transform;
-}
-
-/* Hero parallax layers */
-.hero-bg-layer {
-  will-change: transform;
-  transition: none;
-}
-
-.hero-content-layer {
-  will-change: transform;
-  transition: none;
-}
-
-/* ──────────────────────────────────────────────
-   LEADERBOARD TABLE
+   LEADERBOARD TABLE — race pages
    ────────────────────────────────────────────── */
 .leaderboard-table {
   width: 100%;
@@ -235,27 +159,25 @@ body {
 
 .leaderboard-table th {
   text-align: left;
-  font-family: var(--font-body);
   font-size: 10px;
   text-transform: uppercase;
   letter-spacing: 0.3em;
-  color: var(--color-gray-2);
+  color: var(--color-gray);
   padding: 12px 16px;
-  border-bottom: 1px solid rgba(51, 51, 51, 0.4);
+  border-bottom: 1px solid var(--color-gray-border);
 }
 
 .leaderboard-table td {
   padding: 10px 16px;
   font-size: 14px;
-  color: var(--color-gray-3);
-  border-bottom: 1px solid rgba(51, 51, 51, 0.2);
+  color: var(--color-gray);
+  border-bottom: 1px solid rgba(34, 34, 34, 0.5);
 }
 
 .leaderboard-table tr:hover td {
   background-color: rgba(225, 6, 0, 0.04);
 }
 
-/* Position badges */
 .pos-badge {
   display: inline-flex;
   align-items: center;
@@ -266,16 +188,6 @@ body {
   font-size: 16px;
 }
 
-.pos-1 {
-  background-color: var(--color-red);
-  color: var(--color-white);
-}
-
-.pos-podium {
-  border: 1px solid var(--color-gray-1);
-  color: var(--color-white);
-}
-
-.pos-default {
-  color: var(--color-gray-2);
-}
+.pos-1 { background-color: var(--color-red); color: var(--color-white); }
+.pos-podium { border: 1px solid var(--color-gray-border); color: var(--color-white); }
+.pos-default { color: var(--color-gray); }

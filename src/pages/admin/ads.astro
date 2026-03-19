@@ -1,0 +1,175 @@
+---
+export const prerender = false
+
+import AdminLayout from '../../layouts/AdminLayout.astro'
+import { requireAuth } from '../../lib/admin-auth'
+
+const auth = await requireAuth(Astro.request)
+if (!auth.authorized) return Astro.redirect('/admin')
+
+const tab = new URL(Astro.request.url).searchParams.get('tab') || 'google'
+---
+
+<AdminLayout title="Ads — SimsForHire Admin" active="ads">
+
+  <!-- Header -->
+  <div style="margin-bottom: 32px;">
+    <h1 style="font-size: 32px; font-weight: 600; letter-spacing: -0.5px;">Ads</h1>
+    <p style="font-size: 15px; color: var(--admin-secondary); margin-top: 4px;">Campaign management and tracking</p>
+  </div>
+
+  <!-- Tabs -->
+  <div style="display: flex; gap: 0; border-bottom: 1px solid var(--admin-border); margin-bottom: 32px;">
+    <a
+      href="/admin/ads?tab=google"
+      style={`padding: 12px 24px; font-size: 14px; font-weight: 500; text-decoration: none; border-bottom: 2px solid; margin-bottom: -1px; transition: all 0.15s; ${
+        tab === 'google'
+          ? 'color: var(--admin-text); border-color: var(--admin-text);'
+          : 'color: var(--admin-tertiary); border-color: transparent;'
+      }`}
+    >
+      Google Ads
+    </a>
+    <a
+      href="/admin/ads?tab=facebook"
+      style={`padding: 12px 24px; font-size: 14px; font-weight: 500; text-decoration: none; border-bottom: 2px solid; margin-bottom: -1px; transition: all 0.15s; ${
+        tab === 'facebook'
+          ? 'color: var(--admin-text); border-color: var(--admin-text);'
+          : 'color: var(--admin-tertiary); border-color: transparent;'
+      }`}
+    >
+      Meta / Facebook
+    </a>
+  </div>
+
+  {tab === 'google' && (
+    <div>
+      <!-- Quick Links -->
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 32px;">
+        {[
+          { title: 'Google Ads', desc: 'Manage campaigns, keywords, and bidding', url: 'https://ads.google.com' },
+          { title: 'Tag Manager', desc: 'Container GTM-TXWT5JDH', url: 'https://tagmanager.google.com' },
+        ].map(link => (
+          <a href={link.url} target="_blank" rel="noopener" style="background: var(--admin-surface); border: 1px solid var(--admin-border); border-radius: 14px; padding: 24px; text-decoration: none; transition: border-color 0.2s;"
+            onmouseover="this.style.borderColor='var(--admin-secondary)'"
+            onmouseout="this.style.borderColor='var(--admin-border)'"
+          >
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+              <h3 style="font-size: 15px; font-weight: 600; color: var(--admin-text);">{link.title}</h3>
+              <svg style="width: 14px; height: 14px; color: var(--admin-tertiary);" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 19.5l15-15m0 0H8.25m11.25 0v11.25" />
+              </svg>
+            </div>
+            <p style="font-size: 13px; color: var(--admin-secondary);">{link.desc}</p>
+          </a>
+        ))}
+      </div>
+
+      <!-- Events Reference -->
+      <div style="background: var(--admin-surface); border: 1px solid var(--admin-border); border-radius: 14px; overflow: hidden;">
+        <div style="padding: 20px 24px; border-bottom: 1px solid var(--admin-border);">
+          <h3 style="font-size: 15px; font-weight: 600;">Conversion Events</h3>
+          <p style="font-size: 13px; color: var(--admin-secondary); margin-top: 2px;">Events pushed to GTM dataLayer</p>
+        </div>
+        <div style="padding: 8px 0;">
+          {[
+            { event: 'rent_lead', trigger: 'Contact form submitted', page: '/thank-you/rent' },
+            { event: 'lease_lead', trigger: 'Lease form submitted', page: '/thank-you/lease' },
+            { event: 'popup_lead', trigger: 'Popup form submitted', page: '/thank-you/inquiry' },
+            { event: 'store_click', trigger: 'Store button clicked', page: '—' },
+            { event: 'popup_view', trigger: 'Popup displayed (60s)', page: '—' },
+          ].map(item => (
+            <div style="padding: 12px 24px; display: flex; align-items: center; gap: 16px; font-size: 13px;">
+              <code style="font-family: 'SF Mono', 'Fira Code', monospace; font-size: 12px; color: var(--admin-red); background: rgba(225,6,0,0.06); padding: 4px 10px; border-radius: 6px; flex-shrink: 0;">{item.event}</code>
+              <span style="color: var(--admin-secondary); flex: 1;">{item.trigger}</span>
+              <span style="color: var(--admin-tertiary); font-size: 12px;">{item.page}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <!-- IDs -->
+      <div style="background: var(--admin-surface); border: 1px solid var(--admin-border); border-radius: 14px; padding: 24px; margin-top: 16px;">
+        <h3 style="font-size: 15px; font-weight: 600; margin-bottom: 12px;">Identifiers</h3>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; font-size: 13px;">
+          <div>
+            <p style="color: var(--admin-secondary);">GTM Container</p>
+            <p style="font-weight: 500; margin-top: 2px;">GTM-TXWT5JDH</p>
+          </div>
+          <div>
+            <p style="color: var(--admin-secondary);">GA4 Measurement</p>
+            <p style="font-weight: 500; margin-top: 2px;">G-S7R6C7KLK1</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  )}
+
+  {tab === 'facebook' && (
+    <div>
+      <!-- Quick Links -->
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 32px;">
+        {[
+          { title: 'Meta Ads Manager', desc: 'Campaigns, audiences, and creative', url: 'https://business.facebook.com/adsmanager' },
+          { title: 'Events Manager', desc: 'Pixel events and CAPI activity', url: 'https://business.facebook.com/events_manager2' },
+        ].map(link => (
+          <a href={link.url} target="_blank" rel="noopener" style="background: var(--admin-surface); border: 1px solid var(--admin-border); border-radius: 14px; padding: 24px; text-decoration: none; transition: border-color 0.2s;"
+            onmouseover="this.style.borderColor='var(--admin-secondary)'"
+            onmouseout="this.style.borderColor='var(--admin-border)'"
+          >
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+              <h3 style="font-size: 15px; font-weight: 600; color: var(--admin-text);">{link.title}</h3>
+              <svg style="width: 14px; height: 14px; color: var(--admin-tertiary);" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 19.5l15-15m0 0H8.25m11.25 0v11.25" />
+              </svg>
+            </div>
+            <p style="font-size: 13px; color: var(--admin-secondary);">{link.desc}</p>
+          </a>
+        ))}
+      </div>
+
+      <!-- Events Reference -->
+      <div style="background: var(--admin-surface); border: 1px solid var(--admin-border); border-radius: 14px; overflow: hidden;">
+        <div style="padding: 20px 24px; border-bottom: 1px solid var(--admin-border);">
+          <h3 style="font-size: 15px; font-weight: 600;">Pixel & CAPI Events</h3>
+          <p style="font-size: 13px; color: var(--admin-secondary); margin-top: 2px;">Client-side Pixel + server-side Conversions API</p>
+        </div>
+        <div style="padding: 8px 0;">
+          {[
+            { event: 'PageView', type: 'Pixel', trigger: 'Every page load' },
+            { event: 'Lead (Rent)', type: 'Pixel + CAPI', trigger: 'Contact form submitted' },
+            { event: 'Lead (Lease)', type: 'Pixel + CAPI', trigger: 'Lease form submitted' },
+            { event: 'Lead (Popup)', type: 'Pixel + CAPI', trigger: 'Popup form submitted' },
+            { event: 'StoreClick', type: 'Pixel', trigger: 'Store button clicked' },
+          ].map(item => (
+            <div style="padding: 12px 24px; display: flex; align-items: center; gap: 16px; font-size: 13px;">
+              <code style="font-family: 'SF Mono', 'Fira Code', monospace; font-size: 12px; color: #1877F2; background: rgba(24,119,242,0.06); padding: 4px 10px; border-radius: 6px; flex-shrink: 0;">{item.event}</code>
+              <span style="color: var(--admin-tertiary); font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; min-width: 80px;">{item.type}</span>
+              <span style="color: var(--admin-secondary); flex: 1;">{item.trigger}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <!-- Setup Status -->
+      <div style="background: var(--admin-surface); border: 1px solid var(--admin-border); border-radius: 14px; padding: 24px; margin-top: 16px;">
+        <h3 style="font-size: 15px; font-weight: 600; margin-bottom: 12px;">Setup</h3>
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; font-size: 13px;">
+          <div>
+            <p style="color: var(--admin-secondary);">Meta Pixel</p>
+            <p style="font-weight: 500; margin-top: 2px;">Via META_PIXEL_ID env</p>
+          </div>
+          <div>
+            <p style="color: var(--admin-secondary);">Conversions API</p>
+            <p style="font-weight: 500; margin-top: 2px;">Server-side via CAPI token</p>
+          </div>
+          <div>
+            <p style="color: var(--admin-secondary);">Deduplication</p>
+            <p style="font-weight: 500; margin-top: 2px;">Shared eventId</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  )}
+
+</AdminLayout>

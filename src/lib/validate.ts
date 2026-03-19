@@ -6,6 +6,7 @@ export interface ContactFormData {
   readonly eventDate?: string
   readonly guestCount?: string
   readonly message: string
+  readonly smsConsent: boolean
 }
 
 interface ValidationResult {
@@ -39,10 +40,6 @@ export function validateContactForm(
     return { success: false, error: 'Valid email is required' }
   }
 
-  if (!message) {
-    return { success: false, error: 'Message is required' }
-  }
-
   if (name.length > 200 || email.length > 200 || message.length > 5000) {
     return { success: false, error: 'Input exceeds maximum length' }
   }
@@ -52,7 +49,7 @@ export function validateContactForm(
     data: {
       name,
       email,
-      message,
+      message: message || 'Event inquiry from website',
       phone: typeof data.phone === 'string' ? data.phone.trim() : undefined,
       eventType:
         typeof data.eventType === 'string' ? data.eventType.trim() : undefined,
@@ -62,6 +59,7 @@ export function validateContactForm(
         typeof data.guestCount === 'string'
           ? data.guestCount.trim()
           : undefined,
+      smsConsent: data.smsConsent === true || data.smsConsent === 'on',
     },
   }
 }

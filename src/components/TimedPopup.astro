@@ -1,0 +1,194 @@
+---
+---
+
+<!-- Timed Popup: shows after 60s on page -->
+<div id="timed-popup" class="fixed inset-0 z-[999] hidden">
+  <!-- Backdrop -->
+  <div id="popup-backdrop" class="absolute inset-0 bg-black/70 backdrop-blur-sm"></div>
+
+  <!-- Popup -->
+  <div class="absolute inset-0 flex items-center justify-center p-4">
+    <div id="popup-card" class="relative bg-bg border border-gray-border w-full max-w-md pointer-events-auto translate-y-8 opacity-0 transition-all duration-500">
+      <!-- Red top accent -->
+      <div class="h-1 bg-red w-full"></div>
+
+      <div class="p-8">
+        <!-- Close -->
+        <button id="popup-close" class="absolute top-4 right-4 text-gray hover:text-white transition-colors">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+
+        <p class="text-[10px] uppercase tracking-[0.4em] text-red mb-2">Still Looking?</p>
+        <h3 class="font-display text-2xl md:text-3xl text-white tracking-wide mb-2">LET'S MAKE IT HAPPEN</h3>
+        <p class="text-gray text-sm mb-6">Drop your info and we'll reach out with a custom quote. No spam, just sims.</p>
+
+        <form id="popup-form" class="space-y-4">
+          <input
+            type="text"
+            name="name"
+            placeholder="Your name"
+            class="w-full bg-transparent border border-gray-border px-4 py-3 text-white text-sm placeholder:text-gray/40 focus:border-red focus:outline-none transition-colors"
+          />
+          <input
+            type="email"
+            name="email"
+            required
+            placeholder="Email *"
+            class="w-full bg-transparent border border-gray-border px-4 py-3 text-white text-sm placeholder:text-gray/40 focus:border-red focus:outline-none transition-colors"
+          />
+          <input
+            type="tel"
+            name="phone"
+            placeholder="Phone (optional)"
+            class="w-full bg-transparent border border-gray-border px-4 py-3 text-white text-sm placeholder:text-gray/40 focus:border-red focus:outline-none transition-colors"
+          />
+          <select
+            name="interest"
+            class="w-full bg-transparent border border-gray-border px-4 py-3 text-sm text-gray focus:border-red focus:outline-none transition-colors appearance-none"
+            style="background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2214%22%20height%3D%2214%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23888%22%20stroke-width%3D%222%22%3E%3Cpath%20d%3D%22M6%209l6%206%206-6%22%2F%3E%3C%2Fsvg%3E'); background-repeat: no-repeat; background-position: right 12px center;"
+          >
+            <option value="" class="bg-bg">What are you looking for?</option>
+            <option value="Rent for an event" class="bg-bg">Rent for an event</option>
+            <option value="Lease for my business" class="bg-bg">Lease for my business</option>
+            <option value="Buy a simulator" class="bg-bg">Buy a simulator</option>
+            <option value="Just browsing" class="bg-bg">Just browsing</option>
+          </select>
+
+          <button
+            type="submit"
+            class="w-full bg-red text-white py-4 text-sm font-display uppercase tracking-[0.25em] cursor-pointer relative z-10 hover:bg-[#ff1a1a] hover:shadow-[0_0_30px_rgba(225,6,0,0.3)] active:scale-[0.99] transition-all duration-200"
+          >
+            Get My Quote
+          </button>
+
+          <div id="popup-status" class="hidden text-center text-sm"></div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const POPUP_DELAY = 60000 // 60 seconds
+  const POPUP_KEY = 's4h_popup_shown'
+
+  function initPopup() {
+    // Don't show if already shown this session or dismissed
+    if (sessionStorage.getItem(POPUP_KEY)) return
+
+    const popup = document.getElementById('timed-popup')!
+    const card = document.getElementById('popup-card')!
+    const backdrop = document.getElementById('popup-backdrop')!
+    const closeBtn = document.getElementById('popup-close')!
+    const form = document.getElementById('popup-form') as HTMLFormElement
+    const status = document.getElementById('popup-status')!
+
+    function showPopup() {
+      popup.classList.remove('hidden')
+      popup.style.opacity = '0'
+      requestAnimationFrame(() => {
+        popup.style.transition = 'opacity 0.3s'
+        popup.style.opacity = '1'
+        card.classList.remove('translate-y-8', 'opacity-0')
+        card.classList.add('translate-y-0', 'opacity-100')
+      })
+
+      // Track popup view
+      if (typeof (window as any).fbq === 'function') {
+        (window as any).fbq('trackCustom', 'PopupView', { source: 'timed_60s' })
+      }
+      window.dataLayer = window.dataLayer || [];
+      window.dataLayer.push({ event: 'popup_view', event_category: 'engagement', event_label: 'timed_60s' })
+    }
+
+    function hidePopup() {
+      card.classList.add('translate-y-8', 'opacity-0')
+      card.classList.remove('translate-y-0', 'opacity-100')
+      popup.style.opacity = '0'
+      setTimeout(() => {
+        popup.classList.add('hidden')
+      }, 300)
+      sessionStorage.setItem(POPUP_KEY, 'true')
+    }
+
+    // Show after delay
+    setTimeout(showPopup, POPUP_DELAY)
+
+    // Close handlers
+    closeBtn.addEventListener('click', hidePopup)
+    backdrop.addEventListener('click', hidePopup)
+
+    // Form submit
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault()
+      const btn = form.querySelector('button[type="submit"]') as HTMLButtonElement
+      btn.disabled = true
+      btn.textContent = 'SENDING...'
+
+      const fd = new FormData(form)
+      const eventId = `popup_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
+
+      const cookies = document.cookie.split(';').reduce((acc: Record<string, string>, c) => {
+        const [k, v] = c.trim().split('=')
+        if (k && v) acc[k] = v
+        return acc
+      }, {})
+
+      const payload: Record<string, unknown> = {
+        name: fd.get('name') || undefined,
+        email: fd.get('email'),
+        phone: fd.get('phone') || undefined,
+        interest: fd.get('interest') || undefined,
+        sourcePage: window.location.pathname,
+        sourceUrl: window.location.href,
+        eventId,
+        fbc: cookies._fbc,
+        fbp: cookies._fbp,
+      }
+
+      try {
+        const res = await fetch('/api/popup', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        })
+
+        if (res.ok) {
+          // Fire tracking before redirect
+          if (typeof (window as any).fbq === 'function') {
+            (window as any).fbq('track', 'Lead', {
+              content_category: 'Popup Lead',
+              content_name: 'Timed Popup Form',
+            }, { eventID: eventId })
+          }
+          window.dataLayer = window.dataLayer || [];
+          window.dataLayer.push({
+            event: 'popup_lead',
+            event_category: 'lead',
+            event_label: 'popup_form',
+          })
+
+          sessionStorage.setItem(POPUP_KEY, 'true')
+          window.location.href = '/thank-you/inquiry'
+        } else {
+          const data = await res.json()
+          status.textContent = data.error || 'Something went wrong.'
+          status.className = 'text-center text-sm text-red pt-1'
+        }
+      } catch {
+        status.textContent = 'Network error. Try again.'
+        status.className = 'text-center text-sm text-red pt-1'
+      } finally {
+        btn.disabled = false
+        btn.textContent = 'GET MY QUOTE'
+      }
+    })
+  }
+
+  // Only run on main pages, not legal pages
+  if (!window.location.pathname.includes('privacy') && !window.location.pathname.includes('terms')) {
+    initPopup()
+  }
+</script>

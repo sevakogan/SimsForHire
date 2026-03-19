@@ -1,117 +1,46 @@
 ---
-import { SITE, NAV_LINKS } from '../data/content'
+import { SITE } from '../data/content'
 
 interface Props {
   isSubpage?: boolean
 }
 
 const { isSubpage = false } = Astro.props
-
-function resolveHref(href: string): string {
-  if (href.startsWith('/')) return href
-  if (isSubpage) return `/${href}`
-  return href
-}
 ---
 
-<nav
-  id="navbar"
-  class="fixed top-0 left-0 w-full z-50 transition-all duration-300"
->
+<nav id="navbar" class="fixed top-0 left-0 w-full z-50 transition-all duration-300">
   <div class="max-w-7xl mx-auto px-6 flex items-center justify-between h-16">
-    <!-- Logo -->
-    <a href={isSubpage ? '/' : '#'} class="font-display text-2xl tracking-tight text-white">
-      {SITE.name}
+    <a href={isSubpage ? '/' : '#'}>
+      <img src="/images/simsforhire-logo-white.png" alt={SITE.name} class="h-8 md:h-10 w-auto" />
     </a>
-
-    <!-- Desktop links -->
-    <div class="hidden md:flex items-center gap-8">
-      {NAV_LINKS.map((link) => (
-        <a
-          href={resolveHref(link.href)}
-          class="text-xs uppercase tracking-[0.2em] text-gray-3 hover:text-white transition-colors"
-        >
-          {link.label}
-        </a>
-      ))}
+    <div class="flex items-center gap-4">
+      <a href="/lease" class="hidden md:inline-block text-xs uppercase tracking-widest text-gray hover:text-white transition-colors">
+        Lease
+      </a>
+      <a href="/store" class="hidden md:inline-block text-xs uppercase tracking-widest text-gray hover:text-white transition-colors">
+        Store
+      </a>
       <a
-        href={resolveHref('#contact')}
-        class="bg-red text-white text-xs uppercase tracking-[0.2em] px-5 py-2 hover:bg-red-dark transition-all"
+        href="tel:7542285654"
+        class="bg-red text-white text-xs font-semibold uppercase tracking-widest px-6 py-2.5 hover:bg-red-hover transition-colors"
       >
-        BOOK NOW
+        (754) 228-5654
       </a>
     </div>
-
-    <!-- Mobile hamburger -->
-    <button
-      id="menu-toggle"
-      class="md:hidden flex flex-col gap-1.5 p-2"
-      aria-label="Toggle menu"
-    >
-      <span class="block w-6 h-px bg-white transition-all" id="bar-1"></span>
-      <span class="block w-6 h-px bg-white transition-all" id="bar-2"></span>
-      <span class="block w-4 h-px bg-white transition-all ml-auto" id="bar-3"></span>
-    </button>
-  </div>
-
-  <!-- Mobile overlay -->
-  <div
-    id="mobile-menu"
-    class="fixed inset-0 bg-bg/98 flex flex-col items-center justify-center gap-8 transition-opacity duration-300 opacity-0 pointer-events-none md:hidden z-40"
-  >
-    {NAV_LINKS.map((link) => (
-      <a
-        href={resolveHref(link.href)}
-        class="mobile-link font-display text-4xl text-white hover:text-red transition-colors"
-      >
-        {link.label}
-      </a>
-    ))}
-    <a
-      href={resolveHref('#contact')}
-      class="mobile-link bg-red text-white font-display text-2xl px-8 py-3 hover:bg-red-dark transition-all mt-4"
-    >
-      BOOK NOW
-    </a>
   </div>
 </nav>
 
 <script>
   const navbar = document.getElementById('navbar')!
-  const toggle = document.getElementById('menu-toggle')!
-  const menu = document.getElementById('mobile-menu')!
-  let open = false
-
-  // Scroll effect
   window.addEventListener('scroll', () => {
     if (window.scrollY > 50) {
-      navbar.classList.add('bg-bg/95', 'backdrop-blur-md', 'border-b', 'border-red/20')
+      navbar.style.backgroundColor = 'rgba(10, 10, 10, 0.9)'
+      navbar.style.backdropFilter = 'blur(12px)'
+      navbar.style.webkitBackdropFilter = 'blur(12px)'
     } else {
-      navbar.classList.remove('bg-bg/95', 'backdrop-blur-md', 'border-b', 'border-red/20')
+      navbar.style.backgroundColor = 'transparent'
+      navbar.style.backdropFilter = 'none'
+      navbar.style.webkitBackdropFilter = 'none'
     }
-  })
-
-  // Mobile toggle
-  toggle.addEventListener('click', () => {
-    open = !open
-    if (open) {
-      menu.classList.remove('opacity-0', 'pointer-events-none')
-      menu.classList.add('opacity-100', 'pointer-events-auto')
-      document.body.style.overflow = 'hidden'
-    } else {
-      menu.classList.add('opacity-0', 'pointer-events-none')
-      menu.classList.remove('opacity-100', 'pointer-events-auto')
-      document.body.style.overflow = ''
-    }
-  })
-
-  // Close on link click
-  menu.querySelectorAll('a').forEach((link) => {
-    link.addEventListener('click', () => {
-      open = false
-      menu.classList.add('opacity-0', 'pointer-events-none')
-      menu.classList.remove('opacity-100', 'pointer-events-auto')
-      document.body.style.overflow = ''
-    })
-  })
+  }, { passive: true })
 </script>

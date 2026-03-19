@@ -1,0 +1,79 @@
+---
+interface Props {
+  active?: string
+}
+
+const { active = 'dashboard' } = Astro.props
+
+const links = [
+  { id: 'dashboard', label: 'Dashboard', href: '/admin/dashboard', icon: 'M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z' },
+  { id: 'events', label: 'Events', href: '/admin/events', icon: 'M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5' },
+  { id: 'leads', label: 'Leads', href: '/admin/leads', icon: 'M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z' },
+  { id: 'ads', label: 'Ads', href: '/admin/ads', icon: 'M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z' },
+]
+---
+
+<aside style="position: fixed; top: 0; left: 0; width: 240px; height: 100vh; background: var(--admin-sidebar); border-right: 1px solid var(--admin-border); display: flex; flex-direction: column; z-index: 40;">
+
+  <!-- Logo area -->
+  <div style="padding: 28px 24px 24px; border-bottom: 1px solid var(--admin-border);">
+    <div style="display: flex; align-items: center; gap: 10px;">
+      <div style="width: 28px; height: 28px; background: var(--admin-text); border-radius: 7px; display: flex; align-items: center; justify-content: center;">
+        <span style="color: white; font-size: 11px; font-weight: 600; letter-spacing: 0.5px;">S4H</span>
+      </div>
+      <div>
+        <p style="font-size: 14px; font-weight: 600; color: var(--admin-text); letter-spacing: -0.2px;">SimsForHire</p>
+        <p style="font-size: 10px; color: var(--admin-tertiary); letter-spacing: 0.5px;">ADMIN</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Navigation -->
+  <nav style="flex: 1; padding: 16px 12px;">
+    <p style="font-size: 10px; font-weight: 500; color: var(--admin-tertiary); letter-spacing: 1px; text-transform: uppercase; padding: 0 12px 8px;">Menu</p>
+    {links.map(link => {
+      const isActive = active === link.id
+      return (
+        <a
+          href={link.href}
+          style={`display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 10px; font-size: 14px; font-weight: ${isActive ? '500' : '400'}; color: ${isActive ? 'var(--admin-text)' : 'var(--admin-secondary)'}; background: ${isActive ? 'rgba(0,0,0,0.04)' : 'transparent'}; text-decoration: none; margin-bottom: 2px; transition: all 0.15s;`}
+        >
+          <svg style={`width: 18px; height: 18px; color: ${isActive ? 'var(--admin-red)' : 'var(--admin-tertiary)'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d={link.icon} />
+          </svg>
+          {link.label}
+        </a>
+      )
+    })}
+  </nav>
+
+  <!-- Footer -->
+  <div style="padding: 16px 12px; border-top: 1px solid var(--admin-border);">
+    <button
+      id="logout-btn"
+      style="display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 10px; font-size: 13px; color: var(--admin-secondary); background: transparent; border: none; cursor: pointer; width: 100%; font-family: inherit; transition: all 0.15s;"
+      onmouseover="this.style.color='var(--admin-red)'"
+      onmouseout="this.style.color='var(--admin-secondary)'"
+    >
+      <svg style="width: 18px; height: 18px;" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
+      </svg>
+      Sign Out
+    </button>
+    <a
+      href="/"
+      style="display: flex; align-items: center; gap: 10px; padding: 8px 12px; font-size: 12px; color: var(--admin-tertiary); text-decoration: none; transition: all 0.15s;"
+      onmouseover="this.style.color='var(--admin-secondary)'"
+      onmouseout="this.style.color='var(--admin-tertiary)'"
+    >
+      ← Back to website
+    </a>
+  </div>
+</aside>
+
+<script>
+  document.getElementById('logout-btn')?.addEventListener('click', async () => {
+    await fetch('/api/admin/logout', { method: 'POST' })
+    window.location.href = '/admin'
+  })
+</script>

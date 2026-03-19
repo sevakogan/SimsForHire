@@ -1,30 +1,62 @@
 ---
 import { SERVICES } from '../data/content'
+
+const SERVICE_ICONS: Record<string, string> = {
+  'Corporate Events': `<svg viewBox="0 0 48 48" fill="none" class="w-10 h-10">
+    <path d="M6 18h36M6 18v22a2 2 0 002 2h32a2 2 0 002-2V18M6 18l6-10h24l6 10" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+    <rect x="14" y="26" width="8" height="8" stroke="currentColor" stroke-width="1.2" opacity="0.6"/>
+    <rect x="26" y="26" width="8" height="8" stroke="currentColor" stroke-width="1.2" opacity="0.6"/>
+  </svg>`,
+  'Private Parties': `<svg viewBox="0 0 48 48" fill="none" class="w-10 h-10">
+    <path d="M24 4l5 14h14l-11 9 4 14-12-9-12 9 4-14L5 18h14z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+    <circle cx="24" cy="24" r="5" stroke="currentColor" stroke-width="1.2" opacity="0.4"/>
+  </svg>`,
+  'Trade Shows': `<svg viewBox="0 0 48 48" fill="none" class="w-10 h-10">
+    <path d="M10 44V16l14-12 14 12v28" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+    <path d="M20 44V32h8v12" stroke="currentColor" stroke-width="1.5"/>
+    <path d="M18 22h12M18 27h12" stroke="currentColor" stroke-width="1.2" opacity="0.5"/>
+  </svg>`,
+  'Brand Activations': `<svg viewBox="0 0 48 48" fill="none" class="w-10 h-10">
+    <circle cx="24" cy="20" r="14" stroke="currentColor" stroke-width="1.5"/>
+    <circle cx="24" cy="20" r="6" stroke="currentColor" stroke-width="1.2" opacity="0.5"/>
+    <path d="M15 38l5-6M33 38l-5-6" stroke="currentColor" stroke-width="1.5"/>
+    <path d="M12 42h24" stroke="currentColor" stroke-width="1.5"/>
+  </svg>`,
+}
 ---
 
-<section id="services" class="relative py-24 px-6 md:px-16 lg:px-24 max-w-7xl mx-auto overflow-hidden">
-  <!-- Floating orb -->
-  <div class="parallax-orb w-[400px] h-[400px] bg-red -left-32 bottom-0" data-parallax="0.08"></div>
-
+<section id="services" class="py-28 md:py-40 px-6 bg-gray-bg">
   <!-- Section header -->
-  <div data-reveal class="mb-16 relative z-10">
-    <span class="text-xs uppercase tracking-[0.3em] text-red font-body">What We Do</span>
-    <h2 class="font-display text-5xl md:text-7xl text-white mt-2">SERVICES</h2>
-    <div class="red-line mt-4"></div>
+  <div class="max-w-[680px] mx-auto text-center mb-20" data-reveal>
+    <p class="text-red text-sm font-medium mb-3">What We Do</p>
+    <h2 class="font-display text-[clamp(2.5rem,5vw,3.5rem)] font-semibold text-headline tracking-tight">
+      Services
+    </h2>
   </div>
 
   <!-- Services grid -->
-  <div class="grid md:grid-cols-2 gap-6 relative z-10">
-    {SERVICES.map((service, i) => (
-      <div data-reveal data-parallax={`${0.02 + (i % 2) * 0.03}`} class="racing-card carbon-weave p-8 relative">
-        <!-- Number watermark — drifts -->
-        <span class="watermark top-2 right-6 text-[5rem]" data-parallax="-0.1">{service.number}</span>
-
-        <div class="relative z-10">
-          <h3 class="font-display text-2xl text-white mb-3">{service.title}</h3>
-          <p class="text-gray-3 text-sm leading-relaxed">{service.description}</p>
+  <div class="max-w-[980px] mx-auto grid md:grid-cols-2 gap-5" data-reveal-stagger data-reveal>
+    {SERVICES.map((service) => (
+      <a
+        href="#contact"
+        class="bg-white rounded-2xl p-8 md:p-10 group transition-shadow duration-300 hover:shadow-lg block"
+      >
+        <!-- Icon -->
+        <div class="text-headline mb-5 transition-colors duration-300 group-hover:text-red">
+          <Fragment set:html={SERVICE_ICONS[service.title] ?? ''} />
         </div>
-      </div>
+
+        <h3 class="font-display text-xl font-semibold text-headline mb-3 tracking-tight">
+          {service.title}
+        </h3>
+        <p class="text-body text-sm font-light leading-relaxed mb-4">
+          {service.description}
+        </p>
+
+        <span class="text-red text-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+          Learn more &rarr;
+        </span>
+      </a>
     ))}
   </div>
 </section>

@@ -1,80 +1,221 @@
 ---
 import { FLEET } from '../data/content'
+
+const PHOTOS = [
+  '/images/tile-1.jpg',
+  '/images/tile-2.jpg',
+  '/images/tile-3.jpg',
+  '/images/tile-4.jpg',
+]
+
+const EXTRA_PHOTOS = [
+  '/images/tile-5.jpg',
+  '/images/tile-6.jpg',
+  '/images/tile-7.jpg',
+  '/images/tile-8.jpg',
+]
+
+const VIDEOS = [
+  { id: 'cwYRNiKxaCQ' },
+  { id: 'woc6CoTKEuo' },
+  { id: 'gADFKSMtPoU' },
+  { id: 'KM01L8na7EA' },
+]
+
+const EXTRA_VIDEOS = [
+  { id: 'LPa9wV6kUUk' },
+  { id: 'U-TkFEJbu5w' },
+  { id: '5O2SD7R-YHc' },
+]
+
+const rig = FLEET[0]
 ---
 
-<section id="fleet" class="relative py-24 px-6 md:px-16 lg:px-24 max-w-7xl mx-auto">
-  <!-- Floating orb -->
-  <div class="parallax-orb w-[400px] h-[400px] bg-red -left-48 top-1/3" data-parallax="-0.08"></div>
+<section id="fleet" class="py-20 md:py-28 px-6 md:px-16 lg:px-24">
+  <div class="max-w-5xl mx-auto">
+    <!-- Header -->
+    <div class="text-center mb-10" data-reveal>
+      <p class="text-[10px] uppercase tracking-[0.4em] text-red mb-2">The Rig</p>
+      <h2 class="font-display text-4xl md:text-6xl text-white tracking-wide">FULL MOTION RACING SIMULATOR</h2>
+      <p class="inline-block bg-red text-white text-sm font-semibold mt-4 px-4 py-2">Up to 8 motion sims available for rent · 24hr lead time · Miami ± 50 miles</p>
+      <!-- Equipment tags -->
+      <div class="flex flex-wrap justify-center gap-2 mt-4">
+        {'equipment' in rig && rig.equipment && rig.equipment.map((item: string) => (
+          <span class="text-gray text-[11px] border border-gray-border px-3 py-1">{item}</span>
+        ))}
+      </div>
+    </div>
 
-  <!-- Section header -->
-  <div data-reveal class="mb-16 relative z-10">
-    <span class="text-xs uppercase tracking-[0.3em] text-red font-body">Our Rigs</span>
-    <h2 class="font-display text-5xl md:text-7xl text-white mt-2">THE FLEET</h2>
-    <div class="red-line mt-4"></div>
-  </div>
+    <!-- 4x2 grid: 4 photos top, 4 videos bottom -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-2" data-reveal>
+      <!-- 4 Photos -->
+      {PHOTOS.map((src, i) => (
+        <div class="relative aspect-square overflow-hidden group cursor-pointer" data-popup-img={src}>
+          <div class="absolute inset-0 bg-red/10 mix-blend-multiply z-[1] pointer-events-none group-hover:bg-transparent transition-all duration-500"></div>
+          <img
+            src={src}
+            alt={`SimsForHire simulator ${i + 1}`}
+            class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+            loading={i < 2 ? 'eager' : 'lazy'}
+          />
+        </div>
+      ))}
 
-  <!-- Fleet cards -->
-  <div class="flex flex-col gap-12 relative z-10">
-    {FLEET.map((rig) => (
-      <div data-reveal class="racing-card p-8 md:p-12 relative">
-        <!-- Watermark number — floats at different speed -->
-        <span class="watermark top-4 right-8" data-parallax="-0.12">{rig.number}</span>
-
-        <div class="relative z-10 grid md:grid-cols-2 gap-8 items-center">
-          <!-- Image -->
-          <div class="overflow-hidden">
-            {'image' in rig && rig.image ? (
-              <img
-                src={rig.image}
-                alt={rig.name}
-                class="w-full aspect-video object-cover border border-gray-1/30"
-                data-parallax="0.05"
-                loading="lazy"
-              />
-            ) : (
-              <div class="bg-bg border border-gray-1/30 aspect-video flex items-center justify-center" data-parallax="0.05">
-                <span class="text-gray-2 text-sm uppercase tracking-wider">Simulator Image</span>
-              </div>
-            )}
-          </div>
-
-          <!-- Info -->
-          <div>
-            <span class="inline-block border border-red text-red text-[10px] uppercase tracking-[0.3em] px-3 py-1 mb-4">
-              {rig.tag}
-            </span>
-            <h3 class="font-display text-3xl md:text-4xl text-white mb-4">{rig.name}</h3>
-            <p class="text-gray-3 text-sm leading-relaxed mb-6">{rig.description}</p>
-
-            <!-- Equipment list (if available) -->
-            {'equipment' in rig && rig.equipment && (
-              <div class="mb-8">
-                <span class="text-[10px] uppercase tracking-[0.3em] text-gray-2 block mb-3">Equipment</span>
-                <ul class="grid grid-cols-1 gap-1.5">
-                  {rig.equipment.map((item: string) => (
-                    <li class="flex items-start gap-2 text-gray-3 text-xs">
-                      <span class="text-red mt-0.5 text-[8px]">&#9670;</span>
-                      <span>{item}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
-            <!-- Specs -->
-            <div class:list={['grid gap-4', rig.specs.length === 2 ? 'grid-cols-2' : 'grid-cols-3']}>
-              {rig.specs.map((spec) => (
-                <div class="text-center">
-                  <span class="font-display text-3xl text-white">{spec.value}</span>
-                  <span class="block text-[10px] uppercase tracking-[0.2em] text-gray-2 mt-1">
-                    {spec.label}
-                  </span>
-                </div>
-              ))}
-            </div>
+      <!-- 4 Videos — autoplay, IG format (4:5) -->
+      {VIDEOS.map((vid) => (
+        <div class="video-cell relative aspect-[4/5] overflow-hidden group cursor-pointer" data-popup-video={vid.id}>
+          <iframe
+            class="vid-frame absolute inset-0 w-full h-full pointer-events-none"
+            src={`https://www.youtube-nocookie.com/embed/${vid.id}?autoplay=1&mute=1&loop=1&playlist=${vid.id}&controls=0&showinfo=0&rel=0&modestbranding=1&playsinline=1&enablejsapi=1&iv_load_policy=3&disablekb=1`}
+            style="border: none; transform: scale(1.3); transform-origin: center;"
+            allow="autoplay; encrypted-media"
+            loading="lazy"
+          ></iframe>
+          <div class="absolute inset-0 bg-red/5 mix-blend-multiply pointer-events-none group-hover:bg-transparent transition-all duration-500 z-[1]"></div>
+          <div class="absolute bottom-3 left-3 z-[2] bg-black/50 backdrop-blur-sm px-2 py-1 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+            <svg class="w-3 h-3 text-red" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+            <span class="text-[8px] uppercase tracking-wider text-white">Tap to expand</span>
           </div>
         </div>
-      </div>
-    ))}
+      ))}
+    </div>
+
+    <!-- Hidden extra content -->
+    <div id="fleet-extra" class="grid grid-cols-2 md:grid-cols-4 gap-2 mt-2 hidden">
+      {EXTRA_PHOTOS.map((src, i) => (
+        <div class="relative aspect-square overflow-hidden group cursor-pointer" data-popup-img={src}>
+          <div class="absolute inset-0 bg-red/10 mix-blend-multiply z-[1] pointer-events-none group-hover:bg-transparent transition-all duration-500"></div>
+          <img
+            src={src}
+            alt={`SimsForHire simulator ${i + 5}`}
+            class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+            loading="lazy"
+          />
+        </div>
+      ))}
+      {EXTRA_VIDEOS.map((vid) => (
+        <div class="video-cell relative aspect-[4/5] overflow-hidden group cursor-pointer" data-popup-video={vid.id}>
+          <iframe
+            class="vid-frame absolute inset-0 w-full h-full pointer-events-none"
+            src={`https://www.youtube-nocookie.com/embed/${vid.id}?autoplay=1&mute=1&loop=1&playlist=${vid.id}&controls=0&showinfo=0&rel=0&modestbranding=1&playsinline=1&enablejsapi=1&iv_load_policy=3&disablekb=1`}
+            style="border: none; transform: scale(1.3); transform-origin: center;"
+            allow="autoplay; encrypted-media"
+            loading="lazy"
+          ></iframe>
+          <div class="absolute inset-0 bg-red/5 mix-blend-multiply pointer-events-none group-hover:bg-transparent transition-all duration-500 z-[1]"></div>
+        </div>
+      ))}
+    </div>
+
+    <!-- More button -->
+    <div class="text-center mt-6" data-reveal>
+      <button
+        id="fleet-more-btn"
+        class="border border-gray-border text-gray text-xs uppercase tracking-[0.25em] px-8 py-3 hover:border-red hover:text-red transition-colors"
+      >
+        More
+      </button>
+    </div>
   </div>
 </section>
+
+<!-- Popup overlay -->
+<div id="popup-overlay" class="fixed inset-0 z-[100] bg-black/90 backdrop-blur-sm hidden items-center justify-center cursor-pointer">
+  <div id="popup-content" onclick="event.stopPropagation()">
+    <img id="popup-img" src="" alt="" class="max-w-[45vw] max-h-[45vh] object-contain hidden" />
+    <div id="popup-video" class="hidden w-[320px] md:w-[380px] aspect-[9/16]">
+      <iframe id="popup-iframe" src="" class="w-full h-full" style="border: none;" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+    </div>
+  </div>
+</div>
+
+<style>
+  @media (max-width: 768px) {
+    #popup-content img { max-width: 85vw; max-height: 70vh; }
+    #popup-video { width: 85vw; }
+  }
+</style>
+
+<script>
+  const overlay = document.getElementById('popup-overlay')!
+  const popupImg = document.getElementById('popup-img') as HTMLImageElement
+  const popupVideo = document.getElementById('popup-video')!
+  const popupIframe = document.getElementById('popup-iframe') as HTMLIFrameElement
+
+  function openImage(src: string) {
+    popupImg.src = src
+    popupImg.classList.remove('hidden')
+    popupVideo.classList.add('hidden')
+    popupIframe.src = ''
+    overlay.classList.remove('hidden')
+    overlay.classList.add('flex')
+    document.body.style.overflow = 'hidden'
+  }
+
+  function openVideo(videoId: string) {
+    popupIframe.src = `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&mute=0&loop=1&playlist=${videoId}&controls=1&playsinline=1`
+    popupVideo.classList.remove('hidden')
+    popupImg.classList.add('hidden')
+    popupImg.src = ''
+    overlay.classList.remove('hidden')
+    overlay.classList.add('flex')
+    document.body.style.overflow = 'hidden'
+  }
+
+  function closePopup() {
+    overlay.classList.add('hidden')
+    overlay.classList.remove('flex')
+    document.body.style.overflow = ''
+    popupImg.src = ''
+    popupIframe.src = ''
+    popupImg.classList.add('hidden')
+    popupVideo.classList.add('hidden')
+  }
+
+  // Image clicks
+  document.querySelectorAll<HTMLElement>('[data-popup-img]').forEach((el) => {
+    el.addEventListener('click', () => {
+      const src = el.dataset.popupImg
+      if (src) openImage(src)
+    })
+  })
+
+  // Video clicks
+  document.querySelectorAll<HTMLElement>('[data-popup-video]').forEach((el) => {
+    el.addEventListener('click', () => {
+      const id = el.dataset.popupVideo
+      if (id) openVideo(id)
+    })
+  })
+
+  overlay.addEventListener('click', closePopup)
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closePopup() })
+
+  // Hover to unmute inline videos
+  document.querySelectorAll<HTMLElement>('.video-cell').forEach((cell) => {
+    const iframe = cell.querySelector<HTMLIFrameElement>('.vid-frame')
+    if (!iframe) return
+    cell.addEventListener('mouseenter', () => {
+      iframe.contentWindow?.postMessage(JSON.stringify({ event: 'command', func: 'unMute' }), '*')
+    })
+    cell.addEventListener('mouseleave', () => {
+      iframe.contentWindow?.postMessage(JSON.stringify({ event: 'command', func: 'mute' }), '*')
+    })
+  })
+
+  // More button
+  const moreBtn = document.getElementById('fleet-more-btn')!
+  const extraGrid = document.getElementById('fleet-extra')!
+  let expanded = false
+
+  moreBtn.addEventListener('click', () => {
+    expanded = !expanded
+    if (expanded) {
+      extraGrid.classList.remove('hidden')
+      moreBtn.textContent = 'Less'
+    } else {
+      extraGrid.classList.add('hidden')
+      moreBtn.textContent = 'More'
+    }
+  })
+</script>

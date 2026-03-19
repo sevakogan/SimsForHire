@@ -1,0 +1,181 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro'
+import Navbar from '../components/Navbar.astro'
+import Footer from '../components/Footer.astro'
+import { CONTACT } from '../data/content'
+
+const lastUpdated = 'March 5, 2026'
+---
+
+<BaseLayout
+  title="Privacy Policy — SimsForHire"
+  description="SimsForHire privacy policy. Learn how we collect, use, and protect your personal information."
+>
+  <Navbar isSubpage />
+
+  <!-- Header -->
+  <section class="pt-32 pb-12 px-6">
+    <div class="max-w-[680px] mx-auto" data-reveal>
+      <p class="text-red text-sm font-medium mb-3">Legal</p>
+      <h1 class="font-display text-[clamp(2.5rem,5vw,3.5rem)] font-semibold text-white tracking-tight">
+        Privacy Policy
+      </h1>
+      <p class="text-gray text-sm mt-3">Last updated: {lastUpdated}</p>
+    </div>
+  </section>
+
+  <!-- Content -->
+  <section class="pb-24 px-6">
+    <div class="max-w-[680px] mx-auto space-y-12">
+
+      <!-- Introduction -->
+      <div class="bg-surface  p-6 md:p-8" data-reveal>
+        <p class="text-gray text-sm leading-relaxed">
+          SimsForHire, a brand of TheLevelTeam LLC ("we," "us," or "our"), operates the website
+          <a href="https://simsforhire.com" class="text-red hover:underline">simsforhire.com</a>
+          and provides premium racing simulator rental services in Miami, FL. This Privacy Policy describes
+          how we collect, use, and protect your personal information when you visit our website, book our
+          services, or communicate with us.
+        </p>
+      </div>
+
+      <!-- Information We Collect -->
+      <div data-reveal>
+        <h2 class="font-display text-xl font-semibold text-white mb-4">Information We Collect</h2>
+        <p class="text-gray text-sm leading-relaxed mb-4">
+          We collect information you provide directly when you interact with our website and services:
+        </p>
+        <ul class="space-y-3 text-gray text-sm leading-relaxed">
+          <li class="flex items-start gap-3">
+            <span class="text-gray-dim mt-1 text-xs">&#8226;</span>
+            <span><strong class="text-white">Contact information</strong> — name, email address, and phone number submitted through our booking or inquiry forms.</span>
+          </li>
+          <li class="flex items-start gap-3">
+            <span class="text-gray-dim mt-1 text-xs">&#8226;</span>
+            <span><strong class="text-white">Event details</strong> — event type, date, location, and other details you provide when requesting a quote or booking.</span>
+          </li>
+          <li class="flex items-start gap-3">
+            <span class="text-gray-dim mt-1 text-xs">&#8226;</span>
+            <span><strong class="text-white">Communications</strong> — messages, emails, or other correspondence you send to us.</span>
+          </li>
+          <li class="flex items-start gap-3">
+            <span class="text-gray-dim mt-1 text-xs">&#8226;</span>
+            <span><strong class="text-white">Usage data</strong> — standard web analytics data such as browser type, pages visited, and referring URLs collected automatically via cookies and similar technologies.</span>
+          </li>
+        </ul>
+      </div>
+
+      <!-- How We Use Your Information -->
+      <div data-reveal>
+        <h2 class="font-display text-xl font-semibold text-white mb-4">How We Use Your Information</h2>
+        <ul class="space-y-3 text-gray text-sm leading-relaxed">
+          <li class="flex items-start gap-3">
+            <span class="text-gray-dim mt-1 text-xs">&#8226;</span>
+            <span>Respond to inquiries and process bookings for simulator rentals and event services.</span>
+          </li>
+          <li class="flex items-start gap-3">
+            <span class="text-gray-dim mt-1 text-xs">&#8226;</span>
+            <span>Send booking confirmations, event reminders, and event-related text messages (SMS) to the phone number you provide.</span>
+          </li>
+          <li class="flex items-start gap-3">
+            <span class="text-gray-dim mt-1 text-xs">&#8226;</span>
+            <span>Communicate with you about your event logistics, setup details, and follow-ups.</span>
+          </li>
+          <li class="flex items-start gap-3">
+            <span class="text-gray-dim mt-1 text-xs">&#8226;</span>
+            <span>Improve our website, services, and customer experience.</span>
+          </li>
+        </ul>
+      </div>
+
+      <!-- SMS/Text Messaging -->
+      <div class="bg-surface  p-6 md:p-8 border-l-4 border-red" data-reveal>
+        <h2 class="font-display text-xl font-semibold text-white mb-4">SMS / Text Messaging</h2>
+        <p class="text-gray text-sm leading-relaxed mb-4">
+          When you provide your phone number and check the SMS consent checkbox on our website booking form
+          at simsforhire.com, you consent to receive booking confirmations and event-related text
+          messages from SimsForHire.
+        </p>
+        <ul class="space-y-3 text-gray text-sm leading-relaxed">
+          <li class="flex items-start gap-3">
+            <span class="text-gray-dim mt-1 text-xs">&#8226;</span>
+            <span>Message frequency varies based on your booking activity, typically 1–5 messages per booking.</span>
+          </li>
+          <li class="flex items-start gap-3">
+            <span class="text-gray-dim mt-1 text-xs">&#8226;</span>
+            <span>Message and data rates may apply.</span>
+          </li>
+          <li class="flex items-start gap-3">
+            <span class="text-gray-dim mt-1 text-xs">&#8226;</span>
+            <span>You can opt out at any time by replying <strong class="text-white">STOP</strong> to any message.</span>
+          </li>
+          <li class="flex items-start gap-3">
+            <span class="text-gray-dim mt-1 text-xs">&#8226;</span>
+            <span>For help, reply <strong class="text-white">HELP</strong> or contact us at {CONTACT.email}.</span>
+          </li>
+          <li class="flex items-start gap-3">
+            <span class="text-gray-dim mt-1 text-xs">&#8226;</span>
+            <span>We will not share your phone number or SMS consent with any third parties for marketing purposes.</span>
+          </li>
+        </ul>
+      </div>
+
+      <!-- Data Sharing -->
+      <div data-reveal>
+        <h2 class="font-display text-xl font-semibold text-white mb-4">Data Sharing</h2>
+        <p class="text-gray text-sm leading-relaxed mb-4">
+          We do not sell, rent, or share your personal information with third parties for their marketing
+          purposes. We may share information only in the following circumstances:
+        </p>
+        <ul class="space-y-3 text-gray text-sm leading-relaxed">
+          <li class="flex items-start gap-3">
+            <span class="text-gray-dim mt-1 text-xs">&#8226;</span>
+            <span><strong class="text-white">Service providers</strong> — trusted vendors who help us operate our business (e.g., SMS delivery, email services, payment processing), bound by confidentiality obligations.</span>
+          </li>
+          <li class="flex items-start gap-3">
+            <span class="text-gray-dim mt-1 text-xs">&#8226;</span>
+            <span><strong class="text-white">Legal requirements</strong> — when required by law, regulation, or legal process.</span>
+          </li>
+        </ul>
+      </div>
+
+      <!-- Remaining sections -->
+      {[
+        { title: 'Data Retention', text: 'We retain your personal information only for as long as necessary to fulfill the purposes described in this policy, comply with legal obligations, and resolve disputes. Contact and booking information is retained for the duration of our business relationship and a reasonable period afterward for record-keeping and follow-up.' },
+        { title: 'Data Security', text: 'We implement reasonable administrative, technical, and physical safeguards to protect your personal information from unauthorized access, loss, or misuse. However, no method of transmission over the Internet is 100% secure, and we cannot guarantee absolute security.' },
+        { title: 'Your Rights', text: 'You may request access to, correction of, or deletion of your personal information at any time by contacting us. If you no longer wish to receive text messages, reply STOP to any message or contact us directly.' },
+        { title: 'Changes to This Policy', text: 'We may update this Privacy Policy from time to time. Changes will be posted on this page with an updated "Last updated" date. Continued use of our website or services after changes are posted constitutes acceptance of the revised policy.' },
+      ].map((section) => (
+        <div data-reveal>
+          <h2 class="font-display text-xl font-semibold text-white mb-4">{section.title}</h2>
+          <p class="text-gray text-sm leading-relaxed">{section.text}</p>
+        </div>
+      ))}
+
+      <!-- Contact -->
+      <div class="bg-surface  p-6 md:p-8" data-reveal>
+        <h2 class="font-display text-xl font-semibold text-white mb-4">Contact Us</h2>
+        <p class="text-gray text-sm leading-relaxed mb-4">
+          If you have questions about this Privacy Policy or our data practices, contact us:
+        </p>
+        <div class="space-y-2 text-sm">
+          <p>
+            <span class="text-gray text-xs">Email</span><br />
+            <a href={`mailto:${CONTACT.email}`} class="text-red hover:underline">{CONTACT.email}</a>
+          </p>
+          <p>
+            <span class="text-gray text-xs">Phone</span><br />
+            <a href={`tel:${CONTACT.phone.replace(/[^\d+]/g, '')}`} class="text-red hover:underline">{CONTACT.phone}</a>
+          </p>
+          <p>
+            <span class="text-gray text-xs">Location</span><br />
+            <span class="text-white">{CONTACT.location}</span>
+          </p>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <Footer isSubpage />
+</BaseLayout>

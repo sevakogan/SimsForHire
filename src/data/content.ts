@@ -18,7 +18,7 @@ export const HERO = {
   headingLine1: 'WE BRING THE',
   headingLine2: 'RACE TO YOU',
   subtext:
-    'Full-motion racing simulators delivered, set up, and operated anywhere in Miami. Corporate events, private parties, brand activations.',
+    'Professional racing simulators. Delivered to your event. We handle everything.',
   ctaPrimary: { label: 'BOOK YOUR EVENT', href: '#contact' },
   ctaSecondary: { label: 'VIEW FLEET', href: '#fleet' },
 } as const
@@ -71,18 +71,20 @@ export const FLEET = [
 ] as const
 
 export const STATS = [
-  { value: '4', suffix: '+', label: 'Events Completed' },
-  { value: '11', suffix: '+', label: 'Simulators Deployed' },
-  { value: '2.4K', suffix: '+', label: 'Racers Served' },
+  { value: '5', suffix: '+', label: 'Events Completed' },
+  { value: '19', suffix: '+', label: 'Simulators Deployed' },
+  { value: '3.4K', suffix: '+', label: 'Racers Served' },
   { value: '5.0', suffix: '/5', label: 'Client Rating' },
 ] as const
 
 export const EVENTS = [
   {
+    slug: 'art-basel',
     name: 'Art Basel Miami',
     type: 'Brand Activation',
     date: 'December 2025',
     venue: 'OFFSPEC Miami × Vossen',
+    videoId: 'ruFF6F0UO5I',
     stats: { people: '650+', sims: '4', days: '2' },
     description:
       'Two days of nonstop racing action at Miami\'s premier Art Basel car show. SimsForHire partnered with OFFSPEC Miami and Vossen Wheels to deploy four full-motion simulators alongside a jaw-dropping lineup of exotic cars — from widebody Porsches to custom-wrapped supercars. Guests lined up to compete on professional-grade rigs while DJs set the soundtrack and the Miami skyline lit up the night. An unforgettable fusion of car culture, art, and high-octane sim racing.',
@@ -93,13 +95,16 @@ export const EVENTS = [
       { src: '/images/artbasel-4.jpg', alt: 'Night scene at OFFSPEC Miami with sim racing and car show' },
       { src: '/images/artbasel-5.jpg', alt: 'Vossen Wheels partnership display with SimsForHire simulators' },
       { src: '/images/artbasel-6.jpg', alt: 'Wide shot of Art Basel event space with racing simulators' },
+      { src: '/images/artbasel-7.jpg', alt: 'SimsForHire activation at Art Basel Miami with Vossen' },
     ],
   },
   {
+    slug: 'wynwood',
     name: 'Wynwood Marketplace',
     type: 'Private Party',
-    date: 'January 2026',
+    date: 'November 2025',
     venue: 'Wynwood Marketplace',
+    videoId: 'zXzN2IGwfRA',
     stats: { people: '850+', sims: '4', days: '1' },
     description:
       'An exclusive private event at Wynwood Marketplace that brought together 850 guests for a night of competition and celebration. Four SimsForHire rigs took center stage as partygoers battled it out on the leaderboard, with the crowd erupting after every close finish. From VIP lounges to open-air sim racing under the neon glow of Wynwood\'s famous murals — this was sim racing meets Miami nightlife at its finest.',
@@ -113,6 +118,7 @@ export const EVENTS = [
     ],
   },
   {
+    slug: 'rmc',
     name: 'RMC Miami',
     type: 'Car Culture',
     date: 'February 2026',
@@ -121,7 +127,7 @@ export const EVENTS = [
     description:
       'SimsForHire rolled into one of Miami\'s most exclusive private car meets with two competition-ready rigs. RMC Miami brought together collectors, enthusiasts, and gearheads — and our simulators gave them a chance to push limits without risking the paint. Drivers went head-to-head on iconic tracks while surrounded by million-dollar machinery. Intimate, high-energy, and the perfect crossover of real and virtual motorsport.',
     images: [
-      { src: '/images/rmc-1.jpg', alt: 'SimsForHire racing rig alongside exotic cars at RMC Miami' },
+      { src: '/images/rmc_wekfest-1.jpg', alt: 'SimsForHire racing rig alongside exotic cars at RMC Miami' },
       { src: '/images/rmc-2.jpg', alt: 'Car enthusiast competing on full-motion simulator at RMC meet' },
       { src: '/images/rmc-3.jpg', alt: 'Head-to-head sim racing competition at RMC Miami car meet' },
       { src: '/images/rmc-4.jpg', alt: 'SimsForHire setup surrounded by luxury vehicles at RMC Miami' },
@@ -130,6 +136,7 @@ export const EVENTS = [
     ],
   },
   {
+    slug: 'drt',
     name: 'DRT 2026 × Vossen',
     type: 'Trade Show',
     date: 'March 2026',
@@ -144,6 +151,27 @@ export const EVENTS = [
       { src: '/images/drt-4.jpg', alt: 'Wide shot of DRT 2026 show floor with SimsForHire activation' },
       { src: '/images/drt-5.jpg', alt: 'Close-up of racing action on simulator at DRT Vossen partnership' },
       { src: '/images/drt-6.jpg', alt: 'SimsForHire branding alongside Vossen Wheels at DRT 2026' },
+    ],
+  },
+  {
+    slug: 'hard-rock',
+    name: 'Hard Rock Miami',
+    type: 'Brand Activation',
+    date: 'March 2026',
+    venue: 'Miami International Autodrome',
+    stats: { people: '1,000+', sims: '8', days: '1' },
+    description:
+      'SimsForHire hit the grid at the Miami International Autodrome for a high-profile Hard Rock activation alongside some of the world\'s most exotic machinery. With the grandstands as our backdrop, six full-motion rigs and two non-motion rigs gave attendees the chance to race the same circuit they were standing on — virtually. From racing suit-clad hosts to head-to-head battles under the stadium lights, this was sim racing at its most cinematic.',
+    images: [
+      { src: '/images/Hardrock-1.jpg', alt: 'SimsForHire racing simulators at Miami International Autodrome' },
+      { src: '/images/Hardrock-2.jpg', alt: 'Guests racing on full-motion simulators at Hard Rock event' },
+      { src: '/images/Hardrock-3.jpg', alt: 'SimsForHire crew in racing suits at Miami Autodrome' },
+      { src: '/images/Hardrock-4.jpg', alt: 'Exotic cars and racing simulators at Hard Rock activation' },
+      { src: '/images/Hardrock-5.jpg', alt: 'Night racing on SimsForHire rigs at the autodrome' },
+      { src: '/images/Hardrock-6.jpg', alt: 'Crowd gathered around SimsForHire at Hard Rock Miami' },
+      { src: '/images/Hardrock-7.jpg', alt: 'Head-to-head sim racing under stadium lights' },
+      { src: '/images/Hardrock-8.jpg', alt: 'Wide shot of Hard Rock event with SimsForHire setup' },
+      { src: '/images/Hardrock-9.jpg', alt: 'SimsForHire branding at Miami International Autodrome event' },
     ],
   },
 ] as const

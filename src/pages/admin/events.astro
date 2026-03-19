@@ -1,0 +1,260 @@
+---
+export const prerender = false
+
+import AdminLayout from '../../layouts/AdminLayout.astro'
+import { requireAuth } from '../../lib/admin-auth'
+import { createServiceClient } from '../../lib/supabase'
+
+const auth = await requireAuth(Astro.request)
+if (!auth.authorized) return Astro.redirect('/admin')
+
+const supabase = createServiceClient()
+
+const { data: events } = await supabase
+  .from('live_events')
+  .select('*, event_config(*)')
+  .order('created_at', { ascending: false })
+
+// Enrich with racer counts
+const enriched = await Promise.all(
+  (events ?? []).map(async (event) => {
+    const { count } = await supabase
+      .from('racers')
+      .select('*', { count: 'exact', head: true })
+      .eq('event_id', event.id)
+    return { ...event, racer_count: count ?? 0 }
+  }),
+)
+
+const activeEvents = enriched.filter(e => e.status === 'active')
+const archivedEvents = enriched.filter(e => e.status === 'archived')
+
+function timeAgo(date: string): string {
+  const diff = Date.now() - new Date(date).getTime()
+  const mins = Math.floor(diff / 60000)
+  if (mins < 60) return `${mins}m ago`
+  const hrs = Math.floor(mins / 60)
+  if (hrs < 24) return `${hrs}h ago`
+  const days = Math.floor(hrs / 24)
+  return `${days}d ago`
+}
+---
+
+<AdminLayout title="Events — Admin" active="events">
+  <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 32px;">
+    <div>
+      <h1 style="font-size: 24px; font-weight: 600; color: var(--admin-text); letter-spacing: -0.5px;">Events</h1>
+      <p style="font-size: 13px; color: var(--admin-secondary); margin-top: 4px;">{activeEvents.length} active, {archivedEvents.length} archived</p>
+    </div>
+    <button
+      id="create-event-btn"
+      style="padding: 10px 20px; background: var(--admin-text); color: white; border: none; border-radius: 10px; font-size: 13px; font-weight: 500; cursor: pointer; font-family: inherit;"
+    >
+      + Create Event
+    </button>
+  </div>
+
+  <!-- Active Events -->
+  {activeEvents.length > 0 && (
+    <div style="margin-bottom: 32px;">
+      <p style="font-size: 11px; font-weight: 500; color: var(--admin-tertiary); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 12px;">Active Events</p>
+      <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px;">
+        {activeEvents.map(event => {
+          const config = Array.isArray(event.event_config) ? event.event_config[0] : event.event_config
+          return (
+            <div style="background: var(--admin-surface); border: 1px solid var(--admin-border); border-radius: 12px; padding: 20px;">
+              <div style="display: flex; align-items: start; justify-content: space-between; margin-bottom: 12px;">
+                <div>
+                  <h3 style="font-size: 16px; font-weight: 600; color: var(--admin-text);">{event.name}</h3>
+                  <p style="font-size: 12px; color: var(--admin-tertiary); margin-top: 2px;">/{event.slug}</p>
+                </div>
+                <span style="padding: 3px 8px; font-size: 10px; font-weight: 500; background: #dcfce7; color: #166534; border-radius: 6px;">Active</span>
+              </div>
+
+              <div style="display: flex; gap: 16px; margin-bottom: 16px;">
+                <div>
+                  <div style="font-size: 20px; font-weight: 600; color: var(--admin-text);">{event.racer_count}</div>
+                  <div style="font-size: 10px; color: var(--admin-tertiary); letter-spacing: 0.5px;">Racers</div>
+                </div>
+                {config?.event_date && (
+                  <div>
+                    <div style="font-size: 13px; font-weight: 500; color: var(--admin-text);">{new Date(config.event_date + 'T00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</div>
+                    <div style="font-size: 10px; color: var(--admin-tertiary); letter-spacing: 0.5px;">Date</div>
+                  </div>
+                )}
+                <div>
+                  <div style="font-size: 13px; font-weight: 500; color: var(--admin-text);">{config?.dealer_name || '—'}</div>
+                  <div style="font-size: 10px; color: var(--admin-tertiary); letter-spacing: 0.5px;">Dealer</div>
+                </div>
+              </div>
+
+              <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                <a href={`/races/live/${event.slug}`} style="padding: 6px 12px; font-size: 11px; font-weight: 500; color: var(--admin-text); border: 1px solid var(--admin-border); border-radius: 8px; text-decoration: none;">Event Page</a>
+                <a href={`/races/live/${event.slug}/leaderboard`} style="padding: 6px 12px; font-size: 11px; font-weight: 500; color: var(--admin-text); border: 1px solid var(--admin-border); border-radius: 8px; text-decoration: none;">Leaderboard</a>
+                <a href={`/races/live/${event.slug}/admin`} style="padding: 6px 12px; font-size: 11px; font-weight: 500; color: var(--admin-text); border: 1px solid var(--admin-border); border-radius: 8px; text-decoration: none;">Staff Panel</a>
+                <button
+                  class="archive-btn"
+                  data-id={event.id}
+                  style="padding: 6px 12px; font-size: 11px; font-weight: 500; color: var(--admin-amber); border: 1px solid var(--admin-amber); border-radius: 8px; background: transparent; cursor: pointer; font-family: inherit;"
+                >Archive</button>
+              </div>
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )}
+
+  <!-- Archived Events -->
+  {archivedEvents.length > 0 && (
+    <div>
+      <p style="font-size: 11px; font-weight: 500; color: var(--admin-tertiary); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 12px;">Archived</p>
+      <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px;">
+        {archivedEvents.map(event => (
+          <div style="background: var(--admin-surface); border: 1px solid var(--admin-border); border-radius: 12px; padding: 16px; opacity: 0.7;">
+            <div style="display: flex; align-items: center; justify-content: space-between;">
+              <div>
+                <h3 style="font-size: 14px; font-weight: 500; color: var(--admin-secondary);">{event.name}</h3>
+                <p style="font-size: 11px; color: var(--admin-tertiary);">{event.racer_count} racers — {timeAgo(event.created_at)}</p>
+              </div>
+              <button
+                class="activate-btn"
+                data-id={event.id}
+                style="padding: 5px 10px; font-size: 10px; font-weight: 500; color: var(--admin-green); border: 1px solid var(--admin-green); border-radius: 6px; background: transparent; cursor: pointer; font-family: inherit;"
+              >Reactivate</button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )}
+
+  <!-- Empty state -->
+  {enriched.length === 0 && (
+    <div style="text-align: center; padding: 60px 0;">
+      <p style="font-size: 16px; color: var(--admin-secondary); margin-bottom: 8px;">No events yet</p>
+      <p style="font-size: 13px; color: var(--admin-tertiary);">Create your first event to get started</p>
+    </div>
+  )}
+
+  <!-- Create Event Modal (hidden by default) -->
+  <div id="create-modal" style="display: none; position: fixed; inset: 0; z-index: 100; background: rgba(0,0,0,0.4); backdrop-filter: blur(4px);">
+    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; border-radius: 16px; padding: 32px; width: 440px; max-width: 90vw;">
+      <h2 style="font-size: 18px; font-weight: 600; color: var(--admin-text); margin-bottom: 20px;">Create Event</h2>
+
+      <div style="margin-bottom: 16px;">
+        <label style="display: block; font-size: 12px; font-weight: 500; color: var(--admin-secondary); margin-bottom: 6px;">Event Name *</label>
+        <input id="evt-name" type="text" placeholder="Porsche Miami 2026" style="width: 100%; padding: 10px 14px; border: 1px solid var(--admin-border); border-radius: 8px; font-size: 14px; font-family: inherit; outline: none; box-sizing: border-box;" />
+      </div>
+
+      <div style="margin-bottom: 16px;">
+        <label style="display: block; font-size: 12px; font-weight: 500; color: var(--admin-secondary); margin-bottom: 6px;">Admin PIN * (4+ digits)</label>
+        <input id="evt-pin" type="text" inputmode="numeric" placeholder="2920" style="width: 100%; padding: 10px 14px; border: 1px solid var(--admin-border); border-radius: 8px; font-size: 14px; font-family: inherit; outline: none; box-sizing: border-box;" />
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;">
+        <div>
+          <label style="display: block; font-size: 12px; font-weight: 500; color: var(--admin-secondary); margin-bottom: 6px;">Dealer Name</label>
+          <input id="evt-dealer" type="text" placeholder="Porsche Miami" style="width: 100%; padding: 10px 14px; border: 1px solid var(--admin-border); border-radius: 8px; font-size: 14px; font-family: inherit; outline: none; box-sizing: border-box;" />
+        </div>
+        <div>
+          <label style="display: block; font-size: 12px; font-weight: 500; color: var(--admin-secondary); margin-bottom: 6px;">Theme</label>
+          <select id="evt-theme" style="width: 100%; padding: 10px 14px; border: 1px solid var(--admin-border); border-radius: 8px; font-size: 14px; font-family: inherit; outline: none; background: white; box-sizing: border-box;">
+            <option value="default">Classic Yellow</option>
+            <option value="porsche">Porsche Red</option>
+            <option value="ferrari">Ferrari Crimson</option>
+            <option value="ocean">Ocean Blue</option>
+            <option value="emerald">Emerald</option>
+            <option value="purple">Royal Purple</option>
+            <option value="orange">Sunset Orange</option>
+            <option value="pink">Hot Pink</option>
+            <option value="cyan">Neon Cyan</option>
+            <option value="gold">Championship Gold</option>
+          </select>
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;">
+        <div>
+          <label style="display: block; font-size: 12px; font-weight: 500; color: var(--admin-secondary); margin-bottom: 6px;">Event Date</label>
+          <input id="evt-date" type="date" style="width: 100%; padding: 10px 14px; border: 1px solid var(--admin-border); border-radius: 8px; font-size: 14px; font-family: inherit; outline: none; box-sizing: border-box;" />
+        </div>
+        <div>
+          <label style="display: block; font-size: 12px; font-weight: 500; color: var(--admin-secondary); margin-bottom: 6px;">Event Time</label>
+          <input id="evt-time" type="time" style="width: 100%; padding: 10px 14px; border: 1px solid var(--admin-border); border-radius: 8px; font-size: 14px; font-family: inherit; outline: none; box-sizing: border-box;" />
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 12px; margin-top: 24px;">
+        <button id="cancel-create" style="flex: 1; padding: 12px; border: 1px solid var(--admin-border); border-radius: 10px; font-size: 14px; font-weight: 500; background: transparent; cursor: pointer; font-family: inherit; color: var(--admin-secondary);">Cancel</button>
+        <button id="confirm-create" style="flex: 2; padding: 12px; border: none; border-radius: 10px; font-size: 14px; font-weight: 500; background: var(--admin-text); color: white; cursor: pointer; font-family: inherit;">Create Event</button>
+      </div>
+    </div>
+  </div>
+</AdminLayout>
+
+<script>
+  const modal = document.getElementById('create-modal')!
+  const createBtn = document.getElementById('create-event-btn')!
+  const cancelBtn = document.getElementById('cancel-create')!
+  const confirmBtn = document.getElementById('confirm-create')!
+
+  createBtn.addEventListener('click', () => { modal.style.display = 'block' })
+  cancelBtn.addEventListener('click', () => { modal.style.display = 'none' })
+  modal.addEventListener('click', (e) => { if (e.target === modal) modal.style.display = 'none' })
+
+  confirmBtn.addEventListener('click', async () => {
+    const name = (document.getElementById('evt-name') as HTMLInputElement).value
+    const pin = (document.getElementById('evt-pin') as HTMLInputElement).value
+    const dealer = (document.getElementById('evt-dealer') as HTMLInputElement).value
+    const theme = (document.getElementById('evt-theme') as HTMLSelectElement).value
+    const date = (document.getElementById('evt-date') as HTMLInputElement).value
+    const time = (document.getElementById('evt-time') as HTMLInputElement).value
+
+    if (!name.trim()) { alert('Event name is required'); return }
+    if (!pin || pin.length < 4) { alert('PIN must be at least 4 digits'); return }
+
+    confirmBtn.textContent = 'Creating...'
+    try {
+      const res = await fetch('/api/admin/events', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, admin_pin: pin, dealer_name: dealer, theme, event_date: date, event_time: time }),
+      })
+      if (!res.ok) {
+        const data = await res.json()
+        throw new Error(data.error || 'Failed')
+      }
+      window.location.reload()
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Error creating event')
+      confirmBtn.textContent = 'Create Event'
+    }
+  })
+
+  // Archive/Activate buttons
+  document.querySelectorAll('.archive-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const id = (btn as HTMLElement).dataset.id
+      if (!confirm('Archive this event?')) return
+      await fetch(`/api/admin/events/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'archived' }),
+      })
+      window.location.reload()
+    })
+  })
+
+  document.querySelectorAll('.activate-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const id = (btn as HTMLElement).dataset.id
+      await fetch(`/api/admin/events/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'active' }),
+      })
+      window.location.reload()
+    })
+  })
+</script>

@@ -1,0 +1,205 @@
+---
+export const prerender = false
+
+import AdminLayout from '../../layouts/AdminLayout.astro'
+import { requireAuth } from '../../lib/admin-auth'
+import { createServiceClient } from '../../lib/supabase'
+
+const auth = await requireAuth(Astro.request)
+if (!auth.authorized) return Astro.redirect('/admin')
+
+const url = new URL(Astro.request.url)
+const sourceFilter = url.searchParams.get('source') || 'all'
+const statusFilter = url.searchParams.get('status') || 'all'
+const page = parseInt(url.searchParams.get('page') || '1', 10)
+const perPage = 25
+
+const supabase = createServiceClient()
+
+let query = supabase
+  .from('leads')
+  .select('*', { count: 'exact' })
+  .order('created_at', { ascending: false })
+
+if (sourceFilter !== 'all') query = query.eq('source', sourceFilter)
+if (statusFilter !== 'all') query = query.eq('status', statusFilter)
+query = query.range((page - 1) * perPage, page * perPage - 1)
+
+const { data: leads, count } = await query
+const totalPages = Math.ceil((count ?? 0) / perPage)
+
+function statusStyle(status: string) {
+  if (status === 'new') return { bg: 'rgba(225,6,0,0.08)', color: '#E10600' }
+  if (status === 'contacted') return { bg: 'rgba(255,159,10,0.08)', color: '#FF9F0A' }
+  return { bg: 'rgba(48,209,88,0.08)', color: '#30D158' }
+}
+
+function formatDate(date: string): string {
+  return new Date(date).toLocaleDateString('en-US', {
+    month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit',
+    timeZone: 'America/New_York',
+  })
+}
+
+function buildUrl(params: Record<string, string>): string {
+  const p = new URLSearchParams()
+  const s = params.source ?? sourceFilter
+  const st = params.status ?? statusFilter
+  const pg = params.page ?? String(page)
+  if (s !== 'all') p.set('source', s)
+  if (st !== 'all') p.set('status', st)
+  if (pg !== '1') p.set('page', pg)
+  const qs = p.toString()
+  return `/admin/leads${qs ? `?${qs}` : ''}`
+}
+
+const sources = ['all', 'rent', 'lease', 'popup']
+const statuses = ['all', 'new', 'contacted', 'closed']
+---
+
+<AdminLayout title="Leads — SimsForHire Admin" active="leads">
+
+  <!-- Header -->
+  <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 32px;">
+    <div>
+      <h1 style="font-size: 32px; font-weight: 600; letter-spacing: -0.5px;">Leads</h1>
+      <p style="font-size: 15px; color: var(--admin-secondary); margin-top: 4px;">{count ?? 0} total</p>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div style="display: flex; gap: 12px; margin-bottom: 24px;">
+    <!-- Source -->
+    <div style="display: flex; background: var(--admin-surface); border: 1px solid var(--admin-border); border-radius: 10px; overflow: hidden;">
+      {sources.map(s => (
+        <a
+          href={buildUrl({ source: s, page: '1' })}
+          style={`padding: 8px 16px; font-size: 13px; text-decoration: none; transition: all 0.15s; ${
+            sourceFilter === s
+              ? 'background: var(--admin-text); color: white; font-weight: 500;'
+              : 'color: var(--admin-secondary);'
+          }`}
+        >
+          {s === 'all' ? 'All' : s.charAt(0).toUpperCase() + s.slice(1)}
+        </a>
+      ))}
+    </div>
+
+    <!-- Status -->
+    <div style="display: flex; background: var(--admin-surface); border: 1px solid var(--admin-border); border-radius: 10px; overflow: hidden;">
+      {statuses.map(s => (
+        <a
+          href={buildUrl({ status: s, page: '1' })}
+          style={`padding: 8px 16px; font-size: 13px; text-decoration: none; transition: all 0.15s; ${
+            statusFilter === s
+              ? 'background: var(--admin-text); color: white; font-weight: 500;'
+              : 'color: var(--admin-secondary);'
+          }`}
+        >
+          {s === 'all' ? 'All' : s.charAt(0).toUpperCase() + s.slice(1)}
+        </a>
+      ))}
+    </div>
+  </div>
+
+  <!-- Table -->
+  <div style="background: var(--admin-surface); border: 1px solid var(--admin-border); border-radius: 14px; overflow: hidden;">
+    <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+      <thead>
+        <tr style="border-bottom: 1px solid var(--admin-border);">
+          {['Status', 'Name', 'Email', 'Phone', 'Source', 'Details', 'Date', ''].map(h => (
+            <th style="text-align: left; padding: 14px 16px; font-size: 11px; font-weight: 500; color: var(--admin-tertiary); text-transform: uppercase; letter-spacing: 0.5px;">{h}</th>
+          ))}
+        </tr>
+      </thead>
+      <tbody>
+        {(!leads || leads.length === 0) ? (
+          <tr>
+            <td colspan="8" style="padding: 64px 16px; text-align: center; color: var(--admin-tertiary);">No leads found</td>
+          </tr>
+        ) : leads.map((lead: any) => {
+          const s = statusStyle(lead.status)
+          return (
+            <tr style="border-bottom: 1px solid var(--admin-border); transition: background 0.1s;"
+              onmouseover="this.style.background='rgba(0,0,0,0.015)'"
+              onmouseout="this.style.background='transparent'"
+            >
+              <td style="padding: 14px 16px;">
+                <select
+                  class="lead-status"
+                  data-id={lead.id}
+                  style={`font-size: 12px; font-weight: 500; padding: 4px 8px; border-radius: 6px; border: 1px solid ${s.color}22; background: ${s.bg}; color: ${s.color}; font-family: inherit; cursor: pointer; appearance: none; -webkit-appearance: none;`}
+                >
+                  {['new', 'contacted', 'closed'].map(st => (
+                    <option value={st} selected={lead.status === st}>{st.charAt(0).toUpperCase() + st.slice(1)}</option>
+                  ))}
+                </select>
+              </td>
+              <td style="padding: 14px 16px; font-weight: 500; color: var(--admin-text);">{lead.name || '—'}</td>
+              <td style="padding: 14px 16px;">
+                <a href={`mailto:${lead.email}`} style="color: var(--admin-red); text-decoration: none;">{lead.email}</a>
+              </td>
+              <td style="padding: 14px 16px; color: var(--admin-secondary);">
+                {lead.phone ? <a href={`tel:${lead.phone}`} style="color: var(--admin-secondary); text-decoration: none;">{lead.phone}</a> : '—'}
+              </td>
+              <td style="padding: 14px 16px;">
+                <span style="font-size: 11px; color: var(--admin-tertiary); text-transform: uppercase; letter-spacing: 0.5px;">{lead.source}</span>
+              </td>
+              <td style="padding: 14px 16px; color: var(--admin-secondary); font-size: 13px; max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                {lead.event_type || lead.business_name || lead.interest || lead.message || '—'}
+              </td>
+              <td style="padding: 14px 16px; color: var(--admin-tertiary); font-size: 13px; white-space: nowrap;">{formatDate(lead.created_at)}</td>
+              <td style="padding: 14px 16px;">
+                <a href={`mailto:${lead.email}`} style="font-size: 13px; color: var(--admin-red); text-decoration: none; font-weight: 500;">Reply</a>
+              </td>
+            </tr>
+          )
+        })}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Pagination -->
+  {totalPages > 1 && (
+    <div style="display: flex; align-items: center; justify-content: center; gap: 12px; margin-top: 24px;">
+      {page > 1 && (
+        <a href={buildUrl({ page: String(page - 1) })} style="padding: 8px 16px; font-size: 13px; color: var(--admin-secondary); text-decoration: none; background: var(--admin-surface); border: 1px solid var(--admin-border); border-radius: 8px;">← Previous</a>
+      )}
+      <span style="font-size: 13px; color: var(--admin-tertiary);">Page {page} of {totalPages}</span>
+      {page < totalPages && (
+        <a href={buildUrl({ page: String(page + 1) })} style="padding: 8px 16px; font-size: 13px; color: var(--admin-secondary); text-decoration: none; background: var(--admin-surface); border: 1px solid var(--admin-border); border-radius: 8px;">Next →</a>
+      )}
+    </div>
+  )}
+
+</AdminLayout>
+
+<script>
+  document.querySelectorAll('.lead-status').forEach(select => {
+    select.addEventListener('change', async (e) => {
+      const el = e.target as HTMLSelectElement
+      const id = el.dataset.id
+      const status = el.value
+
+      const res = await fetch('/api/admin/update-lead', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, status }),
+      })
+
+      if (res.ok) {
+        const styles: Record<string, { bg: string; color: string }> = {
+          new: { bg: 'rgba(225,6,0,0.08)', color: '#E10600' },
+          contacted: { bg: 'rgba(255,159,10,0.08)', color: '#FF9F0A' },
+          closed: { bg: 'rgba(48,209,88,0.08)', color: '#30D158' },
+        }
+        const s = styles[status]
+        if (s) {
+          el.style.background = s.bg
+          el.style.color = s.color
+          el.style.borderColor = s.color + '22'
+        }
+      }
+    })
+  })
+</script>

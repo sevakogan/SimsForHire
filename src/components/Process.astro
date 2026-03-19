@@ -1,0 +1,53 @@
+---
+const STEPS = [
+  { number: '01', title: 'Call It In', description: 'Tell us about your event. We answer 24/7.' },
+  { number: '02', title: 'Get a Quote', description: 'Custom pricing based on your venue, date, and rig count.' },
+  { number: '03', title: 'Submit a Deposit', description: 'Lock in your date. We handle the rest.' },
+  { number: '04', title: 'We Deliver & Install', description: 'Full setup at your venue. White-label branding available.' },
+  { number: '05', title: 'We Clean Up', description: 'Teardown, packout, gone. Zero trace. Zero issues.' },
+]
+---
+
+<section class="py-20 md:py-28 px-6 md:px-16 lg:px-24 border-t border-gray-border">
+  <div class="max-w-7xl mx-auto">
+    <!-- Header -->
+    <div class="mb-12" data-reveal>
+      <p class="text-[10px] uppercase tracking-[0.4em] text-red mb-2">How It Works</p>
+      <h2 class="font-display text-4xl md:text-6xl text-white tracking-wide">FIVE STEPS. THAT'S IT.</h2>
+      <p class="text-gray text-base mt-4 max-w-xl">
+        From first call to final teardown — we handle everything. White-label wrapping, custom branding, full setup and cleanup. 48 hours from call to showtime.
+      </p>
+    </div>
+
+    <!-- Steps -->
+    <div class="grid md:grid-cols-5 gap-6 md:gap-4" data-reveal>
+      {STEPS.map((step, i) => (
+        <div class="relative group">
+          <!-- Step number -->
+          <span class="font-display text-5xl text-red/20 group-hover:text-red/40 transition-colors">{step.number}</span>
+          <!-- Connector line (desktop only) -->
+          {i < STEPS.length - 1 && (
+            <div class="hidden md:block absolute top-7 left-full w-full h-px bg-gray-border -translate-x-4"></div>
+          )}
+          <h3 class="font-display text-xl text-white mt-2">{step.title}</h3>
+          <p class="text-gray text-sm mt-1">{step.description}</p>
+        </div>
+      ))}
+    </div>
+
+    <!-- Bottom highlights -->
+    <div class="flex flex-wrap gap-6 mt-12 pt-8 border-t border-gray-border" data-reveal>
+      {[
+        '24/7 Availability',
+        '48-Hour Turnaround',
+        'White-Label Ready',
+        'Full Setup & Teardown',
+        'Zero Cleanup Issues',
+      ].map((item) => (
+        <span class="text-[10px] uppercase tracking-[0.3em] text-gray border border-gray-border px-4 py-2 hover:border-red hover:text-red transition-colors">
+          {item}
+        </span>
+      ))}
+    </div>
+  </div>
+</section>

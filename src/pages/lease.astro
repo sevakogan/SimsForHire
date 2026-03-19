@@ -1,0 +1,450 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro'
+import Navbar from '../components/Navbar.astro'
+import Footer from '../components/Footer.astro'
+---
+
+<BaseLayout
+  title="Lease a Racing Simulator | SimsForHire"
+  description="Monthly simulator leasing for dealerships, venues, hotels, and entertainment spaces. Full-motion racing simulators with maintenance, support, and bi-weekly service. Starting at $2,700/month in Miami."
+  ogTitle="LEASE A SIMULATOR"
+  ogSubtitle="Monthly programs for dealerships, venues & businesses — from $2,700/mo"
+>
+  <Navbar isSubpage />
+  <main>
+
+    <!-- ═══ HERO ═══ -->
+    <section class="relative min-h-[80vh] flex items-end pb-16 md:pb-24 px-6 md:px-16 lg:px-24 overflow-hidden">
+      <!-- Diagonal accent -->
+      <div class="absolute top-0 right-0 w-1/2 h-full bg-red/5 -skew-x-12 translate-x-1/4"></div>
+      <!-- Top line -->
+      <div class="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-red/40 to-transparent"></div>
+
+      <div class="max-w-7xl mx-auto w-full relative z-10 pt-32">
+        <div class="grid lg:grid-cols-2 gap-12 items-end">
+          <div>
+            <div class="flex items-center gap-3 mb-6">
+              <div class="w-8 h-px bg-red"></div>
+              <p class="text-[10px] uppercase tracking-[0.5em] text-red">Monthly Programs</p>
+            </div>
+            <h1 class="font-display text-6xl md:text-7xl lg:text-8xl xl:text-9xl text-white tracking-wide leading-[0.85] mb-6">
+              LEASE<br/>
+              <span class="text-red">A SIM</span>
+            </h1>
+            <p class="text-gray text-base md:text-lg max-w-lg mb-8 leading-relaxed">
+              Professional racing simulators installed at your location.
+              We handle hardware, software, maintenance, and support — you just turn it on.
+            </p>
+            <div class="flex flex-wrap gap-4">
+              <a href="#lease-form" class="inline-block bg-red text-white px-10 py-4 text-sm font-display uppercase tracking-[0.25em] hover:bg-red-hover transition-colors">
+                Get a Quote
+              </a>
+              <a href="tel:7542285654" class="inline-flex items-center gap-2 border border-gray-border text-white px-8 py-4 text-sm font-display uppercase tracking-[0.25em] hover:border-red/40 transition-colors">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 01-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 00-1.091-.852H4.5A2.25 2.25 0 002.25 4.5v2.25z" />
+                </svg>
+                Call Us
+              </a>
+            </div>
+          </div>
+
+          <!-- Pricing lockup -->
+          <div class="lg:text-right">
+            <p class="text-gray text-xs uppercase tracking-[0.3em] mb-2">Full-Motion Simulators From</p>
+            <div class="inline-block">
+              <span class="font-display text-7xl md:text-8xl lg:text-9xl text-white leading-none">
+                <span class="text-red italic">$</span>2,700
+              </span>
+              <span class="text-gray text-lg font-display tracking-wider">+</span>
+            </div>
+            <p class="text-gray text-sm mt-1">per month · fully managed</p>
+            <p class="text-gray/50 text-xs mt-3 border-t border-gray-border pt-3 inline-block">
+              Non-motion simulators also available at lower rates
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══ WHAT'S INCLUDED ═══ -->
+    <section class="py-20 md:py-28 px-6 md:px-16 lg:px-24 border-t border-gray-border relative">
+      <div class="absolute top-0 left-1/2 w-px h-16 bg-gradient-to-b from-red/40 to-transparent"></div>
+      <div class="max-w-7xl mx-auto">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="w-8 h-px bg-red"></div>
+          <p class="text-[10px] uppercase tracking-[0.5em] text-red">What's Included</p>
+        </div>
+        <h2 class="font-display text-4xl md:text-6xl text-white tracking-wide mb-16">EVERYTHING YOU NEED</h2>
+
+        <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-px bg-gray-border">
+          {[
+            { num: '01', title: 'Hardware', desc: 'Sigma Integrale motion platform, Simucube 2 direct-drive wheelbase, Heusinkveld pedals, triple-screen display' },
+            { num: '02', title: 'Software', desc: 'Assetto Corsa with curated car & track selection, custom launcher, motion-tuned profiles' },
+            { num: '03', title: 'Setup', desc: 'Professional on-site installation, calibration, and operator training. Ready to go day one' },
+            { num: '04', title: 'Support', desc: 'Bi-weekly service calls, remote diagnostics, software updates, and hardware troubleshooting included' },
+          ].map(item => (
+            <div class="bg-bg p-8 group hover:bg-red/5 transition-colors">
+              <span class="text-red/30 font-display text-5xl block mb-4 group-hover:text-red/50 transition-colors">{item.num}</span>
+              <h3 class="font-display text-xl text-white tracking-wide mb-3">{item.title}</h3>
+              <p class="text-gray text-sm leading-relaxed">{item.desc}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══ WHY LEASE ═══ -->
+    <section class="py-20 md:py-28 px-6 md:px-16 lg:px-24 border-t border-gray-border">
+      <div class="max-w-7xl mx-auto">
+        <div class="grid lg:grid-cols-2 gap-16 items-start">
+          <div>
+            <div class="flex items-center gap-3 mb-4">
+              <div class="w-8 h-px bg-red"></div>
+              <p class="text-[10px] uppercase tracking-[0.5em] text-red">Why Lease</p>
+            </div>
+            <h2 class="font-display text-4xl md:text-6xl text-white tracking-wide leading-[0.9] mb-6">
+              SKIP THE<br/>CAPITAL<br/>EXPENSE
+            </h2>
+            <p class="text-gray text-base leading-relaxed">
+              Purchasing a commercial-grade simulator is a $15K–$25K investment before
+              you factor in setup, software, and ongoing maintenance. Leasing gives you
+              the same hardware with zero upfront risk and full support baked in.
+            </p>
+          </div>
+
+          <div class="space-y-0">
+            {[
+              { title: 'Predictable Monthly Cost', desc: 'One flat rate. No surprises. Hardware, software, and support all included.' },
+              { title: 'We Maintain Everything', desc: 'Bi-weekly service calls keep the rig performing. Something breaks? We fix or replace it.' },
+              { title: 'Upgrade Anytime', desc: 'Technology moves fast. Swap to newer hardware without buying again.' },
+              { title: 'Revenue-Ready From Day One', desc: 'Charge guests per session. Many venues cover the lease in the first two weeks.' },
+              { title: 'No Long-Term Lock-In', desc: 'Flexible terms tailored to your space, usage patterns, and revenue goals.' },
+            ].map((item, i) => (
+              <div class="border-b border-gray-border py-6 group">
+                <div class="flex items-start gap-4">
+                  <span class="text-red/40 font-display text-lg mt-0.5 group-hover:text-red transition-colors">0{i + 1}</span>
+                  <div>
+                    <h3 class="text-white text-sm font-semibold mb-1">{item.title}</h3>
+                    <p class="text-gray text-sm leading-relaxed">{item.desc}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══ DEALERSHIPS ═══ -->
+    <section class="py-20 md:py-28 px-6 md:px-16 lg:px-24 bg-red relative overflow-hidden">
+      <div class="absolute inset-0 opacity-[0.07]" style="background-image: repeating-linear-gradient(90deg, transparent, transparent 80px, rgba(0,0,0,0.3) 80px, rgba(0,0,0,0.3) 81px);"></div>
+      <div class="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
+
+      <div class="max-w-7xl mx-auto relative z-10">
+        <div class="grid lg:grid-cols-2 gap-16 items-start">
+          <div>
+            <div class="flex items-center gap-3 mb-4">
+              <div class="w-8 h-px bg-white/40"></div>
+              <p class="text-[10px] uppercase tracking-[0.5em] text-white/60">For Dealerships & Venues</p>
+            </div>
+            <h2 class="font-display text-4xl md:text-6xl text-white tracking-wide leading-[0.9] mb-6">
+              TURN IDLE<br/>SPACE INTO<br/>AN ATTRACTION
+            </h2>
+            <p class="text-white/70 text-base leading-relaxed mb-6">
+              A racing simulator keeps customers engaged during service waits,
+              creates a premium showroom experience, and differentiates your
+              brand from every competitor on the block.
+            </p>
+            <p class="text-white/50 text-xs uppercase tracking-widest">
+              Ideal for showrooms · service lounges · hotel lobbies · entertainment venues
+            </p>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {[
+              'Keeps customers in-store longer during visits and service waits',
+              'Creates a performance-driven brand experience guests remember',
+              'Engages enthusiasts without tying up your sales team',
+              'Supports launches, demo days, and promotional events',
+              'Differentiates your showroom from every competitor nearby',
+              'Lets customers experience vehicle handling before or after purchase',
+            ].map(item => (
+              <div class="bg-white/10 backdrop-blur-sm p-5">
+                <p class="text-white/90 text-sm leading-relaxed">{item}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══ HOW IT WORKS ═══ -->
+    <section class="py-20 md:py-28 px-6 md:px-16 lg:px-24 border-t border-gray-border">
+      <div class="max-w-7xl mx-auto">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="w-8 h-px bg-red"></div>
+          <p class="text-[10px] uppercase tracking-[0.5em] text-red">How It Works</p>
+        </div>
+        <h2 class="font-display text-4xl md:text-6xl text-white tracking-wide mb-16">SIMPLE PROCESS</h2>
+
+        <div class="grid md:grid-cols-3 gap-8">
+          {[
+            { step: '01', title: 'Tell Us About Your Space', desc: 'Where will the sim live? Indoor or outdoor? How much foot traffic? Public or private use? We design the program around your answers.' },
+            { step: '02', title: 'We Build Your Package', desc: 'Based on your space and goals, we recommend the right simulator type, screen setup, and support plan. You approve, we schedule.' },
+            { step: '03', title: 'Install & Go Live', desc: 'Our team delivers, installs, calibrates, and trains your staff. Most installs are live within two weeks of approval.' },
+          ].map(item => (
+            <div class="relative">
+              <span class="font-display text-8xl text-red/10 absolute -top-4 -left-2">{item.step}</span>
+              <div class="relative z-10 pt-12">
+                <h3 class="font-display text-xl text-white tracking-wide mb-3">{item.title}</h3>
+                <p class="text-gray text-sm leading-relaxed">{item.desc}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══ LEASE FORM ═══ -->
+    <section id="lease-form" class="py-20 md:py-28 px-6 md:px-16 lg:px-24 border-t border-gray-border relative">
+      <div class="absolute top-0 left-1/2 w-px h-16 bg-gradient-to-b from-red/40 to-transparent"></div>
+      <div class="max-w-7xl mx-auto">
+        <div class="grid lg:grid-cols-2 gap-16">
+          <!-- Left: Context -->
+          <div>
+            <div class="flex items-center gap-3 mb-4">
+              <div class="w-8 h-px bg-red"></div>
+              <p class="text-[10px] uppercase tracking-[0.5em] text-red">Get Started</p>
+            </div>
+            <h2 class="font-display text-4xl md:text-6xl text-white tracking-wide leading-[0.9] mb-6">
+              LET'S BUILD<br/>YOUR PROGRAM
+            </h2>
+            <p class="text-gray text-base leading-relaxed mb-8">
+              Tell us about your space and we'll design a simulator program that fits.
+              No commitment — just a conversation.
+            </p>
+
+            <div class="space-y-6 border-t border-gray-border pt-8">
+              <div class="flex items-center gap-4">
+                <svg class="w-5 h-5 text-red flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 01-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 00-1.091-.852H4.5A2.25 2.25 0 002.25 4.5v2.25z" />
+                </svg>
+                <div>
+                  <p class="text-white text-sm font-semibold">(754) 228-5654</p>
+                  <p class="text-gray text-xs">Call or text anytime</p>
+                </div>
+              </div>
+              <div class="flex items-center gap-4">
+                <svg class="w-5 h-5 text-red flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
+                </svg>
+                <div>
+                  <p class="text-white text-sm font-semibold">info@simsforhire.com</p>
+                  <p class="text-gray text-xs">We reply within 24 hours</p>
+                </div>
+              </div>
+              <div class="flex items-center gap-4">
+                <svg class="w-5 h-5 text-red flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
+                </svg>
+                <div>
+                  <p class="text-white text-sm font-semibold">Based in Wynwood, Miami</p>
+                  <p class="text-gray text-xs">Serving South Florida & beyond</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right: Form -->
+          <div>
+            <form id="lease-form-el" class="space-y-5">
+              <div class="grid sm:grid-cols-2 gap-5">
+                <div>
+                  <label for="lease-name" class="block text-[10px] uppercase tracking-[0.3em] text-gray mb-2">Name *</label>
+                  <input
+                    type="text"
+                    id="lease-name"
+                    name="name"
+                    required
+                    class="w-full bg-transparent border border-gray-border px-4 py-3 text-white text-sm placeholder:text-gray/40 focus:border-red focus:outline-none transition-colors"
+                    placeholder="Your name"
+                  />
+                </div>
+                <div>
+                  <label for="lease-email" class="block text-[10px] uppercase tracking-[0.3em] text-gray mb-2">Email *</label>
+                  <input
+                    type="email"
+                    id="lease-email"
+                    name="email"
+                    required
+                    class="w-full bg-transparent border border-gray-border px-4 py-3 text-white text-sm placeholder:text-gray/40 focus:border-red focus:outline-none transition-colors"
+                    placeholder="you@company.com"
+                  />
+                </div>
+              </div>
+
+              <div class="grid sm:grid-cols-2 gap-5">
+                <div>
+                  <label for="lease-phone" class="block text-[10px] uppercase tracking-[0.3em] text-gray mb-2">Phone</label>
+                  <input
+                    type="tel"
+                    id="lease-phone"
+                    name="phone"
+                    class="w-full bg-transparent border border-gray-border px-4 py-3 text-white text-sm placeholder:text-gray/40 focus:border-red focus:outline-none transition-colors"
+                    placeholder="(555) 000-0000"
+                  />
+                </div>
+                <div>
+                  <label for="lease-business" class="block text-[10px] uppercase tracking-[0.3em] text-gray mb-2">Business Name</label>
+                  <input
+                    type="text"
+                    id="lease-business"
+                    name="businessName"
+                    class="w-full bg-transparent border border-gray-border px-4 py-3 text-white text-sm placeholder:text-gray/40 focus:border-red focus:outline-none transition-colors"
+                    placeholder="Your company"
+                  />
+                </div>
+              </div>
+
+              <div class="grid sm:grid-cols-2 gap-5">
+                <div>
+                  <label for="lease-type" class="block text-[10px] uppercase tracking-[0.3em] text-gray mb-2">Business Type</label>
+                  <select
+                    id="lease-type"
+                    name="businessType"
+                    class="w-full bg-transparent border border-gray-border px-4 py-3 text-white text-sm focus:border-red focus:outline-none transition-colors appearance-none"
+                    style="background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2214%22%20height%3D%2214%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23888%22%20stroke-width%3D%222%22%3E%3Cpath%20d%3D%22M6%209l6%206%206-6%22%2F%3E%3C%2Fsvg%3E'); background-repeat: no-repeat; background-position: right 12px center;"
+                  >
+                    <option value="" class="bg-bg">Select type...</option>
+                    <option value="Auto Dealership" class="bg-bg">Auto Dealership</option>
+                    <option value="Entertainment Venue" class="bg-bg">Entertainment Venue</option>
+                    <option value="Hotel / Resort" class="bg-bg">Hotel / Resort</option>
+                    <option value="Bar / Restaurant" class="bg-bg">Bar / Restaurant</option>
+                    <option value="Corporate Office" class="bg-bg">Corporate Office</option>
+                    <option value="Performance Shop" class="bg-bg">Performance Shop</option>
+                    <option value="Other" class="bg-bg">Other</option>
+                  </select>
+                </div>
+                <div>
+                  <label for="lease-location" class="block text-[10px] uppercase tracking-[0.3em] text-gray mb-2">Location</label>
+                  <input
+                    type="text"
+                    id="lease-location"
+                    name="location"
+                    class="w-full bg-transparent border border-gray-border px-4 py-3 text-white text-sm placeholder:text-gray/40 focus:border-red focus:outline-none transition-colors"
+                    placeholder="City, State"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label for="lease-message" class="block text-[10px] uppercase tracking-[0.3em] text-gray mb-2">Tell Us About Your Space</label>
+                <textarea
+                  id="lease-message"
+                  name="message"
+                  rows="4"
+                  class="w-full bg-transparent border border-gray-border px-4 py-3 text-white text-sm placeholder:text-gray/40 focus:border-red focus:outline-none transition-colors resize-none"
+                  placeholder="Indoor or outdoor? Expected foot traffic? Staffed or self-service? Anything else we should know..."
+                ></textarea>
+              </div>
+
+              <!-- SMS Consent -->
+              <label class="flex items-start gap-3 cursor-pointer group">
+                <input type="checkbox" name="smsConsent" class="mt-1 accent-red w-4 h-4 flex-shrink-0" />
+                <span class="text-gray/60 text-xs leading-relaxed">
+                  I agree to receive SMS updates about my lease inquiry from SimsForHire. Message & data rates may apply. Reply STOP to opt out.
+                  <a href="/privacy-policy" class="text-red hover:underline">Privacy Policy</a>
+                </span>
+              </label>
+
+              <button
+                type="submit"
+                class="w-full bg-red text-white py-5 text-sm font-display uppercase tracking-[0.25em] cursor-pointer relative z-10 hover:bg-[#ff1a1a] hover:shadow-[0_0_30px_rgba(225,6,0,0.3)] active:scale-[0.99] transition-all duration-200"
+              >
+                Request Lease Quote
+              </button>
+
+              <!-- Status -->
+              <div id="lease-status" class="hidden text-center py-3 text-sm"></div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+  <Footer />
+</BaseLayout>
+
+<script>
+  const form = document.getElementById('lease-form-el') as HTMLFormElement
+  const status = document.getElementById('lease-status')!
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault()
+    const btn = form.querySelector('button[type="submit"]') as HTMLButtonElement
+    btn.disabled = true
+    btn.textContent = 'SUBMITTING...'
+    status.className = 'hidden'
+
+    const fd = new FormData(form)
+    const payload: Record<string, unknown> = {
+      name: fd.get('name'),
+      email: fd.get('email'),
+      phone: fd.get('phone') || undefined,
+      businessName: fd.get('businessName') || undefined,
+      businessType: fd.get('businessType') || undefined,
+      location: fd.get('location') || undefined,
+      message: fd.get('message') || 'Lease inquiry from website',
+      smsConsent: fd.has('smsConsent'),
+      sourceUrl: window.location.href,
+      eventId: `lease_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+    }
+
+    // Grab Meta cookies if present
+    const cookies = document.cookie.split(';').reduce((acc: Record<string, string>, c) => {
+      const [k, v] = c.trim().split('=')
+      if (k && v) acc[k] = v
+      return acc
+    }, {})
+    if (cookies._fbc) payload.fbc = cookies._fbc
+    if (cookies._fbp) payload.fbp = cookies._fbp
+
+    try {
+      const res = await fetch('/api/lease', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      })
+      const data = await res.json()
+
+      if (res.ok) {
+        // Fire tracking before redirect
+        if (typeof (window as any).fbq === 'function') {
+          (window as any).fbq('track', 'Lead', {
+            content_category: 'Lease Inquiry',
+            content_name: 'Lease Form',
+          }, { eventID: payload.eventId })
+        }
+        window.dataLayer = window.dataLayer || [];
+        window.dataLayer.push({
+          event: 'lease_lead',
+          event_category: 'lead',
+          event_label: 'lease_inquiry_form',
+        })
+
+        window.location.href = '/thank-you/lease'
+      } else {
+        status.textContent = data.error || 'Something went wrong. Please try again.'
+        status.className = 'text-center py-3 text-sm text-red'
+      }
+    } catch {
+      status.textContent = 'Network error. Please try again.'
+      status.className = 'text-center py-3 text-sm text-red'
+    } finally {
+      btn.disabled = false
+      btn.textContent = 'REQUEST LEASE QUOTE'
+    }
+  })
+</script>

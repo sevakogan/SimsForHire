@@ -1,0 +1,54 @@
+---
+import Sidebar from '../components/admin/Sidebar.astro'
+
+interface Props {
+  title?: string
+  active?: string
+}
+
+const { title = 'Admin — SimsForHire', active = 'dashboard' } = Astro.props
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&display=swap" rel="stylesheet" />
+    <title>{title}</title>
+    <style is:global>
+      :root {
+        --admin-bg: #F5F5F7;
+        --admin-surface: #FFFFFF;
+        --admin-border: #E5E5E7;
+        --admin-text: #1D1D1F;
+        --admin-secondary: #86868B;
+        --admin-tertiary: #AEAEB2;
+        --admin-red: #E10600;
+        --admin-green: #30D158;
+        --admin-amber: #FF9F0A;
+        --admin-sidebar: #FBFBFD;
+      }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      body {
+        font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+        background: var(--admin-bg);
+        color: var(--admin-text);
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+      ::selection { background: rgba(225, 6, 0, 0.12); }
+      input:focus, select:focus, textarea:focus { outline: none; }
+    </style>
+  </head>
+  <body>
+    <Sidebar active={active} />
+    <main style="margin-left: 240px; min-height: 100vh; padding: 48px 56px;">
+      <slot />
+    </main>
+  </body>
+</html>

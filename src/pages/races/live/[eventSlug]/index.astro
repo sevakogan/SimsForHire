@@ -1,0 +1,100 @@
+---
+export const prerender = false
+
+import { createServiceClient } from '../../../../lib/supabase'
+import { resolveEventSlug } from '../../../../lib/s4m/event-helpers'
+import { getThemeVariables } from '../../../../lib/s4m/themes'
+
+const { eventSlug } = Astro.params
+const eventId = await resolveEventSlug(eventSlug!)
+if (!eventId) return Astro.redirect('/races')
+
+const supabase = createServiceClient()
+const [{ data: event }, { data: config }] = await Promise.all([
+  supabase.from('live_events').select('*').eq('id', eventId).single(),
+  supabase.from('event_config').select('*').eq('event_id', eventId).single(),
+])
+
+if (!event || !config) return Astro.redirect('/races')
+
+const themeVars = getThemeVariables(event.theme || 'default')
+const styleVars = Object.entries(themeVars).map(([k, v]) => `${k}:${v}`).join(';')
+
+const { count: totalRacers } = await supabase
+  .from('racers')
+  .select('*', { count: 'exact', head: true })
+  .eq('event_id', eventId)
+
+const { count: queueCount } = await supabase
+  .from('racers')
+  .select('*', { count: 'exact', head: true })
+  .eq('event_id', eventId)
+  .is('lap_time', null)
+
+const { count: completedCount } = await supabase
+  .from('racers')
+  .select('*', { count: 'exact', head: true })
+  .eq('event_id', eventId)
+  .not('lap_time', 'is', null)
+---
+
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{config.event_name} — {config.dealer_name}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Orbitron:wght@400;700;900&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet" />
+</head>
+<body style={styleVars} class="min-h-screen" style:list={[{ backgroundColor: 'var(--black)', color: 'var(--white)' }]}>
+  <div class="h-1" style="background: var(--yellow)"></div>
+
+  <div class="max-w-lg mx-auto px-6 py-12 text-center">
+    {config.logo_left && <img src={config.logo_left} alt="" class="h-16 mx-auto mb-6 object-contain" />}
+
+    <h1 class="font-bold text-3xl tracking-tight uppercase text-white mb-2">
+      {config.event_name}
+    </h1>
+    <p class="font-mono text-[10px] tracking-[3px] uppercase text-white/50 mb-8">
+      {config.dealer_name}
+    </p>
+
+    {(config.event_date || config.event_time) && (
+      <p class="font-mono text-[10px] tracking-[2px] text-white/70 mb-8">
+        {config.event_date && new Date(config.event_date + 'T00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+        {config.event_date && config.event_time && ' | '}
+        {config.event_time && new Date('2000-01-01T' + config.event_time).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
+      </p>
+    )}
+
+    <!-- Stats -->
+    <div class="grid grid-cols-3 gap-4 mb-10">
+      <div class="border border-white/10 p-4">
+        <div class="text-2xl font-bold" style="color: var(--yellow)">{totalRacers ?? 0}</div>
+        <div class="font-mono text-[8px] tracking-[2px] uppercase text-white/50 mt-1">Registered</div>
+      </div>
+      <div class="border border-white/10 p-4">
+        <div class="text-2xl font-bold" style="color: var(--yellow)">{queueCount ?? 0}</div>
+        <div class="font-mono text-[8px] tracking-[2px] uppercase text-white/50 mt-1">In Queue</div>
+      </div>
+      <div class="border border-white/10 p-4">
+        <div class="text-2xl font-bold" style="color: var(--yellow)">{completedCount ?? 0}</div>
+        <div class="font-mono text-[8px] tracking-[2px] uppercase text-white/50 mt-1">Completed</div>
+      </div>
+    </div>
+
+    <!-- Navigation -->
+    <div class="flex flex-col gap-3">
+      <a href={`/races/live/${eventSlug}/register`} class="block w-full py-4 text-center font-bold text-xs tracking-[3px] uppercase transition-all" style="background: var(--yellow); color: var(--black);">
+        Register to Race →
+      </a>
+      <a href={`/races/live/${eventSlug}/leaderboard`} class="block w-full py-4 text-center font-bold text-xs tracking-[3px] uppercase border border-white/20 text-white transition-all hover:border-white/40">
+        View Leaderboard
+      </a>
+      <a href={`/races/live/${eventSlug}/admin`} class="block w-full py-3 text-center font-mono text-[10px] tracking-[2px] uppercase text-white/30 transition-all hover:text-white/60">
+        Event Staff →
+      </a>
+    </div>
+  </div>
+</body>
+</html>

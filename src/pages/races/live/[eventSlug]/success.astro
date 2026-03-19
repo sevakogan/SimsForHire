@@ -1,0 +1,75 @@
+---
+export const prerender = false
+
+import { createServiceClient } from '../../../../lib/supabase'
+import { resolveEventSlug } from '../../../../lib/s4m/event-helpers'
+import { getThemeVariables } from '../../../../lib/s4m/themes'
+
+const { eventSlug } = Astro.params
+const eventId = await resolveEventSlug(eventSlug!)
+if (!eventId) return Astro.redirect('/races')
+
+const supabase = createServiceClient()
+const [{ data: event }, { data: config }] = await Promise.all([
+  supabase.from('live_events').select('*').eq('id', eventId).single(),
+  supabase.from('event_config').select('*').eq('event_id', eventId).single(),
+])
+
+if (!event || !config) return Astro.redirect('/races')
+
+const themeVars = getThemeVariables(event.theme || 'default')
+const styleVars = Object.entries(themeVars).map(([k, v]) => `${k}:${v}`).join(';')
+
+const url = new URL(Astro.request.url)
+const name = url.searchParams.get('name') ?? 'Racer'
+const queue = url.searchParams.get('queue') ?? '1'
+---
+
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Confirmed! — {config.event_name}</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet" />
+</head>
+<body style={styleVars}>
+  <div class="min-h-screen flex flex-col items-center justify-center px-6" style="background: var(--light)">
+    <div class="max-w-md w-full text-center">
+      <!-- Checkmark -->
+      <div class="w-16 h-16 mx-auto mb-6 rounded-full border-2 flex items-center justify-center text-2xl" style="border-color: var(--yellow); color: var(--yellow)">
+        &#x2713;
+      </div>
+
+      <h1 class="text-3xl font-bold tracking-tight mb-2" style="color: var(--black)">
+        You're confirmed, {name}!
+      </h1>
+      <p class="font-mono text-[10px] tracking-[2px] uppercase mb-8" style="color: var(--gray)">
+        {config.dealer_name} {config.event_name}
+      </p>
+
+      <!-- Queue position -->
+      <div class="p-6 text-center mb-6" style="background: var(--yellow)">
+        <div class="font-mono text-[10px] tracking-[3px] uppercase opacity-40 mb-1">Total People in Queue</div>
+        <div class="text-4xl font-bold" style="color: var(--black)">{queue.padStart(2, '0')}</div>
+      </div>
+
+      <!-- Important notice -->
+      <div class="border-2 p-5 mb-6 text-left" style="border-color: var(--black)">
+        <div class="font-mono text-[10px] tracking-[3px] uppercase mb-2" style="color: var(--gray)">Important</div>
+        <p class="text-sm leading-relaxed" style="color: var(--black)">
+          Please stand in line and wait to be called.
+          <strong>If your turn is missed you will have to get in the back of the line unfortunately.</strong>
+        </p>
+      </div>
+
+      <p class="font-mono text-[11px] leading-relaxed" style="color: var(--gray)">
+        Your results will be texted and emailed after your run. Good luck!
+      </p>
+
+      <a href={`/races/live/${eventSlug}/leaderboard`} class="inline-block mt-8 py-3 px-8 font-bold text-xs tracking-[3px] uppercase text-white" style="background: var(--black)">
+        View Leaderboard →
+      </a>
+    </div>
+  </div>
+</body>
+</html>

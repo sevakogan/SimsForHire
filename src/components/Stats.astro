@@ -2,23 +2,21 @@
 import { STATS } from '../data/content'
 ---
 
-<section class="relative clip-diagonal-top clip-diagonal-bottom bg-surface py-24 -mt-8 overflow-hidden">
-  <!-- Parallax background texture -->
-  <div class="absolute inset-0 carbon-weave" data-parallax="0.08"></div>
-
-  <!-- Floating orbs -->
-  <div class="parallax-orb w-[300px] h-[300px] bg-red left-1/4 top-0" data-parallax="-0.06"></div>
-  <div class="parallax-orb w-[200px] h-[200px] bg-white right-1/4 bottom-0" data-parallax="0.1"></div>
-
-  <div class="max-w-7xl mx-auto px-6 md:px-16 lg:px-24 relative z-10">
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-4 text-center">
-      {STATS.map((stat, i) => (
-        <div data-reveal class="py-4" data-parallax={`${0.03 + i * 0.02}`}>
-          <span class="font-display text-5xl md:text-6xl text-white" data-count-value={stat.value}>
+<section class="bg-dark-bg py-32 md:py-40 px-6">
+  <div class="max-w-[980px] mx-auto">
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-8 text-center" data-reveal-stagger data-reveal>
+      {STATS.map((stat) => (
+        <div class="py-4">
+          <span
+            class="font-display text-[clamp(3rem,8vw,5rem)] font-bold text-white tracking-tight leading-none"
+            data-count-value={stat.value}
+          >
             {stat.value}
           </span>
-          <span class="font-display text-5xl md:text-6xl text-red">{stat.suffix}</span>
-          <span class="block text-[10px] uppercase tracking-[0.3em] text-gray-2 mt-3">
+          <span class="font-display text-[clamp(3rem,8vw,5rem)] font-bold text-white tracking-tight leading-none">
+            {stat.suffix}
+          </span>
+          <span class="block text-secondary text-sm font-light mt-3">
             {stat.label}
           </span>
         </div>
@@ -38,13 +36,13 @@ import { STATS } from '../data/content'
         const isFloat = raw.includes('.')
         const target = isFloat ? parseFloat(raw) : parseInt(raw.replace(/\D/g, ''))
         const suffix = raw.replace(/[\d.]/g, '')
-        const duration = 1500
+        const duration = 2000
         const start = performance.now()
 
         function tick(now: number) {
           const elapsed = now - start
           const progress = Math.min(elapsed / duration, 1)
-          const eased = 1 - Math.pow(1 - progress, 3)
+          const eased = 1 - Math.pow(1 - progress, 4)
           const current = isFloat
             ? (target * eased).toFixed(1)
             : Math.floor(target * eased)

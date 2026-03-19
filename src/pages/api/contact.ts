@@ -5,6 +5,8 @@ import { validateContactForm } from '../../lib/validate'
 import { notifySlack } from '../../lib/notify-slack'
 import { sendConfirmationEmail, sendLeadNotificationEmail } from '../../lib/send-email'
 import { sendSmsNotification } from '../../lib/send-sms'
+import { sendCAPIEvent } from '../../lib/meta-capi'
+import { saveLead } from '../../lib/save-lead'
 
 export const POST: APIRoute = async ({ request }) => {
   // Rate-limit header check (Vercel provides client IP)
@@ -37,39 +39,83 @@ export const POST: APIRoute = async ({ request }) => {
 
   const { data } = result
 
-  // Fire all three notifications concurrently
+  // Extract Meta CAPI fields from the raw body
+  const rawBody = body as Record<string, unknown>
+  const eventId = typeof rawBody.eventId === 'string' ? rawBody.eventId : undefined
+  const sourceUrl = typeof rawBody.sourceUrl === 'string' ? rawBody.sourceUrl : undefined
+  const fbc = typeof rawBody.fbc === 'string' ? rawBody.fbc : undefined
+  const fbp = typeof rawBody.fbp === 'string' ? rawBody.fbp : undefined
+
+  const clientIp = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
+    ?? request.headers.get('x-real-ip')
+    ?? undefined
+  const clientUserAgent = request.headers.get('user-agent') ?? undefined
+
+  // Split name for better Meta match quality
+  const nameParts = (data.name ?? '').trim().split(/\s+/)
+  const firstName = nameParts[0] ?? undefined
+  const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : undefined
+
+  // Fire notifications + Meta CAPI concurrently
+  // Only send SMS if user gave explicit consent
   // We use allSettled so one failure doesn't block the others
-  const [slackResult, emailResult, leadEmailResult, smsResult] =
-    await Promise.allSettled([
-      notifySlack(data),
-      sendConfirmationEmail(data),
-      sendLeadNotificationEmail(data),
-      sendSmsNotification(data),
-    ])
+  const notifications: Promise<unknown>[] = [
+    notifySlack(data),
+    sendConfirmationEmail(data),
+    sendLeadNotificationEmail(data),
+    saveLead({
+      source: 'rent',
+      name: data.name,
+      email: data.email,
+      phone: data.phone,
+      eventType: data.eventType,
+      eventDate: data.eventDate,
+      guestCount: data.guestCount,
+      message: data.message,
+      smsConsent: data.smsConsent,
+    }),
+    sendCAPIEvent({
+      eventName: 'Lead',
+      eventSourceUrl: sourceUrl ?? 'https://simsforhire.com',
+      eventId,
+      userData: {
+        email: data.email ?? undefined,
+        phone: data.phone ?? undefined,
+        firstName,
+        lastName,
+        clientIp,
+        clientUserAgent,
+        fbc,
+        fbp,
+      },
+      customData: {
+        content_category: data.eventType ?? 'General Inquiry',
+        content_name: 'Hire Inquiry Form',
+        lead_event_source: 'Website',
+      },
+    }),
+  ]
+  if (data.smsConsent && data.phone) {
+    notifications.push(sendSmsNotification(data))
+  }
+
+  const results = await Promise.allSettled(notifications)
 
   // Log any failures (but still return 200 to the user)
+  const labels = ['slack', 'email', 'lead-email', 'meta-capi', ...(data.smsConsent && data.phone ? ['sms'] : [])]
   const failures: string[] = []
 
-  if (slackResult.status === 'rejected') {
-    console.error('[API] Slack failed:', slackResult.reason)
-    failures.push('slack')
-  }
-  if (emailResult.status === 'rejected') {
-    console.error('[API] Confirmation email failed:', emailResult.reason)
-    failures.push('email')
-  }
-  if (leadEmailResult.status === 'rejected') {
-    console.error('[API] Lead email failed:', leadEmailResult.reason)
-    failures.push('lead-email')
-  }
-  if (smsResult.status === 'rejected') {
-    console.error('[API] SMS failed:', smsResult.reason)
-    failures.push('sms')
+  for (let i = 0; i < results.length; i++) {
+    if (results[i].status === 'rejected') {
+      const reason = (results[i] as PromiseRejectedResult).reason
+      console.error(`[API] ${labels[i]} failed:`, reason)
+      failures.push(labels[i])
+    }
   }
 
   // Return success to user regardless (their submission was received)
   // Only fail if ALL notifications failed
-  if (failures.length === 4) {
+  if (failures.length === results.length) {
     return new Response(
       JSON.stringify({
         error: 'Failed to process submission. Please try again.',
