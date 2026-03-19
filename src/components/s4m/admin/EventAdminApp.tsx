@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import type { LiveEvent, EventConfig } from '../../../lib/s4m/types'
 import { EventProvider } from '../EventProvider'
 import { ToastProvider } from '../Toast'
@@ -12,37 +12,111 @@ interface EventAdminAppProps {
   tab: 'queue' | 'results' | 'settings'
 }
 
+const adminStyles = {
+  fontFamily: "'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif",
+  background: '#F5F5F7',
+  minHeight: '100vh',
+  color: '#1D1D1F',
+} as const
+
 export function EventAdminApp({ event, config, tab }: EventAdminAppProps) {
-  const [role, setRole] = useState<'admin' | 'employee' | null>(null)
+  const storageKey = `s4h_staff_${event.slug}`
+  const [role, setRole] = useState<'admin' | 'employee' | null>(() => {
+    if (typeof window === 'undefined') return null
+    const saved = sessionStorage.getItem(storageKey)
+    return saved === 'admin' || saved === 'employee' ? saved : null
+  })
+
+  const handleAuthenticated = (r: 'admin' | 'employee') => {
+    setRole(r)
+    sessionStorage.setItem(storageKey, r)
+  }
 
   if (!role) {
-    return <PinGate eventSlug={event.slug} onAuthenticated={setRole} />
+    return <PinGate eventSlug={event.slug} onAuthenticated={handleAuthenticated} />
   }
 
   return (
-    <EventProvider event={event} config={config}>
-      <ToastProvider>
-        {/* Header */}
-        <div className="px-6 py-3 flex items-center justify-between" style={{ backgroundColor: 'var(--black)' }}>
-          <div className="font-mono text-[11px] tracking-[3px] uppercase text-white/90">
-            Event Staff — {role === 'admin' ? 'Admin' : 'Employee'}
+    <div style={adminStyles}>
+      <EventProvider event={event} config={config}>
+        <ToastProvider>
+          {/* Header bar */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            padding: '16px 28px',
+            background: 'white',
+            borderBottom: '1px solid #E5E5E7',
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <div style={{ width: '28px', height: '28px', background: '#1D1D1F', borderRadius: '7px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <span style={{ color: 'white', fontSize: '10px', fontWeight: 600 }}>S4H</span>
+              </div>
+              <div>
+                <span style={{ fontSize: '14px', fontWeight: 600, color: '#1D1D1F' }}>{config.event_name}</span>
+                <span style={{ fontSize: '12px', color: '#86868B', marginLeft: '8px' }}>
+                  {role === 'admin' ? 'Admin' : 'Employee'}
+                </span>
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <a href={`/live/${event.slug}/leaderboard/tv`} style={{
+                padding: '7px 14px', fontSize: '12px', fontWeight: 500, color: '#1D1D1F',
+                border: '1px solid #E5E5E7', borderRadius: '8px', textDecoration: 'none',
+              }}>TV View</a>
+              <a href={`/live/${event.slug}`} style={{
+                padding: '7px 14px', fontSize: '12px', fontWeight: 500, color: '#86868B',
+                border: '1px solid #E5E5E7', borderRadius: '8px', textDecoration: 'none',
+              }}>← Event</a>
+            </div>
           </div>
-          <div className="flex gap-2">
-            <a href={`/live/${event.slug}/leaderboard/tv`} className="no-underline px-4 py-2 text-[10px] font-bold tracking-[2px] uppercase border border-white/30 text-white/90 hover:border-white/70">TV</a>
-            <a href={`/live/${event.slug}`} className="no-underline px-4 py-2 text-[10px] font-bold tracking-[2px] uppercase border border-white/30 text-white/90 hover:border-white/70">← Home</a>
-          </div>
-        </div>
 
-        {tab === 'queue' && <QueueManager role={role} />}
-        {tab === 'results' && <ResultsView role={role} />}
-        {tab === 'settings' && (
-          <div className="p-6">
-            <p className="font-mono text-sm" style={{ color: 'var(--gray)' }}>
-              Event settings are managed from the <a href="/admin/events" className="underline" style={{ color: 'var(--black)' }}>admin panel</a>.
-            </p>
+          {/* Tab nav */}
+          <div style={{
+            display: 'flex',
+            gap: '0',
+            padding: '0 28px',
+            background: 'white',
+            borderBottom: '1px solid #E5E5E7',
+          }}>
+            {[
+              { id: 'queue', label: 'Queue', href: `/live/${event.slug}/admin/queue` },
+              { id: 'results', label: 'Results', href: `/live/${event.slug}/admin/results` },
+              { id: 'settings', label: 'Settings', href: `/live/${event.slug}/admin/settings` },
+            ].map(t => (
+              <a
+                key={t.id}
+                href={t.href}
+                style={{
+                  padding: '12px 20px',
+                  fontSize: '13px',
+                  fontWeight: tab === t.id ? 500 : 400,
+                  color: tab === t.id ? '#1D1D1F' : '#86868B',
+                  textDecoration: 'none',
+                  borderBottom: tab === t.id ? '2px solid #E10600' : '2px solid transparent',
+                }}
+              >
+                {t.label}
+              </a>
+            ))}
           </div>
-        )}
-      </ToastProvider>
-    </EventProvider>
+
+          {/* Content */}
+          <div style={{ padding: '28px' }}>
+            {tab === 'queue' && <QueueManager role={role} />}
+            {tab === 'results' && <ResultsView role={role} />}
+            {tab === 'settings' && (
+              <div style={{ background: 'white', borderRadius: '12px', border: '1px solid #E5E5E7', padding: '24px' }}>
+                <p style={{ fontSize: '14px', color: '#86868B' }}>
+                  Event settings are managed from the{' '}
+                  <a href="/admin/events" style={{ color: '#1D1D1F', textDecoration: 'underline' }}>admin panel</a>.
+                </p>
+              </div>
+            )}
+          </div>
+        </ToastProvider>
+      </EventProvider>
+    </div>
   )
 }

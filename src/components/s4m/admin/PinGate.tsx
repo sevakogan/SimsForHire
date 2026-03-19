@@ -38,33 +38,67 @@ export function PinGate({ onAuthenticated, eventSlug }: PinGateProps) {
   }, [pin, eventSlug, onAuthenticated])
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-6" style={{ backgroundColor: 'var(--light, #F5F4F0)' }}>
-      <div className="max-w-xs w-full text-center">
-        <h1 className="font-bold text-xl tracking-tight uppercase mb-2" style={{ color: 'var(--black)' }}>Event Staff</h1>
-        <p className="font-mono text-[10px] tracking-[2px] uppercase mb-8" style={{ color: 'var(--gray)' }}>Enter admin PIN to continue</p>
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px', background: '#F5F5F7', fontFamily: "'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif" }}>
+      <div style={{ maxWidth: '340px', width: '100%', textAlign: 'center' }}>
+        <div style={{ width: '48px', height: '48px', background: '#1D1D1F', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px' }}>
+          <span style={{ color: 'white', fontSize: '18px', fontWeight: 600 }}>S4H</span>
+        </div>
 
-        <input
-          type="password"
-          inputMode="numeric"
-          value={pin}
-          onChange={e => setPin(e.target.value.replace(/\D/g, '').slice(0, 8))}
-          onKeyDown={e => e.key === 'Enter' && handleSubmit()}
-          placeholder="Enter PIN"
-          className="w-full text-center text-2xl tracking-[8px] border-[1.5px] py-4 outline-none transition-colors focus:border-black"
-          style={{ borderColor: error ? '#ef4444' : 'var(--border)', color: 'var(--black)', backgroundColor: 'white' }}
-          autoFocus
-        />
+        <h1 style={{ fontSize: '22px', fontWeight: 600, color: '#1D1D1F', letterSpacing: '-0.3px', marginBottom: '6px' }}>Event Staff</h1>
+        <p style={{ fontSize: '13px', color: '#86868B', marginBottom: '32px' }}>Enter your PIN to access the event panel</p>
 
-        {error && <p className="text-red-500 text-xs mt-2">{error}</p>}
+        <div style={{ background: 'white', borderRadius: '16px', padding: '28px', border: '1px solid #E5E5E7' }}>
+          <input
+            type="password"
+            inputMode="numeric"
+            value={pin}
+            onChange={e => setPin(e.target.value.replace(/\D/g, '').slice(0, 8))}
+            onKeyDown={e => e.key === 'Enter' && handleSubmit()}
+            placeholder="••••"
+            style={{
+              width: '100%',
+              textAlign: 'center',
+              fontSize: '28px',
+              letterSpacing: '12px',
+              padding: '14px',
+              border: `1px solid ${error ? '#FF3B30' : '#E5E5E7'}`,
+              borderRadius: '10px',
+              outline: 'none',
+              fontFamily: 'inherit',
+              color: '#1D1D1F',
+              background: '#F5F5F7',
+              boxSizing: 'border-box',
+            }}
+            autoFocus
+          />
 
-        <button
-          onClick={handleSubmit}
-          disabled={loading || pin.length < 4}
-          className="w-full mt-4 py-4 font-bold text-xs tracking-[3px] uppercase text-white cursor-pointer disabled:opacity-35"
-          style={{ backgroundColor: 'var(--black)' }}
-        >
-          {loading ? 'Verifying...' : 'Enter →'}
-        </button>
+          {error && <p style={{ color: '#FF3B30', fontSize: '12px', marginTop: '8px' }}>{error}</p>}
+
+          <button
+            onClick={handleSubmit}
+            disabled={loading || pin.length < 4}
+            style={{
+              width: '100%',
+              marginTop: '16px',
+              padding: '14px',
+              background: '#1D1D1F',
+              color: 'white',
+              border: 'none',
+              borderRadius: '10px',
+              fontSize: '14px',
+              fontWeight: 500,
+              cursor: pin.length >= 4 && !loading ? 'pointer' : 'not-allowed',
+              opacity: pin.length >= 4 && !loading ? 1 : 0.35,
+              fontFamily: 'inherit',
+            }}
+          >
+            {loading ? 'Verifying...' : 'Enter'}
+          </button>
+        </div>
+
+        <a href={`/live/${eventSlug}`} style={{ display: 'inline-block', marginTop: '20px', fontSize: '13px', color: '#86868B', textDecoration: 'none' }}>
+          ← Back to event
+        </a>
       </div>
     </div>
   )

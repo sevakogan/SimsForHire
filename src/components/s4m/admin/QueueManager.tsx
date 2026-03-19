@@ -49,23 +49,22 @@ function TimeEntryModal({ isOpen, onClose, racer, onSaved }: TimeEntryModalProps
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Enter Lap Time" footer={
       <>
-        <button onClick={onClose} className="flex-1 py-3 text-[11px] font-bold tracking-[2px] uppercase border-[1.5px] bg-transparent" style={{ borderColor: 'var(--border)', color: 'var(--black)' }}>Cancel</button>
-        <button onClick={handleSave} disabled={!time || loading} className="flex-[2] py-3 text-[11px] font-bold tracking-[2px] uppercase border-[1.5px] border-black bg-black text-white disabled:opacity-35">{loading ? 'Saving...' : 'Save & Send SMS →'}</button>
+        <button onClick={onClose} style={{ flex: 1, padding: '12px', fontSize: '13px', fontWeight: 500, border: '1px solid #E5E5E7', borderRadius: '10px', background: 'white', cursor: 'pointer', fontFamily: 'inherit', color: '#86868B' }}>Cancel</button>
+        <button onClick={handleSave} disabled={!time || loading} style={{ flex: 2, padding: '12px', fontSize: '13px', fontWeight: 500, border: 'none', borderRadius: '10px', background: '#1D1D1F', color: 'white', cursor: !time || loading ? 'not-allowed' : 'pointer', opacity: !time || loading ? 0.35 : 1, fontFamily: 'inherit' }}>{loading ? 'Saving...' : 'Save & Send SMS'}</button>
       </>
     }>
-      <div className="font-mono text-[10px] tracking-[2px] mb-4 uppercase" style={{ color: 'var(--gray)' }}>
-        Driver: <strong style={{ color: 'var(--black)' }}>{racer?.name}</strong>
-      </div>
+      <p style={{ fontSize: '13px', color: '#86868B', marginBottom: '16px' }}>
+        Driver: <strong style={{ color: '#1D1D1F' }}>{racer?.name}</strong>
+      </p>
       <input
         type="tel"
         inputMode="numeric"
         value={time}
         onChange={e => setTime(formatTimeInput(e.target.value))}
         placeholder="0:00.000"
-        className="w-full border-[1.5px] text-4xl font-bold tracking-[4px] text-center py-4 outline-none focus:border-black"
-        style={{ borderColor: 'var(--border)', color: 'var(--black)', backgroundColor: 'var(--light)' }}
+        style={{ width: '100%', border: '1px solid #E5E5E7', borderRadius: '10px', background: '#F5F5F7', fontSize: '36px', fontWeight: 600, letterSpacing: '4px', textAlign: 'center', padding: '16px', color: '#1D1D1F', outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box' }}
       />
-      <div className="font-mono text-[9px] text-center mt-2 tracking-[2px]" style={{ color: 'var(--gray)' }}>Format: M:SS.mmm</div>
+      <p style={{ fontSize: '11px', color: '#AEAEB2', textAlign: 'center', marginTop: '8px' }}>Format: M:SS.mmm</p>
     </Modal>
   )
 }
@@ -75,7 +74,7 @@ interface QueueManagerProps {
 }
 
 export function QueueManager({ role }: QueueManagerProps) {
-  const { event, apiUrl, eventUrl } = useEventContext()
+  const { event, apiUrl } = useEventContext()
   const { queue, refetch } = useQueue(event.id)
   const { show } = useToast()
   const [selectedRacer, setSelectedRacer] = useState<Racer | null>(null)
@@ -93,41 +92,47 @@ export function QueueManager({ role }: QueueManagerProps) {
 
   return (
     <>
-      {/* Admin nav */}
-      <div className="flex border-b px-6 bg-white" style={{ borderColor: 'var(--border)' }}>
-        <a href={eventUrl('/admin/queue')} className="no-underline py-3 mr-8 font-mono text-[10px] tracking-[2px] uppercase border-b-2" style={{ color: 'var(--black)', borderColor: 'var(--yellow)' }}>Queue ({queue.length})</a>
-        <a href={eventUrl('/admin/results')} className="no-underline py-3 mr-8 font-mono text-[10px] tracking-[2px] uppercase border-b-2 border-transparent" style={{ color: 'var(--gray)' }}>Results</a>
-        <a href={eventUrl('/admin/settings')} className="no-underline py-3 mr-8 font-mono text-[10px] tracking-[2px] uppercase border-b-2 border-transparent" style={{ color: 'var(--gray)' }}>Settings</a>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+        <div>
+          <h2 style={{ fontSize: '18px', fontWeight: 600, color: '#1D1D1F' }}>Queue</h2>
+          <p style={{ fontSize: '12px', color: '#86868B', marginTop: '2px' }}>{queue.length} drivers awaiting simulator</p>
+        </div>
       </div>
 
-      <div className="p-6 max-w-[900px]">
-        <div className="font-mono text-[9px] tracking-[3px] uppercase mb-4" style={{ color: 'var(--gray)' }}>Drivers awaiting simulator</div>
-
+      <div style={{ background: 'white', borderRadius: '12px', border: '1px solid #E5E5E7', overflow: 'hidden' }}>
         {queue.length === 0 && (
-          <p className="font-mono text-[11px] tracking-[2px] py-12 text-center" style={{ color: 'var(--gray)' }}>No drivers in queue</p>
+          <div style={{ padding: '48px', textAlign: 'center' }}>
+            <p style={{ fontSize: '14px', color: '#86868B' }}>No drivers in queue</p>
+          </div>
         )}
 
         {queue.map((racer, i) => (
-          <div key={racer.id} className="flex items-center py-3 border-b" style={{ borderColor: 'var(--border)' }}>
-            <div className="w-8 font-mono text-sm font-bold" style={{ color: 'var(--gray)' }}>{(i + 1).toString().padStart(2, '0')}</div>
-            <div className="flex-1 min-w-0 px-3">
-              <div className="font-bold text-sm uppercase truncate" style={{ color: 'var(--black)' }}>{racer.name}</div>
-              <div className="font-mono text-[9px]" style={{ color: 'var(--gray)' }}>{racer.phone}</div>
+          <div key={racer.id} style={{
+            display: 'flex',
+            alignItems: 'center',
+            padding: '14px 20px',
+            borderBottom: i < queue.length - 1 ? '1px solid #E5E5E7' : 'none',
+          }}>
+            <div style={{ width: '32px', fontSize: '14px', fontWeight: 600, color: '#AEAEB2' }}>
+              {(i + 1).toString().padStart(2, '0')}
             </div>
-            <div className="flex gap-2">
+            <div style={{ flex: 1, minWidth: 0, paddingLeft: '12px' }}>
+              <div style={{ fontSize: '14px', fontWeight: 500, color: '#1D1D1F' }}>{racer.name}</div>
+              <div style={{ fontSize: '12px', color: '#86868B' }}>{racer.phone}</div>
+            </div>
+            <div style={{ display: 'flex', gap: '8px' }}>
               <button
                 onClick={() => { setSelectedRacer(racer); setModalOpen(true) }}
-                className="px-4 py-2 text-[10px] font-bold tracking-[2px] uppercase text-white"
-                style={{ backgroundColor: 'var(--black)' }}
+                style={{ padding: '7px 14px', fontSize: '12px', fontWeight: 500, background: '#1D1D1F', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontFamily: 'inherit' }}
               >
                 Enter Time
               </button>
               {role === 'admin' && (
                 <button
                   onClick={() => handleDelete(racer.id)}
-                  className="px-3 py-2 text-[10px] font-bold tracking-[1px] uppercase text-red-500 border border-red-200 bg-transparent hover:bg-red-50"
+                  style={{ padding: '7px 10px', fontSize: '12px', fontWeight: 500, color: '#FF3B30', border: '1px solid #FFD4D2', borderRadius: '8px', background: 'white', cursor: 'pointer', fontFamily: 'inherit' }}
                 >
-                  ×
+                  Remove
                 </button>
               )}
             </div>

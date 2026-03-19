@@ -12,9 +12,8 @@ interface ResultsViewProps {
 }
 
 export function ResultsView({ role }: ResultsViewProps) {
-  const { event, apiUrl, eventUrl } = useEventContext()
+  const { event, apiUrl } = useEventContext()
   const { racers, refetch: refetchResults } = useLeaderboard(event.id)
-  const { queue } = useQueue(event.id)
   const leaderMs = racers[0]?.lap_time_ms ?? 0
   const { show } = useToast()
   const [deleteTarget, setDeleteTarget] = useState<Racer | null>(null)
@@ -51,61 +50,94 @@ export function ResultsView({ role }: ResultsViewProps) {
 
   return (
     <>
-      <div className="flex border-b px-6 bg-white" style={{ borderColor: 'var(--border)' }}>
-        <a href={eventUrl('/admin/queue')} className="no-underline py-3 mr-8 font-mono text-[10px] tracking-[2px] uppercase border-b-2 border-transparent" style={{ color: 'var(--gray)' }}>Queue ({queue.length})</a>
-        <a href={eventUrl('/admin/results')} className="no-underline py-3 mr-8 font-mono text-[10px] tracking-[2px] uppercase border-b-2" style={{ color: 'var(--black)', borderColor: 'var(--yellow)' }}>Results ({racers.length})</a>
-        <a href={eventUrl('/admin/settings')} className="no-underline py-3 mr-8 font-mono text-[10px] tracking-[2px] uppercase border-b-2 border-transparent" style={{ color: 'var(--gray)' }}>Settings</a>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+        <div>
+          <h2 style={{ fontSize: '18px', fontWeight: 600, color: '#1D1D1F' }}>Results</h2>
+          <p style={{ fontSize: '12px', color: '#86868B', marginTop: '2px' }}>{racers.length} completed runs — sorted by lap time</p>
+        </div>
       </div>
 
-      <div className="p-6 max-w-[900px]">
-        <div className="font-mono text-[9px] tracking-[3px] uppercase mb-4" style={{ color: 'var(--gray)' }}>Completed runs — sorted by lap time</div>
-
+      <div style={{ background: 'white', borderRadius: '12px', border: '1px solid #E5E5E7', overflow: 'hidden' }}>
         {racers.length === 0 && (
-          <p className="font-mono text-[11px] tracking-[2px] py-12 text-center" style={{ color: 'var(--gray)' }}>No completed runs yet</p>
+          <div style={{ padding: '48px', textAlign: 'center' }}>
+            <p style={{ fontSize: '14px', color: '#86868B' }}>No completed runs yet</p>
+          </div>
         )}
 
         {racers.map((racer, i) => (
-          <div key={racer.id} className="flex items-center py-3 border-b" style={{ borderColor: 'var(--border)' }}>
-            <div className="w-8 font-bold text-sm" style={{ color: i < 3 ? 'var(--yellow)' : 'var(--gray)' }}>P{i + 1}</div>
-            <div className="flex-1 min-w-0 px-3">
-              <div className="font-bold text-sm uppercase truncate" style={{ color: 'var(--black)' }}>{shortName(racer.name)}</div>
-              <div className="font-mono text-[9px]" style={{ color: 'var(--gray)' }}>{racer.lap_time_ms ? formatGap(leaderMs, racer.lap_time_ms) : ''}</div>
+          <div key={racer.id} style={{
+            display: 'flex',
+            alignItems: 'center',
+            padding: '14px 20px',
+            borderBottom: i < racers.length - 1 ? '1px solid #E5E5E7' : 'none',
+          }}>
+            <div style={{
+              width: '32px',
+              fontSize: '14px',
+              fontWeight: 600,
+              color: i < 3 ? '#E10600' : '#AEAEB2',
+            }}>
+              P{i + 1}
             </div>
-            <div className="font-mono font-bold text-lg tracking-[1px] mr-4" style={{ color: 'var(--black)' }}>{racer.lap_time}</div>
+            <div style={{ flex: 1, minWidth: 0, paddingLeft: '12px' }}>
+              <div style={{ fontSize: '14px', fontWeight: 500, color: '#1D1D1F' }}>{shortName(racer.name)}</div>
+              <div style={{ fontSize: '11px', color: '#AEAEB2' }}>
+                {racer.lap_time_ms != null ? formatGap(leaderMs, racer.lap_time_ms) : ''}
+              </div>
+            </div>
+            <div style={{ fontSize: '16px', fontWeight: 600, color: '#1D1D1F', letterSpacing: '1px', fontVariantNumeric: 'tabular-nums', marginRight: role === 'admin' ? '12px' : 0 }}>
+              {racer.lap_time}
+            </div>
             {role === 'admin' && (
-              <button onClick={() => setDeleteTarget(racer)} className="text-red-400 hover:text-red-600 text-xs">×</button>
+              <button
+                onClick={() => setDeleteTarget(racer)}
+                style={{ fontSize: '12px', color: '#FF3B30', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', padding: '4px 8px' }}
+              >
+                Remove
+              </button>
             )}
           </div>
         ))}
-
-        {role === 'admin' && (
-          <div className="mt-10 pt-6 border-t" style={{ borderColor: 'var(--border)' }}>
-            <button onClick={() => setResetOpen(true)} className="px-6 py-3 text-[10px] font-bold tracking-[2px] uppercase border-[1.5px] border-red-300 text-red-500 bg-transparent hover:bg-red-50">
-              Reset All Data
-            </button>
-          </div>
-        )}
       </div>
 
+      {role === 'admin' && (
+        <div style={{ marginTop: '24px' }}>
+          <button
+            onClick={() => setResetOpen(true)}
+            style={{ padding: '10px 20px', fontSize: '13px', fontWeight: 500, color: '#FF3B30', border: '1px solid #FFD4D2', borderRadius: '10px', background: 'white', cursor: 'pointer', fontFamily: 'inherit' }}
+          >
+            Reset All Data
+          </button>
+          <p style={{ fontSize: '11px', color: '#AEAEB2', marginTop: '6px' }}>Permanently delete all drivers, times, and queue data</p>
+        </div>
+      )}
+
       {/* Delete confirm */}
-      <Modal isOpen={!!deleteTarget} onClose={() => setDeleteTarget(null)} title="Delete Entry?" footer={
+      <Modal isOpen={!!deleteTarget} onClose={() => setDeleteTarget(null)} title="Remove Entry?" footer={
         <>
-          <button onClick={() => setDeleteTarget(null)} className="flex-1 py-3 text-[11px] font-bold tracking-[2px] uppercase border bg-transparent" style={{ borderColor: 'var(--border)' }}>Cancel</button>
-          <button onClick={handleDelete} className="flex-1 py-3 text-[11px] font-bold tracking-[2px] uppercase bg-red-500 text-white border border-red-500">Delete</button>
+          <button onClick={() => setDeleteTarget(null)} style={{ flex: 1, padding: '12px', fontSize: '13px', fontWeight: 500, border: '1px solid #E5E5E7', borderRadius: '10px', background: 'white', cursor: 'pointer', fontFamily: 'inherit', color: '#86868B' }}>Cancel</button>
+          <button onClick={handleDelete} style={{ flex: 1, padding: '12px', fontSize: '13px', fontWeight: 500, border: 'none', borderRadius: '10px', background: '#FF3B30', color: 'white', cursor: 'pointer', fontFamily: 'inherit' }}>Remove</button>
         </>
       }>
-        <p className="text-sm" style={{ color: 'var(--gray)' }}>Remove <strong style={{ color: 'var(--black)' }}>{deleteTarget?.name}</strong> and their lap time?</p>
+        <p style={{ fontSize: '14px', color: '#86868B' }}>Remove <strong style={{ color: '#1D1D1F' }}>{deleteTarget?.name}</strong> and their lap time?</p>
       </Modal>
 
       {/* Reset confirm */}
       <Modal isOpen={resetOpen} onClose={() => setResetOpen(false)} title="Reset All Data?" footer={
         <>
-          <button onClick={() => setResetOpen(false)} className="flex-1 py-3 text-[11px] font-bold tracking-[2px] uppercase border bg-transparent" style={{ borderColor: 'var(--border)' }}>Cancel</button>
-          <button onClick={handleReset} disabled={resetPin.length < 4} className="flex-1 py-3 text-[11px] font-bold tracking-[2px] uppercase bg-red-500 text-white border border-red-500 disabled:opacity-35">Confirm Reset</button>
+          <button onClick={() => setResetOpen(false)} style={{ flex: 1, padding: '12px', fontSize: '13px', fontWeight: 500, border: '1px solid #E5E5E7', borderRadius: '10px', background: 'white', cursor: 'pointer', fontFamily: 'inherit', color: '#86868B' }}>Cancel</button>
+          <button onClick={handleReset} disabled={resetPin.length < 4} style={{ flex: 1, padding: '12px', fontSize: '13px', fontWeight: 500, border: 'none', borderRadius: '10px', background: '#FF3B30', color: 'white', cursor: resetPin.length >= 4 ? 'pointer' : 'not-allowed', opacity: resetPin.length >= 4 ? 1 : 0.35, fontFamily: 'inherit' }}>Confirm Reset</button>
         </>
       }>
-        <p className="text-sm mb-4" style={{ color: 'var(--gray)' }}>This will permanently delete all racers, times, and queue data.</p>
-        <input type="password" inputMode="numeric" placeholder="Admin PIN" value={resetPin} onChange={e => setResetPin(e.target.value)} className="w-full border-[1.5px] py-3 text-center tracking-[4px] outline-none" style={{ borderColor: 'var(--border)' }} />
+        <p style={{ fontSize: '14px', color: '#86868B', marginBottom: '16px' }}>This will permanently delete all racers, times, and queue data.</p>
+        <input
+          type="password"
+          inputMode="numeric"
+          placeholder="Admin PIN"
+          value={resetPin}
+          onChange={e => setResetPin(e.target.value)}
+          style={{ width: '100%', border: '1px solid #E5E5E7', borderRadius: '10px', padding: '12px', textAlign: 'center', letterSpacing: '6px', fontSize: '18px', outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box' }}
+        />
       </Modal>
     </>
   )
