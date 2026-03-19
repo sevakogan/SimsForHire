@@ -1,7 +1,66 @@
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { useEventContext } from '../EventProvider'
 import { useToast } from '../Toast'
 import type { EventConfig } from '../../../lib/s4m/types'
+
+function ShareLink({ event }: { event: { slug: string } }) {
+  const [copied, setCopied] = useState(false)
+  const staffUrl = typeof window !== 'undefined'
+    ? `${window.location.origin}/live/${event.slug}/admin`
+    : `/live/${event.slug}/admin`
+  const eventUrl = typeof window !== 'undefined'
+    ? `${window.location.origin}/live/${event.slug}`
+    : `/live/${event.slug}`
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(staffUrl)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
+
+  return (
+    <div style={{ background: '#EEF6FF', borderRadius: '12px', border: '1px solid #BFD8F5', padding: '20px 24px', marginBottom: '16px' }}>
+      <h3 style={{ fontSize: '14px', fontWeight: 600, color: '#1D1D1F', marginBottom: '4px' }}>Share with Staff</h3>
+      <p style={{ fontSize: '12px', color: '#5A7DA8', marginBottom: '14px' }}>Send this link to employees running the event — they'll enter their PIN to access the panel</p>
+      <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+        <input
+          readOnly
+          value={staffUrl}
+          onClick={e => (e.target as HTMLInputElement).select()}
+          style={{
+            flex: 1, padding: '10px 14px', border: '1px solid #BFD8F5', borderRadius: '8px',
+            fontSize: '13px', fontFamily: 'monospace', color: '#2563EB', background: 'white',
+            outline: 'none', boxSizing: 'border-box',
+          }}
+        />
+        <button
+          onClick={handleCopy}
+          style={{
+            padding: '10px 18px', fontSize: '13px', fontWeight: 500,
+            background: copied ? '#30D158' : '#2563EB', color: 'white',
+            border: 'none', borderRadius: '8px', cursor: 'pointer', fontFamily: 'inherit',
+            whiteSpace: 'nowrap', transition: 'background 0.2s',
+          }}
+        >
+          {copied ? 'Copied!' : 'Copy Link'}
+        </button>
+        <a
+          href={eventUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{
+            padding: '10px 18px', fontSize: '13px', fontWeight: 500,
+            background: 'white', color: '#2563EB',
+            border: '1px solid #BFD8F5', borderRadius: '8px', textDecoration: 'none',
+            fontFamily: 'inherit', whiteSpace: 'nowrap',
+          }}
+        >
+          Preview Event
+        </a>
+      </div>
+    </div>
+  )
+}
 
 interface EventSettingsProps {
   role: 'admin' | 'employee'
@@ -125,6 +184,9 @@ export function EventSettings({ role }: EventSettingsProps) {
           {saving ? 'Saving...' : 'Save Changes'}
         </button>
       </div>
+
+      {/* Share with Staff */}
+      <ShareLink event={event} />
 
       {/* Event Details */}
       <div style={{ background: 'white', borderRadius: '12px', border: '1px solid #E5E5E7', padding: '24px', marginBottom: '16px' }}>
