@@ -5,9 +5,7 @@ import '../../../../styles/global.css'
 import { createServiceClient } from '../../../../lib/supabase'
 import { resolveEventSlug } from '../../../../lib/s4m/event-helpers'
 import { getThemeVariables } from '../../../../lib/s4m/themes'
-import { EventProvider } from '../../../../components/s4m/EventProvider'
-import { ToastProvider } from '../../../../components/s4m/Toast'
-import { LeaderboardLive } from '../../../../components/s4m/LeaderboardLive'
+import { LeaderboardIsland } from '../../../../components/s4m/LeaderboardIsland'
 
 const { eventSlug } = Astro.params
 const eventId = await resolveEventSlug(eventSlug!)
@@ -41,10 +39,6 @@ const styleVars = Object.entries(themeVars).map(([k, v]) => `${k}:${v}`).join(';
   </script>
 </head>
 <body style={styleVars}>
-  <EventProvider event={event} config={config} client:load>
-    <ToastProvider client:load>
-      <LeaderboardLive client:load />
-    </ToastProvider>
-  </EventProvider>
+  <LeaderboardIsland event={event} config={config} client:load />
 </body>
 </html>
