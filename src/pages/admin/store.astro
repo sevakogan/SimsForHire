@@ -1,0 +1,26 @@
+---
+export const prerender = false
+
+import AdminLayout from '../../layouts/AdminLayout.astro'
+import { requireAuth } from '../../lib/admin-auth'
+
+const auth = await requireAuth(Astro.request)
+if (!auth.authorized) return Astro.redirect('/admin')
+---
+
+<AdminLayout title="Store — Admin" active="store">
+  <div style="display: flex; align-items: center; justify-content: center; min-height: 60vh;">
+    <div style="text-align: center; max-width: 400px;">
+      <div style="width: 64px; height: 64px; background: #F5F5F7; border-radius: 16px; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;">
+        <svg width="28" height="28" fill="none" stroke="#AEAEB2" viewBox="0 0 24 24" stroke-width="1.5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 21v-7.5a.75.75 0 01.75-.75h3a.75.75 0 01.75.75V21m-4.5 0H2.36m11.14 0H18m0 0h3.64m-1.39 0V9.349m-16.5 11.65V9.35m0 0a3.001 3.001 0 003.75-.615A2.993 2.993 0 009.75 9.75c.896 0 1.7-.393 2.25-1.016a2.993 2.993 0 002.25 1.016c.896 0 1.7-.393 2.25-1.016A3.001 3.001 0 0021 9.349m-18 0a2.994 2.994 0 00-1.5-.349C2.45 9.3 4.352 5.25 4.352 5.25 4.648 4.5 5.352 4.125 6 4.125h12c.648 0 1.352.375 1.648 1.125 0 0 1.902 4.05 2.852 4.725-.479.112-.976.175-1.5.175" />
+        </svg>
+      </div>
+      <h1 style="font-size: 22px; font-weight: 600; color: var(--admin-text); margin-bottom: 8px;">Store Interface</h1>
+      <p style="font-size: 14px; color: var(--admin-secondary); margin-bottom: 4px;">Coming Soon</p>
+      <p style="font-size: 13px; color: var(--admin-tertiary); line-height: 1.6;">
+        Manage products, inventory, and orders directly from the admin panel. This feature is currently in development.
+      </p>
+    </div>
+  </div>
+</AdminLayout>
