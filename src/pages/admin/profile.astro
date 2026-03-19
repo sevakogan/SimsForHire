@@ -146,6 +146,8 @@ const labelStyle = "display: block; font-size: 12px; font-weight: 500; color: va
               <span style={`padding: 2px 8px; font-size: 10px; font-weight: 500; border-radius: 6px; ${
                 p.role === 'owner' ? 'background: #FFF3E0; color: #E65100;' :
                 p.role === 'admin' ? 'background: #E8F5E9; color: #2E7D32;' :
+                p.role === 'marketing' ? 'background: #E3F2FD; color: #1565C0;' :
+                p.role === 'customer' ? 'background: #F3E5F5; color: #7B1FA2;' :
                 'background: #F5F5F7; color: var(--admin-secondary);'
               }`}>{roleLabels[p.role] || p.role}</span>
             </div>
@@ -157,6 +159,14 @@ const labelStyle = "display: block; font-size: 12px; font-weight: 500; color: va
         <div style="flex: 1;">
           <label style={labelStyle}>Email address</label>
           <input id="invite-email" type="email" placeholder="colleague@company.com" style={inputStyle} />
+        </div>
+        <div>
+          <label style={labelStyle}>Role</label>
+          <select id="invite-role" style={inputStyle + " min-width: 130px;"}>
+            <option value="admin">Admin</option>
+            <option value="marketing">Marketing</option>
+            <option value="customer">Customer</option>
+          </select>
         </div>
         <button id="send-invite" style="padding: 10px 18px; font-size: 13px; font-weight: 500; background: #2563EB; color: white; border: none; border-radius: 8px; cursor: pointer; font-family: inherit; white-space: nowrap;">
           Send Invite
@@ -263,13 +273,14 @@ const labelStyle = "display: block; font-size: 12px; font-weight: 500; color: va
   // Send invite
   document.getElementById('send-invite')!.addEventListener('click', async () => {
     const email = (document.getElementById('invite-email') as HTMLInputElement).value
+    const role = (document.getElementById('invite-role') as HTMLSelectElement).value
     const status = document.getElementById('invite-status')!
     if (!email.includes('@')) { status.textContent = 'Enter a valid email'; status.style.color = '#FF3B30'; status.style.display = 'block'; return }
     try {
       const res = await fetch('/api/admin/invite', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email, role }),
       })
       status.style.display = 'block'
       if (res.ok) {
