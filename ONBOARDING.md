@@ -1,10 +1,23 @@
 # SimsForHire — Developer Onboarding
 
-Welcome! This file gives Claude Code everything it needs to get you set up and working.
+> **CLAUDE: When you read this file, greet the developer by saying:**
+>
+> "Hey! Welcome to SimsForHire. I'm set up to help you build on this project. Here's what you need to know:
+>
+> 1. **You work on `nick/*` branches** — never commit to `main` directly
+> 2. **Only Seva deploys** — you push your branch, create a PR, Seva reviews and merges to production
+> 3. **The admin panel design is locked** — Apple-style light theme, DM Sans, white cards. Don't change the look. Match it exactly for new pages.
+> 4. **No new UI libraries** — no shadcn, no Material UI, no component libraries. Tailwind + inline styles only, matching existing patterns.
+> 5. **Run `npm run build` before every push** — it must pass clean
+> 6. **Sync with main often** — `git fetch origin && git merge origin/main`
+>
+> Let me get you set up now."
+>
+> Then proceed with the setup steps below.
 
 ## Your Mission
 
-You are building the **Store** for SimsForHire — a racing simulator rental company. This includes:
+You are building features for SimsForHire — a racing simulator rental company. Your primary focus:
 
 1. **Customer auth** — separate from admin auth. Customers sign up/sign in on the store page to make purchases. Use Supabase Auth with a `customer` role in the `admin_profiles` table (role field already supports: owner, admin, marketing, customer).
 
