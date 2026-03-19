@@ -234,6 +234,23 @@ const labelStyle = "display: block; font-size: 12px; font-weight: 500; color: va
       <p id="invite-status" style="font-size: 11px; margin-top: 8px; display: none;"></p>
     </div>
   </div>
+
+  <!-- Delete user modal -->
+  <div id="delete-modal" style="display: none; position: fixed; inset: 0; z-index: 100; background: rgba(0,0,0,0.4); backdrop-filter: blur(4px);">
+    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; border-radius: 16px; padding: 32px; width: 380px; max-width: 90vw; text-align: center;">
+      <div style="width: 48px; height: 48px; background: #FFF2F1; border-radius: 12px; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;">
+        <svg width="22" height="22" fill="none" stroke="#FF3B30" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M22 10.5h-6m-2.25-4.125a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zM4 19.235v-.11a6.375 6.375 0 0112.75 0v.109A12.318 12.318 0 0110.374 21c-2.331 0-4.512-.645-6.374-1.766z" /></svg>
+      </div>
+      <h2 style="font-size: 17px; font-weight: 600; color: var(--admin-text); margin-bottom: 8px;">Remove Team Member?</h2>
+      <p style="font-size: 13px; color: var(--admin-secondary); margin-bottom: 4px;">This will permanently remove</p>
+      <p id="delete-user-name" style="font-size: 14px; font-weight: 600; color: var(--admin-text); margin-bottom: 20px;"></p>
+      <p style="font-size: 12px; color: var(--admin-tertiary); margin-bottom: 24px;">They will lose access to the admin panel immediately. This cannot be undone.</p>
+      <div style="display: flex; gap: 12px;">
+        <button id="delete-cancel" style="flex: 1; padding: 12px; border: 1px solid var(--admin-border); border-radius: 10px; font-size: 14px; font-weight: 500; background: white; cursor: pointer; font-family: inherit; color: var(--admin-secondary);">Cancel</button>
+        <button id="delete-confirm" style="flex: 1; padding: 12px; border: none; border-radius: 10px; font-size: 14px; font-weight: 500; background: #FF3B30; color: white; cursor: pointer; font-family: inherit;">Remove</button>
+      </div>
+    </div>
+  </div>
 </AdminLayout>
 
 <script>
@@ -418,27 +435,45 @@ const labelStyle = "display: block; font-size: 12px; font-weight: 500; color: va
     })
   })
 
-  // Delete user buttons
+  // Delete user modal
+  const deleteModal = document.getElementById('delete-modal')!
+  const deleteCancel = document.getElementById('delete-cancel')!
+  const deleteConfirm = document.getElementById('delete-confirm')!
+  const deleteNameEl = document.getElementById('delete-user-name')!
+  let deleteTargetUserId: string | null = null
+
+  deleteCancel.addEventListener('click', () => { deleteModal.style.display = 'none' })
+  deleteModal.addEventListener('click', (e) => { if (e.target === deleteModal) deleteModal.style.display = 'none' })
+
   document.querySelectorAll('.delete-user-btn').forEach(btn => {
-    btn.addEventListener('click', async () => {
-      const userId = (btn as HTMLElement).dataset.userid!
-      const name = (btn as HTMLElement).dataset.name!
-      if (!confirm(`Remove "${name}" from the team? This cannot be undone.`)) return
-      try {
-        const res = await fetch('/api/admin/delete-user', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ userId }),
-        })
-        if (res.ok) {
-          window.location.reload()
-        } else {
-          const data = await res.json()
-          alert(data.error || 'Failed to remove user')
-        }
-      } catch {
-        alert('Error removing user')
-      }
+    btn.addEventListener('click', () => {
+      deleteTargetUserId = (btn as HTMLElement).dataset.userid!
+      deleteNameEl.textContent = `"${(btn as HTMLElement).dataset.name}"`
+      deleteModal.style.display = 'block'
     })
+  })
+
+  deleteConfirm.addEventListener('click', async () => {
+    if (!deleteTargetUserId) return
+    deleteConfirm.textContent = 'Removing...'
+    try {
+      const res = await fetch('/api/admin/delete-user', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: deleteTargetUserId }),
+      })
+      if (res.ok) {
+        window.location.reload()
+      } else {
+        const data = await res.json()
+        alert(data.error || 'Failed to remove user')
+        deleteConfirm.textContent = 'Remove'
+        deleteModal.style.display = 'none'
+      }
+    } catch {
+      alert('Error removing user')
+      deleteConfirm.textContent = 'Remove'
+      deleteModal.style.display = 'none'
+    }
   })
 </script>
