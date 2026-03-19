@@ -88,6 +88,34 @@ npm run build     # Production build
 npm run preview   # Preview production build locally
 ```
 
+## Parallel Development (Two Developers)
+
+This project has two developers working simultaneously on separate branches:
+
+| Developer | Branch | Owns | Do NOT touch |
+|-----------|--------|------|--------------|
+| **Seva** | `main` or `feat/seva-*` | Everything except store | `src/pages/store/`, `src/pages/api/store/`, `src/components/store/`, `src/lib/store/`, `src/pages/account/`, `src/pages/api/account/` |
+| **Store Dev** | `feat/store` | Store + customer accounts | `src/components/s4m/`, `src/pages/live/`, `src/pages/api/live-events/`, `src/lib/s4m/`, `src/pages/admin/` (except `store.astro`) |
+
+### Rules for Conflict-Free Parallel Work
+
+1. **Never commit to `main` directly** — always use feature branches + PRs
+2. **Stay in your lanes** — only modify files in your "Owns" column
+3. **Shared files** that both might touch (coordinate before editing):
+   - `src/components/admin/Sidebar.astro` — nav links
+   - `src/styles/global.css` — theme tokens
+   - `package.json` — dependencies
+   - `src/env.d.ts` — env var types
+   - `src/lib/supabase.ts` — shared client
+4. **Supabase migrations** — share SQL scripts in `docs/migrations/` so both devs can run them
+5. **Merge flow:**
+   - Each dev pushes to their branch and creates a PR
+   - PR gets reviewed, then merged to `main`
+   - After merging, the other dev pulls `main` into their branch: `git fetch origin && git merge origin/main`
+   - If both PRs are ready, merge one first, then the second dev rebases/merges before their PR
+6. **Build check before PR:** always run `npm run build` — it must pass clean
+7. **Bump build info** in `src/lib/build-info.json` only when merging to `main` (whoever merges last bumps it)
+
 ## Git Workflow
 
 - Branch from `main` for features: `git checkout -b feat/your-feature`
