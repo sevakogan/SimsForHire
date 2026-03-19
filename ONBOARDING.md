@@ -70,40 +70,33 @@ git merge origin/main
 - `src/pages/account/` — Customer account pages (login, register, orders, profile)
 - `src/pages/api/account/` — Customer auth APIs
 
-### Don't touch (Seva's areas) — CRITICAL
+### Be aware of (Seva is actively working on these)
 - `src/components/s4m/` — Live event system
 - `src/pages/live/` — Live leaderboard pages
 - `src/pages/api/live-events/` — Live event APIs
 - `src/lib/s4m/` — Event system utilities
-- `src/pages/admin/` — Admin pages (except `store.astro` which is yours)
-- `src/components/admin/` — Admin components
-- `src/lib/admin-auth.ts` — Admin auth system
-- Any marketing site components (`Hero.astro`, `Fleet.astro`, etc.)
+- Marketing site components (`Hero.astro`, `Fleet.astro`, etc.)
 
-### Shared files (coordinate with Seva before editing)
-- `src/components/admin/Sidebar.astro` — if you need a nav link, ask Seva to add it
-- `src/styles/global.css` — if you need new theme tokens
-- `package.json` — if you need new dependencies, add them on your branch (merge will combine)
-- `src/env.d.ts` — if you add new env vars
-- `src/lib/supabase.ts` — shared Supabase client (probably don't need to change)
+You CAN edit anything in the project, but **sync with main first** when touching files outside your primary area to avoid merge conflicts.
 
 ## Parallel Work Rules
 
-You and Seva work simultaneously on separate branches. Here's how it stays clean:
+You and Seva work simultaneously. Both can work on any part of the codebase.
 
-1. **Your branch:** `feat/store` — always work here, never on `main`
-2. **Seva works on:** `main` or `feat/seva-*` branches
-3. **Stay in your lane** — only touch files in "Your files" section above
-4. **Sync with main regularly:**
+1. **Use `nick/*` branch prefix:** `git checkout -b nick/stripe-checkout`
+2. **Seva uses `seva/*` prefix**
+3. **Never commit directly to `main`** — always use branches + PRs
+4. **Sync with main often:**
    ```bash
    git fetch origin
    git merge origin/main
    ```
-   Do this daily or before creating a PR to avoid big merge conflicts.
-5. **When ready to deploy:** Create a PR from `feat/store` → `main` on GitHub
+   Do this before starting new work and before creating a PR.
+5. **When ready to deploy:** Push branch → create PR to `main` on GitHub
 6. **Build must pass:** Run `npm run build` before pushing. If it fails, fix it.
-7. **Supabase changes:** Put SQL scripts in `docs/migrations/` with a descriptive filename like `002-store-tables.sql`. Tell Seva to run them, or ask for dashboard access.
-8. **Don't force-push to main.** Don't merge to main without a PR.
+7. **Supabase changes:** Put SQL scripts in `docs/migrations/` with numbered filenames like `003-store-tables.sql`. Tell Seva to run them, or ask for dashboard access.
+8. **Don't force-push to `main`.** Don't merge without a PR.
+9. **If merge conflict:** resolve locally, run `npm run build`, push.
 
 ## Tech Stack Rules
 

@@ -88,40 +88,71 @@ npm run build     # Production build
 npm run preview   # Preview production build locally
 ```
 
-## Parallel Development (Two Developers)
+## Parallel Development (Seva + Nick)
 
-This project has two developers working simultaneously on separate branches:
+Two devs work simultaneously on separate branches.
 
-| Developer | Branch | Owns | Do NOT touch |
-|-----------|--------|------|--------------|
-| **Seva** | `main` or `feat/seva-*` | Everything except store | `src/pages/store/`, `src/pages/api/store/`, `src/components/store/`, `src/lib/store/`, `src/pages/account/`, `src/pages/api/account/` |
-| **Store Dev** | `feat/store` | Store + customer accounts | `src/components/s4m/`, `src/pages/live/`, `src/pages/api/live-events/`, `src/lib/s4m/`, `src/pages/admin/` (except `store.astro`) |
+| Developer | Branch prefix | Focus areas |
+|-----------|--------------|-------------|
+| **Seva** | `seva/*` | Live events, leaderboard, admin panel UI, marketing site, ads |
+| **Nick** | `nick/*` | Store, payments, customer auth, authentication flows, invite system |
 
-### Rules for Conflict-Free Parallel Work
+### Branch Rules
 
-1. **Never commit to `main` directly** — always use feature branches + PRs
-2. **Stay in your lanes** — only modify files in your "Owns" column
-3. **Shared files** that both might touch (coordinate before editing):
-   - `src/components/admin/Sidebar.astro` — nav links
-   - `src/styles/global.css` — theme tokens
-   - `package.json` — dependencies
-   - `src/env.d.ts` — env var types
-   - `src/lib/supabase.ts` — shared client
-4. **Supabase migrations** — share SQL scripts in `docs/migrations/` so both devs can run them
-5. **Merge flow:**
-   - Each dev pushes to their branch and creates a PR
-   - PR gets reviewed, then merged to `main`
-   - After merging, the other dev pulls `main` into their branch: `git fetch origin && git merge origin/main`
-   - If both PRs are ready, merge one first, then the second dev rebases/merges before their PR
-6. **Build check before PR:** always run `npm run build` — it must pass clean
-7. **Bump build info** in `src/lib/build-info.json` only when merging to `main` (whoever merges last bumps it)
+```bash
+# Seva starts work
+git checkout main && git pull
+git checkout -b seva/calendar-fix
+
+# Nick starts work
+git checkout main && git pull
+git checkout -b nick/stripe-checkout
+```
+
+- **Never commit directly to `main`** — always PR
+- **Sync with main before starting new work** and before creating a PR
+- **Run `npm run build`** before pushing — must pass clean
+
+### Shared Files (Both May Edit — Pull Latest First)
+
+These files are touched by both devs. Before editing, do `git pull origin main`:
+- `src/components/admin/Sidebar.astro` — nav links
+- `src/styles/global.css` — theme tokens
+- `package.json` — dependencies
+- `src/env.d.ts` — env var types
+- `src/lib/supabase.ts` — Supabase client
+- `src/lib/admin-auth.ts` — auth system (Nick may refactor for customer auth)
+
+### Merge Flow
+
+1. Push your branch → create PR to `main` on GitHub
+2. Vercel auto-creates a preview deploy for the PR
+3. Other dev reviews (or self-merge if non-overlapping)
+4. After merge, the other dev syncs: `git fetch origin && git merge origin/main`
+5. If both have PRs open: merge one, second dev rebases, then merge the other
+6. **Bump `src/lib/build-info.json`** when merging to main (whoever merges last)
+
+### Supabase Migrations
+
+Put SQL scripts in `docs/migrations/` with numbered filenames:
+- `001-initial-schema.sql` (already run)
+- `002-admin-profiles.sql` (already run)
+- `003-store-tables.sql` (Nick creates, Seva runs or vice versa)
+
+### If Merge Conflict Happens
+
+1. `git fetch origin && git merge origin/main`
+2. Resolve conflicts in your editor
+3. `npm run build` — must pass
+4. `git add -A && git commit`
+5. Push and update PR
 
 ## Git Workflow
 
-- Branch from `main` for features: `git checkout -b feat/your-feature`
+- Branch from `main`: `git checkout -b seva/feature` or `git checkout -b nick/feature`
 - Push to your branch, create PR to `main`
 - Vercel auto-deploys `main` on merge
-- **IMPORTANT:** Bump `src/lib/build-info.json` (build number + date in Pacific time) before pushing to main
+- **IMPORTANT:** Bump `src/lib/build-info.json` (build number + date in Pacific time) before merging to main
 - Don't force-push to `main`
 
 ## Environment Variables
