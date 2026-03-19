@@ -48,8 +48,10 @@ const { data: allProfiles } = await supabase
 // Get auth users to check invite status
 const { data: authUsers } = await supabase.auth.admin.listUsers()
 const userStatusMap = new Map<string, 'accepted' | 'pending'>()
+const userEmailMap = new Map<string, string>()
 authUsers?.users?.forEach(u => {
   userStatusMap.set(u.id, u.email_confirmed_at ? 'accepted' : 'pending')
+  if (u.email) userEmailMap.set(u.id, u.email)
 })
 
 // Also get invited users who don't have profiles yet
@@ -160,12 +162,18 @@ const labelStyle = "display: block; font-size: 12px; font-weight: 500; color: va
         <div style="margin-bottom: 16px;">
           {(allProfiles ?? []).map(p => {
             const status = userStatusMap.get(p.user_id) ?? 'accepted'
+            const memberEmail = userEmailMap.get(p.user_id) ?? ''
+            const isMe = p.user_id === auth.userId
             return (
               <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--admin-border);">
                 <div>
-                  <div style="font-size: 13px; font-weight: 500; color: var(--admin-text);">{p.name || 'Unnamed'}</div>
+                  <div style="font-size: 13px; font-weight: 500; color: var(--admin-text);">{p.name || memberEmail || 'Unnamed'}</div>
+                  {p.name && memberEmail && <div style="font-size: 11px; color: var(--admin-tertiary);">{memberEmail}</div>}
                 </div>
                 <div style="display: flex; gap: 6px; align-items: center;">
+                  {status === 'pending' && (
+                    <button class="resend-btn" data-email={memberEmail} style="padding: 2px 8px; font-size: 10px; font-weight: 500; border-radius: 6px; background: none; border: 1px solid #2563EB; color: #2563EB; cursor: pointer; font-family: inherit;">Resend</button>
+                  )}
                   {status === 'pending' && (
                     <span style="padding: 2px 8px; font-size: 10px; font-weight: 500; border-radius: 6px; background: #FFF8E1; color: #F57F17;">Pending</span>
                   )}
@@ -179,6 +187,9 @@ const labelStyle = "display: block; font-size: 12px; font-weight: 500; color: va
                     p.role === 'customer' ? 'background: #F3E5F5; color: #7B1FA2;' :
                     'background: #F5F5F7; color: var(--admin-secondary);'
                   }`}>{roleLabels[p.role] || p.role}</span>
+                  {!isMe && (
+                    <button class="delete-user-btn" data-userid={p.user_id} data-name={p.name || memberEmail} style="padding: 2px 6px; font-size: 10px; color: #FF3B30; background: none; border: none; cursor: pointer; font-family: inherit; opacity: 0.6;" title="Remove user">✕</button>
+                  )}
                 </div>
               </div>
             )
@@ -189,8 +200,10 @@ const labelStyle = "display: block; font-size: 12px; font-weight: 500; color: va
                 <div style="font-size: 13px; color: var(--admin-secondary);">{p.email}</div>
               </div>
               <div style="display: flex; gap: 6px; align-items: center;">
+                <button class="resend-btn" data-email={p.email} style="padding: 2px 8px; font-size: 10px; font-weight: 500; border-radius: 6px; background: none; border: 1px solid #2563EB; color: #2563EB; cursor: pointer; font-family: inherit;">Resend</button>
                 <span style="padding: 2px 8px; font-size: 10px; font-weight: 500; border-radius: 6px; background: #FFF8E1; color: #F57F17;">Pending</span>
                 <span style="padding: 2px 8px; font-size: 10px; font-weight: 500; border-radius: 6px; background: #F5F5F7; color: var(--admin-secondary);">{roleLabels[p.role] || p.role}</span>
+                <button class="delete-user-btn" data-userid={p.user_id} data-name={p.email} style="padding: 2px 6px; font-size: 10px; color: #FF3B30; background: none; border: none; cursor: pointer; font-family: inherit; opacity: 0.6;" title="Remove user">✕</button>
               </div>
             </div>
           ))}
@@ -374,5 +387,58 @@ const labelStyle = "display: block; font-size: 12px; font-weight: 500; color: va
       status.style.color = '#FF3B30'
       status.style.display = 'block'
     }
+  })
+
+  // Resend invite buttons
+  document.querySelectorAll('.resend-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const email = (btn as HTMLElement).dataset.email!
+      const el = btn as HTMLElement
+      el.textContent = '...'
+      try {
+        const res = await fetch('/api/admin/resend-invite', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email }),
+        })
+        if (res.ok) {
+          el.textContent = 'Sent!'
+          el.style.borderColor = '#30D158'
+          el.style.color = '#30D158'
+          setTimeout(() => { el.textContent = 'Resend'; el.style.borderColor = '#2563EB'; el.style.color = '#2563EB' }, 2000)
+        } else {
+          const data = await res.json()
+          alert(data.error || 'Failed to resend')
+          el.textContent = 'Resend'
+        }
+      } catch {
+        alert('Error resending invite')
+        el.textContent = 'Resend'
+      }
+    })
+  })
+
+  // Delete user buttons
+  document.querySelectorAll('.delete-user-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const userId = (btn as HTMLElement).dataset.userid!
+      const name = (btn as HTMLElement).dataset.name!
+      if (!confirm(`Remove "${name}" from the team? This cannot be undone.`)) return
+      try {
+        const res = await fetch('/api/admin/delete-user', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId }),
+        })
+        if (res.ok) {
+          window.location.reload()
+        } else {
+          const data = await res.json()
+          alert(data.error || 'Failed to remove user')
+        }
+      } catch {
+        alert('Error removing user')
+      }
+    })
   })
 </script>
