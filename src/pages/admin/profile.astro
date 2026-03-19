@@ -45,6 +45,24 @@ const { data: allProfiles } = await supabase
   .select('user_id, name, role')
   .order('created_at', { ascending: true })
 
+// Get auth users to check invite status
+const { data: authUsers } = await supabase.auth.admin.listUsers()
+const userStatusMap = new Map<string, 'accepted' | 'pending'>()
+authUsers?.users?.forEach(u => {
+  userStatusMap.set(u.id, u.email_confirmed_at ? 'accepted' : 'pending')
+})
+
+// Also get invited users who don't have profiles yet
+const invitedWithoutProfile = (authUsers?.users ?? []).filter(u =>
+  !allProfiles?.some(p => p.user_id === u.id) && u.id !== auth.userId
+).map(u => ({
+  user_id: u.id,
+  name: u.email ?? '',
+  role: 'admin',
+  email: u.email,
+  status: u.email_confirmed_at ? 'accepted' as const : 'pending' as const,
+}))
+
 const initials = name
   ? name.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2)
   : email.slice(0, 2).toUpperCase()
@@ -138,35 +156,63 @@ const labelStyle = "display: block; font-size: 12px; font-weight: 500; color: va
       <p style="font-size: 12px; color: var(--admin-secondary); margin-bottom: 14px;">Invite people to access the admin panel</p>
 
       <!-- Existing members -->
-      {(allProfiles ?? []).length > 0 && (
+      {((allProfiles ?? []).length > 0 || invitedWithoutProfile.length > 0) && (
         <div style="margin-bottom: 16px;">
-          {(allProfiles ?? []).map(p => (
-            <div style="display: flex; align-items: center; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--admin-border);">
-              <div style="font-size: 13px; color: var(--admin-text);">{p.name || 'Unnamed'}</div>
-              <span style={`padding: 2px 8px; font-size: 10px; font-weight: 500; border-radius: 6px; ${
-                p.role === 'owner' ? 'background: #FFF3E0; color: #E65100;' :
-                p.role === 'admin' ? 'background: #E8F5E9; color: #2E7D32;' :
-                p.role === 'marketing' ? 'background: #E3F2FD; color: #1565C0;' :
-                p.role === 'customer' ? 'background: #F3E5F5; color: #7B1FA2;' :
-                'background: #F5F5F7; color: var(--admin-secondary);'
-              }`}>{roleLabels[p.role] || p.role}</span>
+          {(allProfiles ?? []).map(p => {
+            const status = userStatusMap.get(p.user_id) ?? 'accepted'
+            return (
+              <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--admin-border);">
+                <div>
+                  <div style="font-size: 13px; font-weight: 500; color: var(--admin-text);">{p.name || 'Unnamed'}</div>
+                </div>
+                <div style="display: flex; gap: 6px; align-items: center;">
+                  {status === 'pending' && (
+                    <span style="padding: 2px 8px; font-size: 10px; font-weight: 500; border-radius: 6px; background: #FFF8E1; color: #F57F17;">Pending</span>
+                  )}
+                  {status === 'accepted' && (
+                    <span style="padding: 2px 8px; font-size: 10px; font-weight: 500; border-radius: 6px; background: #E8F5E9; color: #2E7D32;">Accepted</span>
+                  )}
+                  <span style={`padding: 2px 8px; font-size: 10px; font-weight: 500; border-radius: 6px; ${
+                    p.role === 'owner' ? 'background: #FFF3E0; color: #E65100;' :
+                    p.role === 'admin' ? 'background: #E8F5E9; color: #2E7D32;' :
+                    p.role === 'marketing' ? 'background: #E3F2FD; color: #1565C0;' :
+                    p.role === 'customer' ? 'background: #F3E5F5; color: #7B1FA2;' :
+                    'background: #F5F5F7; color: var(--admin-secondary);'
+                  }`}>{roleLabels[p.role] || p.role}</span>
+                </div>
+              </div>
+            )
+          })}
+          {invitedWithoutProfile.map(p => (
+            <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--admin-border); opacity: 0.7;">
+              <div>
+                <div style="font-size: 13px; color: var(--admin-secondary);">{p.email}</div>
+              </div>
+              <div style="display: flex; gap: 6px; align-items: center;">
+                <span style="padding: 2px 8px; font-size: 10px; font-weight: 500; border-radius: 6px; background: #FFF8E1; color: #F57F17;">Pending</span>
+                <span style="padding: 2px 8px; font-size: 10px; font-weight: 500; border-radius: 6px; background: #F5F5F7; color: var(--admin-secondary);">{roleLabels[p.role] || p.role}</span>
+              </div>
             </div>
           ))}
         </div>
       )}
 
+      <!-- Role pills -->
+      <div style="margin-bottom: 14px;">
+        <label style={labelStyle}>Select Role</label>
+        <div style="display: flex; gap: 8px;" id="role-pills">
+          <button data-role="admin" class="role-pill active" style="padding: 8px 16px; font-size: 12px; font-weight: 500; border-radius: 20px; cursor: pointer; font-family: inherit; transition: all 0.15s; border: 1.5px solid #2E7D32; background: #E8F5E9; color: #2E7D32;">Admin</button>
+          <button data-role="marketing" class="role-pill" style="padding: 8px 16px; font-size: 12px; font-weight: 500; border-radius: 20px; cursor: pointer; font-family: inherit; transition: all 0.15s; border: 1.5px solid var(--admin-border); background: white; color: var(--admin-secondary);">Marketing</button>
+          <button data-role="customer" class="role-pill" style="padding: 8px 16px; font-size: 12px; font-weight: 500; border-radius: 20px; cursor: pointer; font-family: inherit; transition: all 0.15s; border: 1.5px solid var(--admin-border); background: white; color: var(--admin-secondary);">Customer</button>
+        </div>
+      </div>
+      <input type="hidden" id="invite-role" value="admin" />
+
+      <!-- Email + Send -->
       <div style="display: flex; gap: 10px; align-items: end;">
         <div style="flex: 1;">
           <label style={labelStyle}>Email address</label>
           <input id="invite-email" type="email" placeholder="colleague@company.com" style={inputStyle} />
-        </div>
-        <div>
-          <label style={labelStyle}>Role</label>
-          <select id="invite-role" style={inputStyle + " min-width: 130px;"}>
-            <option value="admin">Admin</option>
-            <option value="marketing">Marketing</option>
-            <option value="customer">Customer</option>
-          </select>
         </div>
         <button id="send-invite" style="padding: 10px 18px; font-size: 13px; font-weight: 500; background: #2563EB; color: white; border: none; border-radius: 8px; cursor: pointer; font-family: inherit; white-space: nowrap;">
           Send Invite
@@ -268,6 +314,37 @@ const labelStyle = "display: block; font-size: 12px; font-weight: 500; color: va
       status.style.color = '#FF3B30'
       status.style.display = 'block'
     }
+  })
+
+  // Role pills
+  const roleColors: Record<string, { bg: string; border: string; color: string }> = {
+    admin: { bg: '#E8F5E9', border: '#2E7D32', color: '#2E7D32' },
+    marketing: { bg: '#E3F2FD', border: '#1565C0', color: '#1565C0' },
+    customer: { bg: '#F3E5F5', border: '#7B1FA2', color: '#7B1FA2' },
+  }
+
+  document.querySelectorAll('.role-pill').forEach(pill => {
+    pill.addEventListener('click', () => {
+      const role = (pill as HTMLElement).dataset.role!
+      ;(document.getElementById('invite-role') as HTMLInputElement).value = role
+
+      // Reset all pills
+      document.querySelectorAll('.role-pill').forEach(p => {
+        const el = p as HTMLElement
+        el.style.border = '1.5px solid var(--admin-border)'
+        el.style.background = 'white'
+        el.style.color = 'var(--admin-secondary)'
+      })
+
+      // Activate selected
+      const colors = roleColors[role]
+      if (colors) {
+        const el = pill as HTMLElement
+        el.style.border = `1.5px solid ${colors.border}`
+        el.style.background = colors.bg
+        el.style.color = colors.color
+      }
+    })
   })
 
   // Send invite
