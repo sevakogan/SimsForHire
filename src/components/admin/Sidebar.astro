@@ -1,6 +1,6 @@
 ---
-import { execFileSync } from 'node:child_process'
 import pkg from '../../../package.json'
+import buildInfo from '../../lib/build-info.json'
 
 interface Props {
   active?: string
@@ -9,16 +9,15 @@ interface Props {
 const { active = 'dashboard' } = Astro.props
 
 const version = pkg.version
-
-let buildNumber = '—'
-let lastPushed = '—'
-try {
-  buildNumber = execFileSync('git', ['rev-list', '--count', 'HEAD'], { encoding: 'utf8' }).trim()
-  const gitDate = execFileSync('git', ['log', '-1', '--format=%ci'], { encoding: 'utf8' }).trim()
-  lastPushed = new Date(gitDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' })
-} catch {
-  lastPushed = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' })
-}
+const buildNumber = buildInfo.build
+const lastPushed = new Date(buildInfo.date).toLocaleString('en-US', {
+  timeZone: 'America/Los_Angeles',
+  month: 'short',
+  day: 'numeric',
+  year: 'numeric',
+  hour: 'numeric',
+  minute: '2-digit',
+})
 
 const links = [
   { id: 'dashboard', label: 'Dashboard', href: '/admin/dashboard', icon: 'M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z' },
@@ -88,7 +87,7 @@ const links = [
     <div style="padding: 8px 12px; margin-top: 8px;">
       <div style="font-size: 10px; color: var(--admin-tertiary); letter-spacing: 0.5px; line-height: 1.6; opacity: 0.6;">
         v{version} · build {buildNumber}<br />
-        {lastPushed}
+        {lastPushed} PT
       </div>
     </div>
   </div>
