@@ -15,7 +15,6 @@ const { data: events } = await supabase
   .select('*, event_config(*)')
   .order('created_at', { ascending: false })
 
-// Enrich with racer counts
 const enriched = await Promise.all(
   (events ?? []).map(async (event) => {
     const { count } = await supabase
@@ -29,41 +28,82 @@ const enriched = await Promise.all(
 const activeEvents = enriched.filter(e => e.status === 'active')
 const archivedEvents = enriched.filter(e => e.status === 'archived')
 
-function timeAgo(date: string): string {
-  const diff = Date.now() - new Date(date).getTime()
-  const mins = Math.floor(diff / 60000)
-  if (mins < 60) return `${mins}m ago`
-  const hrs = Math.floor(mins / 60)
-  if (hrs < 24) return `${hrs}h ago`
-  const days = Math.floor(hrs / 24)
-  return `${days}d ago`
+// Calendar data
+const now = new Date()
+const year = now.getFullYear()
+const month = now.getMonth()
+const today = now.getDate()
+const monthName = now.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+const firstDay = new Date(year, month, 1).getDay()
+const daysInMonth = new Date(year, month + 1, 0).getDate()
+
+// Build event dates set for calendar dots
+const eventDates = new Set<number>()
+activeEvents.forEach(e => {
+  const config = Array.isArray(e.event_config) ? e.event_config[0] : e.event_config
+  if (config?.event_date) {
+    const d = new Date(config.event_date + 'T00:00')
+    if (d.getFullYear() === year && d.getMonth() === month) {
+      eventDates.add(d.getDate())
+    }
+  }
+})
+
+const calendarDays: Array<{ day: number; isToday: boolean; hasEvent: boolean } | null> = []
+for (let i = 0; i < firstDay; i++) calendarDays.push(null)
+for (let d = 1; d <= daysInMonth; d++) {
+  calendarDays.push({ day: d, isToday: d === today, hasEvent: eventDates.has(d) })
 }
 ---
 
 <AdminLayout title="Events — Admin" active="events">
-  <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 32px;">
+  <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 28px;">
     <div>
       <h1 style="font-size: 24px; font-weight: 600; color: var(--admin-text); letter-spacing: -0.5px;">Events</h1>
       <p style="font-size: 13px; color: var(--admin-secondary); margin-top: 4px;">{activeEvents.length} active, {archivedEvents.length} archived</p>
     </div>
-    <button
-      id="create-event-btn"
-      style="padding: 10px 20px; background: var(--admin-text); color: white; border: none; border-radius: 10px; font-size: 13px; font-weight: 500; cursor: pointer; font-family: inherit;"
-    >
+    <button id="create-event-btn" style="padding: 10px 20px; background: var(--admin-text); color: white; border: none; border-radius: 10px; font-size: 13px; font-weight: 500; cursor: pointer; font-family: inherit;">
       + Create Event
     </button>
+  </div>
+
+  <!-- Calendar -->
+  <div style="background: var(--admin-surface); border: 1px solid var(--admin-border); border-radius: 16px; padding: 24px; margin-bottom: 28px;">
+    <div style="font-size: 15px; font-weight: 600; color: var(--admin-text); margin-bottom: 16px;">{monthName}</div>
+    <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; text-align: center;">
+      {['S','M','T','W','T','F','S'].map(d => (
+        <div style="font-size: 10px; font-weight: 500; color: var(--admin-tertiary); padding: 6px 0; letter-spacing: 0.5px;">{d}</div>
+      ))}
+      {calendarDays.map(cell => (
+        <div style={`position: relative; padding: 8px 0; font-size: 13px; border-radius: 10px; ${
+          cell?.isToday
+            ? 'background: var(--admin-red); color: white; font-weight: 600;'
+            : cell
+            ? 'color: var(--admin-text);'
+            : ''
+        }`}>
+          {cell?.day || ''}
+          {cell?.hasEvent && !cell?.isToday && (
+            <div style="position: absolute; bottom: 2px; left: 50%; transform: translateX(-50%); width: 4px; height: 4px; border-radius: 2px; background: var(--admin-red);"></div>
+          )}
+          {cell?.hasEvent && cell?.isToday && (
+            <div style="position: absolute; bottom: 2px; left: 50%; transform: translateX(-50%); width: 4px; height: 4px; border-radius: 2px; background: white;"></div>
+          )}
+        </div>
+      ))}
+    </div>
   </div>
 
   <!-- Active Events -->
   {activeEvents.length > 0 && (
     <div style="margin-bottom: 32px;">
       <p style="font-size: 11px; font-weight: 500; color: var(--admin-tertiary); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 12px;">Active Events</p>
-      <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px;">
+      <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 16px;">
         {activeEvents.map(event => {
           const config = Array.isArray(event.event_config) ? event.event_config[0] : event.event_config
           return (
-            <div style="background: var(--admin-surface); border: 1px solid var(--admin-border); border-radius: 12px; padding: 20px;">
-              <div style="display: flex; align-items: start; justify-content: space-between; margin-bottom: 12px;">
+            <div style="background: var(--admin-surface); border: 1px solid var(--admin-border); border-radius: 14px; padding: 22px;">
+              <div style="display: flex; align-items: start; justify-content: space-between; margin-bottom: 14px;">
                 <div>
                   <h3 style="font-size: 16px; font-weight: 600; color: var(--admin-text);">{event.name}</h3>
                   <p style="font-size: 12px; color: var(--admin-tertiary); margin-top: 2px;">/{event.slug}</p>
@@ -88,14 +128,36 @@ function timeAgo(date: string): string {
                 </div>
               </div>
 
+              <!-- Share link -->
+              <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 14px; background: #F0F7FF; border: 1px solid #D4E5F7; border-radius: 8px; padding: 8px 10px;">
+                <input
+                  readonly
+                  value={`https://simsforhire.com/live/${event.slug}/admin`}
+                  class="share-input"
+                  style="flex: 1; font-size: 11px; font-family: monospace; color: #2563EB; background: transparent; border: none; outline: none; min-width: 0;"
+                />
+                <button
+                  class="copy-btn"
+                  data-url={`https://simsforhire.com/live/${event.slug}/admin`}
+                  style="padding: 4px 10px; font-size: 10px; font-weight: 500; background: #2563EB; color: white; border: none; border-radius: 6px; cursor: pointer; font-family: inherit; white-space: nowrap;"
+                >Copy</button>
+                <a
+                  href={`/live/${event.slug}`}
+                  target="_blank"
+                  style="padding: 4px 10px; font-size: 10px; font-weight: 500; color: #2563EB; border: 1px solid #D4E5F7; border-radius: 6px; text-decoration: none; font-family: inherit; white-space: nowrap; background: white;"
+                >Preview</a>
+              </div>
+
+              <!-- Action buttons -->
               <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                <a href={`/live/${event.slug}`} style="padding: 6px 12px; font-size: 11px; font-weight: 500; color: var(--admin-text); border: 1px solid var(--admin-border); border-radius: 8px; text-decoration: none;">Event Page</a>
-                <a href={`/live/${event.slug}/leaderboard`} style="padding: 6px 12px; font-size: 11px; font-weight: 500; color: var(--admin-text); border: 1px solid var(--admin-border); border-radius: 8px; text-decoration: none;">Leaderboard</a>
-                <a href={`/live/${event.slug}/admin`} style="padding: 6px 12px; font-size: 11px; font-weight: 500; color: var(--admin-text); border: 1px solid var(--admin-border); border-radius: 8px; text-decoration: none;">Staff Panel</a>
+                <a href={`/live/${event.slug}`} target="_blank" style="padding: 7px 14px; font-size: 11px; font-weight: 500; color: white; background: var(--admin-text); border-radius: 8px; text-decoration: none;">Event Page</a>
+                <a href={`/live/${event.slug}/leaderboard`} target="_blank" style="padding: 7px 14px; font-size: 11px; font-weight: 500; color: var(--admin-text); border: 1px solid var(--admin-border); border-radius: 8px; text-decoration: none;">Leaderboard</a>
+                <a href={`/live/${event.slug}/admin`} style="padding: 7px 14px; font-size: 11px; font-weight: 500; color: #2563EB; border: 1px solid #BFD8F5; border-radius: 8px; text-decoration: none;">Staff Panel</a>
                 <button
                   class="archive-btn"
                   data-id={event.id}
-                  style="padding: 6px 12px; font-size: 11px; font-weight: 500; color: var(--admin-amber); border: 1px solid var(--admin-amber); border-radius: 8px; background: transparent; cursor: pointer; font-family: inherit;"
+                  data-name={event.name}
+                  style="padding: 7px 14px; font-size: 11px; font-weight: 500; color: #FF3B30; border: 1px solid #FFD4D2; border-radius: 8px; background: transparent; cursor: pointer; font-family: inherit;"
                 >Archive</button>
               </div>
             </div>
@@ -109,18 +171,18 @@ function timeAgo(date: string): string {
   {archivedEvents.length > 0 && (
     <div>
       <p style="font-size: 11px; font-weight: 500; color: var(--admin-tertiary); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 12px;">Archived</p>
-      <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px;">
+      <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 16px;">
         {archivedEvents.map(event => (
-          <div style="background: var(--admin-surface); border: 1px solid var(--admin-border); border-radius: 12px; padding: 16px; opacity: 0.7;">
+          <div style="background: var(--admin-surface); border: 1px solid var(--admin-border); border-radius: 12px; padding: 16px; opacity: 0.6;">
             <div style="display: flex; align-items: center; justify-content: space-between;">
               <div>
                 <h3 style="font-size: 14px; font-weight: 500; color: var(--admin-secondary);">{event.name}</h3>
-                <p style="font-size: 11px; color: var(--admin-tertiary);">{event.racer_count} racers — {timeAgo(event.created_at)}</p>
+                <p style="font-size: 11px; color: var(--admin-tertiary);">{event.racer_count} racers</p>
               </div>
               <button
                 class="activate-btn"
                 data-id={event.id}
-                style="padding: 5px 10px; font-size: 10px; font-weight: 500; color: var(--admin-green); border: 1px solid var(--admin-green); border-radius: 6px; background: transparent; cursor: pointer; font-family: inherit;"
+                style="padding: 6px 12px; font-size: 10px; font-weight: 500; color: #30D158; border: 1px solid #30D158; border-radius: 6px; background: transparent; cursor: pointer; font-family: inherit;"
               >Reactivate</button>
             </div>
           </div>
@@ -137,21 +199,35 @@ function timeAgo(date: string): string {
     </div>
   )}
 
-  <!-- Create Event Modal (hidden by default) -->
+  <!-- Archive Confirmation Modal -->
+  <div id="archive-modal" style="display: none; position: fixed; inset: 0; z-index: 100; background: rgba(0,0,0,0.4); backdrop-filter: blur(4px);">
+    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; border-radius: 16px; padding: 32px; width: 380px; max-width: 90vw; text-align: center;">
+      <div style="width: 48px; height: 48px; background: #FFF2F1; border-radius: 12px; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;">
+        <span style="font-size: 22px;">⚠️</span>
+      </div>
+      <h2 style="font-size: 17px; font-weight: 600; color: var(--admin-text); margin-bottom: 8px;">Archive Event?</h2>
+      <p style="font-size: 13px; color: var(--admin-secondary); margin-bottom: 4px;">Are you sure you want to archive</p>
+      <p id="archive-event-name" style="font-size: 14px; font-weight: 600; color: var(--admin-text); margin-bottom: 20px;"></p>
+      <p style="font-size: 12px; color: var(--admin-tertiary); margin-bottom: 24px;">The event will be hidden from the live site. You can reactivate it later.</p>
+      <div style="display: flex; gap: 12px;">
+        <button id="archive-cancel" style="flex: 1; padding: 12px; border: 1px solid var(--admin-border); border-radius: 10px; font-size: 14px; font-weight: 500; background: white; cursor: pointer; font-family: inherit; color: var(--admin-secondary);">Cancel</button>
+        <button id="archive-confirm" style="flex: 1; padding: 12px; border: none; border-radius: 10px; font-size: 14px; font-weight: 500; background: #FF3B30; color: white; cursor: pointer; font-family: inherit;">Archive</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Create Event Modal -->
   <div id="create-modal" style="display: none; position: fixed; inset: 0; z-index: 100; background: rgba(0,0,0,0.4); backdrop-filter: blur(4px);">
     <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; border-radius: 16px; padding: 32px; width: 440px; max-width: 90vw;">
       <h2 style="font-size: 18px; font-weight: 600; color: var(--admin-text); margin-bottom: 20px;">Create Event</h2>
-
       <div style="margin-bottom: 16px;">
         <label style="display: block; font-size: 12px; font-weight: 500; color: var(--admin-secondary); margin-bottom: 6px;">Event Name *</label>
         <input id="evt-name" type="text" placeholder="Porsche Miami 2026" style="width: 100%; padding: 10px 14px; border: 1px solid var(--admin-border); border-radius: 8px; font-size: 14px; font-family: inherit; outline: none; box-sizing: border-box;" />
       </div>
-
       <div style="margin-bottom: 16px;">
         <label style="display: block; font-size: 12px; font-weight: 500; color: var(--admin-secondary); margin-bottom: 6px;">Admin PIN * (4+ digits)</label>
         <input id="evt-pin" type="text" inputmode="numeric" placeholder="2920" style="width: 100%; padding: 10px 14px; border: 1px solid var(--admin-border); border-radius: 8px; font-size: 14px; font-family: inherit; outline: none; box-sizing: border-box;" />
       </div>
-
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;">
         <div>
           <label style="display: block; font-size: 12px; font-weight: 500; color: var(--admin-secondary); margin-bottom: 6px;">Dealer Name</label>
@@ -173,7 +249,6 @@ function timeAgo(date: string): string {
           </select>
         </div>
       </div>
-
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;">
         <div>
           <label style="display: block; font-size: 12px; font-weight: 500; color: var(--admin-secondary); margin-bottom: 6px;">Event Date</label>
@@ -184,7 +259,6 @@ function timeAgo(date: string): string {
           <input id="evt-time" type="time" style="width: 100%; padding: 10px 14px; border: 1px solid var(--admin-border); border-radius: 8px; font-size: 14px; font-family: inherit; outline: none; box-sizing: border-box;" />
         </div>
       </div>
-
       <div style="display: flex; gap: 12px; margin-top: 24px;">
         <button id="cancel-create" style="flex: 1; padding: 12px; border: 1px solid var(--admin-border); border-radius: 10px; font-size: 14px; font-weight: 500; background: transparent; cursor: pointer; font-family: inherit; color: var(--admin-secondary);">Cancel</button>
         <button id="confirm-create" style="flex: 2; padding: 12px; border: none; border-radius: 10px; font-size: 14px; font-weight: 500; background: var(--admin-text); color: white; cursor: pointer; font-family: inherit;">Create Event</button>
@@ -194,6 +268,7 @@ function timeAgo(date: string): string {
 </AdminLayout>
 
 <script>
+  // Create modal
   const modal = document.getElementById('create-modal')!
   const createBtn = document.getElementById('create-event-btn')!
   const cancelBtn = document.getElementById('cancel-create')!
@@ -221,10 +296,7 @@ function timeAgo(date: string): string {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, admin_pin: pin, dealer_name: dealer, theme, event_date: date, event_time: time }),
       })
-      if (!res.ok) {
-        const data = await res.json()
-        throw new Error(data.error || 'Failed')
-      }
+      if (!res.ok) throw new Error((await res.json()).error || 'Failed')
       window.location.reload()
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Error creating event')
@@ -232,20 +304,36 @@ function timeAgo(date: string): string {
     }
   })
 
-  // Archive/Activate buttons
+  // Archive modal
+  const archiveModal = document.getElementById('archive-modal')!
+  const archiveCancel = document.getElementById('archive-cancel')!
+  const archiveConfirm = document.getElementById('archive-confirm')!
+  const archiveNameEl = document.getElementById('archive-event-name')!
+  let archiveTargetId: string | null = null
+
+  archiveCancel.addEventListener('click', () => { archiveModal.style.display = 'none' })
+  archiveModal.addEventListener('click', (e) => { if (e.target === archiveModal) archiveModal.style.display = 'none' })
+
   document.querySelectorAll('.archive-btn').forEach(btn => {
-    btn.addEventListener('click', async () => {
-      const id = (btn as HTMLElement).dataset.id
-      if (!confirm('Archive this event?')) return
-      await fetch(`/api/admin/events/${id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: 'archived' }),
-      })
-      window.location.reload()
+    btn.addEventListener('click', () => {
+      archiveTargetId = (btn as HTMLElement).dataset.id!
+      archiveNameEl.textContent = `"${(btn as HTMLElement).dataset.name}"`
+      archiveModal.style.display = 'block'
     })
   })
 
+  archiveConfirm.addEventListener('click', async () => {
+    if (!archiveTargetId) return
+    archiveConfirm.textContent = 'Archiving...'
+    await fetch(`/api/admin/events/${archiveTargetId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: 'archived' }),
+    })
+    window.location.reload()
+  })
+
+  // Reactivate buttons
   document.querySelectorAll('.activate-btn').forEach(btn => {
     btn.addEventListener('click', async () => {
       const id = (btn as HTMLElement).dataset.id
@@ -256,5 +344,22 @@ function timeAgo(date: string): string {
       })
       window.location.reload()
     })
+  })
+
+  // Copy buttons
+  document.querySelectorAll('.copy-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const url = (btn as HTMLElement).dataset.url!
+      navigator.clipboard.writeText(url)
+      const el = btn as HTMLElement
+      el.textContent = 'Copied!'
+      el.style.background = '#30D158'
+      setTimeout(() => { el.textContent = 'Copy'; el.style.background = '#2563EB' }, 2000)
+    })
+  })
+
+  // Share input click to select
+  document.querySelectorAll('.share-input').forEach(input => {
+    input.addEventListener('click', () => (input as HTMLInputElement).select())
   })
 </script>
