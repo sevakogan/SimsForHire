@@ -167,28 +167,31 @@ for (let d = 1; d <= daysInMonth; d++) {
     </div>
   )}
 
-  <!-- Archived Events -->
+  <!-- Archived Events (collapsible) -->
   {archivedEvents.length > 0 && (
-    <div>
-      <p style="font-size: 11px; font-weight: 500; color: var(--admin-tertiary); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 12px;">Archived</p>
-      <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 16px;">
+    <details id="archived-section" style="margin-top: 8px;">
+      <summary style="font-size: 11px; font-weight: 500; color: var(--admin-tertiary); letter-spacing: 1px; text-transform: uppercase; cursor: pointer; list-style: none; display: flex; align-items: center; gap: 6px; padding: 8px 0; user-select: none;">
+        <span id="archived-chevron" style="font-size: 10px; transition: transform 0.2s;">&#9654;</span>
+        Archived ({archivedEvents.length})
+      </summary>
+      <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 12px; margin-top: 12px;">
         {archivedEvents.map(event => (
-          <div style="background: var(--admin-surface); border: 1px solid var(--admin-border); border-radius: 12px; padding: 16px; opacity: 0.6;">
+          <div style="background: var(--admin-surface); border: 1px solid var(--admin-border); border-radius: 10px; padding: 14px; opacity: 0.6;">
             <div style="display: flex; align-items: center; justify-content: space-between;">
               <div>
-                <h3 style="font-size: 14px; font-weight: 500; color: var(--admin-secondary);">{event.name}</h3>
+                <h3 style="font-size: 13px; font-weight: 500; color: var(--admin-secondary);">{event.name}</h3>
                 <p style="font-size: 11px; color: var(--admin-tertiary);">{event.racer_count} racers</p>
               </div>
               <button
                 class="activate-btn"
                 data-id={event.id}
-                style="padding: 6px 12px; font-size: 10px; font-weight: 500; color: #30D158; border: 1px solid #30D158; border-radius: 6px; background: transparent; cursor: pointer; font-family: inherit;"
+                style="padding: 5px 10px; font-size: 10px; font-weight: 500; color: #30D158; border: 1px solid #30D158; border-radius: 6px; background: transparent; cursor: pointer; font-family: inherit;"
               >Reactivate</button>
             </div>
           </div>
         ))}
       </div>
-    </div>
+    </details>
   )}
 
   <!-- Empty state -->
@@ -357,6 +360,15 @@ for (let d = 1; d <= daysInMonth; d++) {
       setTimeout(() => { el.textContent = 'Copy'; el.style.background = '#2563EB' }, 2000)
     })
   })
+
+  // Archived chevron rotation
+  const archivedSection = document.getElementById('archived-section')
+  const chevron = document.getElementById('archived-chevron')
+  if (archivedSection && chevron) {
+    archivedSection.addEventListener('toggle', () => {
+      chevron.style.transform = archivedSection.open ? 'rotate(90deg)' : 'rotate(0deg)'
+    })
+  }
 
   // Share input click to select
   document.querySelectorAll('.share-input').forEach(input => {
