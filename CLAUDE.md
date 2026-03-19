@@ -147,13 +147,29 @@ Put SQL scripts in `docs/migrations/` with numbered filenames:
 4. `git add -A && git commit`
 5. Push and update PR
 
+## Deploy Rules
+
+- **Only Seva merges PRs to `main`** — Nick creates PRs, Seva reviews and merges
+- Vercel auto-deploys `main` on every merge
+- Bump `src/lib/build-info.json` (build number + date in Pacific time) before merging
+- Don't force-push to `main`
+- Nick gets Vercel preview deploys automatically on every PR push
+
 ## Git Workflow
 
 - Branch from `main`: `git checkout -b seva/feature` or `git checkout -b nick/feature`
 - Push to your branch, create PR to `main`
-- Vercel auto-deploys `main` on merge
-- **IMPORTANT:** Bump `src/lib/build-info.json` (build number + date in Pacific time) before merging to main
-- Don't force-push to `main`
+- Nick: push branch → create PR → Seva reviews → Seva merges
+- Seva: can push branch → PR → self-merge
+
+## Design Rules (MANDATORY)
+
+The admin panel uses an **Apple-style light theme**. All admin pages MUST match this design:
+- **Do NOT** change the admin layout, sidebar, or design system without Seva's approval
+- **Do NOT** introduce new UI frameworks (no shadcn, no Material UI, no Chakra)
+- **Do NOT** change colors, fonts, border-radius, or spacing of existing admin components
+- New admin pages (like store admin) MUST use `AdminLayout` and match the existing card/modal/button styles
+- Refer to the Design System section below for exact values
 
 ## Environment Variables
 

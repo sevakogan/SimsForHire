@@ -115,14 +115,41 @@ You and Seva work simultaneously. Both can work on any part of the codebase.
 - You'll create new tables for: `products`, `orders`, `order_items`, `cart` (or similar)
 - Ask Seva for Supabase dashboard access if needed, or provide SQL scripts for him to run
 
-## Admin Panel Design System
+## Admin Panel Design System (DO NOT CHANGE)
 
-The admin panel uses an Apple-style light theme. Match this for store admin pages:
-- Background: `#F5F5F7`, Cards: white with `1px solid #E5E5E7`, `border-radius: 12-14px`
+The admin panel uses Seva's **Apple-style light theme**. This is locked — follow it exactly:
+
+### Rules
+- **DO NOT** change the admin layout, sidebar, color scheme, or design language
+- **DO NOT** introduce new UI frameworks (no shadcn, no Material UI, no Chakra, no component libraries)
+- **DO NOT** change fonts, colors, border-radius, or spacing of existing admin components
+- **DO** use `AdminLayout` for any new admin pages: `import AdminLayout from '../../layouts/AdminLayout.astro'`
+- **DO** match the existing card/modal/button styles exactly when building new admin pages
+
+### Values
+- Background: `#F5F5F7`, Surface/Cards: `white` with `1px solid #E5E5E7`, `border-radius: 12-14px`
 - Text: `#1D1D1F`, Secondary: `#86868B`, Tertiary: `#AEAEB2`
-- Accent red: `#E10600`, Green: `#30D158`, Blue: `#2563EB`
+- Accent red: `#E10600`, Green: `#30D158`, Amber: `#FF9F0A`, Blue: `#2563EB`
 - Font: DM Sans (loaded in AdminLayout)
-- Use `AdminLayout` for admin store pages: `import AdminLayout from '../../layouts/AdminLayout.astro'`
+- Modals: centered, white, `border-radius: 16px`, `backdrop-filter: blur(4px)`
+- Buttons: `border-radius: 8-10px`, `font-size: 13px`, `font-weight: 500`
+- Inputs: `border: 1px solid #E5E5E7`, `border-radius: 8px`, `padding: 10px 14px`
+
+### Example — creating a new admin page
+```astro
+---
+export const prerender = false
+import AdminLayout from '../../layouts/AdminLayout.astro'
+import { requireAuth } from '../../lib/admin-auth'
+
+const auth = await requireAuth(Astro.request)
+if (!auth.authorized) return Astro.redirect('/admin')
+---
+
+<AdminLayout title="Store — Admin" active="store">
+  <!-- Your content here, using the design values above -->
+</AdminLayout>
+```
 
 ## Customer Auth (Separate from Admin)
 
@@ -135,10 +162,11 @@ The admin panel uses an Apple-style light theme. Match this for store admin page
 
 ## Deployment
 
-- Push to your branch, create PR to `main`
-- Vercel preview deploys automatically on PR
-- When PR is merged to `main`, Vercel deploys to production
-- Before merging to main, bump `src/lib/build-info.json` (build number + date in Pacific time)
+- **You do NOT merge to `main`** — only Seva merges PRs to production
+- Push your branch → create PR to `main` → Seva reviews and merges
+- Vercel gives you a **preview deploy** automatically on every PR push (use this to test)
+- After Seva merges, Vercel auto-deploys to production
+- `npm run build` must pass before you create a PR
 
 ## Questions?
 
