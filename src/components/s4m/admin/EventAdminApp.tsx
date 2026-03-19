@@ -5,6 +5,7 @@ import { ToastProvider } from '../Toast'
 import { PinGate } from './PinGate'
 import { QueueManager } from './QueueManager'
 import { ResultsView } from './ResultsView'
+import { EventSettings } from './EventSettings'
 
 interface EventAdminAppProps {
   event: LiveEvent
@@ -106,14 +107,7 @@ export function EventAdminApp({ event, config, tab }: EventAdminAppProps) {
           <div style={{ padding: '28px' }}>
             {tab === 'queue' && <QueueManager role={role} />}
             {tab === 'results' && <ResultsView role={role} />}
-            {tab === 'settings' && (
-              <div style={{ background: 'white', borderRadius: '12px', border: '1px solid #E5E5E7', padding: '24px' }}>
-                <p style={{ fontSize: '14px', color: '#86868B' }}>
-                  Event settings are managed from the{' '}
-                  <a href="/admin/events" style={{ color: '#1D1D1F', textDecoration: 'underline' }}>admin panel</a>.
-                </p>
-              </div>
-            )}
+            {tab === 'settings' && <EventSettings role={role} />}
           </div>
         </ToastProvider>
       </EventProvider>
