@@ -68,41 +68,53 @@ for (let d = 1; d <= daysInMonth; d++) {
   </div>
 
   <!-- Calendar -->
-  <div style="background: var(--admin-surface); border: 1px solid var(--admin-border); border-radius: 16px; padding: 24px; margin-bottom: 28px;">
-    <div style="font-size: 15px; font-weight: 600; color: var(--admin-text); margin-bottom: 16px;">{monthName}</div>
-    <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; text-align: center;">
-      {['S','M','T','W','T','F','S'].map(d => (
-        <div style="font-size: 10px; font-weight: 500; color: var(--admin-tertiary); padding: 6px 0; letter-spacing: 0.5px;">{d}</div>
-      ))}
-      {calendarDays.map(cell => (
-        <div style={`position: relative; padding: 8px 0; font-size: 13px; border-radius: 10px; ${
-          cell?.isToday
-            ? 'background: var(--admin-red); color: white; font-weight: 600;'
-            : cell
-            ? 'color: var(--admin-text);'
-            : ''
-        }`}>
-          {cell?.day || ''}
-          {cell?.hasEvent && !cell?.isToday && (
-            <div style="position: absolute; bottom: 2px; left: 50%; transform: translateX(-50%); width: 4px; height: 4px; border-radius: 2px; background: var(--admin-red);"></div>
-          )}
-          {cell?.hasEvent && cell?.isToday && (
-            <div style="position: absolute; bottom: 2px; left: 50%; transform: translateX(-50%); width: 4px; height: 4px; border-radius: 2px; background: white;"></div>
-          )}
-        </div>
-      ))}
+  <div style="background: var(--admin-surface); border: 1px solid var(--admin-border); border-radius: 16px; padding: 20px 24px; margin-bottom: 28px;">
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;">
+      <div style="font-size: 15px; font-weight: 600; color: var(--admin-text);">{monthName}</div>
+      <button id="cal-clear" style="display: none; font-size: 12px; font-weight: 500; color: #2563EB; background: none; border: none; cursor: pointer; font-family: inherit; padding: 4px 8px;">Show All</button>
     </div>
+    <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 0; text-align: center;">
+      {['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(d => (
+        <div style="font-size: 10px; font-weight: 600; color: var(--admin-tertiary); padding: 8px 0; letter-spacing: 0.5px; text-transform: uppercase;">{d}</div>
+      ))}
+      {calendarDays.map(cell => {
+        if (!cell) return <div style="padding: 6px 0;" />
+        const isClickable = cell.hasEvent || cell.isToday
+        return (
+          <div
+            class={`cal-day ${cell.hasEvent ? 'has-event' : ''} ${cell.isToday ? 'is-today' : ''}`}
+            data-day={cell.day}
+            style={`position: relative; padding: 6px 0; font-size: 13px; cursor: ${isClickable ? 'pointer' : 'default'}; border-radius: 10px; transition: all 0.15s; user-select: none;`}
+          >
+            <div class="cal-day-inner" style={`width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto; transition: all 0.15s; ${
+              cell.isToday
+                ? 'background: var(--admin-red); color: white; font-weight: 600;'
+                : 'color: var(--admin-text);'
+            }`}>
+              {cell.day}
+            </div>
+            {cell.hasEvent && (
+              <div class="cal-dot" style={`position: absolute; bottom: 1px; left: 50%; transform: translateX(-50%); width: 5px; height: 5px; border-radius: 50%; ${
+                cell.isToday ? 'background: white;' : 'background: var(--admin-red);'
+              }`}></div>
+            )}
+          </div>
+        )
+      })}
+    </div>
+    <div id="cal-filter-label" style="display: none; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--admin-border); font-size: 12px; color: var(--admin-secondary);"></div>
   </div>
 
   <!-- Active Events -->
   {activeEvents.length > 0 && (
     <div style="margin-bottom: 32px;">
       <p style="font-size: 11px; font-weight: 500; color: var(--admin-tertiary); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 12px;">Active Events</p>
-      <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 16px;">
+      <div id="events-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 16px;">
         {activeEvents.map(event => {
           const config = Array.isArray(event.event_config) ? event.event_config[0] : event.event_config
+          const eventDay = config?.event_date ? new Date(config.event_date + 'T00:00').getDate() : ''
           return (
-            <div style="background: var(--admin-surface); border: 1px solid var(--admin-border); border-radius: 14px; padding: 22px;">
+            <div class="event-card" data-event-day={eventDay} style="background: var(--admin-surface); border: 1px solid var(--admin-border); border-radius: 14px; padding: 22px; transition: opacity 0.2s;">
               <div style="display: flex; align-items: start; justify-content: space-between; margin-bottom: 14px;">
                 <div>
                   <h3 style="font-size: 16px; font-weight: 600; color: var(--admin-text);">{event.name}</h3>
@@ -221,24 +233,34 @@ for (let d = 1; d <= daysInMonth; d++) {
 
   <!-- Create Event Modal -->
   <div id="create-modal" style="display: none; position: fixed; inset: 0; z-index: 100; background: rgba(0,0,0,0.4); backdrop-filter: blur(4px);">
-    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; border-radius: 16px; padding: 32px; width: 440px; max-width: 90vw;">
-      <h2 style="font-size: 18px; font-weight: 600; color: var(--admin-text); margin-bottom: 20px;">Create Event</h2>
-      <div style="margin-bottom: 16px;">
-        <label style="display: block; font-size: 12px; font-weight: 500; color: var(--admin-secondary); margin-bottom: 6px;">Event Name *</label>
-        <input id="evt-name" type="text" placeholder="Porsche Miami 2026" style="width: 100%; padding: 10px 14px; border: 1px solid var(--admin-border); border-radius: 8px; font-size: 14px; font-family: inherit; outline: none; box-sizing: border-box;" />
-      </div>
-      <div style="margin-bottom: 16px;">
-        <label style="display: block; font-size: 12px; font-weight: 500; color: var(--admin-secondary); margin-bottom: 6px;">Admin PIN * (4+ digits)</label>
-        <input id="evt-pin" type="text" inputmode="numeric" placeholder="2920" style="width: 100%; padding: 10px 14px; border: 1px solid var(--admin-border); border-radius: 8px; font-size: 14px; font-family: inherit; outline: none; box-sizing: border-box;" />
-      </div>
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;">
+    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; border-radius: 16px; padding: 28px; width: 500px; max-width: 90vw; max-height: 90vh; overflow-y: auto;">
+      <h2 style="font-size: 17px; font-weight: 600; color: var(--admin-text); margin-bottom: 18px;">Create Event</h2>
+
+      <!-- Required fields -->
+      <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 10px; margin-bottom: 12px;">
         <div>
-          <label style="display: block; font-size: 12px; font-weight: 500; color: var(--admin-secondary); margin-bottom: 6px;">Dealer Name</label>
-          <input id="evt-dealer" type="text" placeholder="Porsche Miami" style="width: 100%; padding: 10px 14px; border: 1px solid var(--admin-border); border-radius: 8px; font-size: 14px; font-family: inherit; outline: none; box-sizing: border-box;" />
+          <label style="display: block; font-size: 11px; font-weight: 500; color: var(--admin-secondary); margin-bottom: 4px;">Event Name *</label>
+          <input id="evt-name" type="text" placeholder="Porsche Miami 2026" style="width: 100%; padding: 9px 12px; border: 1px solid var(--admin-border); border-radius: 8px; font-size: 13px; font-family: inherit; outline: none; box-sizing: border-box;" />
         </div>
         <div>
-          <label style="display: block; font-size: 12px; font-weight: 500; color: var(--admin-secondary); margin-bottom: 6px;">Theme</label>
-          <select id="evt-theme" style="width: 100%; padding: 10px 14px; border: 1px solid var(--admin-border); border-radius: 8px; font-size: 14px; font-family: inherit; outline: none; background: white; box-sizing: border-box;">
+          <label style="display: block; font-size: 11px; font-weight: 500; color: var(--admin-secondary); margin-bottom: 4px;">Admin PIN *</label>
+          <input id="evt-pin" type="text" inputmode="numeric" placeholder="4+ digits" style="width: 100%; padding: 9px 12px; border: 1px solid var(--admin-border); border-radius: 8px; font-size: 13px; font-family: inherit; outline: none; box-sizing: border-box;" />
+        </div>
+      </div>
+
+      <!-- Event details row -->
+      <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 12px;">
+        <div>
+          <label style="display: block; font-size: 11px; font-weight: 500; color: var(--admin-secondary); margin-bottom: 4px;">Dealer Name</label>
+          <input id="evt-dealer" type="text" placeholder="Porsche Miami" style="width: 100%; padding: 9px 12px; border: 1px solid var(--admin-border); border-radius: 8px; font-size: 13px; font-family: inherit; outline: none; box-sizing: border-box;" />
+        </div>
+        <div>
+          <label style="display: block; font-size: 11px; font-weight: 500; color: var(--admin-secondary); margin-bottom: 4px;">Track Name</label>
+          <input id="evt-track" type="text" placeholder="Circuit" style="width: 100%; padding: 9px 12px; border: 1px solid var(--admin-border); border-radius: 8px; font-size: 13px; font-family: inherit; outline: none; box-sizing: border-box;" />
+        </div>
+        <div>
+          <label style="display: block; font-size: 11px; font-weight: 500; color: var(--admin-secondary); margin-bottom: 4px;">Theme</label>
+          <select id="evt-theme" style="width: 100%; padding: 9px 12px; border: 1px solid var(--admin-border); border-radius: 8px; font-size: 13px; font-family: inherit; outline: none; background: white; box-sizing: border-box;">
             <option value="default">Classic Yellow</option>
             <option value="porsche">Porsche Red</option>
             <option value="ferrari">Ferrari Crimson</option>
@@ -252,25 +274,158 @@ for (let d = 1; d <= daysInMonth; d++) {
           </select>
         </div>
       </div>
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;">
+
+      <!-- Date, time, employee pin, SMS -->
+      <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 12px;">
         <div>
-          <label style="display: block; font-size: 12px; font-weight: 500; color: var(--admin-secondary); margin-bottom: 6px;">Event Date</label>
-          <input id="evt-date" type="date" style="width: 100%; padding: 10px 14px; border: 1px solid var(--admin-border); border-radius: 8px; font-size: 14px; font-family: inherit; outline: none; box-sizing: border-box;" />
+          <label style="display: block; font-size: 11px; font-weight: 500; color: var(--admin-secondary); margin-bottom: 4px;">Date</label>
+          <input id="evt-date" type="date" style="width: 100%; padding: 9px 12px; border: 1px solid var(--admin-border); border-radius: 8px; font-size: 13px; font-family: inherit; outline: none; box-sizing: border-box;" />
         </div>
         <div>
-          <label style="display: block; font-size: 12px; font-weight: 500; color: var(--admin-secondary); margin-bottom: 6px;">Event Time</label>
-          <input id="evt-time" type="time" style="width: 100%; padding: 10px 14px; border: 1px solid var(--admin-border); border-radius: 8px; font-size: 14px; font-family: inherit; outline: none; box-sizing: border-box;" />
+          <label style="display: block; font-size: 11px; font-weight: 500; color: var(--admin-secondary); margin-bottom: 4px;">Time</label>
+          <input id="evt-time" type="time" style="width: 100%; padding: 9px 12px; border: 1px solid var(--admin-border); border-radius: 8px; font-size: 13px; font-family: inherit; outline: none; box-sizing: border-box;" />
+        </div>
+        <div>
+          <label style="display: block; font-size: 11px; font-weight: 500; color: var(--admin-secondary); margin-bottom: 4px;">Employee PIN</label>
+          <input id="evt-employee-pin" type="text" inputmode="numeric" placeholder="Optional" style="width: 100%; padding: 9px 12px; border: 1px solid var(--admin-border); border-radius: 8px; font-size: 13px; font-family: inherit; outline: none; box-sizing: border-box;" />
         </div>
       </div>
-      <div style="display: flex; gap: 12px; margin-top: 24px;">
-        <button id="cancel-create" style="flex: 1; padding: 12px; border: 1px solid var(--admin-border); border-radius: 10px; font-size: 14px; font-weight: 500; background: transparent; cursor: pointer; font-family: inherit; color: var(--admin-secondary);">Cancel</button>
-        <button id="confirm-create" style="flex: 2; padding: 12px; border: none; border-radius: 10px; font-size: 14px; font-weight: 500; background: var(--admin-text); color: white; cursor: pointer; font-family: inherit;">Create Event</button>
+
+      <!-- SMS + Logos -->
+      <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px; padding: 8px 0;">
+        <input id="evt-sms" type="checkbox" style="width: 16px; height: 16px; accent-color: var(--admin-red);" />
+        <label for="evt-sms" style="font-size: 12px; color: var(--admin-secondary); cursor: pointer;">Enable SMS notifications to drivers</label>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px;">
+        <div>
+          <label style="display: block; font-size: 11px; font-weight: 500; color: var(--admin-secondary); margin-bottom: 4px;">Primary Logo URL</label>
+          <input id="evt-logo-left" type="text" placeholder="https://..." style="width: 100%; padding: 9px 12px; border: 1px solid var(--admin-border); border-radius: 8px; font-size: 13px; font-family: inherit; outline: none; box-sizing: border-box;" />
+        </div>
+        <div>
+          <label style="display: block; font-size: 11px; font-weight: 500; color: var(--admin-secondary); margin-bottom: 4px;">Sponsor Logo URL</label>
+          <input id="evt-logo-right" type="text" placeholder="https://..." style="width: 100%; padding: 9px 12px; border: 1px solid var(--admin-border); border-radius: 8px; font-size: 13px; font-family: inherit; outline: none; box-sizing: border-box;" />
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 10px; margin-top: 18px;">
+        <button id="cancel-create" style="flex: 1; padding: 11px; border: 1px solid var(--admin-border); border-radius: 10px; font-size: 13px; font-weight: 500; background: transparent; cursor: pointer; font-family: inherit; color: var(--admin-secondary);">Cancel</button>
+        <button id="confirm-create" style="flex: 2; padding: 11px; border: none; border-radius: 10px; font-size: 13px; font-weight: 500; background: var(--admin-text); color: white; cursor: pointer; font-family: inherit;">Create Event</button>
       </div>
     </div>
   </div>
 </AdminLayout>
 
 <script>
+  // Calendar filtering
+  let selectedDay: number | null = null
+  const calClear = document.getElementById('cal-clear')!
+  const calLabel = document.getElementById('cal-filter-label')!
+  const eventsGrid = document.getElementById('events-grid')
+  const eventCards = document.querySelectorAll('.event-card')
+
+  function updateCalendarSelection(day: number | null) {
+    selectedDay = day
+    const todayNum = new Date().getDate()
+
+    // Update day styles
+    document.querySelectorAll('.cal-day').forEach(el => {
+      const d = parseInt((el as HTMLElement).dataset.day || '0')
+      const inner = el.querySelector('.cal-day-inner') as HTMLElement
+      if (!inner || !d) return
+
+      const isToday = d === todayNum
+      const isSelected = d === selectedDay
+      const hasEvent = el.classList.contains('has-event')
+
+      if (isSelected && !isToday) {
+        inner.style.background = '#2563EB'
+        inner.style.color = 'white'
+        inner.style.fontWeight = '600'
+      } else if (isToday) {
+        inner.style.background = selectedDay === null || isSelected ? '#E10600' : '#E10600'
+        inner.style.color = 'white'
+        inner.style.fontWeight = '600'
+      } else {
+        inner.style.background = ''
+        inner.style.color = ''
+        inner.style.fontWeight = ''
+      }
+
+      // Update dot color
+      const dot = el.querySelector('.cal-dot') as HTMLElement
+      if (dot) {
+        if (isSelected || (isToday && (selectedDay === null || isSelected))) {
+          dot.style.background = 'white'
+        } else {
+          dot.style.background = '#E10600'
+        }
+      }
+    })
+
+    // Filter event cards
+    eventCards.forEach(card => {
+      const cardDay = (card as HTMLElement).dataset.eventDay
+      if (selectedDay === null) {
+        (card as HTMLElement).style.display = ''
+      } else {
+        (card as HTMLElement).style.display = cardDay === String(selectedDay) ? '' : 'none'
+      }
+    })
+
+    // Show/hide clear button and label
+    if (selectedDay !== null) {
+      calClear.style.display = 'block'
+      const d = new Date(new Date().getFullYear(), new Date().getMonth(), selectedDay)
+      calLabel.style.display = 'block'
+      calLabel.textContent = `Showing events for ${d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}`
+
+      // Check if any visible
+      let anyVisible = false
+      eventCards.forEach(card => { if ((card as HTMLElement).style.display !== 'none') anyVisible = true })
+      if (!anyVisible) {
+        calLabel.textContent += ' — No events on this date'
+      }
+    } else {
+      calClear.style.display = 'none'
+      calLabel.style.display = 'none'
+    }
+  }
+
+  document.querySelectorAll('.cal-day').forEach(el => {
+    el.addEventListener('click', () => {
+      const day = parseInt((el as HTMLElement).dataset.day || '0')
+      if (!day) return
+      updateCalendarSelection(day === selectedDay ? null : day)
+    })
+  })
+
+  calClear.addEventListener('click', () => updateCalendarSelection(null))
+
+  // Hover effect for calendar days
+  document.querySelectorAll('.cal-day').forEach(el => {
+    el.addEventListener('mouseenter', () => {
+      const d = parseInt((el as HTMLElement).dataset.day || '0')
+      if (!d) return
+      const inner = el.querySelector('.cal-day-inner') as HTMLElement
+      const isToday = d === new Date().getDate()
+      const isSelected = d === selectedDay
+      if (!isToday && !isSelected && inner) {
+        inner.style.background = '#F0F0F2'
+      }
+    })
+    el.addEventListener('mouseleave', () => {
+      const d = parseInt((el as HTMLElement).dataset.day || '0')
+      if (!d) return
+      const inner = el.querySelector('.cal-day-inner') as HTMLElement
+      const isToday = d === new Date().getDate()
+      const isSelected = d === selectedDay
+      if (!isToday && !isSelected && inner) {
+        inner.style.background = ''
+      }
+    })
+  })
+
   // Create modal
   const modal = document.getElementById('create-modal')!
   const createBtn = document.getElementById('create-event-btn')!
@@ -285,9 +440,14 @@ for (let d = 1; d <= daysInMonth; d++) {
     const name = (document.getElementById('evt-name') as HTMLInputElement).value
     const pin = (document.getElementById('evt-pin') as HTMLInputElement).value
     const dealer = (document.getElementById('evt-dealer') as HTMLInputElement).value
+    const track = (document.getElementById('evt-track') as HTMLInputElement).value
     const theme = (document.getElementById('evt-theme') as HTMLSelectElement).value
     const date = (document.getElementById('evt-date') as HTMLInputElement).value
     const time = (document.getElementById('evt-time') as HTMLInputElement).value
+    const employeePin = (document.getElementById('evt-employee-pin') as HTMLInputElement).value
+    const sms = (document.getElementById('evt-sms') as HTMLInputElement).checked
+    const logoLeft = (document.getElementById('evt-logo-left') as HTMLInputElement).value
+    const logoRight = (document.getElementById('evt-logo-right') as HTMLInputElement).value
 
     if (!name.trim()) { alert('Event name is required'); return }
     if (!pin || pin.length < 4) { alert('PIN must be at least 4 digits'); return }
@@ -297,7 +457,12 @@ for (let d = 1; d <= daysInMonth; d++) {
       const res = await fetch('/api/admin/events', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, admin_pin: pin, dealer_name: dealer, theme, event_date: date, event_time: time }),
+        body: JSON.stringify({
+          name, admin_pin: pin, dealer_name: dealer, track_name: track,
+          theme, event_date: date, event_time: time,
+          employee_pin: employeePin, sms_enabled: sms,
+          logo_left: logoLeft, logo_right: logoRight,
+        }),
       })
       if (!res.ok) throw new Error((await res.json()).error || 'Failed')
       window.location.reload()
@@ -366,7 +531,7 @@ for (let d = 1; d <= daysInMonth; d++) {
   const chevron = document.getElementById('archived-chevron')
   if (archivedSection && chevron) {
     archivedSection.addEventListener('toggle', () => {
-      chevron.style.transform = archivedSection.open ? 'rotate(90deg)' : 'rotate(0deg)'
+      chevron.style.transform = (archivedSection as HTMLDetailsElement).open ? 'rotate(90deg)' : 'rotate(0deg)'
     })
   }
 

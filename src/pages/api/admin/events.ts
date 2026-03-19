@@ -43,7 +43,7 @@ export const POST: APIRoute = async ({ request }) => {
   }
 
   const body = await request.json()
-  const { name, theme, admin_pin, dealer_name, sms_enabled, event_date, event_time } = body
+  const { name, theme, admin_pin, dealer_name, track_name, sms_enabled, event_date, event_time, employee_pin, logo_left, logo_right } = body
 
   if (!name?.trim()) {
     return new Response(JSON.stringify({ error: 'Event name is required' }), { status: 400 })
@@ -84,6 +84,10 @@ export const POST: APIRoute = async ({ request }) => {
       sms_enabled: sms_enabled ?? false,
       event_date: event_date?.trim() || '',
       event_time: event_time?.trim() || '',
+      employee_pin: employee_pin?.trim() || '',
+      track_name: track_name?.trim() || 'Circuit',
+      logo_left: logo_left?.trim() || '',
+      logo_right: logo_right?.trim() || '',
     })
 
   if (configErr) {
