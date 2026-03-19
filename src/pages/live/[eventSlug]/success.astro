@@ -1,10 +1,10 @@
 ---
 export const prerender = false
 
-import '../../../../styles/global.css'
-import { createServiceClient } from '../../../../lib/supabase'
-import { resolveEventSlug } from '../../../../lib/s4m/event-helpers'
-import { getThemeVariables } from '../../../../lib/s4m/themes'
+import '../../../styles/global.css'
+import { createServiceClient } from '../../../lib/supabase'
+import { resolveEventSlug } from '../../../lib/s4m/event-helpers'
+import { getThemeVariables } from '../../../lib/s4m/themes'
 
 const { eventSlug } = Astro.params
 const eventId = await resolveEventSlug(eventSlug!)
@@ -67,7 +67,7 @@ const queue = url.searchParams.get('queue') ?? '1'
         Your results will be texted and emailed after your run. Good luck!
       </p>
 
-      <a href={`/races/live/${eventSlug}/leaderboard`} class="inline-block mt-8 py-3 px-8 font-bold text-xs tracking-[3px] uppercase text-white" style="background: var(--black)">
+      <a href={`/live/${eventSlug}/leaderboard`} class="inline-block mt-8 py-3 px-8 font-bold text-xs tracking-[3px] uppercase text-white" style="background: var(--black)">
         View Leaderboard →
       </a>
     </div>

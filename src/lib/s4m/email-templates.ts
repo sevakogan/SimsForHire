@@ -124,7 +124,7 @@ export function resultsEmail(
   const positionLabel = position === 1 ? '1st' : position === 2 ? '2nd' : position === 3 ? '3rd' : `P${position}`
   const accent = branding?.themeColor || '#FFE400'
   const leaderboardUrl = branding?.eventSlug
-    ? `https://simsforhire.com/races/live/${branding.eventSlug}/leaderboard`
+    ? `https://simsforhire.com/live/${branding.eventSlug}/leaderboard`
     : 'https://simsforhire.com'
 
   return layout(`
@@ -189,7 +189,7 @@ export function resultsPlainText(
   const isPodium = position <= 3
   const positionLabel = position === 1 ? '1st' : position === 2 ? '2nd' : position === 3 ? '3rd' : `P${position}`
   const leaderboardUrl = eventSlug
-    ? `https://simsforhire.com/races/live/${eventSlug}/leaderboard`
+    ? `https://simsforhire.com/live/${eventSlug}/leaderboard`
     : 'https://simsforhire.com'
 
   return [

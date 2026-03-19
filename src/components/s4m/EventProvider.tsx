@@ -18,7 +18,7 @@ interface EventProviderProps {
 
 export function EventProvider({ event, config, children }: EventProviderProps) {
   const eventUrl = useCallback(
-    (path: string) => `/races/live/${event.slug}${path === '/' ? '' : path}`,
+    (path: string) => `/live/${event.slug}${path === '/' ? '' : path}`,
     [event.slug],
   )
 

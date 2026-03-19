@@ -89,9 +89,9 @@ function timeAgo(date: string): string {
               </div>
 
               <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                <a href={`/races/live/${event.slug}`} style="padding: 6px 12px; font-size: 11px; font-weight: 500; color: var(--admin-text); border: 1px solid var(--admin-border); border-radius: 8px; text-decoration: none;">Event Page</a>
-                <a href={`/races/live/${event.slug}/leaderboard`} style="padding: 6px 12px; font-size: 11px; font-weight: 500; color: var(--admin-text); border: 1px solid var(--admin-border); border-radius: 8px; text-decoration: none;">Leaderboard</a>
-                <a href={`/races/live/${event.slug}/admin`} style="padding: 6px 12px; font-size: 11px; font-weight: 500; color: var(--admin-text); border: 1px solid var(--admin-border); border-radius: 8px; text-decoration: none;">Staff Panel</a>
+                <a href={`/live/${event.slug}`} style="padding: 6px 12px; font-size: 11px; font-weight: 500; color: var(--admin-text); border: 1px solid var(--admin-border); border-radius: 8px; text-decoration: none;">Event Page</a>
+                <a href={`/live/${event.slug}/leaderboard`} style="padding: 6px 12px; font-size: 11px; font-weight: 500; color: var(--admin-text); border: 1px solid var(--admin-border); border-radius: 8px; text-decoration: none;">Leaderboard</a>
+                <a href={`/live/${event.slug}/admin`} style="padding: 6px 12px; font-size: 11px; font-weight: 500; color: var(--admin-text); border: 1px solid var(--admin-border); border-radius: 8px; text-decoration: none;">Staff Panel</a>
                 <button
                   class="archive-btn"
                   data-id={event.id}

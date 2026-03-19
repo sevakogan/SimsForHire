@@ -28,8 +28,8 @@ export function EventAdminApp({ event, config, tab }: EventAdminAppProps) {
             Event Staff — {role === 'admin' ? 'Admin' : 'Employee'}
           </div>
           <div className="flex gap-2">
-            <a href={`/races/live/${event.slug}/leaderboard/tv`} className="no-underline px-4 py-2 text-[10px] font-bold tracking-[2px] uppercase border border-white/30 text-white/90 hover:border-white/70">TV</a>
-            <a href={`/races/live/${event.slug}`} className="no-underline px-4 py-2 text-[10px] font-bold tracking-[2px] uppercase border border-white/30 text-white/90 hover:border-white/70">← Home</a>
+            <a href={`/live/${event.slug}/leaderboard/tv`} className="no-underline px-4 py-2 text-[10px] font-bold tracking-[2px] uppercase border border-white/30 text-white/90 hover:border-white/70">TV</a>
+            <a href={`/live/${event.slug}`} className="no-underline px-4 py-2 text-[10px] font-bold tracking-[2px] uppercase border border-white/30 text-white/90 hover:border-white/70">← Home</a>
           </div>
         </div>
 

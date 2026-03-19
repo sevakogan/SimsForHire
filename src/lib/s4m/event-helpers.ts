@@ -29,10 +29,10 @@ export async function resolveEventSlug(slug: string): Promise<string | null> {
 
 /**
  * Build the page URL prefix for an event.
- * e.g. eventBasePath("porsche") → "/races/live/porsche"
+ * e.g. eventBasePath("porsche") → "/live/porsche"
  */
 export function eventBasePath(slug: string): string {
-  return `/races/live/${slug}`
+  return `/live/${slug}`
 }
 
 /**

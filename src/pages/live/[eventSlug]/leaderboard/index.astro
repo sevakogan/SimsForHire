@@ -1,13 +1,13 @@
 ---
 export const prerender = false
 
-import '../../../../../styles/global.css'
-import { createServiceClient } from '../../../../../lib/supabase'
-import { resolveEventSlug } from '../../../../../lib/s4m/event-helpers'
-import { getThemeVariables } from '../../../../../lib/s4m/themes'
-import { EventProvider } from '../../../../../components/s4m/EventProvider'
-import { ToastProvider } from '../../../../../components/s4m/Toast'
-import { LeaderboardLive } from '../../../../../components/s4m/LeaderboardLive'
+import '../../../../styles/global.css'
+import { createServiceClient } from '../../../../lib/supabase'
+import { resolveEventSlug } from '../../../../lib/s4m/event-helpers'
+import { getThemeVariables } from '../../../../lib/s4m/themes'
+import { EventProvider } from '../../../../components/s4m/EventProvider'
+import { ToastProvider } from '../../../../components/s4m/Toast'
+import { LeaderboardLive } from '../../../../components/s4m/LeaderboardLive'
 
 const { eventSlug } = Astro.params
 const eventId = await resolveEventSlug(eventSlug!)
@@ -29,16 +29,12 @@ const styleVars = Object.entries(themeVars).map(([k, v]) => `${k}:${v}`).join(';
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>TV — {config.event_name}</title>
+  <title>Leaderboard — {config.event_name}</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Orbitron:wght@400;700;900&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet" />
   <style>
-    body { margin: 0; overflow: hidden; cursor: none; }
+    body { margin: 0; overflow: hidden; }
   </style>
-  <script>
-    // Auto-refresh every 30 minutes to prevent stale connections
-    setTimeout(() => window.location.reload(), 30 * 60 * 1000)
-  </script>
 </head>
 <body style={styleVars}>
   <EventProvider event={event} config={config} client:load>
