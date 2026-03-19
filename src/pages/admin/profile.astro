@@ -1,0 +1,290 @@
+---
+export const prerender = false
+
+import AdminLayout from '../../layouts/AdminLayout.astro'
+import { requireAuth, getAuthToken } from '../../lib/admin-auth'
+import { createServiceClient } from '../../lib/supabase'
+import { createClient } from '@supabase/supabase-js'
+
+const auth = await requireAuth(Astro.request)
+if (!auth.authorized) return Astro.redirect('/admin')
+
+const supabase = createServiceClient()
+
+// Get auth user email
+const token = getAuthToken(Astro.request)!
+const anonClient = createClient(
+  import.meta.env.NEXT_PUBLIC_SUPABASE_URL,
+  import.meta.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+)
+const { data: userData } = await anonClient.auth.getUser(token)
+const email = userData.user?.email ?? ''
+
+// Get profile
+const { data: profile } = await supabase
+  .from('admin_profiles')
+  .select('*')
+  .eq('user_id', auth.userId)
+  .single()
+
+const name = profile?.name ?? ''
+const phone = profile?.phone ?? ''
+const avatarUrl = profile?.avatar_url ?? ''
+const role = profile?.role ?? 'admin'
+
+const roleLabels: Record<string, string> = {
+  owner: 'Owner',
+  admin: 'Admin',
+  customer: 'Customer',
+  marketing: 'Marketing',
+}
+
+// Get all admin users for invite section
+const { data: allProfiles } = await supabase
+  .from('admin_profiles')
+  .select('user_id, name, role')
+  .order('created_at', { ascending: true })
+
+const initials = name
+  ? name.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2)
+  : email.slice(0, 2).toUpperCase()
+
+const inputStyle = "width: 100%; padding: 10px 14px; border: 1px solid var(--admin-border); border-radius: 8px; font-size: 14px; font-family: inherit; outline: none; box-sizing: border-box; color: var(--admin-text); background: white;"
+const labelStyle = "display: block; font-size: 12px; font-weight: 500; color: var(--admin-secondary); margin-bottom: 6px;"
+---
+
+<AdminLayout title="Profile — Admin" active="profile">
+  <div style="max-width: 640px;">
+    <h1 style="font-size: 24px; font-weight: 600; color: var(--admin-text); letter-spacing: -0.5px; margin-bottom: 4px;">Profile</h1>
+    <p style="font-size: 13px; color: var(--admin-secondary); margin-bottom: 28px;">Manage your account settings</p>
+
+    <!-- Avatar + Name header -->
+    <div style="background: var(--admin-surface); border: 1px solid var(--admin-border); border-radius: 14px; padding: 24px; margin-bottom: 16px;">
+      <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 20px;">
+        <div style="position: relative;">
+          {avatarUrl ? (
+            <img id="avatar-preview" src={avatarUrl} alt="" style="width: 64px; height: 64px; border-radius: 50%; object-fit: cover; border: 2px solid var(--admin-border);" />
+          ) : (
+            <div id="avatar-preview" style="width: 64px; height: 64px; border-radius: 50%; background: var(--admin-red); display: flex; align-items: center; justify-content: center; color: white; font-size: 20px; font-weight: 600;">
+              {initials}
+            </div>
+          )}
+          <label for="avatar-input" style="position: absolute; bottom: -2px; right: -2px; width: 24px; height: 24px; background: var(--admin-text); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; border: 2px solid white;">
+            <svg width="12" height="12" fill="white" viewBox="0 0 20 20"><path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"/></svg>
+          </label>
+          <input id="avatar-input" type="file" accept="image/jpeg,image/png,image/webp" style="display: none;" />
+        </div>
+        <div>
+          <div style="font-size: 18px; font-weight: 600; color: var(--admin-text);">{name || 'Set your name'}</div>
+          <div style="font-size: 13px; color: var(--admin-secondary);">{email}</div>
+          <span style={`display: inline-block; margin-top: 4px; padding: 2px 8px; font-size: 10px; font-weight: 500; border-radius: 6px; ${
+            role === 'owner' ? 'background: #FFF3E0; color: #E65100;' :
+            role === 'admin' ? 'background: #E8F5E9; color: #2E7D32;' :
+            role === 'marketing' ? 'background: #E3F2FD; color: #1565C0;' :
+            'background: #F5F5F7; color: var(--admin-secondary);'
+          }`}>{roleLabels[role] || role}</span>
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+        <div>
+          <label style={labelStyle}>Full Name</label>
+          <input id="profile-name" type="text" value={name} placeholder="Your name" style={inputStyle} />
+        </div>
+        <div>
+          <label style={labelStyle}>Phone</label>
+          <input id="profile-phone" type="tel" value={phone} placeholder="+1 (305) 000-0000" style={inputStyle} />
+        </div>
+      </div>
+      <button id="save-profile" style="margin-top: 14px; padding: 10px 24px; font-size: 13px; font-weight: 500; background: var(--admin-text); color: white; border: none; border-radius: 8px; cursor: pointer; font-family: inherit;">
+        Save Profile
+      </button>
+      <span id="save-status" style="font-size: 12px; color: var(--admin-green); margin-left: 12px; display: none;">Saved</span>
+    </div>
+
+    <!-- Email -->
+    <div style="background: var(--admin-surface); border: 1px solid var(--admin-border); border-radius: 14px; padding: 24px; margin-bottom: 16px;">
+      <h3 style="font-size: 14px; font-weight: 600; color: var(--admin-text); margin-bottom: 14px;">Email Address</h3>
+      <div style="display: flex; gap: 10px; align-items: end;">
+        <div style="flex: 1;">
+          <label style={labelStyle}>Email</label>
+          <input id="profile-email" type="email" value={email} style={inputStyle} />
+        </div>
+        <button id="change-email" style="padding: 10px 18px; font-size: 13px; font-weight: 500; background: white; color: var(--admin-text); border: 1px solid var(--admin-border); border-radius: 8px; cursor: pointer; font-family: inherit; white-space: nowrap;">
+          Update Email
+        </button>
+      </div>
+      <p id="email-status" style="font-size: 11px; color: var(--admin-secondary); margin-top: 8px; display: none;"></p>
+    </div>
+
+    <!-- Password -->
+    <div style="background: var(--admin-surface); border: 1px solid var(--admin-border); border-radius: 14px; padding: 24px; margin-bottom: 16px;">
+      <h3 style="font-size: 14px; font-weight: 600; color: var(--admin-text); margin-bottom: 14px;">Change Password</h3>
+      <div style="display: flex; gap: 10px; align-items: end;">
+        <div style="flex: 1;">
+          <label style={labelStyle}>New Password (6+ characters)</label>
+          <input id="new-password" type="password" placeholder="New password" style={inputStyle} />
+        </div>
+        <button id="change-password" style="padding: 10px 18px; font-size: 13px; font-weight: 500; background: white; color: var(--admin-text); border: 1px solid var(--admin-border); border-radius: 8px; cursor: pointer; font-family: inherit; white-space: nowrap;">
+          Update
+        </button>
+      </div>
+      <p id="password-status" style="font-size: 11px; margin-top: 8px; display: none;"></p>
+    </div>
+
+    <!-- Invite User -->
+    <div style="background: var(--admin-surface); border: 1px solid var(--admin-border); border-radius: 14px; padding: 24px;">
+      <h3 style="font-size: 14px; font-weight: 600; color: var(--admin-text); margin-bottom: 4px;">Team Members</h3>
+      <p style="font-size: 12px; color: var(--admin-secondary); margin-bottom: 14px;">Invite people to access the admin panel</p>
+
+      <!-- Existing members -->
+      {(allProfiles ?? []).length > 0 && (
+        <div style="margin-bottom: 16px;">
+          {(allProfiles ?? []).map(p => (
+            <div style="display: flex; align-items: center; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--admin-border);">
+              <div style="font-size: 13px; color: var(--admin-text);">{p.name || 'Unnamed'}</div>
+              <span style={`padding: 2px 8px; font-size: 10px; font-weight: 500; border-radius: 6px; ${
+                p.role === 'owner' ? 'background: #FFF3E0; color: #E65100;' :
+                p.role === 'admin' ? 'background: #E8F5E9; color: #2E7D32;' :
+                'background: #F5F5F7; color: var(--admin-secondary);'
+              }`}>{roleLabels[p.role] || p.role}</span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <div style="display: flex; gap: 10px; align-items: end;">
+        <div style="flex: 1;">
+          <label style={labelStyle}>Email address</label>
+          <input id="invite-email" type="email" placeholder="colleague@company.com" style={inputStyle} />
+        </div>
+        <button id="send-invite" style="padding: 10px 18px; font-size: 13px; font-weight: 500; background: #2563EB; color: white; border: none; border-radius: 8px; cursor: pointer; font-family: inherit; white-space: nowrap;">
+          Send Invite
+        </button>
+      </div>
+      <p id="invite-status" style="font-size: 11px; margin-top: 8px; display: none;"></p>
+    </div>
+  </div>
+</AdminLayout>
+
+<script>
+  // Avatar upload
+  const avatarInput = document.getElementById('avatar-input') as HTMLInputElement
+  avatarInput.addEventListener('change', async () => {
+    const file = avatarInput.files?.[0]
+    if (!file) return
+    const fd = new FormData()
+    fd.append('avatar', file)
+    try {
+      const res = await fetch('/api/admin/upload-avatar', { method: 'POST', body: fd })
+      const data = await res.json()
+      if (data.avatar_url) window.location.reload()
+      else alert(data.error || 'Upload failed')
+    } catch { alert('Upload error') }
+  })
+
+  // Save profile
+  document.getElementById('save-profile')!.addEventListener('click', async () => {
+    const name = (document.getElementById('profile-name') as HTMLInputElement).value
+    const phone = (document.getElementById('profile-phone') as HTMLInputElement).value
+    const status = document.getElementById('save-status')!
+    try {
+      const res = await fetch('/api/admin/profile', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, phone }),
+      })
+      if (res.ok) {
+        status.textContent = 'Saved!'
+        status.style.color = '#30D158'
+        status.style.display = 'inline'
+        setTimeout(() => { status.style.display = 'none' }, 2000)
+      } else {
+        const data = await res.json()
+        alert(data.error || 'Failed to save')
+      }
+    } catch { alert('Error saving profile') }
+  })
+
+  // Change email
+  document.getElementById('change-email')!.addEventListener('click', async () => {
+    const email = (document.getElementById('profile-email') as HTMLInputElement).value
+    const status = document.getElementById('email-status')!
+    try {
+      const res = await fetch('/api/admin/change-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      })
+      const data = await res.json()
+      status.style.display = 'block'
+      if (res.ok) {
+        status.textContent = 'Confirmation email sent to your new address'
+        status.style.color = '#30D158'
+      } else {
+        status.textContent = data.error || 'Failed'
+        status.style.color = '#FF3B30'
+      }
+    } catch {
+      status.textContent = 'Error'
+      status.style.color = '#FF3B30'
+      status.style.display = 'block'
+    }
+  })
+
+  // Change password
+  document.getElementById('change-password')!.addEventListener('click', async () => {
+    const pw = (document.getElementById('new-password') as HTMLInputElement).value
+    const status = document.getElementById('password-status')!
+    if (pw.length < 6) { status.textContent = 'Password must be at least 6 characters'; status.style.color = '#FF3B30'; status.style.display = 'block'; return }
+    try {
+      const res = await fetch('/api/admin/change-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ newPassword: pw }),
+      })
+      status.style.display = 'block'
+      if (res.ok) {
+        status.textContent = 'Password updated'
+        status.style.color = '#30D158'
+        ;(document.getElementById('new-password') as HTMLInputElement).value = ''
+      } else {
+        const data = await res.json()
+        status.textContent = data.error || 'Failed'
+        status.style.color = '#FF3B30'
+      }
+    } catch {
+      status.textContent = 'Error'
+      status.style.color = '#FF3B30'
+      status.style.display = 'block'
+    }
+  })
+
+  // Send invite
+  document.getElementById('send-invite')!.addEventListener('click', async () => {
+    const email = (document.getElementById('invite-email') as HTMLInputElement).value
+    const status = document.getElementById('invite-status')!
+    if (!email.includes('@')) { status.textContent = 'Enter a valid email'; status.style.color = '#FF3B30'; status.style.display = 'block'; return }
+    try {
+      const res = await fetch('/api/admin/invite', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      })
+      status.style.display = 'block'
+      if (res.ok) {
+        status.textContent = `Invitation sent to ${email}`
+        status.style.color = '#30D158'
+        ;(document.getElementById('invite-email') as HTMLInputElement).value = ''
+      } else {
+        const data = await res.json()
+        status.textContent = data.error || 'Failed to send invite'
+        status.style.color = '#FF3B30'
+      }
+    } catch {
+      status.textContent = 'Error sending invite'
+      status.style.color = '#FF3B30'
+      status.style.display = 'block'
+    }
+  })
+</script>
