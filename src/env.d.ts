@@ -33,6 +33,13 @@ interface ImportMetaEnv {
   // Google Ads
   readonly GOOGLE_ADS_ID: string
 
+  // Optional pixel IDs (uncomment in BaseLayout when ready)
+  readonly CLARITY_PROJECT_ID?: string
+  readonly TIKTOK_PIXEL_ID?: string
+  readonly LINKEDIN_PARTNER_ID?: string
+  readonly PINTEREST_TAG_ID?: string
+  readonly TWITTER_PIXEL_ID?: string
+
   // Slack
   readonly SLACK_WEBHOOK_URL: string
 

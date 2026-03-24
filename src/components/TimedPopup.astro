@@ -136,6 +136,11 @@
         return acc
       }, {})
 
+      // Grab UTM data from session storage
+      const utmRaw = sessionStorage.getItem('s4h_utm')
+      const utmData = utmRaw ? JSON.parse(utmRaw) : {}
+      const landingPage = sessionStorage.getItem('s4h_landing') || undefined
+
       const payload: Record<string, unknown> = {
         name: fd.get('name') || undefined,
         email: fd.get('email'),
@@ -146,6 +151,8 @@
         eventId,
         fbc: cookies._fbc,
         fbp: cookies._fbp,
+        ...utmData,
+        landingPage,
       }
 
       try {

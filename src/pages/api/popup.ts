@@ -88,6 +88,16 @@ export const POST: APIRoute = async ({ request }) => {
   const fbc = typeof body.fbc === 'string' ? body.fbc : undefined
   const fbp = typeof body.fbp === 'string' ? body.fbp : undefined
 
+  // Extract UTM fields
+  const utmSource = typeof body.utm_source === 'string' ? body.utm_source : undefined
+  const utmMedium = typeof body.utm_medium === 'string' ? body.utm_medium : undefined
+  const utmCampaign = typeof body.utm_campaign === 'string' ? body.utm_campaign : undefined
+  const utmTerm = typeof body.utm_term === 'string' ? body.utm_term : undefined
+  const utmContent = typeof body.utm_content === 'string' ? body.utm_content : undefined
+  const gclid = typeof body.gclid === 'string' ? body.gclid : undefined
+  const fbclid = typeof body.fbclid === 'string' ? body.fbclid : undefined
+  const landingPage = typeof body.landingPage === 'string' ? body.landingPage : undefined
+
   const clientIp = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
     ?? request.headers.get('x-real-ip') ?? undefined
   const clientUserAgent = request.headers.get('user-agent') ?? undefined
@@ -105,6 +115,14 @@ export const POST: APIRoute = async ({ request }) => {
       phone: data.phone,
       interest: data.interest,
       sourcePage: data.sourcePage,
+      utmSource,
+      utmMedium,
+      utmCampaign,
+      utmTerm,
+      utmContent,
+      gclid,
+      fbclid,
+      landingPage,
     }),
     sendCAPIEvent({
       eventName: 'Lead',

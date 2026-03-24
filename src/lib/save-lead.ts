@@ -15,6 +15,14 @@ interface LeadData {
   readonly message?: string
   readonly smsConsent?: boolean
   readonly sourcePage?: string
+  readonly utmSource?: string
+  readonly utmMedium?: string
+  readonly utmCampaign?: string
+  readonly utmTerm?: string
+  readonly utmContent?: string
+  readonly gclid?: string
+  readonly fbclid?: string
+  readonly landingPage?: string
 }
 
 export async function saveLead(lead: LeadData): Promise<void> {
@@ -42,6 +50,14 @@ export async function saveLead(lead: LeadData): Promise<void> {
     message: lead.message ?? null,
     sms_consent: lead.smsConsent ?? false,
     source_page: lead.sourcePage ?? null,
+    utm_source: lead.utmSource ?? null,
+    utm_medium: lead.utmMedium ?? null,
+    utm_campaign: lead.utmCampaign ?? null,
+    utm_term: lead.utmTerm ?? null,
+    utm_content: lead.utmContent ?? null,
+    gclid: lead.gclid ?? null,
+    fbclid: lead.fbclid ?? null,
+    landing_page: lead.landingPage ?? null,
   })
 
   if (error) {

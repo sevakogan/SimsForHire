@@ -46,6 +46,16 @@ export const POST: APIRoute = async ({ request }) => {
   const fbc = typeof rawBody.fbc === 'string' ? rawBody.fbc : undefined
   const fbp = typeof rawBody.fbp === 'string' ? rawBody.fbp : undefined
 
+  // Extract UTM fields
+  const utmSource = typeof rawBody.utm_source === 'string' ? rawBody.utm_source : undefined
+  const utmMedium = typeof rawBody.utm_medium === 'string' ? rawBody.utm_medium : undefined
+  const utmCampaign = typeof rawBody.utm_campaign === 'string' ? rawBody.utm_campaign : undefined
+  const utmTerm = typeof rawBody.utm_term === 'string' ? rawBody.utm_term : undefined
+  const utmContent = typeof rawBody.utm_content === 'string' ? rawBody.utm_content : undefined
+  const gclid = typeof rawBody.gclid === 'string' ? rawBody.gclid : undefined
+  const fbclid = typeof rawBody.fbclid === 'string' ? rawBody.fbclid : undefined
+  const landingPage = typeof rawBody.landingPage === 'string' ? rawBody.landingPage : undefined
+
   const clientIp = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
     ?? request.headers.get('x-real-ip')
     ?? undefined
@@ -73,6 +83,14 @@ export const POST: APIRoute = async ({ request }) => {
       guestCount: data.guestCount,
       message: data.message,
       smsConsent: data.smsConsent,
+      utmSource,
+      utmMedium,
+      utmCampaign,
+      utmTerm,
+      utmContent,
+      gclid,
+      fbclid,
+      landingPage,
     }),
     sendCAPIEvent({
       eventName: 'Lead',
@@ -102,7 +120,7 @@ export const POST: APIRoute = async ({ request }) => {
   const results = await Promise.allSettled(notifications)
 
   // Log any failures (but still return 200 to the user)
-  const labels = ['slack', 'email', 'lead-email', 'meta-capi', ...(data.smsConsent && data.phone ? ['sms'] : [])]
+  const labels = ['slack', 'email', 'lead-email', 'save-lead', 'meta-capi', ...(data.smsConsent && data.phone ? ['sms'] : [])]
   const failures: string[] = []
 
   for (let i = 0; i < results.length; i++) {

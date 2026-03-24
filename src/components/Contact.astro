@@ -186,6 +186,11 @@ import { CONTACT } from '../data/content'
       event_label: 'rent_inquiry_form',
     })
 
+    // Attach UTM params for attribution tracking
+    const utmRaw = sessionStorage.getItem('s4h_utm')
+    const utmData = utmRaw ? JSON.parse(utmRaw) : {}
+    const landingPage = sessionStorage.getItem('s4h_landing') || undefined
+
     try {
       const response = await fetch('/api/contact', {
         method: 'POST',
@@ -196,6 +201,8 @@ import { CONTACT } from '../data/content'
           sourceUrl: window.location.href,
           fbc: getCookie('_fbc'),
           fbp: getCookie('_fbp'),
+          ...utmData,
+          landingPage,
         }),
       })
 

@@ -194,6 +194,18 @@ const canonicalUrl = SITE.url
       rel="stylesheet"
     />
 
+    <!-- UTM Capture — persist across pages for attribution -->
+    <script is:inline>
+      (function(){
+        var p=new URLSearchParams(window.location.search);
+        var keys=['utm_source','utm_medium','utm_campaign','utm_term','utm_content','gclid','fbclid'];
+        var found={};
+        keys.forEach(function(k){var v=p.get(k);if(v)found[k]=v;});
+        if(Object.keys(found).length>0)sessionStorage.setItem('s4h_utm',JSON.stringify(found));
+        if(!sessionStorage.getItem('s4h_landing'))sessionStorage.setItem('s4h_landing',window.location.href);
+      })();
+    </script>
+
     <!-- Google Tag Manager -->
     <script is:inline>
       (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
@@ -215,6 +227,92 @@ const canonicalUrl = SITE.url
         fbq('track', 'PageView');
       }
     </script>
+
+    <!-- GA4 Direct (backup — fires even if GTM blocked) -->
+    <script is:inline>
+      (function(){
+        var s=document.createElement('script');s.async=true;
+        s.src='https://www.googletagmanager.com/gtag/js?id=G-S7R6C7KLK1';
+        document.head.appendChild(s);
+        window.dataLayer=window.dataLayer||[];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js',new Date());
+        gtag('config','G-S7R6C7KLK1',{send_page_view:true});
+      })();
+    </script>
+
+    <!-- Google Ads Global Site Tag -->
+    <script is:inline define:vars={{ googleAdsId: import.meta.env.GOOGLE_ADS_ID || '' }}>
+      if (googleAdsId) {
+        (function(){
+          var s=document.createElement('script');s.async=true;
+          s.src='https://www.googletagmanager.com/gtag/js?id='+googleAdsId;
+          document.head.appendChild(s);
+          window.dataLayer=window.dataLayer||[];
+          function gtag(){dataLayer.push(arguments);}
+          gtag('config',googleAdsId);
+        })();
+      }
+    </script>
+
+    <!-- Microsoft Clarity — free heatmaps & session recordings -->
+    <script is:inline>
+      (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/qx14m3k8qr";
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+      })(window,document,"clarity","script");
+    </script>
+
+    <!-- TikTok Pixel — uncomment and add pixel ID when ready
+    <script is:inline>
+      !function(w,d,t){w.TiktokAnalyticsObject=t;var ttq=w[t]=w[t]||[];
+      ttq.methods=["page","track","identify","instances","debug","on","off","once","ready","alias","group","enableCookie","disableCookie"];
+      ttq.setAndDefer=function(t,e){t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}};
+      for(var i=0;i<ttq.methods.length;i++)ttq.setAndDefer(ttq,ttq.methods[i]);
+      ttq.instance=function(t){for(var e=ttq._i[t]||[],n=0;n<ttq.methods.length;n++)ttq.setAndDefer(e,ttq.methods[n]);return e};
+      ttq.load=function(e,n){var i="https://analytics.tiktok.com/i18n/pixel/events.js";
+      ttq._i=ttq._i||{};ttq._i[e]=[];ttq._i[e]._u=i;ttq._t=ttq._t||{};ttq._t[e]=+new Date;
+      ttq._o=ttq._o||{};ttq._o[e]=n||{};var o=document.createElement("script");
+      o.type="text/javascript";o.async=!0;o.src=i+"?sdkid="+e+"&lib="+t;
+      var a=document.getElementsByTagName("script")[0];a.parentNode.insertBefore(o,a)};
+      ttq.load('YOUR_TIKTOK_PIXEL_ID');ttq.page();
+      }(window,document,'ttq');
+    </script>
+    -->
+
+    <!-- LinkedIn Insight Tag — uncomment and add partner ID when ready
+    <script is:inline>
+      _linkedin_partner_id="YOUR_LINKEDIN_PARTNER_ID";
+      window._linkedin_data_partner_ids=window._linkedin_data_partner_ids||[];
+      window._linkedin_data_partner_ids.push(_linkedin_partner_id);
+      (function(l){if(!l){window.lintrk=function(a,b){window.lintrk.q.push([a,b])};
+      window.lintrk.q=[]}var s=document.getElementsByTagName("script")[0];
+      var b=document.createElement("script");b.type="text/javascript";b.async=true;
+      b.src="https://snap.licdn.com/li.lms-analytics/insight.min.js";
+      s.parentNode.insertBefore(b,s);})(window.lintrk);
+    </script>
+    -->
+
+    <!-- Pinterest Tag — uncomment and add tag ID when ready
+    <script is:inline>
+      !function(e){if(!window.pintrk){window.pintrk=function(){window.pintrk.queue.push(Array.prototype.slice.call(arguments))};
+      var n=window.pintrk;n.queue=[],n.version="3.0";
+      var t=document.createElement("script");t.async=!0,t.src=e;
+      document.getElementsByTagName("script")[0].parentNode.insertBefore(t,document.getElementsByTagName("script")[0])
+      }}("https://s.pinimg.com/ct/core.js");
+      pintrk('load','YOUR_PINTEREST_TAG_ID');pintrk('page');
+    </script>
+    -->
+
+    <!-- X (Twitter) Pixel — uncomment and add pixel ID when ready
+    <script is:inline>
+      !function(e,t,n,s,u,a){e.twq||(s=e.twq=function(){s.exe?s.exe.apply(s,arguments):s.queue.push(arguments);},
+      s.version='1.1',s.queue=[],u=t.createElement(n),u.async=!0,u.src='https://static.ads-twitter.com/uwt.js',
+      a=t.getElementsByTagName(n)[0],a.parentNode.insertBefore(u,a))}(window,document,'script');
+      twq('config','YOUR_TWITTER_PIXEL_ID');
+    </script>
+    -->
 
     <title>{title}</title>
   </head>
@@ -259,6 +357,39 @@ const canonicalUrl = SITE.url
       document.querySelectorAll('[data-reveal]').forEach((el) => {
         observer.observe(el)
       })
+    </script>
+
+    <!-- Cookie Consent Banner -->
+    <div id="cookie-consent" class="fixed bottom-0 left-0 right-0 z-[998] hidden">
+      <div class="bg-[#111] border-t border-gray-border px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-3 max-w-screen-xl mx-auto">
+        <p class="text-gray text-xs leading-relaxed text-center sm:text-left">
+          We use cookies to improve your experience and for analytics.
+          <a href="/privacy-policy" class="text-red hover:text-white transition-colors underline">Privacy Policy</a>
+        </p>
+        <div class="flex gap-2 flex-shrink-0">
+          <button id="cookie-reject" class="px-4 py-2 text-xs text-gray border border-gray-border hover:border-white/30 transition-colors cursor-pointer">Reject</button>
+          <button id="cookie-accept" class="px-4 py-2 text-xs text-white bg-red hover:bg-[#ff1a1a] transition-colors cursor-pointer">Accept</button>
+        </div>
+      </div>
+    </div>
+    <script is:inline>
+      (function(){
+        if(localStorage.getItem('s4h_consent'))return;
+        var el=document.getElementById('cookie-consent');
+        if(el)el.classList.remove('hidden');
+        document.getElementById('cookie-accept')?.addEventListener('click',function(){
+          localStorage.setItem('s4h_consent','accepted');
+          el?.classList.add('hidden');
+        });
+        document.getElementById('cookie-reject')?.addEventListener('click',function(){
+          localStorage.setItem('s4h_consent','rejected');
+          el?.classList.add('hidden');
+          // Disable tracking cookies
+          window['ga-disable-G-S7R6C7KLK1']=true;
+          document.cookie='_fbp=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/';
+          document.cookie='_fbc=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/';
+        });
+      })();
     </script>
   </body>
 </html>
