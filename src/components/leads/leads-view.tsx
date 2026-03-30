@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState } from "react";
 import { LeadStatusSelect } from "./lead-status-select";
 import { archiveLead, deleteLead, startLeadCampaign, stopLeadCampaigns } from "@/lib/actions/leads";
 import type { Lead, LeadSource, LeadStatus, LeadCampaign } from "@/types";
@@ -12,6 +12,13 @@ interface LeadsViewProps {
 
 type SourceFilter = "all" | LeadSource;
 type StatusFilter = "all" | LeadStatus;
+
+const SOURCE_LABELS: Record<SourceFilter, string> = {
+  all: "All Sources",
+  rent: "Rent",
+  lease: "Lease",
+  popup: "Popup",
+};
 
 const STATUS_LABELS: Record<StatusFilter, string> = {
   all: "All",
@@ -37,28 +44,36 @@ function getDetails(lead: Lead): string {
 }
 
 function getCampaignLabel(c: LeadCampaign): string {
-  const name = c.campaign?.name ?? "Campaign";
-  // Shorten long names
-  const shortName = name.replace("& Nurture", "").replace("Recovery", "").trim();
-  return `${shortName} ${c.current_step}/${c.total_steps ?? "?"}`;
+  const name = (c.campaign?.name ?? "Campaign")
+    .replace("& Nurture", "")
+    .replace("Recovery", "")
+    .replace("Abandoned Booking", "Abandoned")
+    .trim();
+  return `${name} ${c.current_step}/${c.total_steps ?? "?"}`;
 }
 
 // ─── Campaign Start/Stop control ───
 
 function CampaignControl({ leadId, campaign }: { leadId: string; campaign?: LeadCampaign }) {
-  const [isPending, startTransition] = useTransition();
+  const [isPending, setIsPending] = useState(false);
   const isActive = campaign?.status === "active";
 
-  function handleStart() {
-    startTransition(() => {
-      startLeadCampaign(leadId, "welcome_nurture");
-    });
+  async function handleStart() {
+    setIsPending(true);
+    try {
+      await startLeadCampaign(leadId, "welcome_nurture");
+    } finally {
+      setIsPending(false);
+    }
   }
 
-  function handleStop() {
-    startTransition(() => {
-      stopLeadCampaigns(leadId);
-    });
+  async function handleStop() {
+    setIsPending(true);
+    try {
+      await stopLeadCampaigns(leadId);
+    } finally {
+      setIsPending(false);
+    }
   }
 
   if (!campaign) {
@@ -74,15 +89,15 @@ function CampaignControl({ leadId, campaign }: { leadId: string; campaign?: Lead
   }
 
   return (
-    <div className="flex flex-col gap-1 min-w-0">
-      <span className="text-[11px] text-muted-foreground truncate max-w-[110px]">
+    <div className="flex flex-col gap-0.5 min-w-0">
+      <span className="text-[10px] text-muted-foreground truncate max-w-[100px] leading-tight">
         {getCampaignLabel(campaign)}
       </span>
       {isActive ? (
         <button
           onClick={handleStop}
           disabled={isPending}
-          className="rounded px-2 py-1 text-[11px] font-medium bg-[rgba(225,6,0,0.08)] text-[#E10600] hover:bg-[rgba(225,6,0,0.14)] disabled:opacity-50 transition-colors whitespace-nowrap"
+          className="rounded px-2 py-0.5 text-[11px] font-medium bg-[rgba(225,6,0,0.08)] text-[#E10600] hover:bg-[rgba(225,6,0,0.14)] disabled:opacity-50 transition-colors whitespace-nowrap w-fit"
         >
           {isPending ? "…" : "Stop"}
         </button>
@@ -90,7 +105,7 @@ function CampaignControl({ leadId, campaign }: { leadId: string; campaign?: Lead
         <button
           onClick={handleStart}
           disabled={isPending}
-          className="rounded px-2 py-1 text-[11px] font-medium bg-[rgba(48,209,88,0.1)] text-[#30D158] hover:bg-[rgba(48,209,88,0.18)] disabled:opacity-50 transition-colors whitespace-nowrap"
+          className="rounded px-2 py-0.5 text-[11px] font-medium bg-[rgba(48,209,88,0.1)] text-[#30D158] hover:bg-[rgba(48,209,88,0.18)] disabled:opacity-50 transition-colors whitespace-nowrap w-fit"
         >
           {isPending ? "…" : "Resume"}
         </button>
@@ -102,24 +117,22 @@ function CampaignControl({ leadId, campaign }: { leadId: string; campaign?: Lead
 // ─── Archive/Delete actions ───
 
 function LeadActions({ leadId }: { leadId: string }) {
-  const [isPending, startTransition] = useTransition();
+  const [isPending, setIsPending] = useState(false);
 
-  function handleArchive() {
-    if (!confirm("Archive this lead? You can restore it later.")) return;
-    startTransition(() => {
-      archiveLead(leadId);
-    });
+  async function handleArchive() {
+    if (!confirm("Archive this lead?")) return;
+    setIsPending(true);
+    try { await archiveLead(leadId); } finally { setIsPending(false); }
   }
 
-  function handleDelete() {
-    if (!confirm("Permanently delete this lead? This cannot be undone.")) return;
-    startTransition(() => {
-      deleteLead(leadId);
-    });
+  async function handleDelete() {
+    if (!confirm("Permanently delete this lead? Cannot be undone.")) return;
+    setIsPending(true);
+    try { await deleteLead(leadId); } finally { setIsPending(false); }
   }
 
   return (
-    <div className="flex items-center gap-1">
+    <div className="flex items-center gap-0.5">
       <button
         onClick={handleArchive}
         disabled={isPending}
@@ -147,6 +160,7 @@ function LeadActions({ leadId }: { leadId: string }) {
 // ─── Main view ───
 
 export function LeadsView({ leads, campaignStatuses }: LeadsViewProps) {
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   const [sourceFilter, setSourceFilter] = useState<SourceFilter>("all");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
 
@@ -157,148 +171,172 @@ export function LeadsView({ leads, campaignStatuses }: LeadsViewProps) {
   });
 
   return (
-    <div className="space-y-6">
-      {/* Filters */}
-      <div className="flex flex-wrap gap-3">
-        {/* Source filter */}
-        <div className="flex overflow-hidden rounded-[10px] border border-border bg-white">
-          {(["all", "rent", "lease", "popup"] as SourceFilter[]).map((s) => (
-            <button
-              key={s}
-              onClick={() => setSourceFilter(s)}
-              className={`px-4 py-2 text-[13px] transition-all ${
-                sourceFilter === s
-                  ? "bg-foreground font-medium text-white"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              {s === "all" ? "All" : s.charAt(0).toUpperCase() + s.slice(1)}
-            </button>
-          ))}
+    <div className="flex gap-4 items-start">
+      {/* Sidebar */}
+      {sidebarOpen && (
+        <aside className="w-40 shrink-0">
+          <div className="rounded-xl border border-border bg-white p-3 space-y-4">
+            {/* Source */}
+            <div>
+              <p className="text-[10px] font-semibold uppercase tracking-[0.7px] text-muted-foreground mb-1.5">Source</p>
+              <div className="space-y-0.5">
+                {(Object.keys(SOURCE_LABELS) as SourceFilter[]).map((s) => (
+                  <button
+                    key={s}
+                    onClick={() => setSourceFilter(s)}
+                    className={`w-full text-left rounded-md px-2 py-1.5 text-[12px] transition-colors ${
+                      sourceFilter === s
+                        ? "bg-foreground text-white font-medium"
+                        : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                    }`}
+                  >
+                    {SOURCE_LABELS[s]}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Status */}
+            <div>
+              <p className="text-[10px] font-semibold uppercase tracking-[0.7px] text-muted-foreground mb-1.5">Status</p>
+              <div className="space-y-0.5">
+                {(Object.keys(STATUS_LABELS) as StatusFilter[]).map((s) => (
+                  <button
+                    key={s}
+                    onClick={() => setStatusFilter(s)}
+                    className={`w-full text-left rounded-md px-2 py-1.5 text-[12px] transition-colors ${
+                      statusFilter === s
+                        ? "bg-foreground text-white font-medium"
+                        : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                    }`}
+                  >
+                    {STATUS_LABELS[s]}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </aside>
+      )}
+
+      {/* Main */}
+      <div className="flex-1 min-w-0 space-y-3">
+        {/* Toolbar */}
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            className="rounded-lg p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+            title={sidebarOpen ? "Hide filters" : "Show filters"}
+          >
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3 4h18M7 8h10M11 12h4" />
+            </svg>
+          </button>
+          <span className="text-[13px] text-muted-foreground">
+            {filtered.length} lead{filtered.length !== 1 ? "s" : ""}
+            {(sourceFilter !== "all" || statusFilter !== "all") && " (filtered)"}
+          </span>
         </div>
 
-        {/* Status filter */}
-        <div className="flex overflow-hidden rounded-[10px] border border-border bg-white">
-          {(Object.keys(STATUS_LABELS) as StatusFilter[]).map((s) => (
-            <button
-              key={s}
-              onClick={() => setStatusFilter(s)}
-              className={`px-3 py-2 text-[13px] transition-all ${
-                statusFilter === s
-                  ? "bg-foreground font-medium text-white"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              {STATUS_LABELS[s]}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Desktop table */}
-      <div className="hidden overflow-hidden rounded-[14px] border border-border bg-white sm:block">
-        <table className="w-full border-collapse text-sm">
-          <thead>
-            <tr className="border-b border-border">
-              {["Status", "Name", "Email", "Phone", "Source", "Details", "Date", "Campaign", ""].map((h) => (
-                <th
-                  key={h}
-                  className="px-4 py-3.5 text-left text-[11px] font-medium uppercase tracking-[0.5px] text-muted-foreground"
-                >
-                  {h}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {filtered.map((lead) => (
-              <tr key={lead.id} className="border-b border-border last:border-0 transition-colors hover:bg-black/[0.015]">
-                <td className="px-4 py-3.5">
-                  <LeadStatusSelect leadId={lead.id} currentStatus={lead.status} />
-                </td>
-                <td className="px-4 py-3.5 font-medium text-foreground">{lead.name || "—"}</td>
-                <td className="px-4 py-3.5">
-                  <a href={`mailto:${lead.email}`} className="text-[#E10600] hover:underline">
-                    {lead.email}
-                  </a>
-                </td>
-                <td className="px-4 py-3.5 text-muted-foreground">
-                  {lead.phone ? (
-                    <a href={`tel:${lead.phone}`} className="text-muted-foreground hover:text-foreground">
-                      {lead.phone}
+        {/* Desktop table */}
+        <div className="hidden overflow-hidden rounded-[14px] border border-border bg-white sm:block">
+          <table className="w-full border-collapse text-sm">
+            <thead>
+              <tr className="border-b border-border">
+                {["Status", "Name", "Contact", "Source", "Details", "Date", "Campaign", ""].map((h) => (
+                  <th
+                    key={h}
+                    className="px-3 py-3 text-left text-[10px] font-medium uppercase tracking-[0.5px] text-muted-foreground"
+                  >
+                    {h}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.map((lead) => (
+                <tr key={lead.id} className="border-b border-border last:border-0 hover:bg-black/[0.015]">
+                  <td className="px-3 py-2.5">
+                    <LeadStatusSelect leadId={lead.id} currentStatus={lead.status} />
+                  </td>
+                  <td className="px-3 py-2.5 font-medium text-[13px] text-foreground whitespace-nowrap">
+                    {lead.name || "—"}
+                  </td>
+                  <td className="px-3 py-2.5">
+                    <a href={`mailto:${lead.email}`} className="block text-[12px] text-[#E10600] hover:underline truncate max-w-[160px]">
+                      {lead.email}
                     </a>
-                  ) : "—"}
-                </td>
-                <td className="px-4 py-3.5">
-                  <span className="text-[11px] uppercase tracking-[0.5px] text-muted-foreground">
-                    {lead.source}
-                  </span>
-                </td>
-                <td className="max-w-[180px] truncate px-4 py-3.5 text-[13px] text-muted-foreground">
-                  {getDetails(lead)}
-                </td>
-                <td className="whitespace-nowrap px-4 py-3.5 text-[13px] text-muted-foreground">
-                  {formatDate(lead.created_at)}
-                </td>
-                <td className="px-4 py-3.5">
-                  <CampaignControl leadId={lead.id} campaign={campaignStatuses[lead.id]} />
-                </td>
-                <td className="px-4 py-3.5">
-                  <LeadActions leadId={lead.id} />
-                </td>
-              </tr>
-            ))}
-            {filtered.length === 0 && (
-              <tr>
-                <td colSpan={9} className="px-4 py-16 text-center text-sm text-muted-foreground">
-                  No leads found
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+                    {lead.phone && (
+                      <a href={`tel:${lead.phone}`} className="block text-[12px] text-muted-foreground hover:text-foreground">
+                        {lead.phone}
+                      </a>
+                    )}
+                  </td>
+                  <td className="px-3 py-2.5">
+                    <span className="text-[10px] uppercase tracking-[0.5px] text-muted-foreground">
+                      {lead.source}
+                    </span>
+                  </td>
+                  <td className="max-w-[150px] truncate px-3 py-2.5 text-[12px] text-muted-foreground">
+                    {getDetails(lead)}
+                  </td>
+                  <td className="whitespace-nowrap px-3 py-2.5 text-[12px] text-muted-foreground">
+                    {formatDate(lead.created_at)}
+                  </td>
+                  <td className="px-3 py-2.5">
+                    <CampaignControl leadId={lead.id} campaign={campaignStatuses[lead.id]} />
+                  </td>
+                  <td className="px-3 py-2.5">
+                    <LeadActions leadId={lead.id} />
+                  </td>
+                </tr>
+              ))}
+              {filtered.length === 0 && (
+                <tr>
+                  <td colSpan={8} className="px-4 py-16 text-center text-sm text-muted-foreground">
+                    No leads found
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
 
-      {/* Mobile cards */}
-      <div className="space-y-3 sm:hidden">
-        {filtered.map((lead) => (
-          <div key={lead.id} className="rounded-[14px] border border-border bg-white p-4 space-y-3">
-            <div className="flex items-start justify-between gap-2">
-              <div>
-                <div className="font-medium text-sm text-foreground">{lead.name || "—"}</div>
-                <div className="text-[11px] uppercase tracking-[0.5px] text-muted-foreground mt-0.5">
-                  {lead.source}
+        {/* Mobile cards */}
+        <div className="space-y-3 sm:hidden">
+          {filtered.map((lead) => (
+            <div key={lead.id} className="rounded-[14px] border border-border bg-white p-4 space-y-3">
+              <div className="flex items-start justify-between gap-2">
+                <div>
+                  <div className="font-medium text-sm text-foreground">{lead.name || "—"}</div>
+                  <div className="text-[11px] uppercase tracking-[0.5px] text-muted-foreground mt-0.5">{lead.source}</div>
+                </div>
+                <LeadStatusSelect leadId={lead.id} currentStatus={lead.status} />
+              </div>
+              <div className="space-y-0.5">
+                <a href={`mailto:${lead.email}`} className="block text-[13px] text-[#E10600]">{lead.email}</a>
+                {lead.phone && (
+                  <a href={`tel:${lead.phone}`} className="block text-[13px] text-muted-foreground">{lead.phone}</a>
+                )}
+              </div>
+              {getDetails(lead) !== "—" && (
+                <div className="truncate text-[13px] text-muted-foreground">{getDetails(lead)}</div>
+              )}
+              <div className="flex items-center justify-between pt-1">
+                <span className="text-[12px] text-muted-foreground">{formatDate(lead.created_at)}</span>
+                <div className="flex items-center gap-2">
+                  <CampaignControl leadId={lead.id} campaign={campaignStatuses[lead.id]} />
+                  <LeadActions leadId={lead.id} />
                 </div>
               </div>
-              <LeadStatusSelect leadId={lead.id} currentStatus={lead.status} />
             </div>
-            <div className="space-y-1 text-[13px]">
-              <a href={`mailto:${lead.email}`} className="block text-[#E10600]">
-                {lead.email}
-              </a>
-              {lead.phone && (
-                <a href={`tel:${lead.phone}`} className="block text-muted-foreground">
-                  {lead.phone}
-                </a>
-              )}
+          ))}
+          {filtered.length === 0 && (
+            <div className="rounded-[14px] border border-dashed border-border p-8 text-center">
+              <p className="text-sm text-muted-foreground">No leads found</p>
             </div>
-            {getDetails(lead) !== "—" && (
-              <div className="truncate text-[13px] text-muted-foreground">{getDetails(lead)}</div>
-            )}
-            <div className="flex items-center justify-between pt-1">
-              <span className="text-[13px] text-muted-foreground">{formatDate(lead.created_at)}</span>
-              <div className="flex items-center gap-2">
-                <CampaignControl leadId={lead.id} campaign={campaignStatuses[lead.id]} />
-                <LeadActions leadId={lead.id} />
-              </div>
-            </div>
-          </div>
-        ))}
-        {filtered.length === 0 && (
-          <div className="rounded-[14px] border border-dashed border-border p-8 text-center">
-            <p className="text-sm text-muted-foreground">No leads found</p>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </div>
   );

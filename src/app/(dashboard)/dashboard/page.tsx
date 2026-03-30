@@ -283,52 +283,52 @@ async function AdminDashboard() {
 
       {/* ─── Leads section ─── */}
       <div className="space-y-4">
-        {/* Top lead stats */}
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <div className="rounded-xl border border-border bg-white p-5 shadow-sm">
-            <p className="text-sm text-muted-foreground">Total Leads</p>
-            <p className="mt-1 text-3xl font-semibold tracking-tight text-foreground">{leadStats.total}</p>
+        {/* Top lead stats — compact */}
+        <div className="grid grid-cols-4 gap-2 sm:grid-cols-4">
+          <div className="rounded-xl border border-border bg-white p-3.5 shadow-sm">
+            <p className="text-[11px] text-muted-foreground">Total</p>
+            <p className="mt-0.5 text-2xl font-semibold tracking-tight text-foreground">{leadStats.total}</p>
           </div>
-          <div className="rounded-xl border border-border bg-white p-5 shadow-sm">
-            <p className="text-sm text-muted-foreground">This Week</p>
-            <p className="mt-1 text-3xl font-semibold tracking-tight text-foreground">{leadStats.thisWeek}</p>
+          <div className="rounded-xl border border-border bg-white p-3.5 shadow-sm">
+            <p className="text-[11px] text-muted-foreground">This Week</p>
+            <p className="mt-0.5 text-2xl font-semibold tracking-tight text-foreground">{leadStats.thisWeek}</p>
           </div>
-          <div className="rounded-xl border border-border bg-white p-5 shadow-sm">
-            <p className="text-sm text-muted-foreground">Awaiting Response</p>
-            <p className="mt-1 text-3xl font-semibold tracking-tight text-foreground">{leadStats.awaiting}</p>
+          <div className="rounded-xl border border-border bg-white p-3.5 shadow-sm">
+            <p className="text-[11px] text-muted-foreground">Awaiting</p>
+            <p className="mt-0.5 text-2xl font-semibold tracking-tight text-foreground">{leadStats.awaiting}</p>
           </div>
-          <div className="rounded-xl border border-border bg-white p-5 shadow-sm">
-            <p className="text-sm text-muted-foreground">Closed</p>
-            <p className="mt-1 text-3xl font-semibold tracking-tight text-foreground">{leadStats.closed}</p>
+          <div className="rounded-xl border border-border bg-white p-3.5 shadow-sm">
+            <p className="text-[11px] text-muted-foreground">Closed</p>
+            <p className="mt-0.5 text-2xl font-semibold tracking-tight text-foreground">{leadStats.closed}</p>
           </div>
         </div>
 
-        {/* Source breakdown */}
-        <div className="grid grid-cols-3 gap-3">
-          <div className="rounded-xl border border-border bg-white p-5 shadow-sm">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted text-lg">🏎️</div>
+        {/* Source breakdown — compact */}
+        <div className="grid grid-cols-3 gap-2">
+          <div className="rounded-xl border border-border bg-white px-4 py-3 shadow-sm">
+            <div className="flex items-center gap-2.5">
+              <span className="text-base">🏎️</span>
               <div>
-                <p className="text-sm text-muted-foreground">Event Rentals</p>
-                <p className="text-2xl font-semibold tracking-tight text-foreground">{leadStats.rent}</p>
+                <p className="text-[11px] text-muted-foreground">Rentals</p>
+                <p className="text-xl font-semibold tracking-tight text-foreground">{leadStats.rent}</p>
               </div>
             </div>
           </div>
-          <div className="rounded-xl border border-border bg-white p-5 shadow-sm">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted text-lg">📋</div>
+          <div className="rounded-xl border border-border bg-white px-4 py-3 shadow-sm">
+            <div className="flex items-center gap-2.5">
+              <span className="text-base">📋</span>
               <div>
-                <p className="text-sm text-muted-foreground">Lease Inquiries</p>
-                <p className="text-2xl font-semibold tracking-tight text-foreground">{leadStats.lease}</p>
+                <p className="text-[11px] text-muted-foreground">Lease</p>
+                <p className="text-xl font-semibold tracking-tight text-foreground">{leadStats.lease}</p>
               </div>
             </div>
           </div>
-          <div className="rounded-xl border border-border bg-white p-5 shadow-sm">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted text-lg">🎯</div>
+          <div className="rounded-xl border border-border bg-white px-4 py-3 shadow-sm">
+            <div className="flex items-center gap-2.5">
+              <span className="text-base">🎯</span>
               <div>
-                <p className="text-sm text-muted-foreground">Popup Leads</p>
-                <p className="text-2xl font-semibold tracking-tight text-foreground">{leadStats.popup}</p>
+                <p className="text-[11px] text-muted-foreground">Popup</p>
+                <p className="text-xl font-semibold tracking-tight text-foreground">{leadStats.popup}</p>
               </div>
             </div>
           </div>
@@ -337,40 +337,48 @@ async function AdminDashboard() {
         {/* Recent leads */}
         {recentLeads.length > 0 && (
           <div className="rounded-xl border border-border bg-white shadow-sm">
-            <div className="flex items-center justify-between px-5 py-4 border-b border-border">
-              <h2 className="text-base font-semibold text-foreground">Recent Leads</h2>
-              <Link href="/leads" className="text-sm font-medium text-[#E10600] hover:underline">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+              <h2 className="text-sm font-semibold text-foreground">Recent Leads</h2>
+              <Link href="/leads" className="text-[12px] font-medium text-[#E10600] hover:underline">
                 View all →
               </Link>
             </div>
             <div className="divide-y divide-border">
               {recentLeads.map((lead) => (
-                <div key={lead.id} className="flex items-center gap-4 px-5 py-3.5">
+                <Link
+                  key={lead.id}
+                  href="/leads"
+                  className="flex items-center gap-3 px-4 py-2.5 hover:bg-black/[0.015] transition-colors"
+                >
                   <span
                     style={{
-                      fontSize: "11px",
+                      fontSize: "10px",
                       fontWeight: 600,
-                      padding: "3px 8px",
+                      padding: "2px 7px",
                       borderRadius: "5px",
                       background: lead.status === "new" ? "rgba(225,6,0,0.08)" : lead.status === "booked" ? "rgba(48,209,88,0.08)" : lead.status === "lost" ? "rgba(120,120,128,0.1)" : "rgba(255,159,10,0.08)",
                       color: lead.status === "new" ? "#E10600" : lead.status === "booked" ? "#30D158" : lead.status === "lost" ? "#6C6C70" : "#FF9F0A",
                       border: `1px solid ${lead.status === "new" ? "rgba(225,6,0,0.13)" : lead.status === "booked" ? "rgba(48,209,88,0.13)" : lead.status === "lost" ? "rgba(120,120,128,0.15)" : "rgba(255,159,10,0.13)"}`,
                       whiteSpace: "nowrap",
+                      flexShrink: 0,
                     }}
                   >
                     {lead.status === "in_progress" ? "In Progress" : lead.status.charAt(0).toUpperCase() + lead.status.slice(1)}
                   </span>
                   <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium text-foreground truncate">{lead.name || "—"}</p>
-                    <p className="text-xs text-muted-foreground truncate">{lead.email}</p>
+                    <p className="text-[13px] font-medium text-foreground truncate">{lead.name || "—"}</p>
+                    <p className="text-[11px] text-muted-foreground truncate">{lead.email}</p>
                   </div>
-                  <span className="hidden text-[11px] uppercase tracking-[0.5px] text-muted-foreground sm:block">
+                  <span className="hidden text-[10px] uppercase tracking-[0.5px] text-muted-foreground sm:block shrink-0">
                     {lead.source}
                   </span>
-                  <span className="text-xs text-muted-foreground whitespace-nowrap">
+                  <span className="text-[11px] text-muted-foreground whitespace-nowrap shrink-0">
                     {formatTimeAgo(lead.created_at)}
                   </span>
-                </div>
+                  <svg className="h-3.5 w-3.5 shrink-0 text-muted-foreground/40" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                  </svg>
+                </Link>
               ))}
             </div>
           </div>

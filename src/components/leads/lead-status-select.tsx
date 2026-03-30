@@ -1,6 +1,6 @@
 "use client";
 
-import { useTransition } from "react";
+import { useState } from "react";
 import { updateLeadStatus } from "@/lib/actions/leads";
 import type { LeadStatus } from "@/types";
 
@@ -26,22 +26,31 @@ interface LeadStatusSelectProps {
 }
 
 export function LeadStatusSelect({ leadId, currentStatus }: LeadStatusSelectProps) {
-  const [isPending, startTransition] = useTransition();
-  const s = statusStyles[currentStatus] ?? statusStyles.new;
+  const [value, setValue] = useState<LeadStatus>(currentStatus);
+  const [saving, setSaving] = useState(false);
 
-  function handleChange(e: React.ChangeEvent<HTMLSelectElement>) {
+  async function handleChange(e: React.ChangeEvent<HTMLSelectElement>) {
     const newStatus = e.target.value as LeadStatus;
-    if (newStatus === currentStatus) return;
-    startTransition(() => {
-      updateLeadStatus(leadId, newStatus);
-    });
+    if (newStatus === value) return;
+    const prev = value;
+    setValue(newStatus); // optimistic update
+    setSaving(true);
+    try {
+      await updateLeadStatus(leadId, newStatus);
+    } catch {
+      setValue(prev); // revert on failure
+    } finally {
+      setSaving(false);
+    }
   }
+
+  const s = statusStyles[value] ?? statusStyles.new;
 
   return (
     <select
-      value={currentStatus}
+      value={value}
       onChange={handleChange}
-      disabled={isPending}
+      disabled={saving}
       style={{
         fontSize: "12px",
         fontWeight: 500,
@@ -54,7 +63,7 @@ export function LeadStatusSelect({ leadId, currentStatus }: LeadStatusSelectProp
         cursor: "pointer",
         appearance: "none",
         WebkitAppearance: "none",
-        opacity: isPending ? 0.5 : 1,
+        opacity: saving ? 0.5 : 1,
         outline: "none",
       }}
     >

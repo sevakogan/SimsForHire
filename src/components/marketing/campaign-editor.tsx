@@ -7,7 +7,7 @@ import {
   updateCampaignStep,
   deleteCampaignStep,
   addCampaignStep,
-  reorderCampaignStep,
+  reorderCampaignSteps,
 } from "@/lib/actions/campaigns";
 
 interface CampaignEditorProps {
@@ -24,26 +24,30 @@ function delayLabel(hours: number): string {
   if (hours === 0) return "Immediately";
   if (hours < 24) return `${hours}h after previous`;
   const days = hours / 24;
-  return `${days % 1 === 0 ? days : days.toFixed(1)} day${days !== 1 ? "s" : ""} after previous`;
+  return `${days % 1 === 0 ? days : days.toFixed(1)}d after previous`;
 }
 
 export function CampaignEditor({ campaign }: CampaignEditorProps) {
-  const [steps, setSteps] = useState<CampaignStep[]>(campaign.steps);
+  const [steps, setSteps] = useState<CampaignStep[]>(
+    [...campaign.steps].sort((a, b) => a.step_number - b.step_number)
+  );
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [showAddForm, setShowAddForm] = useState(false);
   const [isPending, startTransition] = useTransition();
   const saveTimers = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
 
-  // Auto-save on change with debounce
+  // Drag state
+  const [draggedId, setDraggedId] = useState<string | null>(null);
+  const [dragOverId, setDragOverId] = useState<string | null>(null);
+
+  // Auto-save on field change with debounce
   const handleFieldChange = useCallback(
     (stepId: string, field: "subject" | "body_html" | "delay_hours", value: string | number) => {
       setSteps((prev) =>
         prev.map((s) => (s.id === stepId ? { ...s, [field]: value } : s))
       );
-
       const existing = saveTimers.current.get(stepId);
       if (existing) clearTimeout(existing);
-
       const timer = setTimeout(() => {
         startTransition(() => {
           updateCampaignStep(stepId, { [field]: value });
@@ -71,25 +75,49 @@ export function CampaignEditor({ campaign }: CampaignEditorProps) {
     });
   }, []);
 
-  const handleReorder = useCallback(
-    (stepId: string, direction: "up" | "down") => {
-      setSteps((prev) => {
-        const idx = prev.findIndex((s) => s.id === stepId);
-        if (idx === -1) return prev;
-        const targetIdx = direction === "up" ? idx - 1 : idx + 1;
-        if (targetIdx < 0 || targetIdx >= prev.length) return prev;
-        const next = [...prev];
-        const tmp = next[idx].step_number;
-        next[idx] = { ...next[idx], step_number: next[targetIdx].step_number };
-        next[targetIdx] = { ...next[targetIdx], step_number: tmp };
-        return [...next].sort((a, b) => a.step_number - b.step_number);
-      });
+  // ── Drag-and-drop ──
+  function handleDragStart(e: React.DragEvent, stepId: string) {
+    setDraggedId(stepId);
+    e.dataTransfer.effectAllowed = "move";
+  }
+
+  function handleDragOver(e: React.DragEvent, stepId: string) {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    if (stepId !== draggedId) setDragOverId(stepId);
+  }
+
+  function handleDrop(e: React.DragEvent, targetId: string) {
+    e.preventDefault();
+    if (!draggedId || draggedId === targetId) {
+      setDraggedId(null);
+      setDragOverId(null);
+      return;
+    }
+
+    setSteps((prev) => {
+      const fromIdx = prev.findIndex((s) => s.id === draggedId);
+      const toIdx = prev.findIndex((s) => s.id === targetId);
+      const next = [...prev];
+      const [moved] = next.splice(fromIdx, 1);
+      next.splice(toIdx, 0, moved);
+      const reordered = next.map((s, i) => ({ ...s, step_number: i + 1 }));
+
       startTransition(() => {
-        reorderCampaignStep(stepId, direction);
+        reorderCampaignSteps(campaign.id, reordered.map((s) => s.id));
       });
-    },
-    []
-  );
+
+      return reordered;
+    });
+
+    setDraggedId(null);
+    setDragOverId(null);
+  }
+
+  function handleDragEnd() {
+    setDraggedId(null);
+    setDragOverId(null);
+  }
 
   return (
     <div className="space-y-4">
@@ -113,140 +141,138 @@ export function CampaignEditor({ campaign }: CampaignEditorProps) {
 
       {/* Steps */}
       <div className="space-y-2">
-        {steps.sort((a, b) => a.step_number - b.step_number).map((step, idx) => (
-          <div
-            key={step.id}
-            className={`rounded-xl border bg-white transition-all ${
-              step.is_active ? "border-border" : "border-border opacity-50"
-            }`}
-          >
-            {/* Step header row */}
-            <div className="flex items-center gap-3 px-4 py-3">
-              {/* Step number */}
-              <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-muted text-[11px] font-semibold text-muted-foreground">
-                {step.step_number}
-              </span>
+        {steps.map((step) => {
+          const isDragging = draggedId === step.id;
+          const isDragOver = dragOverId === step.id;
 
-              {/* Channel badge */}
-              <span className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${CHANNEL_COLOR[step.channel] ?? "bg-muted text-muted-foreground"}`}>
-                {CHANNEL_LABEL[step.channel] ?? step.channel}
-              </span>
-
-              {/* Subject / preview */}
-              <button
-                onClick={() => setExpandedId(expandedId === step.id ? null : step.id)}
-                className="min-w-0 flex-1 text-left"
-              >
-                <span className="truncate text-[14px] font-medium text-foreground">
-                  {step.subject || "(no subject)"}
-                </span>
-                <span className="ml-3 text-[12px] text-muted-foreground">
-                  {delayLabel(step.delay_hours)}
-                </span>
-              </button>
-
-              {/* Controls */}
-              <div className="flex items-center gap-1">
-                <button
-                  onClick={() => handleReorder(step.id, "up")}
-                  disabled={idx === 0 || isPending}
-                  className="rounded p-1.5 text-muted-foreground hover:bg-muted disabled:opacity-30"
-                  title="Move up"
-                >
-                  <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 15l7-7 7 7" />
+          return (
+            <div
+              key={step.id}
+              draggable
+              onDragStart={(e) => handleDragStart(e, step.id)}
+              onDragOver={(e) => handleDragOver(e, step.id)}
+              onDrop={(e) => handleDrop(e, step.id)}
+              onDragEnd={handleDragEnd}
+              className={`rounded-xl border bg-white transition-all select-none ${
+                isDragging ? "opacity-40 scale-[0.99]" : ""
+              } ${isDragOver ? "border-foreground ring-1 ring-foreground/20" : step.is_active ? "border-border" : "border-border opacity-50"}`}
+            >
+              {/* Step header row */}
+              <div className="flex items-center gap-2 px-3 py-3">
+                {/* Drag handle */}
+                <div className="cursor-grab text-muted-foreground/40 hover:text-muted-foreground px-1 py-1 active:cursor-grabbing">
+                  <svg className="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 24 24">
+                    <circle cx="9" cy="6" r="1.5" /><circle cx="15" cy="6" r="1.5" />
+                    <circle cx="9" cy="12" r="1.5" /><circle cx="15" cy="12" r="1.5" />
+                    <circle cx="9" cy="18" r="1.5" /><circle cx="15" cy="18" r="1.5" />
                   </svg>
-                </button>
-                <button
-                  onClick={() => handleReorder(step.id, "down")}
-                  disabled={idx === steps.length - 1 || isPending}
-                  className="rounded p-1.5 text-muted-foreground hover:bg-muted disabled:opacity-30"
-                  title="Move down"
-                >
-                  <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                  </svg>
-                </button>
+                </div>
 
-                <button
-                  onClick={() => handleToggleActive(step.id, step.is_active)}
-                  disabled={isPending}
-                  className={`rounded px-2 py-1 text-[11px] font-medium transition-colors ${
-                    step.is_active
-                      ? "bg-[rgba(48,209,88,0.08)] text-[#30D158]"
-                      : "bg-muted text-muted-foreground"
-                  }`}
-                >
-                  {step.is_active ? "Active" : "Off"}
-                </button>
+                {/* Step number */}
+                <span className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-muted text-[10px] font-semibold text-muted-foreground">
+                  {step.step_number}
+                </span>
 
+                {/* Channel badge */}
+                <span className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${CHANNEL_COLOR[step.channel] ?? "bg-muted text-muted-foreground"}`}>
+                  {CHANNEL_LABEL[step.channel] ?? step.channel}
+                </span>
+
+                {/* Subject / delay preview */}
                 <button
                   onClick={() => setExpandedId(expandedId === step.id ? null : step.id)}
-                  className="rounded p-1.5 text-muted-foreground hover:bg-muted"
-                  title="Edit"
+                  className="min-w-0 flex-1 text-left"
                 >
-                  <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                  </svg>
+                  <span className="truncate text-[13px] font-medium text-foreground">
+                    {step.subject || "(no subject)"}
+                  </span>
+                  <span className="ml-2 text-[11px] text-muted-foreground">
+                    {delayLabel(step.delay_hours)}
+                  </span>
                 </button>
 
-                <button
-                  onClick={() => handleDelete(step.id)}
-                  disabled={isPending}
-                  className="rounded p-1.5 text-muted-foreground hover:bg-red-50 hover:text-[#E10600]"
-                  title="Delete"
-                >
-                  <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                  </svg>
-                </button>
-              </div>
-            </div>
+                {/* Controls */}
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => handleToggleActive(step.id, step.is_active)}
+                    disabled={isPending}
+                    className={`rounded px-2 py-1 text-[11px] font-medium transition-colors ${
+                      step.is_active
+                        ? "bg-[rgba(48,209,88,0.08)] text-[#30D158]"
+                        : "bg-muted text-muted-foreground"
+                    }`}
+                  >
+                    {step.is_active ? "On" : "Off"}
+                  </button>
 
-            {/* Expanded editor */}
-            {expandedId === step.id && (
-              <div className="border-t border-border px-4 pb-4 pt-3 space-y-3">
-                <div>
-                  <label className="block text-[12px] font-medium text-muted-foreground mb-1">
-                    Send delay (hours from previous step)
-                  </label>
-                  <input
-                    type="number"
-                    min={0}
-                    value={step.delay_hours}
-                    onChange={(e) => handleFieldChange(step.id, "delay_hours", Number(e.target.value))}
-                    className="w-32 rounded-lg border border-border bg-[#F5F5F7] px-3 py-1.5 text-[13px] focus:outline-none focus:ring-1 focus:ring-foreground"
-                  />
-                  <span className="ml-2 text-[12px] text-muted-foreground">{delayLabel(step.delay_hours)}</span>
+                  <button
+                    onClick={() => setExpandedId(expandedId === step.id ? null : step.id)}
+                    className="rounded p-1.5 text-muted-foreground hover:bg-muted"
+                    title="Edit"
+                  >
+                    <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                    </svg>
+                  </button>
+
+                  <button
+                    onClick={() => handleDelete(step.id)}
+                    disabled={isPending}
+                    className="rounded p-1.5 text-muted-foreground hover:bg-red-50 hover:text-[#E10600]"
+                    title="Delete"
+                  >
+                    <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                  </button>
                 </div>
+              </div>
 
-                {step.channel === "email" && (
+              {/* Expanded editor */}
+              {expandedId === step.id && (
+                <div className="border-t border-border px-4 pb-4 pt-3 space-y-3">
                   <div>
-                    <label className="block text-[12px] font-medium text-muted-foreground mb-1">Subject line</label>
+                    <label className="block text-[12px] font-medium text-muted-foreground mb-1">
+                      Delay (hours from previous step)
+                    </label>
                     <input
-                      type="text"
-                      value={step.subject ?? ""}
-                      onChange={(e) => handleFieldChange(step.id, "subject", e.target.value)}
-                      className="w-full rounded-lg border border-border bg-[#F5F5F7] px-3 py-2 text-[13px] focus:outline-none focus:ring-1 focus:ring-foreground"
-                      placeholder="Email subject line"
+                      type="number"
+                      min={0}
+                      value={step.delay_hours}
+                      onChange={(e) => handleFieldChange(step.id, "delay_hours", Number(e.target.value))}
+                      className="w-32 rounded-lg border border-border bg-[#F5F5F7] px-3 py-1.5 text-[13px] focus:outline-none focus:ring-1 focus:ring-foreground"
+                    />
+                    <span className="ml-2 text-[12px] text-muted-foreground">{delayLabel(step.delay_hours)}</span>
+                  </div>
+
+                  {step.channel === "email" && (
+                    <div>
+                      <label className="block text-[12px] font-medium text-muted-foreground mb-1">Subject line</label>
+                      <input
+                        type="text"
+                        value={step.subject ?? ""}
+                        onChange={(e) => handleFieldChange(step.id, "subject", e.target.value)}
+                        className="w-full rounded-lg border border-border bg-[#F5F5F7] px-3 py-2 text-[13px] focus:outline-none focus:ring-1 focus:ring-foreground"
+                        placeholder="Email subject line"
+                      />
+                    </div>
+                  )}
+
+                  <div>
+                    <label className="block text-[12px] font-medium text-muted-foreground mb-1">Body (HTML)</label>
+                    <textarea
+                      value={step.body_html}
+                      onChange={(e) => handleFieldChange(step.id, "body_html", e.target.value)}
+                      rows={8}
+                      className="w-full rounded-lg border border-border bg-[#F5F5F7] px-3 py-2 font-mono text-[12px] leading-relaxed focus:outline-none focus:ring-1 focus:ring-foreground resize-y"
+                      placeholder="<p>Email body HTML...</p>"
                     />
                   </div>
-                )}
-
-                <div>
-                  <label className="block text-[12px] font-medium text-muted-foreground mb-1">Body (HTML)</label>
-                  <textarea
-                    value={step.body_html}
-                    onChange={(e) => handleFieldChange(step.id, "body_html", e.target.value)}
-                    rows={8}
-                    className="w-full rounded-lg border border-border bg-[#F5F5F7] px-3 py-2 font-mono text-[12px] leading-relaxed focus:outline-none focus:ring-1 focus:ring-foreground resize-y"
-                    placeholder="<p>Email body HTML...</p>"
-                  />
                 </div>
-              </div>
-            )}
-          </div>
-        ))}
+              )}
+            </div>
+          );
+        })}
       </div>
 
       {/* Add step */}

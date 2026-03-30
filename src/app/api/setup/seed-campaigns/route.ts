@@ -2,6 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { getAdminSupabase } from "@/lib/supabase-admin";
 import { CAMPAIGNS } from "@/lib/campaign-seed";
 
+// Support GET so it can be triggered from a browser
+export async function GET(req: NextRequest) {
+  return POST(req);
+}
+
 export async function POST(req: NextRequest) {
   const secret = req.headers.get("x-cron-secret") ?? req.nextUrl.searchParams.get("secret");
   if (secret !== process.env.CRON_SECRET) {

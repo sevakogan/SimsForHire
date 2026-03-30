@@ -122,6 +122,18 @@ export async function addCampaignStep(
   revalidatePath("/marketing");
 }
 
+export async function reorderCampaignSteps(campaignId: string, stepIds: string[]): Promise<void> {
+  const supabase = getAdminSupabase();
+  for (let i = 0; i < stepIds.length; i++) {
+    await supabase
+      .from("campaign_steps")
+      .update({ step_number: i + 1, updated_at: new Date().toISOString() })
+      .eq("id", stepIds[i])
+      .eq("campaign_id", campaignId);
+  }
+  revalidatePath("/marketing");
+}
+
 export async function reorderCampaignStep(stepId: string, direction: "up" | "down"): Promise<void> {
   const supabase = getAdminSupabase();
 
