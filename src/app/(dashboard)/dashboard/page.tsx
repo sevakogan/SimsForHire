@@ -352,13 +352,13 @@ async function AdminDashboard() {
                       fontWeight: 600,
                       padding: "3px 8px",
                       borderRadius: "5px",
-                      background: lead.status === "new" ? "rgba(225,6,0,0.08)" : lead.status === "contacted" ? "rgba(255,159,10,0.08)" : "rgba(48,209,88,0.08)",
-                      color: lead.status === "new" ? "#E10600" : lead.status === "contacted" ? "#FF9F0A" : "#30D158",
-                      border: `1px solid ${lead.status === "new" ? "rgba(225,6,0,0.13)" : lead.status === "contacted" ? "rgba(255,159,10,0.13)" : "rgba(48,209,88,0.13)"}`,
+                      background: lead.status === "new" ? "rgba(225,6,0,0.08)" : lead.status === "booked" ? "rgba(48,209,88,0.08)" : lead.status === "lost" ? "rgba(120,120,128,0.1)" : "rgba(255,159,10,0.08)",
+                      color: lead.status === "new" ? "#E10600" : lead.status === "booked" ? "#30D158" : lead.status === "lost" ? "#6C6C70" : "#FF9F0A",
+                      border: `1px solid ${lead.status === "new" ? "rgba(225,6,0,0.13)" : lead.status === "booked" ? "rgba(48,209,88,0.13)" : lead.status === "lost" ? "rgba(120,120,128,0.15)" : "rgba(255,159,10,0.13)"}`,
                       whiteSpace: "nowrap",
                     }}
                   >
-                    {lead.status.charAt(0).toUpperCase() + lead.status.slice(1)}
+                    {lead.status === "in_progress" ? "In Progress" : lead.status.charAt(0).toUpperCase() + lead.status.slice(1)}
                   </span>
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-medium text-foreground truncate">{lead.name || "—"}</p>

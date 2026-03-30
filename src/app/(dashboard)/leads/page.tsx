@@ -1,8 +1,18 @@
-import { getLeads, getLeadStats } from "@/lib/actions/leads";
+export const dynamic = "force-dynamic";
+
+import { getLeads, getLeadStats, getLeadCampaignStatuses } from "@/lib/actions/leads";
 import { LeadsView } from "@/components/leads/leads-view";
+import type { LeadCampaign } from "@/types";
 
 export default async function LeadsPage() {
   const [leads, stats] = await Promise.all([getLeads(), getLeadStats()]);
+
+  const campaignStatusMap = await getLeadCampaignStatuses(leads.map((l) => l.id));
+  // Convert Map to plain object for serialization
+  const campaignStatuses: Record<string, LeadCampaign> = {};
+  for (const [leadId, status] of campaignStatusMap) {
+    campaignStatuses[leadId] = status;
+  }
 
   return (
     <div className="space-y-4 sm:space-y-6">
@@ -25,7 +35,7 @@ export default async function LeadsPage() {
       </div>
 
       {leads.length > 0 ? (
-        <LeadsView leads={leads} />
+        <LeadsView leads={leads} campaignStatuses={campaignStatuses} />
       ) : (
         <div className="rounded-xl border border-dashed border-border p-8 text-center">
           <p className="text-sm text-muted-foreground">No leads yet. Leads from the marketing site will appear here.</p>

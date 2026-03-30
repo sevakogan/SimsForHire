@@ -12,6 +12,7 @@ const allNavTabs = [
   { label: "Leads", href: "/leads", internalOnly: true },
   { label: "Clients", href: "/clients", internalOnly: true },
   { label: "Projects", href: "/projects", internalOnly: false },
+  { label: "Marketing", href: "/marketing", internalOnly: true },
 ];
 
 /** Display "Customer" instead of "client" in the role badge */

@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { getUsers, getClientsAdmin } from "@/lib/actions/users";
 import type { ProfileWithClient } from "@/lib/actions/users";
 import { InviteUserForm } from "./invite-user-form";

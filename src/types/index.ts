@@ -7,7 +7,7 @@ export type AcceptanceStatus = "pending" | "accepted" | "rejected";
 
 // Leads (from Astro marketing frontend)
 export type LeadSource = "rent" | "lease" | "popup";
-export type LeadStatus = "new" | "contacted" | "closed";
+export type LeadStatus = "new" | "replied" | "in_progress" | "booked" | "lost";
 
 export interface Lead {
   id: string;
@@ -34,7 +34,48 @@ export interface Lead {
   gclid: string | null;
   fbclid: string | null;
   landing_page: string | null;
+  archived_at: string | null;
   created_at: string;
+}
+
+// Email Campaigns
+export type CampaignType = "welcome_nurture" | "abandoned_booking" | "post_visit" | "win_back";
+export type CampaignStepChannel = "email" | "sms";
+export type LeadCampaignStatus = "active" | "stopped" | "completed";
+
+export interface EmailCampaign {
+  id: string;
+  name: string;
+  type: CampaignType;
+  description: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CampaignStep {
+  id: string;
+  campaign_id: string;
+  step_number: number;
+  channel: CampaignStepChannel;
+  subject: string | null;
+  body_html: string;
+  delay_hours: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface LeadCampaign {
+  id: string;
+  lead_id: string;
+  campaign_id: string;
+  current_step: number;
+  status: LeadCampaignStatus;
+  started_at: string;
+  next_send_at: string | null;
+  completed_at: string | null;
+  campaign?: EmailCampaign;
+  total_steps?: number;
 }
 
 export interface Profile {
