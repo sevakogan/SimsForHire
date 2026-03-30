@@ -7,7 +7,7 @@ import { formStyles, buttonStyles } from "@/components/ui/form-styles";
 import Link from "next/link";
 
 /** Toggle to show email/password login form */
-const SHOW_EMAIL_LOGIN = false;
+const SHOW_EMAIL_LOGIN = true;
 
 function LoginForm() {
   const [email, setEmail] = useState("");
