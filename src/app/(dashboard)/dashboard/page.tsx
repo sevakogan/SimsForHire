@@ -1,4 +1,5 @@
 import { createSupabaseServer } from "@/lib/supabase-server";
+import { getAdminSupabase } from "@/lib/supabase-admin";
 import { StatCard } from "@/components/dashboard/stat-card";
 import { DashboardClients } from "@/components/dashboard/dashboard-clients";
 import type { DashboardClient } from "@/components/dashboard/dashboard-clients";
@@ -10,6 +11,7 @@ import { buttonStyles } from "@/components/ui/form-styles";
 import { getUnreadNoteCountsByClients } from "@/lib/actions/items";
 import { calculateInvoiceTotals } from "@/lib/invoice-calculations";
 import type { Profile, Project, Client, ProjectStatus, DiscountType, ProductCategory } from "@/types";
+import type { Lead } from "@/types";
 import { isAdminRole, isEmployeeRole } from "@/types";
 
 export default async function DashboardPage() {
@@ -62,10 +64,24 @@ const STATUS_COLORS: Record<string, string> = {
 
 async function AdminDashboard() {
   const supabase = await createSupabaseServer();
+  const adminSupabase = getAdminSupabase();
 
-  // Parallel data fetching
-  const [clientsRes, pendingRes, allClientsRes, allProjectsRes, allItemsRes, allPaymentsRes] =
+  // Fetch leads data in parallel with everything else
+  const oneWeekAgo = new Date();
+  oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+
+  const [recentLeadsRes, leadsStatsRes, clientsRes, pendingRes, allClientsRes, allProjectsRes, allItemsRes, allPaymentsRes] =
     await Promise.all([
+      adminSupabase.from("leads").select("*").order("created_at", { ascending: false }).limit(6),
+      Promise.all([
+        adminSupabase.from("leads").select("id", { count: "exact", head: true }),
+        adminSupabase.from("leads").select("id", { count: "exact", head: true }).gte("created_at", oneWeekAgo.toISOString()),
+        adminSupabase.from("leads").select("id", { count: "exact", head: true }).eq("status", "new"),
+        adminSupabase.from("leads").select("id", { count: "exact", head: true }).eq("status", "closed"),
+        adminSupabase.from("leads").select("id", { count: "exact", head: true }).eq("source", "rent"),
+        adminSupabase.from("leads").select("id", { count: "exact", head: true }).eq("source", "lease"),
+        adminSupabase.from("leads").select("id", { count: "exact", head: true }).eq("source", "popup"),
+      ]),
       supabase.from("clients").select("id", { count: "exact", head: true }),
       supabase.from("profiles").select("id", { count: "exact", head: true }).eq("status", "pending"),
       supabase.from("clients").select("id, name, phone, email").order("created_at", { ascending: false }),
@@ -73,6 +89,18 @@ async function AdminDashboard() {
       supabase.from("items").select("project_id, category, retail_price, retail_shipping, price_sold_for, my_cost, my_shipping, quantity"),
       supabase.from("payments").select("project_id, amount, status, created_at"),
     ]);
+
+  const recentLeads = (recentLeadsRes.data ?? []) as Lead[];
+  const [totalRes, weekRes, awaitingRes, closedRes, rentRes, leaseRes, popupRes] = leadsStatsRes;
+  const leadStats = {
+    total: totalRes.count ?? 0,
+    thisWeek: weekRes.count ?? 0,
+    awaiting: awaitingRes.count ?? 0,
+    closed: closedRes.count ?? 0,
+    rent: rentRes.count ?? 0,
+    lease: leaseRes.count ?? 0,
+    popup: popupRes.count ?? 0,
+  };
 
   const allClients = allClientsRes.data ?? [];
   const allProjects = allProjectsRes.data ?? [];
@@ -246,16 +274,117 @@ async function AdminDashboard() {
   });
 
   return (
-    <div className="space-y-4 sm:space-y-6">
+    <div className="space-y-4 sm:space-y-8">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <h1 className="text-lg sm:text-2xl font-bold text-foreground">Dashboard</h1>
-        <div className="flex gap-2 sm:gap-3">
+      <div>
+        <h1 className="text-2xl font-semibold tracking-tight text-foreground">Dashboard</h1>
+        <p className="mt-1 text-sm text-muted-foreground">Overview of your leads and performance</p>
+      </div>
+
+      {/* ─── Leads section ─── */}
+      <div className="space-y-4">
+        {/* Top lead stats */}
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <div className="rounded-xl border border-border bg-white p-5 shadow-sm">
+            <p className="text-sm text-muted-foreground">Total Leads</p>
+            <p className="mt-1 text-3xl font-semibold tracking-tight text-foreground">{leadStats.total}</p>
+          </div>
+          <div className="rounded-xl border border-border bg-white p-5 shadow-sm">
+            <p className="text-sm text-muted-foreground">This Week</p>
+            <p className="mt-1 text-3xl font-semibold tracking-tight text-foreground">{leadStats.thisWeek}</p>
+          </div>
+          <div className="rounded-xl border border-border bg-white p-5 shadow-sm">
+            <p className="text-sm text-muted-foreground">Awaiting Response</p>
+            <p className="mt-1 text-3xl font-semibold tracking-tight text-foreground">{leadStats.awaiting}</p>
+          </div>
+          <div className="rounded-xl border border-border bg-white p-5 shadow-sm">
+            <p className="text-sm text-muted-foreground">Closed</p>
+            <p className="mt-1 text-3xl font-semibold tracking-tight text-foreground">{leadStats.closed}</p>
+          </div>
+        </div>
+
+        {/* Source breakdown */}
+        <div className="grid grid-cols-3 gap-3">
+          <div className="rounded-xl border border-border bg-white p-5 shadow-sm">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted text-lg">🏎️</div>
+              <div>
+                <p className="text-sm text-muted-foreground">Event Rentals</p>
+                <p className="text-2xl font-semibold tracking-tight text-foreground">{leadStats.rent}</p>
+              </div>
+            </div>
+          </div>
+          <div className="rounded-xl border border-border bg-white p-5 shadow-sm">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted text-lg">📋</div>
+              <div>
+                <p className="text-sm text-muted-foreground">Lease Inquiries</p>
+                <p className="text-2xl font-semibold tracking-tight text-foreground">{leadStats.lease}</p>
+              </div>
+            </div>
+          </div>
+          <div className="rounded-xl border border-border bg-white p-5 shadow-sm">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted text-lg">🎯</div>
+              <div>
+                <p className="text-sm text-muted-foreground">Popup Leads</p>
+                <p className="text-2xl font-semibold tracking-tight text-foreground">{leadStats.popup}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Recent leads */}
+        {recentLeads.length > 0 && (
+          <div className="rounded-xl border border-border bg-white shadow-sm">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-border">
+              <h2 className="text-base font-semibold text-foreground">Recent Leads</h2>
+              <Link href="/leads" className="text-sm font-medium text-[#E10600] hover:underline">
+                View all →
+              </Link>
+            </div>
+            <div className="divide-y divide-border">
+              {recentLeads.map((lead) => (
+                <div key={lead.id} className="flex items-center gap-4 px-5 py-3.5">
+                  <span
+                    style={{
+                      fontSize: "11px",
+                      fontWeight: 600,
+                      padding: "3px 8px",
+                      borderRadius: "5px",
+                      background: lead.status === "new" ? "rgba(225,6,0,0.08)" : lead.status === "contacted" ? "rgba(255,159,10,0.08)" : "rgba(48,209,88,0.08)",
+                      color: lead.status === "new" ? "#E10600" : lead.status === "contacted" ? "#FF9F0A" : "#30D158",
+                      border: `1px solid ${lead.status === "new" ? "rgba(225,6,0,0.13)" : lead.status === "contacted" ? "rgba(255,159,10,0.13)" : "rgba(48,209,88,0.13)"}`,
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {lead.status.charAt(0).toUpperCase() + lead.status.slice(1)}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium text-foreground truncate">{lead.name || "—"}</p>
+                    <p className="text-xs text-muted-foreground truncate">{lead.email}</p>
+                  </div>
+                  <span className="hidden text-[11px] uppercase tracking-[0.5px] text-muted-foreground sm:block">
+                    {lead.source}
+                  </span>
+                  <span className="text-xs text-muted-foreground whitespace-nowrap">
+                    {formatTimeAgo(lead.created_at)}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* ─── Projects & Revenue section ─── */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-base font-semibold text-foreground">Projects & Revenue</h2>
           <Link href="/clients/new" className={`${buttonStyles.primary} text-xs sm:text-sm`}>
             Add Client
           </Link>
         </div>
-      </div>
 
       {/* Charts row: Revenue, Profit, Monthly */}
       <DashboardCharts
@@ -298,8 +427,18 @@ async function AdminDashboard() {
 
       {/* Clients section */}
       <DashboardClients clients={dashboardClients} />
+      </div>
     </div>
   );
+}
+
+function formatTimeAgo(dateStr: string): string {
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 60) return `${mins}m`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h`;
+  return `${Math.floor(hrs / 24)}d`;
 }
 
 /* ─── Employee Dashboard ─── */

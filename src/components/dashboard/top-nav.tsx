@@ -9,6 +9,7 @@ import { NotificationBell } from "./notification-bell";
 
 const allNavTabs = [
   { label: "Dashboard", href: "/dashboard", internalOnly: false },
+  { label: "Leads", href: "/leads", internalOnly: true },
   { label: "Clients", href: "/clients", internalOnly: true },
   { label: "Projects", href: "/projects", internalOnly: false },
 ];

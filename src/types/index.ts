@@ -5,6 +5,38 @@ export type FulfillmentType = "pickup" | "delivery" | "white_glove";
 export type DiscountType = "percent" | "amount";
 export type AcceptanceStatus = "pending" | "accepted" | "rejected";
 
+// Leads (from Astro marketing frontend)
+export type LeadSource = "rent" | "lease" | "popup";
+export type LeadStatus = "new" | "contacted" | "closed";
+
+export interface Lead {
+  id: string;
+  source: LeadSource;
+  status: LeadStatus;
+  name: string | null;
+  email: string;
+  phone: string | null;
+  event_type: string | null;
+  event_date: string | null;
+  guest_count: string | null;
+  business_name: string | null;
+  business_type: string | null;
+  location: string | null;
+  interest: string | null;
+  message: string | null;
+  sms_consent: boolean;
+  source_page: string | null;
+  utm_source: string | null;
+  utm_medium: string | null;
+  utm_campaign: string | null;
+  utm_term: string | null;
+  utm_content: string | null;
+  gclid: string | null;
+  fbclid: string | null;
+  landing_page: string | null;
+  created_at: string;
+}
+
 export interface Profile {
   id: string;
   email: string;
