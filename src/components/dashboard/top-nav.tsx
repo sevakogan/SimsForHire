@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import Image from "next/image";
 import { useAuth } from "@/components/auth/auth-provider";
 import { NotificationBell } from "./notification-bell";
+import versionData from "../../../version.json";
 
 const allNavTabs = [
   { label: "Dashboard", href: "/dashboard", internalOnly: false },
@@ -260,6 +261,16 @@ export function TopNav() {
                     description="Configure Stripe payments"
                   />
                 )}
+              </div>
+
+              {/* Build info */}
+              <div className="border-t border-border px-4 py-2">
+                <p className="text-[11px] text-muted-foreground/60">
+                  v{versionData.version} · Build #{versionData.build}
+                  {"builtAt" in versionData && (versionData as { builtAt: string }).builtAt && (
+                    <> · {new Date((versionData as { builtAt: string }).builtAt).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}</>
+                  )}
+                </p>
               </div>
 
               {/* Sign out */}

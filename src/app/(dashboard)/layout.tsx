@@ -1,5 +1,5 @@
 import { AuthProvider } from "@/components/auth/auth-provider";
-import { TopNav } from "@/components/dashboard/top-nav";
+import { Sidebar } from "@/components/dashboard/sidebar";
 import { createSupabaseServer } from "@/lib/supabase-server";
 import type { Profile } from "@/types";
 
@@ -32,17 +32,12 @@ export default async function DashboardLayout({
 
   return (
     <AuthProvider serverProfile={serverProfile}>
-      <TopNav />
-      <main className="mx-auto max-w-5xl px-4 py-4 sm:px-6 sm:py-6">
-        {children}
-      </main>
-      <footer className="py-4 text-center text-[10px] text-muted-foreground/50">
-        <p>Designed by TheLevelTeam LLC</p>
-        <p>
-          Built: #{process.env.NEXT_PUBLIC_BUILD_NUMBER}, Version{" "}
-          {process.env.NEXT_PUBLIC_APP_VERSION}
-        </p>
-      </footer>
+      <div style={{ background: "#F5F5F7", minHeight: "100vh" }}>
+        <Sidebar />
+        <main style={{ marginLeft: 240, minHeight: "100vh", padding: "48px 56px" }}>
+          {children}
+        </main>
+      </div>
     </AuthProvider>
   );
 }

@@ -61,10 +61,12 @@ export async function POST(req: NextRequest) {
         if (!lead) {
           results.skipped++;
         } else {
+          const firstName = lead.name?.split(" ")[0] ?? lead.name ?? "";
+          const bodyHtml = (step.body_html ?? "").replace(/\{\{first_name\}\}/g, firstName);
           await sendEmail({
             to: lead.email,
             subject: step.subject ?? "A message from SimsForHire",
-            bodyHtml: step.body_html,
+            bodyHtml,
             leadName: lead.name,
           });
           results.sent++;

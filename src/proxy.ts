@@ -10,7 +10,16 @@ const PUBLIC_AUTH_ROUTES = new Set([
   "/confirm",
 ]);
 
-export async function middleware(request: NextRequest) {
+// Routes fully public — no auth check at all
+function isPublicRoute(pathname: string): boolean {
+  return (
+    pathname === "/" ||
+    pathname === "/blog" ||
+    pathname.startsWith("/blog/")
+  );
+}
+
+export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request: { headers: request.headers } });
 
   const supabase = createServerClient(
@@ -40,6 +49,11 @@ export async function middleware(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const { pathname } = request.nextUrl;
+
+  // Allow public routes through with no auth check
+  if (isPublicRoute(pathname)) {
+    return response;
+  }
 
   // Unauthenticated users can only access public auth routes
   if (!user && !PUBLIC_AUTH_ROUTES.has(pathname)) {
@@ -79,6 +93,7 @@ export const config = {
     "/projects/:path*",
     "/catalog/:path*",
     "/customizations/:path*",
+    "/events/:path*",
     "/company",
     "/admin/:path*",
     "/admin",

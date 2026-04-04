@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useTransition, useRef, useCallback } from "react";
+import { useState, useTransition, useCallback } from "react";
 import type { CampaignWithSteps } from "@/lib/actions/campaigns";
 import type { CampaignStep } from "@/types";
 import {
   updateCampaignStep,
+  updateCampaign,
   deleteCampaignStep,
   addCampaignStep,
   reorderCampaignSteps,
@@ -12,6 +13,29 @@ import {
 
 interface CampaignEditorProps {
   campaign: CampaignWithSteps;
+  onUpdate?: (updated: Partial<CampaignWithSteps>) => void;
+}
+
+function htmlToText(html: string): string {
+  return html
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<\/p>/gi, "\n")
+    .replace(/<p[^>]*>/gi, "")
+    .replace(/<[^>]*>/g, "")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&nbsp;/g, " ")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
+function textToHtml(text: string): string {
+  if (!text.trim()) return "";
+  return text
+    .split(/\n\n+/)
+    .map((para) => `<p>${para.replace(/\n/g, "<br>")}</p>`)
+    .join("");
 }
 
 const CHANNEL_LABEL: Record<string, string> = { email: "Email", sms: "SMS" };
@@ -27,33 +51,61 @@ function delayLabel(hours: number): string {
   return `${days % 1 === 0 ? days : days.toFixed(1)}d after previous`;
 }
 
-export function CampaignEditor({ campaign }: CampaignEditorProps) {
+export function CampaignEditor({ campaign, onUpdate }: CampaignEditorProps) {
   const [steps, setSteps] = useState<CampaignStep[]>(
     [...campaign.steps].sort((a, b) => a.step_number - b.step_number)
   );
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [showAddForm, setShowAddForm] = useState(false);
   const [isPending, startTransition] = useTransition();
-  const saveTimers = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
+
+  // Plain-text drafts for body fields — avoids HTML round-trip on every keystroke
+  const [bodyDrafts, setBodyDrafts] = useState<Record<string, string>>(
+    () => Object.fromEntries(campaign.steps.map((s) => [s.id, htmlToText(s.body_html)]))
+  );
+
+  // Inline name/description editing
+  const [editingName, setEditingName] = useState(false);
+  const [nameValue, setNameValue] = useState(campaign.name);
+  const [editingDesc, setEditingDesc] = useState(false);
+  const [descValue, setDescValue] = useState(campaign.description ?? "");
+
+  async function handleSaveName() {
+    setEditingName(false);
+    if (nameValue.trim() === campaign.name) return;
+    const trimmed = nameValue.trim() || campaign.name;
+    setNameValue(trimmed);
+    await updateCampaign(campaign.id, { name: trimmed });
+    onUpdate?.({ id: campaign.id, name: trimmed });
+  }
+
+  async function handleSaveDesc() {
+    setEditingDesc(false);
+    if (descValue.trim() === (campaign.description ?? "")) return;
+    await updateCampaign(campaign.id, { description: descValue.trim() || undefined });
+    onUpdate?.({ id: campaign.id, description: descValue.trim() || undefined });
+  }
 
   // Drag state
   const [draggedId, setDraggedId] = useState<string | null>(null);
   const [dragOverId, setDragOverId] = useState<string | null>(null);
 
-  // Auto-save on field change with debounce
+  // Update local state immediately (no server call)
   const handleFieldChange = useCallback(
     (stepId: string, field: "subject" | "body_html" | "delay_hours", value: string | number) => {
       setSteps((prev) =>
         prev.map((s) => (s.id === stepId ? { ...s, [field]: value } : s))
       );
-      const existing = saveTimers.current.get(stepId);
-      if (existing) clearTimeout(existing);
-      const timer = setTimeout(() => {
-        startTransition(() => {
-          updateCampaignStep(stepId, { [field]: value });
-        });
-      }, 800);
-      saveTimers.current.set(stepId, timer);
+    },
+    []
+  );
+
+  // Save to server on blur
+  const handleFieldBlur = useCallback(
+    (stepId: string, field: "subject" | "body_html" | "delay_hours", value: string | number) => {
+      startTransition(() => {
+        updateCampaignStep(stepId, { [field]: value });
+      });
     },
     []
   );
@@ -123,13 +175,46 @@ export function CampaignEditor({ campaign }: CampaignEditorProps) {
     <div className="space-y-4">
       {/* Header */}
       <div className="flex items-center justify-between rounded-xl border border-border bg-white px-5 py-4">
-        <div>
-          <h2 className="text-[16px] font-semibold text-foreground">{campaign.name}</h2>
-          {campaign.description && (
-            <p className="mt-0.5 text-[13px] text-muted-foreground">{campaign.description}</p>
+        <div className="min-w-0 flex-1 mr-4">
+          {editingName ? (
+            <input
+              autoFocus
+              value={nameValue}
+              onChange={(e) => setNameValue(e.target.value)}
+              onBlur={handleSaveName}
+              onKeyDown={(e) => { if (e.key === "Enter") handleSaveName(); if (e.key === "Escape") { setNameValue(campaign.name); setEditingName(false); } }}
+              className="w-full rounded-lg border border-foreground bg-[#F5F5F7] px-2 py-1 text-[15px] font-semibold text-foreground focus:outline-none"
+            />
+          ) : (
+            <h2
+              onClick={() => setEditingName(true)}
+              className="text-[16px] font-semibold text-foreground cursor-text hover:text-foreground/70 transition-colors"
+              title="Click to edit name"
+            >
+              {nameValue}
+            </h2>
+          )}
+          {editingDesc ? (
+            <input
+              autoFocus
+              value={descValue}
+              onChange={(e) => setDescValue(e.target.value)}
+              onBlur={handleSaveDesc}
+              onKeyDown={(e) => { if (e.key === "Enter") handleSaveDesc(); if (e.key === "Escape") { setDescValue(campaign.description ?? ""); setEditingDesc(false); } }}
+              placeholder="Add description…"
+              className="mt-1 w-full rounded-lg border border-foreground bg-[#F5F5F7] px-2 py-0.5 text-[12px] text-muted-foreground focus:outline-none"
+            />
+          ) : (
+            <p
+              onClick={() => setEditingDesc(true)}
+              className="mt-0.5 text-[13px] text-muted-foreground cursor-text hover:text-muted-foreground/70 transition-colors"
+              title="Click to edit description"
+            >
+              {descValue || <span className="italic opacity-50">Add description…</span>}
+            </p>
           )}
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 shrink-0">
           {isPending && (
             <span className="text-[12px] text-muted-foreground">Saving…</span>
           )}
@@ -240,6 +325,7 @@ export function CampaignEditor({ campaign }: CampaignEditorProps) {
                       min={0}
                       value={step.delay_hours}
                       onChange={(e) => handleFieldChange(step.id, "delay_hours", Number(e.target.value))}
+                      onBlur={(e) => handleFieldBlur(step.id, "delay_hours", Number(e.target.value))}
                       className="w-32 rounded-lg border border-border bg-[#F5F5F7] px-3 py-1.5 text-[13px] focus:outline-none focus:ring-1 focus:ring-foreground"
                     />
                     <span className="ml-2 text-[12px] text-muted-foreground">{delayLabel(step.delay_hours)}</span>
@@ -252,6 +338,7 @@ export function CampaignEditor({ campaign }: CampaignEditorProps) {
                         type="text"
                         value={step.subject ?? ""}
                         onChange={(e) => handleFieldChange(step.id, "subject", e.target.value)}
+                        onBlur={(e) => handleFieldBlur(step.id, "subject", e.target.value)}
                         className="w-full rounded-lg border border-border bg-[#F5F5F7] px-3 py-2 text-[13px] focus:outline-none focus:ring-1 focus:ring-foreground"
                         placeholder="Email subject line"
                       />
@@ -259,13 +346,18 @@ export function CampaignEditor({ campaign }: CampaignEditorProps) {
                   )}
 
                   <div>
-                    <label className="block text-[12px] font-medium text-muted-foreground mb-1">Body (HTML)</label>
+                    <label className="block text-[12px] font-medium text-muted-foreground mb-1">Body</label>
                     <textarea
-                      value={step.body_html}
-                      onChange={(e) => handleFieldChange(step.id, "body_html", e.target.value)}
+                      value={bodyDrafts[step.id] ?? ""}
+                      onChange={(e) => setBodyDrafts((prev) => ({ ...prev, [step.id]: e.target.value }))}
+                      onBlur={(e) => {
+                        const html = textToHtml(e.target.value);
+                        handleFieldChange(step.id, "body_html", html);
+                        handleFieldBlur(step.id, "body_html", html);
+                      }}
                       rows={8}
-                      className="w-full rounded-lg border border-border bg-[#F5F5F7] px-3 py-2 font-mono text-[12px] leading-relaxed focus:outline-none focus:ring-1 focus:ring-foreground resize-y"
-                      placeholder="<p>Email body HTML...</p>"
+                      className="w-full rounded-lg border border-border bg-[#F5F5F7] px-3 py-2 text-[13px] leading-relaxed focus:outline-none focus:ring-1 focus:ring-foreground resize-y"
+                      placeholder="Write your email here…"
                     />
                   </div>
                 </div>
@@ -312,14 +404,14 @@ interface AddStepFormProps {
 
 function AddStepForm({ campaignId, nextStepNumber, onDone, onCancel }: AddStepFormProps) {
   const [subject, setSubject] = useState("");
-  const [body, setBody] = useState("<p></p>");
+  const [body, setBody] = useState("");
   const [delay, setDelay] = useState(24);
   const [isPending, startTransition] = useTransition();
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     startTransition(async () => {
-      await addCampaignStep(campaignId, { subject, body_html: body, delay_hours: delay });
+      await addCampaignStep(campaignId, { subject, body_html: textToHtml(body), delay_hours: delay });
       onDone({
         id: crypto.randomUUID(),
         campaign_id: campaignId,
@@ -352,12 +444,13 @@ function AddStepForm({ campaignId, nextStepNumber, onDone, onCancel }: AddStepFo
       </div>
 
       <div>
-        <label className="block text-[12px] font-medium text-muted-foreground mb-1">Body HTML</label>
+        <label className="block text-[12px] font-medium text-muted-foreground mb-1">Body</label>
         <textarea
           value={body}
           onChange={(e) => setBody(e.target.value)}
           rows={5}
-          className="w-full rounded-lg border border-border bg-[#F5F5F7] px-3 py-2 font-mono text-[12px] focus:outline-none focus:ring-1 focus:ring-foreground resize-y"
+          className="w-full rounded-lg border border-border bg-[#F5F5F7] px-3 py-2 text-[13px] focus:outline-none focus:ring-1 focus:ring-foreground resize-y"
+          placeholder="Write your email here…"
         />
       </div>
 

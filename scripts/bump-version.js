@@ -21,7 +21,7 @@ parts[2] = parts[2] + 1;
 const newVersion = parts.join(".");
 const newBuild = (data.build || 0) + 1;
 
-const updated = { version: newVersion, build: newBuild };
+const updated = { version: newVersion, build: newBuild, builtAt: new Date().toISOString() };
 
 fs.writeFileSync(versionFile, JSON.stringify(updated, null, 2) + "\n", "utf-8");
 

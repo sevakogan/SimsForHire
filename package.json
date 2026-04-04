@@ -12,9 +12,12 @@
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
+    "@ai-sdk/anthropic": "^3.0.64",
+    "@anthropic-ai/sdk": "^0.80.0",
     "@supabase/ssr": "^0.8.0",
     "@supabase/supabase-js": "^2.95.3",
     "@types/pg": "^8.20.0",
+    "ai": "^6.0.141",
     "browser-image-compression": "^2.0.2",
     "html2canvas-pro": "^1.6.7",
     "jspdf": "^4.1.0",

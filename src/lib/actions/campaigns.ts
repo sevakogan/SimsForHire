@@ -3,10 +3,98 @@
 import { revalidatePath } from "next/cache";
 import { getAdminSupabase } from "@/lib/supabase-admin";
 import type { EmailCampaign, CampaignStep } from "@/types";
+import { CAMPAIGNS } from "@/lib/campaign-seed";
 
 export interface CampaignWithSteps extends EmailCampaign {
   steps: CampaignStep[];
   enrollment_count: number;
+}
+
+export async function createCampaign(data: {
+  name: string;
+  type: string;
+  description?: string;
+}): Promise<CampaignWithSteps> {
+  const supabase = getAdminSupabase();
+  const { data: campaign, error } = await supabase
+    .from("email_campaigns")
+    .insert({ name: data.name, type: data.type, description: data.description ?? null })
+    .select("*")
+    .single();
+  if (error) throw new Error(error.message);
+  revalidatePath("/marketing");
+  return { ...(campaign as EmailCampaign), steps: [], enrollment_count: 0 };
+}
+
+export async function updateCampaign(id: string, data: { name?: string; description?: string }): Promise<void> {
+  const supabase = getAdminSupabase();
+  const { error } = await supabase
+    .from("email_campaigns")
+    .update({ ...data, updated_at: new Date().toISOString() })
+    .eq("id", id);
+  if (error) throw new Error(error.message);
+  revalidatePath("/marketing");
+}
+
+export async function deleteCampaign(id: string): Promise<void> {
+  const supabase = getAdminSupabase();
+  const { error } = await supabase.from("email_campaigns").delete().eq("id", id);
+  if (error) throw new Error(error.message);
+  revalidatePath("/marketing");
+}
+
+export async function seedDefaultCampaigns(): Promise<string[]> {
+  const supabase = getAdminSupabase();
+  const results: string[] = [];
+
+  for (const campaign of CAMPAIGNS) {
+    const { data: existing } = await supabase
+      .from("email_campaigns")
+      .select("id")
+      .eq("type", campaign.type)
+      .single();
+
+    let campaignId: string;
+
+    if (existing) {
+      campaignId = existing.id;
+      await supabase
+        .from("email_campaigns")
+        .update({ name: campaign.name, description: campaign.description, updated_at: new Date().toISOString() })
+        .eq("id", campaignId);
+      results.push(`Updated: ${campaign.name}`);
+    } else {
+      const { data: created, error } = await supabase
+        .from("email_campaigns")
+        .insert({ name: campaign.name, type: campaign.type, description: campaign.description })
+        .select("id")
+        .single();
+      if (error) { results.push(`Error: ${campaign.name}`); continue; }
+      campaignId = created.id;
+      results.push(`Created: ${campaign.name}`);
+    }
+
+    for (const step of campaign.steps) {
+      const { data: existingStep } = await supabase
+        .from("campaign_steps")
+        .select("id")
+        .eq("campaign_id", campaignId)
+        .eq("step_number", step.step_number)
+        .single();
+
+      if (existingStep) {
+        await supabase
+          .from("campaign_steps")
+          .update({ ...step, updated_at: new Date().toISOString() })
+          .eq("id", existingStep.id);
+      } else {
+        await supabase.from("campaign_steps").insert({ campaign_id: campaignId, ...step });
+      }
+    }
+  }
+
+  revalidatePath("/marketing");
+  return results;
 }
 
 export async function getCampaigns(): Promise<CampaignWithSteps[]> {
