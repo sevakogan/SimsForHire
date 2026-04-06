@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { JobsList } from "./jobs-list";
 import { ApplicantsList } from "./applicants-list";
 import type { Job, JobApplication } from "@/lib/jobs/types";
@@ -17,7 +18,8 @@ export function JobsView({ jobs, applications }: JobsViewProps) {
 
   return (
     <div className="space-y-6">
-      {/* Tab switcher — same pattern as clients-view toggle */}
+      {/* Header row: tabs + new job button */}
+      <div className="flex items-center justify-between">
       <div className="flex items-center gap-1 rounded-lg border border-border bg-muted/30 p-0.5 w-fit">
         <button
           onClick={() => setActiveTab("jobs")}
@@ -45,6 +47,17 @@ export function JobsView({ jobs, applications }: JobsViewProps) {
           </svg>
           Applicants ({applications.length})
         </button>
+      </div>
+
+        <Link
+          href="/jobs/new"
+          className="inline-flex items-center gap-1.5 rounded-lg bg-[#E10600] px-3.5 py-2 text-xs font-semibold text-white transition-opacity hover:opacity-90"
+        >
+          <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+          </svg>
+          New Job
+        </Link>
       </div>
 
       {/* Tab content */}

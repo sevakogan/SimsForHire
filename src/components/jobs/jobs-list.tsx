@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { updateJobStatus, deleteJob } from "@/lib/actions/jobs";
 import { tableStyles } from "@/components/ui/form-styles";
 import type { Job } from "@/lib/jobs/types";
@@ -64,9 +65,18 @@ export function JobsList({ jobs: initial }: JobsListProps) {
         <div className="text-center">
           <p className="text-sm font-medium text-foreground">No job listings yet</p>
           <p className="mt-1 text-xs text-muted-foreground">
-            Job listings from the careers page will appear here
+            Create your first job listing to get started
           </p>
         </div>
+        <Link
+          href="/jobs/new"
+          className="inline-flex items-center gap-1.5 rounded-lg bg-[#E10600] px-3.5 py-2 text-xs font-semibold text-white transition-opacity hover:opacity-90"
+        >
+          <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+          </svg>
+          New Job
+        </Link>
       </div>
     );
   }
@@ -140,6 +150,12 @@ export function JobsList({ jobs: initial }: JobsListProps) {
                 <td className={tableStyles.tdMuted}>{formatDate(job.created_at)}</td>
                 <td className={tableStyles.td}>
                   <div className="flex items-center gap-2">
+                    <Link
+                      href={`/jobs/${job.id}/edit`}
+                      className="text-xs font-medium text-primary hover:text-primary-hover"
+                    >
+                      Edit
+                    </Link>
                     <button
                       onClick={() => handleToggleStatus(job)}
                       disabled={isPending}

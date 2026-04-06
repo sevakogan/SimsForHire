@@ -6,6 +6,53 @@ import type { Profile } from "@/types";
 import type { ApiResponse, Job, JobImage } from "@/lib/jobs/types";
 
 /**
+ * GET /api/jobs/[id]
+ * Fetch a single job by ID. Auth required (admin).
+ */
+export async function GET(
+  _request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+): Promise<NextResponse<ApiResponse<Job>>> {
+  try {
+    const { id } = await params;
+    const supabase = await createSupabaseServer();
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return NextResponse.json(
+        { success: false, error: "Unauthorized" },
+        { status: 401 }
+      );
+    }
+
+    const { data: job, error } = await supabase
+      .from("jobs")
+      .select("*")
+      .eq("id", id)
+      .single();
+
+    if (error || !job) {
+      return NextResponse.json(
+        { success: false, error: "Job not found" },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json({ success: true, data: job as Job });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Internal server error";
+    console.error("[GET /api/jobs/[id]]", message);
+    return NextResponse.json(
+      { success: false, error: message },
+      { status: 500 }
+    );
+  }
+}
+
+/**
  * PUT /api/jobs/[id]
  * Update a job by ID. Auth required (admin).
  * Body: partial job fields.
