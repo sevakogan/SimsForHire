@@ -41,18 +41,19 @@ export async function POST(
     }
 
     const body = await request.json();
-    const { title, requirements } = body;
+    const title = typeof body.title === "string" ? body.title.trim() : "";
+    const requirements = typeof body.requirements === "string" ? body.requirements.trim() : "";
 
-    if (!title || typeof title !== "string" || !title.trim()) {
+    if (!title && !requirements) {
       return NextResponse.json(
-        { success: false, error: "title is required" },
+        { success: false, error: "Provide a title or requirements" },
         { status: 400 }
       );
     }
 
     const description = await generateJobDescription(
-      title.trim(),
-      typeof requirements === "string" ? requirements : null
+      title || "Untitled Position",
+      requirements || null
     );
 
     return NextResponse.json({

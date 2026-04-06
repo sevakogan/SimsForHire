@@ -94,6 +94,10 @@ export function JobForm({ job, onSave }: JobFormProps) {
   // --- AI Generation ---
 
   async function handleGenerateAI() {
+    if (!title.trim()) {
+      setError("Please enter a job title before generating");
+      return;
+    }
     if (!requirements.trim()) {
       setError("Please enter requirements first so AI can generate a description");
       return;
@@ -107,20 +111,22 @@ export function JobForm({ job, onSave }: JobFormProps) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          title: title || undefined,
-          requirements,
-          tags,
+          title: title.trim(),
+          requirements: requirements.trim(),
         }),
       });
 
+      const result = await res.json();
+
       if (!res.ok) {
-        const errData = await res.json().catch(() => ({ error: "Generation failed" }));
-        throw new Error(errData.error || "Generation failed");
+        throw new Error(result.error || "Generation failed");
       }
 
-      const data = await res.json();
-      if (data.description) {
-        setDescription(data.description);
+      const generated = result.data?.description ?? result.description;
+      if (generated) {
+        setDescription(generated);
+      } else {
+        throw new Error("No description returned");
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "AI generation failed");
