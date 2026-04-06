@@ -382,7 +382,7 @@ export function JobForm({ job, onSave }: JobFormProps) {
                     title="Video preview"
                   />
                 ) : (
-                  <video src={videoUrl} controls className="aspect-video w-full bg-black">
+                  <video src={videoUrl} controls className="w-full rounded-lg bg-black">
                     <track kind="captions" />
                   </video>
                 )}
@@ -479,9 +479,9 @@ function JobPreviewModal({
           Preview
         </div>
 
-        {/* Cover image */}
+        {/* Cover image — natural aspect ratio */}
         {mainImage && (
-          <img src={mainImage.url} alt="" className="h-56 w-full object-cover" />
+          <img src={mainImage.url} alt="" className="w-full max-h-80 object-contain bg-black/50" />
         )}
 
         <div className="p-6 space-y-5">
@@ -530,18 +530,18 @@ function JobPreviewModal({
                       title="Event video"
                     />
                   ) : (
-                    <video src={videoUrl} controls className="aspect-video w-full bg-black">
+                    <video src={videoUrl} controls className="w-full rounded-lg bg-black">
                       <track kind="captions" />
                     </video>
                   )}
                 </div>
               )}
 
-              {/* Gallery */}
+              {/* Gallery — natural aspect ratios */}
               {galleryImages.length > 0 && (
-                <div className="grid grid-cols-3 gap-2">
+                <div className="columns-2 gap-2 space-y-2">
                   {galleryImages.map((img) => (
-                    <img key={img.url} src={img.url} alt="" className="aspect-square rounded-lg object-cover" />
+                    <img key={img.url} src={img.url} alt="" className="w-full rounded-lg object-contain" />
                   ))}
                 </div>
               )}
