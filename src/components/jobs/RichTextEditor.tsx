@@ -154,8 +154,8 @@ export function RichTextEditor({
         </ToolbarButton>
       </div>
 
-      {/* Editor area */}
-      <div>
+      {/* Editor area — resizable */}
+      <div className="relative resize-y overflow-auto min-h-[160px]">
         {editor.isEmpty && (
           <div className="pointer-events-none absolute px-3.5 py-2.5 text-sm text-muted-foreground/50">
             {placeholder}

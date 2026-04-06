@@ -251,7 +251,7 @@ export function JobForm({ job, onSave }: JobFormProps) {
               onChange={(e) => setRequirements(e.target.value)}
               rows={4}
               placeholder={`Enter bullet points, e.g.:\n- Must have customer service experience\n- Available weekends\n- Physically able to set up equipment`}
-              className="w-full rounded-lg border border-border bg-[#F5F5F7] px-3 py-2 text-[13px] focus:outline-none focus:ring-2 focus:ring-[#E10600]/30 focus:border-[#E10600] resize-none"
+              className="w-full rounded-lg border border-border bg-[#F5F5F7] px-3 py-2 text-[13px] focus:outline-none focus:ring-2 focus:ring-[#E10600]/30 focus:border-[#E10600] resize-y min-h-[100px]"
             />
             <p className="text-[10px] text-muted-foreground">
               Raw bullet points from admin. Used as input for AI description generation.
