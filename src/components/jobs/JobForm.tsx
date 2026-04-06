@@ -8,6 +8,13 @@ import type { Job, JobImage } from "@/lib/jobs/types";
 
 type JobStatus = Job["status"];
 
+function extractYouTubeId(url: string): string {
+  const match = url.match(
+    /(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/
+  );
+  return match?.[1] ?? "";
+}
+
 interface JobFormProps {
   job?: Job;
   onSave: (data: {
@@ -16,6 +23,7 @@ interface JobFormProps {
     requirements: string;
     tags: string[];
     images: JobImage[];
+    video_url: string;
     status: JobStatus;
   }) => Promise<void>;
 }
@@ -30,6 +38,7 @@ export function JobForm({ job, onSave }: JobFormProps) {
   const [requirements, setRequirements] = useState(job?.requirements_input ?? "");
   const [description, setDescription] = useState(job?.description ?? "");
   const [images, setImages] = useState<JobImage[]>([...(job?.images ?? [])]);
+  const [videoUrl, setVideoUrl] = useState(job?.video_url ?? "");
   const [status, setStatus] = useState<JobStatus>(job?.status ?? "active");
 
   const [saving, setSaving] = useState(false);
@@ -155,6 +164,7 @@ export function JobForm({ job, onSave }: JobFormProps) {
         requirements,
         tags,
         images,
+        video_url: videoUrl.trim(),
         status,
       });
     } catch (err) {
@@ -304,6 +314,48 @@ export function JobForm({ job, onSave }: JobFormProps) {
             onSetMain={handleSetMain}
             jobId={job?.id}
           />
+        </div>
+
+        {/* Video */}
+        <div className="rounded-xl border border-border bg-white p-5 space-y-1.5">
+          <label className="text-[12px] font-medium text-foreground">Video</label>
+          <input
+            type="url"
+            value={videoUrl}
+            onChange={(e) => setVideoUrl(e.target.value)}
+            placeholder="Paste a YouTube, Vimeo, or direct video URL"
+            className="w-full rounded-lg border border-border bg-[#F5F5F7] px-3 py-2 text-[13px] focus:outline-none focus:ring-2 focus:ring-[#E10600]/30 focus:border-[#E10600]"
+          />
+          <p className="text-[10px] text-muted-foreground">
+            Optional. Will be displayed as an embedded video on the public job post.
+          </p>
+          {videoUrl.trim() && (
+            <div className="mt-3 overflow-hidden rounded-lg border border-border">
+              {videoUrl.includes("youtube.com") || videoUrl.includes("youtu.be") ? (
+                <iframe
+                  src={`https://www.youtube.com/embed/${extractYouTubeId(videoUrl)}`}
+                  className="aspect-video w-full"
+                  allowFullScreen
+                  title="Video preview"
+                />
+              ) : videoUrl.includes("vimeo.com") ? (
+                <iframe
+                  src={`https://player.vimeo.com/video/${videoUrl.split("/").pop()}`}
+                  className="aspect-video w-full"
+                  allowFullScreen
+                  title="Video preview"
+                />
+              ) : (
+                <video
+                  src={videoUrl}
+                  controls
+                  className="aspect-video w-full bg-black"
+                >
+                  <track kind="captions" />
+                </video>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Actions */}

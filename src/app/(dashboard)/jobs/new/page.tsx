@@ -13,6 +13,7 @@ export default function NewJobPage() {
     requirements: string;
     tags: string[];
     images: JobImage[];
+    video_url: string;
     status: "active" | "paused";
   }) {
     const res = await fetch("/api/jobs", {
@@ -24,6 +25,7 @@ export default function NewJobPage() {
         requirements_input: data.requirements,
         tags: data.tags,
         images: data.images,
+        video_url: data.video_url,
         status: data.status,
       }),
     });

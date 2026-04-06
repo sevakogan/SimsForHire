@@ -33,6 +33,7 @@ export default function EditJobPage() {
     requirements: string;
     tags: string[];
     images: JobImage[];
+    video_url: string;
     status: "active" | "paused";
   }) {
     const res = await fetch(`/api/jobs/${params.id}`, {
@@ -44,6 +45,7 @@ export default function EditJobPage() {
         requirements_input: data.requirements,
         tags: data.tags,
         images: data.images,
+        video_url: data.video_url,
         status: data.status,
       }),
     });

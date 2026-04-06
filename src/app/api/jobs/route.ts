@@ -97,7 +97,7 @@ export async function POST(
     }
 
     const body = await request.json();
-    const { title, description, requirements_input, tags, images, status } = body;
+    const { title, description, requirements_input, tags, images, video_url, status } = body;
 
     if (!title || typeof title !== "string" || !title.trim()) {
       return NextResponse.json(
@@ -121,6 +121,7 @@ export async function POST(
       requirements_input: requirements_input ?? null,
       tags: Array.isArray(tags) ? tags : [],
       images: Array.isArray(images) ? images : [],
+      video_url: typeof video_url === "string" && video_url.trim() ? video_url.trim() : null,
       status: status === "paused" ? "paused" : "active",
     };
 

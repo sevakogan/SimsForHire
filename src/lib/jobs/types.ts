@@ -12,6 +12,7 @@ export interface Job {
   readonly requirements_input: string | null
   readonly tags: readonly string[]
   readonly images: readonly JobImage[]
+  readonly video_url: string | null
   readonly status: 'active' | 'paused'
   readonly created_at: string
   readonly updated_at: string

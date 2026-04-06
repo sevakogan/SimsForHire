@@ -97,6 +97,7 @@ export async function PUT(
       "requirements_input",
       "tags",
       "images",
+      "video_url",
       "status",
     ]);
 
