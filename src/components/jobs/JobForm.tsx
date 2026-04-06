@@ -40,6 +40,7 @@ export function JobForm({ job, onSave }: JobFormProps) {
   const [images, setImages] = useState<JobImage[]>([...(job?.images ?? [])]);
   const [videoUrl, setVideoUrl] = useState(job?.video_url ?? "");
   const [status, setStatus] = useState<JobStatus>(job?.status ?? "active");
+  const [showPreview, setShowPreview] = useState(false);
 
   const [saving, setSaving] = useState(false);
   const [generating, setGenerating] = useState(false);
@@ -304,58 +305,90 @@ export function JobForm({ job, onSave }: JobFormProps) {
           </p>
         </div>
 
-        {/* Images */}
+        {/* Job Post Image */}
         <div className="rounded-xl border border-border bg-white p-5 space-y-1.5">
-          <label className="text-[12px] font-medium text-foreground">Images</label>
+          <label className="text-[12px] font-medium text-foreground">Job Post Image</label>
+          <p className="text-[10px] text-muted-foreground">
+            The main image displayed on the job listing card. First image uploaded becomes the cover.
+          </p>
           <ImageUploader
-            images={images}
-            onUpload={handleImageUpload}
-            onDelete={handleImageDelete}
-            onSetMain={handleSetMain}
+            images={images.filter((img) => img.is_main)}
+            onUpload={(url) => {
+              const filename = url.split("/").pop() ?? "image";
+              setImages((prev) => {
+                // Replace existing main image or add as first
+                const withoutMain = prev.filter((img) => !img.is_main);
+                return [{ url, filename, is_main: true }, ...withoutMain];
+              });
+            }}
+            onDelete={(url) => {
+              setImages((prev) => prev.filter((img) => img.url !== url));
+            }}
+            onSetMain={() => {}}
             jobId={job?.id}
           />
         </div>
 
-        {/* Video */}
-        <div className="rounded-xl border border-border bg-white p-5 space-y-1.5">
-          <label className="text-[12px] font-medium text-foreground">Video</label>
-          <input
-            type="url"
-            value={videoUrl}
-            onChange={(e) => setVideoUrl(e.target.value)}
-            placeholder="Paste a YouTube, Vimeo, or direct video URL"
-            className="w-full rounded-lg border border-border bg-[#F5F5F7] px-3 py-2 text-[13px] focus:outline-none focus:ring-2 focus:ring-[#E10600]/30 focus:border-[#E10600]"
-          />
-          <p className="text-[10px] text-muted-foreground">
-            Optional. Will be displayed as an embedded video on the public job post.
-          </p>
-          {videoUrl.trim() && (
-            <div className="mt-3 overflow-hidden rounded-lg border border-border">
-              {videoUrl.includes("youtube.com") || videoUrl.includes("youtu.be") ? (
-                <iframe
-                  src={`https://www.youtube.com/embed/${extractYouTubeId(videoUrl)}`}
-                  className="aspect-video w-full"
-                  allowFullScreen
-                  title="Video preview"
-                />
-              ) : videoUrl.includes("vimeo.com") ? (
-                <iframe
-                  src={`https://player.vimeo.com/video/${videoUrl.split("/").pop()}`}
-                  className="aspect-video w-full"
-                  allowFullScreen
-                  title="Video preview"
-                />
-              ) : (
-                <video
-                  src={videoUrl}
-                  controls
-                  className="aspect-video w-full bg-black"
-                >
-                  <track kind="captions" />
-                </video>
-              )}
-            </div>
-          )}
+        {/* Previous Events — Gallery */}
+        <div className="rounded-xl border border-border bg-white p-5 space-y-4">
+          <div className="space-y-1.5">
+            <label className="text-[12px] font-medium text-foreground">Previous Events</label>
+            <p className="text-[10px] text-muted-foreground">
+              Photos and videos from past events — shows applicants what the job looks like in action.
+            </p>
+          </div>
+
+          {/* Gallery images */}
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-semibold uppercase tracking-[0.7px] text-muted-foreground">Photos</label>
+            <ImageUploader
+              images={images.filter((img) => !img.is_main)}
+              onUpload={(url) => {
+                const filename = url.split("/").pop() ?? "image";
+                setImages((prev) => [...prev, { url, filename, is_main: false }]);
+              }}
+              onDelete={(url) => {
+                setImages((prev) => prev.filter((img) => img.url !== url));
+              }}
+              onSetMain={() => {}}
+              jobId={job?.id}
+            />
+          </div>
+
+          {/* Gallery video */}
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-semibold uppercase tracking-[0.7px] text-muted-foreground">Video</label>
+            <input
+              type="url"
+              value={videoUrl}
+              onChange={(e) => setVideoUrl(e.target.value)}
+              placeholder="Paste a YouTube, Vimeo, or direct video URL"
+              className="w-full rounded-lg border border-border bg-[#F5F5F7] px-3 py-2 text-[13px] focus:outline-none focus:ring-2 focus:ring-[#E10600]/30 focus:border-[#E10600]"
+            />
+            {videoUrl.trim() && (
+              <div className="mt-2 overflow-hidden rounded-lg border border-border">
+                {videoUrl.includes("youtube.com") || videoUrl.includes("youtu.be") ? (
+                  <iframe
+                    src={`https://www.youtube.com/embed/${extractYouTubeId(videoUrl)}`}
+                    className="aspect-video w-full"
+                    allowFullScreen
+                    title="Video preview"
+                  />
+                ) : videoUrl.includes("vimeo.com") ? (
+                  <iframe
+                    src={`https://player.vimeo.com/video/${videoUrl.split("/").pop()}`}
+                    className="aspect-video w-full"
+                    allowFullScreen
+                    title="Video preview"
+                  />
+                ) : (
+                  <video src={videoUrl} controls className="aspect-video w-full bg-black">
+                    <track kind="captions" />
+                  </video>
+                )}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Actions */}
@@ -373,13 +406,154 @@ export function JobForm({ job, onSave }: JobFormProps) {
           </button>
           <button
             type="button"
+            onClick={() => setShowPreview(true)}
+            className="rounded-lg border border-border px-5 py-2.5 text-[13px] font-medium text-foreground transition-colors hover:bg-muted"
+          >
+            Preview
+          </button>
+          <button
+            type="button"
             onClick={() => router.back()}
             className="rounded-lg border border-border px-5 py-2.5 text-[13px] text-muted-foreground transition-colors hover:text-foreground"
           >
             Cancel
           </button>
         </div>
+
+        {/* Preview Modal — shows what applicants see (dark theme) */}
+        {/* Note: description HTML is admin-authored via Tiptap + OpenAI, not user-submitted */}
+        {showPreview && (
+          <JobPreviewModal
+            title={title}
+            tags={tags}
+            description={description}
+            images={images}
+            videoUrl={videoUrl}
+            onClose={() => setShowPreview(false)}
+          />
+        )}
       </form>
+    </div>
+  );
+}
+
+/* ─── Preview Modal ────────────────────────────────────────── */
+
+function JobPreviewModal({
+  title,
+  tags,
+  description,
+  images,
+  videoUrl,
+  onClose,
+}: {
+  title: string;
+  tags: string[];
+  description: string;
+  images: JobImage[];
+  videoUrl: string;
+  onClose: () => void;
+}) {
+  const mainImage = images.find((img) => img.is_main);
+  const galleryImages = images.filter((img) => !img.is_main);
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={onClose}>
+      <div
+        className="relative max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-[#0f172a] text-white shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Close */}
+        <button
+          type="button"
+          onClick={onClose}
+          className="absolute right-4 top-4 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-white/70 hover:bg-white/20 hover:text-white"
+        >
+          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+
+        {/* Preview badge */}
+        <div className="absolute left-4 top-4 z-10 rounded-full bg-blue-600 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-white">
+          Preview
+        </div>
+
+        {/* Cover image */}
+        {mainImage && (
+          <img src={mainImage.url} alt="" className="h-56 w-full object-cover" />
+        )}
+
+        <div className="p-6 space-y-5">
+          {/* Title + tags */}
+          <div>
+            <h2 className="text-2xl font-bold">{title || "Job Title"}</h2>
+            {tags.length > 0 && (
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {tags.map((tag) => (
+                  <span key={tag} className="rounded-full bg-white/10 px-2.5 py-0.5 text-xs font-medium text-white/80">
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Description — admin-authored content from Tiptap/OpenAI, not user-submitted */}
+          {description && (
+            <div
+              className="prose prose-sm prose-invert max-w-none [&_strong]:text-white [&_p]:text-slate-300 [&_li]:text-slate-300 [&_ul]:pl-5 [&_ul]:list-disc"
+              dangerouslySetInnerHTML={{ __html: description }}
+            />
+          )}
+
+          {/* Previous Events */}
+          {(galleryImages.length > 0 || videoUrl.trim()) && (
+            <div className="space-y-3 border-t border-white/10 pt-5">
+              <h3 className="text-sm font-semibold uppercase tracking-wider text-white/50">Previous Events</h3>
+
+              {/* Video */}
+              {videoUrl.trim() && (
+                <div className="overflow-hidden rounded-lg">
+                  {videoUrl.includes("youtube.com") || videoUrl.includes("youtu.be") ? (
+                    <iframe
+                      src={`https://www.youtube.com/embed/${extractYouTubeId(videoUrl)}`}
+                      className="aspect-video w-full"
+                      allowFullScreen
+                      title="Event video"
+                    />
+                  ) : videoUrl.includes("vimeo.com") ? (
+                    <iframe
+                      src={`https://player.vimeo.com/video/${videoUrl.split("/").pop()}`}
+                      className="aspect-video w-full"
+                      allowFullScreen
+                      title="Event video"
+                    />
+                  ) : (
+                    <video src={videoUrl} controls className="aspect-video w-full bg-black">
+                      <track kind="captions" />
+                    </video>
+                  )}
+                </div>
+              )}
+
+              {/* Gallery */}
+              {galleryImages.length > 0 && (
+                <div className="grid grid-cols-3 gap-2">
+                  {galleryImages.map((img) => (
+                    <img key={img.url} src={img.url} alt="" className="aspect-square rounded-lg object-cover" />
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Apply button (decorative) */}
+          <button type="button" disabled className="w-full rounded-lg bg-[#E10600] py-3 text-sm font-semibold text-white opacity-60">
+            Apply Now
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
