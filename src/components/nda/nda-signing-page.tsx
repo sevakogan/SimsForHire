@@ -366,9 +366,9 @@ export function NdaSigningPage({
 
       document.body.appendChild(pdfContainer);
 
-      // Capture as canvas
+      // Capture as canvas (scale 1 to keep payload small for Vercel)
       const canvas = await html2canvas(pdfContainer, {
-        scale: 2,
+        scale: 1.5,
         useCORS: true,
         backgroundColor: "#ffffff",
         logging: false,
@@ -376,14 +376,14 @@ export function NdaSigningPage({
 
       document.body.removeChild(pdfContainer);
 
-      // Generate PDF
+      // Generate PDF with JPEG compression
       const pdf = new jsPDF("p", "mm", "a4");
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = pdf.internal.pageSize.getHeight();
       const margin = 10;
       const contentWidth = pdfWidth - margin * 2;
 
-      const imgData = canvas.toDataURL("image/png");
+      const imgData = canvas.toDataURL("image/jpeg", 0.75);
       const imgWidth = contentWidth;
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
 
@@ -399,7 +399,7 @@ export function NdaSigningPage({
 
         pdf.addImage(
           imgData,
-          "PNG",
+          "JPEG",
           margin,
           margin - yOffset,
           imgWidth,
@@ -431,9 +431,10 @@ export function NdaSigningPage({
       } else {
         setSigned(true);
       }
-    } catch (err) {
-      console.error("[NdaSigningPage] Sign error:", err);
-      setError("Something went wrong. Please try again.");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      console.error("[NdaSigningPage] Sign error:", msg);
+      setError(`Error: ${msg}`);
     } finally {
       setLoading(false);
     }

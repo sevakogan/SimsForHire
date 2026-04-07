@@ -2,6 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { getAdminSupabase } from "@/lib/supabase-admin";
 import type { ApiResponse } from "@/lib/jobs/types";
 
+// Allow large body for PDF upload (up to 10MB)
+export const config = {
+  api: { bodyParser: { sizeLimit: "10mb" } },
+};
+
+// Increase Vercel function timeout
+export const maxDuration = 30;
+
 interface SignNdaBody {
   readonly signatureName: string;
   readonly signatureDataUrl: string;
