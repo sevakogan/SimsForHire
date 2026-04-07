@@ -1,6 +1,6 @@
 "use server";
 
-import crypto from "crypto";
+import { randomUUID } from "crypto";
 import { revalidatePath } from "next/cache";
 import { getAdminSupabase } from "@/lib/supabase-admin";
 import { getSignedUrl } from "@/lib/jobs/storage";
@@ -178,7 +178,7 @@ export async function sendNda(
     const resolvedEmail = overrides?.email?.trim() || (row.email as string);
     const resolvedPhone = overrides?.phone?.trim() || (row.phone as string | null);
 
-    const ndaToken = crypto.randomUUID();
+    const ndaToken = randomUUID();
     const now = new Date().toISOString();
 
     const statusesToBump: readonly string[] = ["new", "reviewed", "contacted"];
@@ -237,18 +237,24 @@ export async function sendNda(
       </p>
     `;
 
-    await sendEmail({
-      to: resolvedEmail,
-      subject: "SimsForHire — Non-Disclosure Agreement",
-      bodyHtml,
-      leadName: applicantName,
-    });
+    try {
+      await sendEmail({
+        to: resolvedEmail,
+        subject: "SimsForHire — Non-Disclosure Agreement",
+        bodyHtml,
+        leadName: applicantName,
+      });
+    } catch (emailErr) {
+      const emailMsg = emailErr instanceof Error ? emailErr.message : "Email send failed";
+      console.error("[sendNda] Email failed:", emailMsg);
+      return { error: `Email failed: ${emailMsg}` };
+    }
 
     revalidatePath("/jobs");
     return { error: null };
   } catch (err) {
     const message = err instanceof Error ? err.message : "Failed to send NDA";
-    console.error("[sendNda]", message);
+    console.error("[sendNda] Unexpected error:", message);
     return { error: message };
   }
 }
