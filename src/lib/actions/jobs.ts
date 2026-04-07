@@ -146,14 +146,20 @@ export async function getApplicationById(
  * Send an NDA email to an applicant. Generates a unique token for signing.
  */
 export async function sendNda(
-  applicationId: string
+  applicationId: string,
+  overrides?: {
+    firstName?: string;
+    lastName?: string;
+    email?: string;
+    phone?: string;
+  }
 ): Promise<{ error: string | null }> {
   try {
     const supabase = getAdminSupabase();
 
     const { data: application, error: fetchError } = await supabase
       .from("job_applications")
-      .select("id, full_name, email, status")
+      .select("id, full_name, email, phone, status")
       .eq("id", applicationId)
       .single();
 
@@ -161,18 +167,38 @@ export async function sendNda(
       return { error: fetchError?.message ?? "Application not found" };
     }
 
+    const row = application as Record<string, unknown>;
+
+    // Resolve final values — prefer overrides if provided
+    const hasNameOverride =
+      overrides?.firstName !== undefined || overrides?.lastName !== undefined;
+    const resolvedName = hasNameOverride
+      ? `${(overrides?.firstName ?? "").trim()} ${(overrides?.lastName ?? "").trim()}`.trim()
+      : (row.full_name as string);
+    const resolvedEmail = overrides?.email?.trim() || (row.email as string);
+    const resolvedPhone = overrides?.phone?.trim() || (row.phone as string | null);
+
     const ndaToken = crypto.randomUUID();
     const now = new Date().toISOString();
 
     const statusesToBump: readonly string[] = ["new", "reviewed", "contacted"];
-    const shouldBumpStatus = statusesToBump.includes(
-      (application as Record<string, unknown>).status as string
-    );
+    const shouldBumpStatus = statusesToBump.includes(row.status as string);
 
     const updatePayload: Record<string, unknown> = {
       nda_token: ndaToken,
       nda_sent_at: now,
     };
+
+    // Apply corrected info if changed
+    if (resolvedName !== row.full_name) {
+      updatePayload.full_name = resolvedName;
+    }
+    if (resolvedEmail !== row.email) {
+      updatePayload.email = resolvedEmail;
+    }
+    if (resolvedPhone !== null && resolvedPhone !== row.phone) {
+      updatePayload.phone = resolvedPhone;
+    }
 
     if (shouldBumpStatus) {
       updatePayload.status = "in_process";
@@ -190,7 +216,7 @@ export async function sendNda(
     const appUrl =
       process.env.NEXT_PUBLIC_APP_URL ?? "https://admin.simsforhire.com";
     const ndaLink = `${appUrl}/nda/${ndaToken}`;
-    const applicantName = (application as Record<string, unknown>).full_name as string;
+    const applicantName = resolvedName;
 
     const bodyHtml = `
       <p style="margin:0 0 16px 0;">
@@ -212,7 +238,7 @@ export async function sendNda(
     `;
 
     await sendEmail({
-      to: (application as Record<string, unknown>).email as string,
+      to: resolvedEmail,
       subject: "SimsForHire — Non-Disclosure Agreement",
       bodyHtml,
       leadName: applicantName,

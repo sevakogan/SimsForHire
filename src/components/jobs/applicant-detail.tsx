@@ -50,6 +50,150 @@ function instagramUrl(value: string): string {
   return `https://instagram.com/${handle}`;
 }
 
+interface NdaFormData {
+  readonly firstName: string;
+  readonly lastName: string;
+  readonly email: string;
+  readonly phone: string;
+}
+
+function splitFullName(fullName: string): { firstName: string; lastName: string } {
+  const parts = fullName.trim().split(/\s+/);
+  if (parts.length <= 1) {
+    return { firstName: parts[0] ?? "", lastName: "" };
+  }
+  return {
+    firstName: parts.slice(0, -1).join(" "),
+    lastName: parts[parts.length - 1] ?? "",
+  };
+}
+
+function NdaConfirmModal({
+  application,
+  onSubmit,
+  onClose,
+  isLoading,
+}: {
+  readonly application: JobApplication;
+  readonly onSubmit: (data: NdaFormData) => void;
+  readonly onClose: () => void;
+  readonly isLoading: boolean;
+}) {
+  const { firstName, lastName } = splitFullName(application.full_name);
+  const [form, setForm] = useState<NdaFormData>({
+    firstName,
+    lastName,
+    email: application.email,
+    phone: application.phone ?? "",
+  });
+
+  function handleFieldChange(field: keyof NdaFormData, value: string) {
+    setForm((prev) => ({ ...prev, [field]: value }));
+  }
+
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    onSubmit(form);
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      {/* Backdrop */}
+      <div
+        className="absolute inset-0 bg-black/30 backdrop-blur-sm"
+        onClick={onClose}
+      />
+      {/* Modal card */}
+      <div className="relative w-full max-w-md rounded-2xl bg-white p-6 shadow-lg mx-4">
+        <div className="mb-5">
+          <h3 className="text-lg font-semibold text-foreground">
+            Verify Applicant Information
+          </h3>
+          <p className="mt-1 text-sm text-muted-foreground">
+            This information will be included in the NDA
+          </p>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="grid grid-cols-2 gap-3">
+            <div className={formStyles.group}>
+              <label htmlFor="nda-first-name" className={formStyles.label}>
+                First Name
+              </label>
+              <input
+                id="nda-first-name"
+                type="text"
+                required
+                value={form.firstName}
+                onChange={(e) => handleFieldChange("firstName", e.target.value)}
+                className={formStyles.input}
+              />
+            </div>
+            <div className={formStyles.group}>
+              <label htmlFor="nda-last-name" className={formStyles.label}>
+                Last Name
+              </label>
+              <input
+                id="nda-last-name"
+                type="text"
+                required
+                value={form.lastName}
+                onChange={(e) => handleFieldChange("lastName", e.target.value)}
+                className={formStyles.input}
+              />
+            </div>
+          </div>
+
+          <div className={formStyles.group}>
+            <label htmlFor="nda-email" className={formStyles.label}>
+              Email
+            </label>
+            <input
+              id="nda-email"
+              type="email"
+              required
+              value={form.email}
+              onChange={(e) => handleFieldChange("email", e.target.value)}
+              className={formStyles.input}
+            />
+          </div>
+
+          <div className={formStyles.group}>
+            <label htmlFor="nda-phone" className={formStyles.label}>
+              Phone
+            </label>
+            <input
+              id="nda-phone"
+              type="tel"
+              value={form.phone}
+              onChange={(e) => handleFieldChange("phone", e.target.value)}
+              className={formStyles.input}
+            />
+          </div>
+
+          <div className="flex items-center justify-end gap-3 pt-2">
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={isLoading}
+              className={buttonStyles.secondary}
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={isLoading}
+              className={buttonStyles.primary}
+            >
+              {isLoading ? "Sending..." : "Send & Continue"}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
 export function ApplicantDetail({
   application,
   resumeSignedUrl,
@@ -66,6 +210,7 @@ export function ApplicantDetail({
   const [ndaSignedAt] = useState<string | null>(
     application.nda_signed_at ?? null
   );
+  const [showNdaModal, setShowNdaModal] = useState(false);
   const [bgCheckUrl, setBgCheckUrl] = useState(
     application.background_check_url ?? ""
   );
@@ -82,13 +227,17 @@ export function ApplicantDetail({
     });
   }
 
-  async function handleSendNda() {
+  async function handleSendNda(overrides?: NdaFormData) {
     setNdaLoading(true);
     setNdaError(null);
     try {
       const res = await fetch(
         `/api/jobs/applications/${application.id}/nda/send`,
-        { method: "POST" }
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(overrides ?? {}),
+        }
       );
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
@@ -96,6 +245,7 @@ export function ApplicantDetail({
           (body as { error?: string }).error ?? "Failed to send NDA"
         );
       }
+      setShowNdaModal(false);
       setNdaSentAt(new Date().toISOString());
       router.refresh();
     } catch (err) {
@@ -105,6 +255,11 @@ export function ApplicantDetail({
     } finally {
       setNdaLoading(false);
     }
+  }
+
+  function handleOpenNdaModal() {
+    setNdaError(null);
+    setShowNdaModal(true);
   }
 
   async function handleSaveBgCheck() {
@@ -406,7 +561,7 @@ export function ApplicantDetail({
               Awaiting signature...
             </p>
             <button
-              onClick={handleSendNda}
+              onClick={handleOpenNdaModal}
               disabled={ndaLoading}
               className={buttonStyles.secondary}
             >
@@ -422,7 +577,7 @@ export function ApplicantDetail({
               No NDA has been sent to this applicant yet.
             </p>
             <button
-              onClick={handleSendNda}
+              onClick={handleOpenNdaModal}
               disabled={ndaLoading}
               className={buttonStyles.danger}
             >
@@ -434,6 +589,16 @@ export function ApplicantDetail({
           </div>
         )}
       </div>
+
+      {/* NDA Confirmation Modal */}
+      {showNdaModal && (
+        <NdaConfirmModal
+          application={application}
+          onSubmit={handleSendNda}
+          onClose={() => setShowNdaModal(false)}
+          isLoading={ndaLoading}
+        />
+      )}
 
       {/* Background Check Card */}
       <div className="rounded-xl border border-border bg-white p-6 shadow-sm">

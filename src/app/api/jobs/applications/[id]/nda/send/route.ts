@@ -10,7 +10,7 @@ import type { ApiResponse } from "@/lib/jobs/types";
  * Send NDA email to applicant. Auth required (admin).
  */
 export async function POST(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ): Promise<NextResponse<ApiResponse<{ sent: boolean }>>> {
   try {
@@ -41,7 +41,22 @@ export async function POST(
       );
     }
 
-    const result = await sendNda(id);
+    let overrides: {
+      firstName?: string;
+      lastName?: string;
+      email?: string;
+      phone?: string;
+    } = {};
+    try {
+      const body = await request.json();
+      if (body && typeof body === "object") {
+        overrides = body as typeof overrides;
+      }
+    } catch {
+      // No body or invalid JSON — proceed without overrides
+    }
+
+    const result = await sendNda(id, overrides);
 
     if (result.error) {
       return NextResponse.json(
