@@ -310,6 +310,13 @@ export function NdaSigningPage({
   const [error, setError] = useState<string | null>(null);
   const [signed, setSigned] = useState(false);
   const [isDark, setIsDark] = useState(false);
+  const [dlStep, setDlStep] = useState(false);
+  const [dlFront, setDlFront] = useState<File | null>(null);
+  const [dlBack, setDlBack] = useState<File | null>(null);
+  const [dlFrontPreview, setDlFrontPreview] = useState<string | null>(null);
+  const [dlBackPreview, setDlBackPreview] = useState<string | null>(null);
+  const [dlUploading, setDlUploading] = useState(false);
+  const [dlDone, setDlDone] = useState(false);
 
   const documentRef = useRef<HTMLDivElement>(null);
   const theme = themeClasses(isDark);
@@ -440,41 +447,174 @@ export function NdaSigningPage({
     }
   }
 
-  /* ─── Success state ─── */
+  /* ─── DL Upload handler ─── */
+  async function handleDlUpload() {
+    if (!dlFront && !dlBack) return;
+    setDlUploading(true);
+    try {
+      const uploads: Promise<Response>[] = [];
+      if (dlFront) {
+        const fd = new FormData();
+        fd.append("file", dlFront);
+        fd.append("side", "front");
+        uploads.push(fetch(`/api/nda/${token}/dl`, { method: "POST", body: fd }));
+      }
+      if (dlBack) {
+        const fd = new FormData();
+        fd.append("file", dlBack);
+        fd.append("side", "back");
+        uploads.push(fetch(`/api/nda/${token}/dl`, { method: "POST", body: fd }));
+      }
+      await Promise.all(uploads);
+      setDlDone(true);
+    } catch {
+      setError("Failed to upload. Please try again.");
+    } finally {
+      setDlUploading(false);
+    }
+  }
+
+  function handleFileSelect(side: "front" | "back", file: File) {
+    const url = URL.createObjectURL(file);
+    if (side === "front") { setDlFront(file); setDlFrontPreview(url); }
+    else { setDlBack(file); setDlBackPreview(url); }
+  }
+
+  /* ─── Success state: NDA signed → DL upload ─── */
   if (signed) {
-    return (
-      <div
-        className={`rounded-2xl border shadow-sm p-8 text-center ${theme.card}`}
-      >
-        <div
-          className={`mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full ${theme.successBg}`}
-        >
-          <svg
-            className={`h-7 w-7 ${theme.successIcon}`}
-            fill="none"
-            viewBox="0 0 24 24"
-            strokeWidth={2}
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="m4.5 12.75 6 6 9-13.5"
-            />
-          </svg>
+    // Final done state
+    if (dlDone || dlStep === false) {
+      if (dlDone) {
+        return (
+          <div className={`rounded-2xl border shadow-sm p-8 text-center ${theme.card}`}>
+            <div className={`mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full ${theme.successBg}`}>
+              <svg className={`h-7 w-7 ${theme.successIcon}`} fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+              </svg>
+            </div>
+            <h2 className={`text-lg font-bold ${theme.heading}`}>All Done!</h2>
+            <p className={`mt-2 text-sm ${theme.successText}`}>Your NDA has been signed and ID uploaded successfully.</p>
+            <p className={`mt-1 text-sm ${theme.successText}`}>A copy has been sent to SimsForHire.</p>
+            <p className={`mt-6 text-xs ${theme.muted}`}>You may close this page.</p>
+          </div>
+        );
+      }
+
+      // NDA signed, show transition to DL upload
+      return (
+        <div className={`rounded-2xl border shadow-sm p-8 text-center space-y-6 ${theme.card}`}>
+          <div className={`mx-auto flex h-14 w-14 items-center justify-center rounded-full ${theme.successBg}`}>
+            <svg className={`h-7 w-7 ${theme.successIcon}`} fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+            </svg>
+          </div>
+          <div>
+            <h2 className={`text-lg font-bold ${theme.heading}`}>NDA Signed Successfully</h2>
+            <p className={`mt-2 text-sm ${theme.successText}`}>One more step — please upload a photo of your driver&apos;s license.</p>
+          </div>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <button
+              onClick={() => setDlStep(true)}
+              className="rounded-xl bg-[#E10600] px-6 py-3 text-sm font-semibold text-white hover:bg-[#C00500] transition-colors"
+            >
+              Upload ID
+            </button>
+            <button
+              onClick={() => setDlDone(true)}
+              className={`rounded-xl border px-6 py-3 text-sm font-medium transition-colors ${theme.cardInner} ${theme.body}`}
+            >
+              Skip for Now
+            </button>
+          </div>
         </div>
-        <h2 className={`text-lg font-bold ${theme.heading}`}>
-          NDA Signed Successfully
-        </h2>
-        <p className={`mt-2 text-sm ${theme.successText}`}>
-          Your Non-Disclosure Agreement has been signed and filed.
-        </p>
-        <p className={`mt-1 text-sm ${theme.successText}`}>
-          A copy has been sent to SimsForHire.
-        </p>
-        <p className={`mt-6 text-xs ${theme.muted}`}>
-          You may close this page.
-        </p>
+      );
+    }
+
+    // DL upload form
+    return (
+      <div className={`rounded-2xl border shadow-sm overflow-hidden ${theme.card}`}>
+        <div className={`px-5 py-6 sm:px-8 border-b ${theme.headerBar} ${theme.cardInner}`}>
+          <h2 className={`text-lg font-bold ${theme.heading}`}>Upload Driver&apos;s License</h2>
+          <p className={`mt-1 text-sm ${theme.body}`}>Please upload clear photos of the front and back of your ID.</p>
+        </div>
+
+        <div className="p-5 sm:p-8 space-y-6">
+          {error && (
+            <div className="rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">{error}</div>
+          )}
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {/* Front */}
+            <div>
+              <p className={`text-xs font-semibold uppercase tracking-wider mb-2 ${theme.muted}`}>Front of ID</p>
+              {dlFrontPreview ? (
+                <div className="relative rounded-xl overflow-hidden border border-gray-200">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={dlFrontPreview} alt="DL Front" className="w-full h-auto" />
+                  <button
+                    type="button"
+                    onClick={() => { setDlFront(null); setDlFrontPreview(null); }}
+                    className="absolute top-2 right-2 flex h-6 w-6 items-center justify-center rounded-full bg-black/50 text-white text-xs hover:bg-black/70"
+                  >
+                    x
+                  </button>
+                </div>
+              ) : (
+                <label className={`flex flex-col items-center justify-center h-40 rounded-xl border-2 border-dashed cursor-pointer transition-colors hover:border-[#E10600]/40 ${theme.cardInner}`}>
+                  <svg className={`h-8 w-8 mb-2 ${theme.muted}`} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0z" />
+                  </svg>
+                  <span className={`text-xs font-medium ${theme.muted}`}>Tap to upload front</span>
+                  <input type="file" accept="image/*" capture="environment" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFileSelect("front", f); }} />
+                </label>
+              )}
+            </div>
+
+            {/* Back */}
+            <div>
+              <p className={`text-xs font-semibold uppercase tracking-wider mb-2 ${theme.muted}`}>Back of ID</p>
+              {dlBackPreview ? (
+                <div className="relative rounded-xl overflow-hidden border border-gray-200">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={dlBackPreview} alt="DL Back" className="w-full h-auto" />
+                  <button
+                    type="button"
+                    onClick={() => { setDlBack(null); setDlBackPreview(null); }}
+                    className="absolute top-2 right-2 flex h-6 w-6 items-center justify-center rounded-full bg-black/50 text-white text-xs hover:bg-black/70"
+                  >
+                    x
+                  </button>
+                </div>
+              ) : (
+                <label className={`flex flex-col items-center justify-center h-40 rounded-xl border-2 border-dashed cursor-pointer transition-colors hover:border-[#E10600]/40 ${theme.cardInner}`}>
+                  <svg className={`h-8 w-8 mb-2 ${theme.muted}`} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0z" />
+                  </svg>
+                  <span className={`text-xs font-medium ${theme.muted}`}>Tap to upload back</span>
+                  <input type="file" accept="image/*" capture="environment" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFileSelect("back", f); }} />
+                </label>
+              )}
+            </div>
+          </div>
+
+          <div className="flex flex-col items-center gap-3">
+            <button
+              onClick={handleDlUpload}
+              disabled={(!dlFront && !dlBack) || dlUploading}
+              className="w-full max-w-md rounded-xl bg-[#E10600] px-6 py-3.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-[#C00500] disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              {dlUploading ? "Uploading..." : "Submit ID"}
+            </button>
+            <button
+              onClick={() => setDlDone(true)}
+              className={`text-xs font-medium ${theme.muted} hover:underline`}
+            >
+              Skip this step
+            </button>
+          </div>
+        </div>
       </div>
     );
   }
