@@ -42,6 +42,9 @@ export interface JobApplication {
   readonly nda_opened_at?: string | null
   readonly nda_signed_at?: string | null
   readonly nda_pdf_url?: string | null
+  readonly dl_front_url?: string | null
+  readonly dl_back_url?: string | null
+  readonly dl_submitted_at?: string | null
   readonly background_check_url?: string | null
 }
 

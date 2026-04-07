@@ -50,6 +50,23 @@ export default async function ApplicantDetailPage({ params }: Props) {
     }
   }
 
+  // Generate signed URLs for DL images
+  let dlFrontSignedUrl: string | null = null;
+  let dlBackSignedUrl: string | null = null;
+  if (application.dl_front_url) {
+    try { dlFrontSignedUrl = await getSignedUrl(application.dl_front_url); } catch { /* */ }
+  }
+  if (application.dl_back_url) {
+    try { dlBackSignedUrl = await getSignedUrl(application.dl_back_url); } catch { /* */ }
+  }
+
+  // Merge signed DL URLs into application for the client
+  const appWithDlUrls = {
+    ...application,
+    dl_front_url: dlFrontSignedUrl ?? application.dl_front_url,
+    dl_back_url: dlBackSignedUrl ?? application.dl_back_url,
+  };
+
   return (
     <div className="space-y-4 sm:space-y-6">
       <div>
@@ -69,7 +86,7 @@ export default async function ApplicantDetailPage({ params }: Props) {
       </div>
 
       <ApplicantDetail
-        application={application}
+        application={appWithDlUrls}
         resumeSignedUrl={resumeSignedUrl}
         imageSignedUrls={imageSignedUrls}
       />

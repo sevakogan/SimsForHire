@@ -270,6 +270,17 @@ export function ApplicantDetail({
     application.nda_signed_at ?? null
   );
   const [ndaPdfUrl, setNdaPdfUrl] = useState<string | null>(null);
+  const [dlFrontUrl, setDlFrontUrl] = useState<string | null>(
+    application.dl_front_url ?? null
+  );
+  const [dlBackUrl, setDlBackUrl] = useState<string | null>(
+    application.dl_back_url ?? null
+  );
+  const [dlSubmittedAt, setDlSubmittedAt] = useState<string | null>(
+    application.dl_submitted_at ?? null
+  );
+  const [dlUploading, setDlUploading] = useState(false);
+  const [dlPreview, setDlPreview] = useState<string | null>(null);
   const [showNdaModal, setShowNdaModal] = useState(false);
   const [bgCheckUrl, setBgCheckUrl] = useState(
     application.background_check_url ?? ""
@@ -390,6 +401,43 @@ export function ApplicantDetail({
       a.href = url;
       a.download = `NDA-${application.full_name.replace(/\s+/g, "-")}.pdf`;
       a.click();
+    }
+  }
+
+  async function handleDlUpload(side: "front" | "back", file: File) {
+    setDlUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("side", side);
+
+      const res = await fetch(
+        `/api/jobs/applications/${application.id}/dl/upload`,
+        { method: "POST", body: formData }
+      );
+
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error((body as { error?: string }).error ?? "Upload failed");
+      }
+
+      const result = await res.json();
+      const url = result.url as string;
+
+      if (side === "front") setDlFrontUrl(url);
+      else setDlBackUrl(url);
+
+      // If both uploaded, mark as submitted
+      const otherSide = side === "front" ? dlBackUrl : dlFrontUrl;
+      if (otherSide || (side === "front" && dlBackUrl) || (side === "back" && dlFrontUrl)) {
+        setDlSubmittedAt(new Date().toISOString());
+      }
+
+      router.refresh();
+    } catch (err) {
+      console.error("[DL Upload]", err);
+    } finally {
+      setDlUploading(false);
     }
   }
 
@@ -664,6 +712,149 @@ export function ApplicantDetail({
           <p className="mt-2 text-xs text-destructive">{ndaError}</p>
         )}
       </div>
+
+      {/* Driver's License */}
+      <div className="rounded-xl border border-border bg-white p-6 shadow-sm">
+        <p className="mb-5 text-[10px] sm:text-xs font-bold uppercase tracking-wider text-gray-400">
+          Driver&apos;s License
+        </p>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+          {/* Left: Timeline */}
+          <div className="space-y-0">
+            <TimelineStep
+              label="Front Uploaded"
+              timestamp={dlFrontUrl ? (dlSubmittedAt ?? new Date().toISOString()) : null}
+              done={!!dlFrontUrl}
+              isLast={false}
+              icon={
+                <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.41a2.25 2.25 0 013.182 0l2.909 2.91m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
+                </svg>
+              }
+            />
+            <TimelineStep
+              label="Back Uploaded"
+              timestamp={dlBackUrl ? (dlSubmittedAt ?? new Date().toISOString()) : null}
+              done={!!dlBackUrl}
+              isLast={false}
+              icon={
+                <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.41a2.25 2.25 0 013.182 0l2.909 2.91m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
+                </svg>
+              }
+            />
+            <TimelineStep
+              label="Submitted"
+              timestamp={dlFrontUrl && dlBackUrl ? dlSubmittedAt : null}
+              done={!!dlFrontUrl && !!dlBackUrl}
+              isLast={true}
+              icon={
+                <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+                </svg>
+              }
+            />
+
+            {/* Upload buttons */}
+            <div className="mt-4 flex flex-wrap gap-2">
+              {!dlFrontUrl && (
+                <label className={`${buttonStyles.secondary} cursor-pointer`}>
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+                  </svg>
+                  {dlUploading ? "Uploading..." : "Upload Front"}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    disabled={dlUploading}
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) handleDlUpload("front", file);
+                    }}
+                  />
+                </label>
+              )}
+              {!dlBackUrl && (
+                <label className={`${buttonStyles.secondary} cursor-pointer`}>
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+                  </svg>
+                  {dlUploading ? "Uploading..." : "Upload Back"}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    disabled={dlUploading}
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) handleDlUpload("back", file);
+                    }}
+                  />
+                </label>
+              )}
+            </div>
+          </div>
+
+          {/* Right: Preview images */}
+          <div className="space-y-3">
+            {dlFrontUrl && (
+              <div>
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">Front</p>
+                <button
+                  type="button"
+                  onClick={() => setDlPreview(dlFrontUrl)}
+                  className="block w-full overflow-hidden rounded-lg border border-border hover:border-primary/40 transition-colors"
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={dlFrontUrl} alt="DL Front" className="w-full h-auto object-contain" />
+                </button>
+              </div>
+            )}
+            {dlBackUrl && (
+              <div>
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">Back</p>
+                <button
+                  type="button"
+                  onClick={() => setDlPreview(dlBackUrl)}
+                  className="block w-full overflow-hidden rounded-lg border border-border hover:border-primary/40 transition-colors"
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={dlBackUrl} alt="DL Back" className="w-full h-auto object-contain" />
+                </button>
+              </div>
+            )}
+            {!dlFrontUrl && !dlBackUrl && (
+              <div className="flex items-center justify-center h-full min-h-[100px] rounded-lg border border-dashed border-border">
+                <p className="text-xs text-muted-foreground">No photos uploaded yet</p>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* DL Image Preview Modal */}
+      {dlPreview && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
+          onClick={() => setDlPreview(null)}
+        >
+          <div className="relative max-h-[90vh] max-w-3xl" onClick={(e) => e.stopPropagation()}>
+            <button
+              type="button"
+              onClick={() => setDlPreview(null)}
+              className="absolute -top-3 -right-3 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-white shadow-lg text-foreground hover:bg-gray-100"
+            >
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={dlPreview} alt="Driver's License" className="max-h-[85vh] w-auto rounded-xl shadow-2xl" />
+          </div>
+        </div>
+      )}
 
       {/* NDA Confirmation Modal */}
       {showNdaModal && (
