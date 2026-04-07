@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { updateApplicationStatus, sendNda } from "@/lib/actions/jobs";
 import { cardStyles, buttonStyles, formStyles } from "@/components/ui/form-styles";
@@ -263,12 +263,13 @@ export function ApplicantDetail({
   const [ndaSentAt, setNdaSentAt] = useState<string | null>(
     application.nda_sent_at ?? null
   );
-  const [ndaOpenedAt] = useState<string | null>(
+  const [ndaOpenedAt, setNdaOpenedAt] = useState<string | null>(
     application.nda_opened_at ?? null
   );
-  const [ndaSignedAt] = useState<string | null>(
+  const [ndaSignedAt, setNdaSignedAt] = useState<string | null>(
     application.nda_signed_at ?? null
   );
+  const [ndaPdfUrl, setNdaPdfUrl] = useState<string | null>(null);
   const [showNdaModal, setShowNdaModal] = useState(false);
   const [bgCheckUrl, setBgCheckUrl] = useState(
     application.background_check_url ?? ""
@@ -277,6 +278,32 @@ export function ApplicantDetail({
   const [bgSaved, setBgSaved] = useState(false);
 
   const statusStyle = STATUS_STYLES[status];
+
+  // Poll for NDA status changes every 10s when NDA is sent but not signed
+  const pollNdaStatus = useCallback(async () => {
+    if (!ndaSentAt || ndaSignedAt) return;
+    try {
+      const res = await fetch(`/api/jobs/applications/${application.id}`);
+      if (!res.ok) return;
+      const result = await res.json();
+      const data = result.data ?? result;
+      if (data.nda_opened_at && !ndaOpenedAt) {
+        setNdaOpenedAt(data.nda_opened_at);
+      }
+      if (data.nda_signed_at && !ndaSignedAt) {
+        setNdaSignedAt(data.nda_signed_at);
+        router.refresh();
+      }
+    } catch {
+      // silent
+    }
+  }, [ndaSentAt, ndaSignedAt, ndaOpenedAt, application.id, router]);
+
+  useEffect(() => {
+    if (!ndaSentAt || ndaSignedAt) return;
+    const interval = setInterval(pollNdaStatus, 10000);
+    return () => clearInterval(interval);
+  }, [ndaSentAt, ndaSignedAt, pollNdaStatus]);
 
   function handleStatusChange(newStatus: ApplicationStatus) {
     setStatus(newStatus);
@@ -334,18 +361,35 @@ export function ApplicantDetail({
     }
   }
 
-  async function handleDownloadNda() {
+  async function fetchNdaPdfUrl(): Promise<string | null> {
     try {
       const res = await fetch(
         `/api/jobs/applications/${application.id}/nda/download`
       );
-      if (!res.ok) throw new Error("Failed to get NDA URL");
+      if (!res.ok) return null;
       const body = (await res.json()) as { url?: string };
-      if (body.url) {
-        window.open(body.url, "_blank");
-      }
+      return body.url ?? null;
     } catch {
-      // silent fail
+      return null;
+    }
+  }
+
+  async function handleViewNda() {
+    const url = ndaPdfUrl || (await fetchNdaPdfUrl());
+    if (url) {
+      setNdaPdfUrl(url);
+      window.open(url, "_blank");
+    }
+  }
+
+  async function handleDownloadNda() {
+    const url = ndaPdfUrl || (await fetchNdaPdfUrl());
+    if (url) {
+      setNdaPdfUrl(url);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `NDA-${application.full_name.replace(/\s+/g, "-")}.pdf`;
+      a.click();
     }
   }
 
@@ -580,12 +624,21 @@ export function ApplicantDetail({
         {/* Actions */}
         <div className="mt-5 flex flex-wrap items-center gap-2">
           {ndaSignedAt ? (
-            <button onClick={handleDownloadNda} className={buttonStyles.secondary}>
-              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
-              </svg>
-              Download Signed NDA
-            </button>
+            <>
+              <button onClick={handleViewNda} className={buttonStyles.secondary}>
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                </svg>
+                View NDA
+              </button>
+              <button onClick={handleDownloadNda} className={buttonStyles.secondary}>
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                </svg>
+                Download
+              </button>
+            </>
           ) : ndaSentAt ? (
             <>
               <button
