@@ -46,6 +46,7 @@ export function ApplicantsList({ applications: initial }: ApplicantsListProps) {
   const [isPending, startTransition] = useTransition();
   const [statusFilter, setStatusFilter] = useState<"all" | ApplicationStatus>("all");
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   function handleStatusChange(appId: string, newStatus: ApplicationStatus) {
     setApplications((prev) =>
@@ -178,24 +179,45 @@ export function ApplicantsList({ applications: initial }: ApplicantsListProps) {
                       >
                         {isExpanded ? "Hide" : "Details"}
                       </button>
-                      <button
-                        onClick={() => {
-                          if (!confirm(`Delete ${app.full_name}'s application?`)) return;
-                          if (!confirm("Are you sure? This cannot be undone.")) return;
-                          setApplications((prev) => prev.filter((a) => a.id !== app.id));
-                          startTransition(async () => {
-                            await deleteApplication(app.id);
-                            router.refresh();
-                          });
-                        }}
-                        disabled={isPending}
-                        className="flex h-6 w-6 items-center justify-center rounded-md text-destructive hover:bg-red-50 transition-colors disabled:opacity-50"
-                        title="Delete applicant"
-                      >
-                        <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                      </button>
+                      <div className="relative">
+                        <button
+                          onClick={() => setConfirmDeleteId(confirmDeleteId === app.id ? null : app.id)}
+                          disabled={isPending}
+                          className="flex h-6 w-6 items-center justify-center rounded-md text-destructive hover:bg-red-50 transition-colors disabled:opacity-50"
+                          title="Delete applicant"
+                        >
+                          <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                        {confirmDeleteId === app.id && (
+                          <div className="absolute right-0 top-8 z-20 w-52 rounded-xl border border-border bg-white p-3 shadow-lg animate-fade-in">
+                            <p className="text-xs font-medium text-foreground mb-1">Delete this applicant?</p>
+                            <p className="text-[11px] text-muted-foreground mb-3">This cannot be undone.</p>
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={() => {
+                                  setConfirmDeleteId(null);
+                                  setApplications((prev) => prev.filter((a) => a.id !== app.id));
+                                  startTransition(async () => {
+                                    await deleteApplication(app.id);
+                                    router.refresh();
+                                  });
+                                }}
+                                className="flex-1 rounded-lg bg-destructive px-3 py-1.5 text-[11px] font-semibold text-white hover:bg-red-600 transition-colors"
+                              >
+                                Yes, delete
+                              </button>
+                              <button
+                                onClick={() => setConfirmDeleteId(null)}
+                                className="flex-1 rounded-lg border border-border px-3 py-1.5 text-[11px] font-medium text-muted-foreground hover:text-foreground transition-colors"
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </td>
                 </tr>
