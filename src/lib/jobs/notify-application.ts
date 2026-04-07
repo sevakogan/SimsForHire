@@ -59,28 +59,28 @@ export async function sendApplicationSms(
     console.error('[sendApplicationSms] auto-reply failed:', await autoReplyRes.text())
   }
 
-  // 2. Lead details to admin
+  // 2. Resume details to admin
   if (adminNumber) {
-    const leadMsg =
-      `📋 New job application!\n` +
-      `Job: ${data.jobTitle}\n` +
+    const resumeMsg =
+      `📄 New Resume Received!\n` +
+      `Position: ${data.jobTitle}\n` +
       `Name: ${data.applicantName}\n` +
       `Email: ${data.applicantEmail}\n` +
       `Phone: ${data.applicantPhone}\n` +
       `IG: ${data.instagram}`
 
-    const leadRes = await fetch(TELNYX_API_URL, {
+    const resumeRes = await fetch(TELNYX_API_URL, {
       method: 'POST',
       headers,
       body: JSON.stringify({
         from: fromNumber,
         to: adminNumber,
-        text: leadMsg,
+        text: resumeMsg,
       }),
     })
 
-    if (!leadRes.ok) {
-      console.error('[sendApplicationSms] lead SMS failed:', await leadRes.text())
+    if (!resumeRes.ok) {
+      console.error('[sendApplicationSms] resume SMS failed:', await resumeRes.text())
     }
   }
 }
