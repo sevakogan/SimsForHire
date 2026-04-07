@@ -246,6 +246,7 @@ export async function sendNda(
       subject: "SimsForHire — Non-Disclosure Agreement",
       bodyHtml,
       leadName: applicantName,
+      skipCc: true,
     }).catch((emailErr) => {
       console.error("[sendNda] Email failed:", emailErr instanceof Error ? emailErr.message : emailErr);
     });

@@ -11,6 +11,7 @@ export interface SendEmailOptions {
   subject: string;
   bodyHtml: string;
   leadName?: string | null;
+  skipCc?: boolean;
 }
 
 export async function sendEmail(opts: SendEmailOptions): Promise<void> {
@@ -19,7 +20,7 @@ export async function sendEmail(opts: SendEmailOptions): Promise<void> {
   const { error } = await resend.emails.send({
     from: FROM,
     to: opts.to,
-    cc: [CC_EMAIL],
+    ...(opts.skipCc ? {} : { cc: [CC_EMAIL] }),
     subject: opts.subject,
     html,
   });

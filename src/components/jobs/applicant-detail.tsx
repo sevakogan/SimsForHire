@@ -648,6 +648,9 @@ export function ApplicantDetail({
         </div>
       )}
 
+      {/* NDA + Driver's License — side by side */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
       {/* NDA Status Report */}
       <div className="rounded-xl border border-border bg-white p-6 shadow-sm">
         <p className="mb-5 text-[10px] sm:text-xs font-bold uppercase tracking-wider text-gray-400">
@@ -760,8 +763,8 @@ export function ApplicantDetail({
           Driver&apos;s License
         </p>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-          {/* Left: Timeline */}
+        <div className="space-y-4">
+          {/* Timeline */}
           <div className="space-y-0">
             <TimelineStep
               label="Front Uploaded"
@@ -838,8 +841,8 @@ export function ApplicantDetail({
             </div>
           </div>
 
-          {/* Right: Preview images */}
-          <div className="space-y-3">
+          {/* Preview images */}
+          <div className="grid grid-cols-2 gap-2">
             {dlFrontUrl && (
               <div>
                 <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">Front</p>
@@ -874,6 +877,8 @@ export function ApplicantDetail({
           </div>
         </div>
       </div>
+
+      </div>{/* end grid */}
 
       {/* DL Image Preview Modal */}
       {dlPreview && (

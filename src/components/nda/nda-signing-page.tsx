@@ -333,8 +333,9 @@ export function NdaSigningPage({
 
   const today = getTodayFormatted();
 
+  const dlReady = !requireDl || (dlFront !== null && dlBack !== null);
   const canSubmit =
-    signerName.trim().length > 0 && signature !== null && !loading;
+    signerName.trim().length > 0 && signature !== null && dlReady && !loading;
 
   async function handleSign() {
     if (!canSubmit || !signature) return;
@@ -438,6 +439,24 @@ export function NdaSigningPage({
       if (!response.ok || !result.success) {
         setError(result.error ?? "Failed to sign NDA. Please try again.");
       } else {
+        // Upload DL photos in parallel if provided
+        if (dlFront || dlBack) {
+          const dlUploads: Promise<Response>[] = [];
+          if (dlFront) {
+            const fd = new FormData();
+            fd.append("file", dlFront);
+            fd.append("side", "front");
+            dlUploads.push(fetch(`/api/nda/${token}/dl`, { method: "POST", body: fd }));
+          }
+          if (dlBack) {
+            const fd = new FormData();
+            fd.append("file", dlBack);
+            fd.append("side", "back");
+            dlUploads.push(fetch(`/api/nda/${token}/dl`, { method: "POST", body: fd }));
+          }
+          await Promise.allSettled(dlUploads);
+          setDlDone(true);
+        }
         setSigned(true);
       }
     } catch (err: unknown) {
@@ -739,6 +758,64 @@ export function NdaSigningPage({
           <p className={`text-[10px] ${theme.dimmed}`}>{NDA_FOOTER}</p>
         </div>
       </div>
+
+      {/* ─── Driver's License Upload (before signing) ─── */}
+      {requireDl && (
+        <div className={`rounded-2xl border shadow-sm overflow-hidden ${theme.card}`}>
+          <div className={`px-4 py-5 sm:px-8 border-b ${theme.headerBar} ${theme.cardInner}`}>
+            <h3 className={`text-sm font-bold ${theme.heading}`}>
+              DRIVER&apos;S LICENSE
+            </h3>
+            <p className={`mt-1 text-xs ${theme.muted}`}>
+              Upload clear photos of the front and back of your ID before signing.
+            </p>
+          </div>
+          <div className="p-4 sm:p-8">
+            <div className="grid grid-cols-2 gap-4">
+              {/* Front */}
+              <div>
+                <p className={`text-xs font-semibold uppercase tracking-wider mb-2 ${theme.muted}`}>Front</p>
+                {dlFrontPreview ? (
+                  <div className="relative rounded-xl overflow-hidden border border-gray-200">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={dlFrontPreview} alt="DL Front" className="w-full h-auto" />
+                    <button type="button" onClick={() => { setDlFront(null); setDlFrontPreview(null); }} className="absolute top-2 right-2 flex h-6 w-6 items-center justify-center rounded-full bg-black/50 text-white text-xs hover:bg-black/70">x</button>
+                  </div>
+                ) : (
+                  <label className={`flex flex-col items-center justify-center h-32 rounded-xl border-2 border-dashed cursor-pointer transition-colors hover:border-[#E10600]/40 ${theme.cardInner}`}>
+                    <svg className={`h-6 w-6 mb-1 ${theme.muted}`} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0z" />
+                    </svg>
+                    <span className={`text-[11px] font-medium ${theme.muted}`}>Upload front</span>
+                    <input type="file" accept="image/*" capture="environment" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFileSelect("front", f); }} />
+                  </label>
+                )}
+              </div>
+              {/* Back */}
+              <div>
+                <p className={`text-xs font-semibold uppercase tracking-wider mb-2 ${theme.muted}`}>Back</p>
+                {dlBackPreview ? (
+                  <div className="relative rounded-xl overflow-hidden border border-gray-200">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={dlBackPreview} alt="DL Back" className="w-full h-auto" />
+                    <button type="button" onClick={() => { setDlBack(null); setDlBackPreview(null); }} className="absolute top-2 right-2 flex h-6 w-6 items-center justify-center rounded-full bg-black/50 text-white text-xs hover:bg-black/70">x</button>
+                  </div>
+                ) : (
+                  <label className={`flex flex-col items-center justify-center h-32 rounded-xl border-2 border-dashed cursor-pointer transition-colors hover:border-[#E10600]/40 ${theme.cardInner}`}>
+                    <svg className={`h-6 w-6 mb-1 ${theme.muted}`} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0z" />
+                    </svg>
+                    <span className={`text-[11px] font-medium ${theme.muted}`}>Upload back</span>
+                    <input type="file" accept="image/*" capture="environment" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFileSelect("back", f); }} />
+                  </label>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ─── Signing Area ─── */}
       <div
