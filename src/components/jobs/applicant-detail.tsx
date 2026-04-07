@@ -68,6 +68,62 @@ function splitFullName(fullName: string): { firstName: string; lastName: string 
   };
 }
 
+function TimelineStep({
+  label,
+  timestamp,
+  done,
+  isLast,
+  icon,
+}: {
+  label: string;
+  timestamp: string | null;
+  done: boolean;
+  isLast: boolean;
+  icon: React.ReactNode;
+}) {
+  return (
+    <div className="flex gap-3">
+      {/* Dot + line */}
+      <div className="flex flex-col items-center">
+        <div
+          className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full ${
+            done
+              ? "bg-emerald-100 text-emerald-600"
+              : "bg-gray-100 text-gray-400"
+          }`}
+        >
+          {icon}
+        </div>
+        {!isLast && (
+          <div
+            className={`w-0.5 flex-1 min-h-[24px] ${
+              done ? "bg-emerald-200" : "bg-gray-200"
+            }`}
+          />
+        )}
+      </div>
+
+      {/* Content */}
+      <div className="pb-5">
+        <p
+          className={`text-sm font-medium ${
+            done ? "text-foreground" : "text-muted-foreground"
+          }`}
+        >
+          {label}
+        </p>
+        {timestamp ? (
+          <p className="text-xs text-muted-foreground">
+            {formatDate(timestamp)}
+          </p>
+        ) : (
+          <p className="text-xs text-muted-foreground/60 italic">Pending</p>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function NdaConfirmModal({
   application,
   onSubmit,
@@ -206,6 +262,9 @@ export function ApplicantDetail({
   const [ndaError, setNdaError] = useState<string | null>(null);
   const [ndaSentAt, setNdaSentAt] = useState<string | null>(
     application.nda_sent_at ?? null
+  );
+  const [ndaOpenedAt] = useState<string | null>(
+    application.nda_opened_at ?? null
   );
   const [ndaSignedAt] = useState<string | null>(
     application.nda_signed_at ?? null
@@ -479,103 +538,76 @@ export function ApplicantDetail({
         </div>
       )}
 
-      {/* NDA Card */}
+      {/* NDA Status Report */}
       <div className="rounded-xl border border-border bg-white p-6 shadow-sm">
-        <p className="mb-4 text-[10px] sm:text-xs font-bold uppercase tracking-wider text-gray-400">
-          NDA
+        <p className="mb-5 text-[10px] sm:text-xs font-bold uppercase tracking-wider text-gray-400">
+          NDA Status Report
         </p>
 
-        {ndaSignedAt ? (
-          <div className="space-y-3">
-            <div className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-50">
-                <svg
-                  className="h-4 w-4 text-emerald-600"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  strokeWidth={2}
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="m4.5 12.75 6 6 9-13.5"
-                  />
-                </svg>
-              </div>
-              <div>
-                <p className="text-sm font-medium text-emerald-700">
-                  NDA Signed
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {formatDate(ndaSignedAt)}
-                </p>
-              </div>
-            </div>
-            <button
-              onClick={handleDownloadNda}
-              className={buttonStyles.secondary}
-            >
-              <svg
-                className="h-4 w-4"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth={1.5}
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3"
-                />
+        {/* Timeline */}
+        <div className="space-y-0">
+          {/* Step 1: NDA Sent */}
+          <TimelineStep
+            label="NDA Sent"
+            timestamp={ndaSentAt}
+            done={!!ndaSentAt}
+            isLast={false}
+            icon={
+              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 12 3.269 3.125A59.769 59.769 0 0 1 21.485 12 59.768 59.768 0 0 1 3.27 20.875L5.999 12Zm0 0h7.5" />
+              </svg>
+            }
+          />
+
+          {/* Step 2: NDA Opened */}
+          <TimelineStep
+            label="NDA Opened"
+            timestamp={ndaOpenedAt}
+            done={!!ndaOpenedAt}
+            isLast={false}
+            icon={
+              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+              </svg>
+            }
+          />
+
+          {/* Step 3: NDA Signed */}
+          <TimelineStep
+            label="NDA Signed"
+            timestamp={ndaSignedAt}
+            done={!!ndaSignedAt}
+            isLast={true}
+            icon={
+              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+              </svg>
+            }
+          />
+        </div>
+
+        {/* Actions */}
+        <div className="mt-5 flex flex-wrap items-center gap-2">
+          {ndaSignedAt ? (
+            <button onClick={handleDownloadNda} className={buttonStyles.secondary}>
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
               </svg>
               Download Signed NDA
             </button>
-          </div>
-        ) : ndaSentAt ? (
-          <div className="space-y-3">
-            <div className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-amber-50">
-                <svg
-                  className="h-4 w-4 text-amber-600"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  strokeWidth={2}
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
-                  />
-                </svg>
-              </div>
-              <div>
-                <p className="text-sm font-medium text-amber-700">NDA Sent</p>
-                <p className="text-xs text-muted-foreground">
-                  {formatDate(ndaSentAt)}
-                </p>
-              </div>
-            </div>
-            <p className="text-xs text-muted-foreground italic">
-              Awaiting signature...
-            </p>
-            <button
-              onClick={handleOpenNdaModal}
-              disabled={ndaLoading}
-              className={buttonStyles.secondary}
-            >
-              {ndaLoading ? "Sending..." : "Resend NDA"}
-            </button>
-            {ndaError && (
-              <p className="text-xs text-destructive">{ndaError}</p>
-            )}
-          </div>
-        ) : (
-          <div className="space-y-3">
-            <p className="text-sm text-muted-foreground">
-              No NDA has been sent to this applicant yet.
-            </p>
+          ) : ndaSentAt ? (
+            <>
+              <button
+                onClick={handleOpenNdaModal}
+                disabled={ndaLoading}
+                className={buttonStyles.secondary}
+              >
+                {ndaLoading ? "Sending..." : "Resend NDA"}
+              </button>
+              <span className="text-xs text-muted-foreground italic">Awaiting signature...</span>
+            </>
+          ) : (
             <button
               onClick={handleOpenNdaModal}
               disabled={ndaLoading}
@@ -583,10 +615,10 @@ export function ApplicantDetail({
             >
               {ndaLoading ? "Sending..." : "Send NDA"}
             </button>
-            {ndaError && (
-              <p className="text-xs text-destructive">{ndaError}</p>
-            )}
-          </div>
+          )}
+        </div>
+        {ndaError && (
+          <p className="mt-2 text-xs text-destructive">{ndaError}</p>
         )}
       </div>
 

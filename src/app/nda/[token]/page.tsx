@@ -40,6 +40,16 @@ export default async function NdaPage({ params }: Props) {
 
   const app = application as ApplicationRow;
 
+  // Record that the NDA was opened (first open only)
+  if (!app.nda_signed_at) {
+    supabase
+      .from("job_applications")
+      .update({ nda_opened_at: new Date().toISOString() })
+      .eq("id", app.id)
+      .is("nda_opened_at", null)
+      .then(() => {});
+  }
+
   // Fetch job title
   const { data: job } = await supabase
     .from("jobs")

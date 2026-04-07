@@ -39,6 +39,7 @@ export interface JobApplication {
   readonly job_title?: string
   readonly nda_token?: string | null
   readonly nda_sent_at?: string | null
+  readonly nda_opened_at?: string | null
   readonly nda_signed_at?: string | null
   readonly nda_pdf_url?: string | null
   readonly background_check_url?: string | null
