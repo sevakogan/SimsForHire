@@ -383,3 +383,22 @@ export async function updateBackgroundCheckUrl(
     return { error: message };
   }
 }
+
+/**
+ * Delete an application by ID.
+ */
+export async function deleteApplication(
+  applicationId: string
+): Promise<void> {
+  const supabase = getAdminSupabase();
+  const { error } = await supabase
+    .from("job_applications")
+    .delete()
+    .eq("id", applicationId);
+
+  if (error) {
+    throw new Error(`Failed to delete application: ${error.message}`);
+  }
+
+  revalidatePath("/jobs");
+}

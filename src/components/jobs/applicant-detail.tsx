@@ -657,104 +657,66 @@ export function ApplicantDetail({
           NDA Status Report
         </p>
 
-        {/* Timeline */}
-        <div className="space-y-0">
-          {/* Step 1: NDA Sent */}
-          <TimelineStep
-            label="NDA Sent"
-            timestamp={ndaSentAt}
-            done={!!ndaSentAt}
-            isLast={false}
-            icon={
-              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M6 12 3.269 3.125A59.769 59.769 0 0 1 21.485 12 59.768 59.768 0 0 1 3.27 20.875L5.999 12Zm0 0h7.5" />
-              </svg>
-            }
-          />
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+          {/* Left: Timeline */}
+          <div>
+            <div className="space-y-0">
+              <TimelineStep label="NDA Sent" timestamp={ndaSentAt} done={!!ndaSentAt} isLast={false}
+                icon={<svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M6 12 3.269 3.125A59.769 59.769 0 0 1 21.485 12 59.768 59.768 0 0 1 3.27 20.875L5.999 12Zm0 0h7.5" /></svg>} />
+              <TimelineStep label={`Email Opened${ndaEmailOpenCount > 1 ? ` (${ndaEmailOpenCount}x)` : ""}`} timestamp={ndaEmailOpenedAt} done={!!ndaEmailOpenedAt} isLast={false}
+                icon={<svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M21.75 9v.906a2.25 2.25 0 0 1-1.183 1.981l-6.478 3.488M2.25 9v.906a2.25 2.25 0 0 0 1.183 1.981l6.478 3.488m8.839 2.51-4.66-2.51m0 0-1.023-.55a2.25 2.25 0 0 0-2.134 0l-1.022.55m0 0-4.661 2.51m16.5 1.615a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V8.844a2.25 2.25 0 0 1 1.183-1.981l7.5-4.039a2.25 2.25 0 0 1 2.134 0l7.5 4.039a2.25 2.25 0 0 1 1.183 1.98V19.5Z" /></svg>} />
+              <TimelineStep label="NDA Opened" timestamp={ndaOpenedAt} done={!!ndaOpenedAt} isLast={false}
+                icon={<svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" /><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" /></svg>} />
+              <TimelineStep label="NDA Signed" timestamp={ndaSignedAt} done={!!ndaSignedAt} isLast={true}
+                icon={<svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" /></svg>} />
+            </div>
 
-          {/* Step 2: Email Opened */}
-          <TimelineStep
-            label={`Email Opened${ndaEmailOpenCount > 1 ? ` (${ndaEmailOpenCount}x)` : ""}`}
-            timestamp={ndaEmailOpenedAt}
-            done={!!ndaEmailOpenedAt}
-            isLast={false}
-            icon={
-              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 9v.906a2.25 2.25 0 0 1-1.183 1.981l-6.478 3.488M2.25 9v.906a2.25 2.25 0 0 0 1.183 1.981l6.478 3.488m8.839 2.51-4.66-2.51m0 0-1.023-.55a2.25 2.25 0 0 0-2.134 0l-1.022.55m0 0-4.661 2.51m16.5 1.615a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V8.844a2.25 2.25 0 0 1 1.183-1.981l7.5-4.039a2.25 2.25 0 0 1 2.134 0l7.5 4.039a2.25 2.25 0 0 1 1.183 1.98V19.5Z" />
-              </svg>
-            }
-          />
+            {/* Actions */}
+            <div className="mt-4 flex flex-wrap items-center gap-2">
+              {ndaSignedAt ? (
+                <button onClick={handleDownloadNda} className={buttonStyles.secondary}>
+                  <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" /></svg>
+                  Download
+                </button>
+              ) : ndaSentAt ? (
+                <button onClick={handleOpenNdaModal} disabled={ndaLoading} className={buttonStyles.secondary}>
+                  {ndaLoading ? "Sending..." : "Resend NDA"}
+                </button>
+              ) : (
+                <button onClick={handleOpenNdaModal} disabled={ndaLoading} className={buttonStyles.danger}>
+                  {ndaLoading ? "Sending..." : "Send NDA"}
+                </button>
+              )}
+            </div>
+            {ndaError && <p className="mt-2 text-xs text-destructive">{ndaError}</p>}
+          </div>
 
-          {/* Step 3: NDA Opened */}
-          <TimelineStep
-            label="NDA Opened"
-            timestamp={ndaOpenedAt}
-            done={!!ndaOpenedAt}
-            isLast={false}
-            icon={
-              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" />
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
-              </svg>
-            }
-          />
-
-          {/* Step 3: NDA Signed */}
-          <TimelineStep
-            label="NDA Signed"
-            timestamp={ndaSignedAt}
-            done={!!ndaSignedAt}
-            isLast={true}
-            icon={
-              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
-              </svg>
-            }
-          />
+          {/* Right: NDA Preview */}
+          <div>
+            {ndaSignedAt && ndaPdfUrl ? (
+              <div className="space-y-2">
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Signed NDA</p>
+                <div className="rounded-lg border border-border overflow-hidden bg-gray-50">
+                  <iframe src={ndaPdfUrl} className="w-full h-64" title="Signed NDA" />
+                </div>
+              </div>
+            ) : ndaSignedAt ? (
+              <div className="space-y-2">
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Signed NDA</p>
+                <button
+                  onClick={async () => { const url = await fetchNdaPdfUrl(); if (url) setNdaPdfUrl(url); }}
+                  className="flex items-center justify-center w-full h-40 rounded-lg border border-dashed border-border bg-gray-50 text-xs text-muted-foreground hover:bg-gray-100 transition-colors"
+                >
+                  Click to load preview
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center justify-center h-full min-h-[120px] rounded-lg border border-dashed border-border">
+                <p className="text-xs text-muted-foreground">NDA preview will appear here after signing</p>
+              </div>
+            )}
+          </div>
         </div>
-
-        {/* Actions */}
-        <div className="mt-5 flex flex-wrap items-center gap-2">
-          {ndaSignedAt ? (
-            <>
-              <button onClick={handleViewNda} className={buttonStyles.secondary}>
-                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
-                </svg>
-                View NDA
-              </button>
-              <button onClick={handleDownloadNda} className={buttonStyles.secondary}>
-                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
-                </svg>
-                Download
-              </button>
-            </>
-          ) : ndaSentAt ? (
-            <>
-              <button
-                onClick={handleOpenNdaModal}
-                disabled={ndaLoading}
-                className={buttonStyles.secondary}
-              >
-                {ndaLoading ? "Sending..." : "Resend NDA"}
-              </button>
-              <span className="text-xs text-muted-foreground italic">Awaiting signature...</span>
-            </>
-          ) : (
-            <button
-              onClick={handleOpenNdaModal}
-              disabled={ndaLoading}
-              className={buttonStyles.danger}
-            >
-              {ndaLoading ? "Sending..." : "Send NDA"}
-            </button>
-          )}
-        </div>
-        {ndaError && (
-          <p className="mt-2 text-xs text-destructive">{ndaError}</p>
-        )}
       </div>
 
       {/* Driver's License */}
@@ -763,94 +725,41 @@ export function ApplicantDetail({
           Driver&apos;s License
         </p>
 
-        <div className="space-y-4">
-          {/* Timeline */}
-          <div className="space-y-0">
-            <TimelineStep
-              label="Front Uploaded"
-              timestamp={dlFrontUrl ? (dlSubmittedAt ?? new Date().toISOString()) : null}
-              done={!!dlFrontUrl}
-              isLast={false}
-              icon={
-                <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.41a2.25 2.25 0 013.182 0l2.909 2.91m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
-                </svg>
-              }
-            />
-            <TimelineStep
-              label="Back Uploaded"
-              timestamp={dlBackUrl ? (dlSubmittedAt ?? new Date().toISOString()) : null}
-              done={!!dlBackUrl}
-              isLast={false}
-              icon={
-                <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.41a2.25 2.25 0 013.182 0l2.909 2.91m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
-                </svg>
-              }
-            />
-            <TimelineStep
-              label="Submitted"
-              timestamp={dlFrontUrl && dlBackUrl ? dlSubmittedAt : null}
-              done={!!dlFrontUrl && !!dlBackUrl}
-              isLast={true}
-              icon={
-                <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
-                </svg>
-              }
-            />
-
-            {/* Upload buttons */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+          {/* Left: Timeline + upload buttons */}
+          <div>
+            <div className="space-y-0">
+              <TimelineStep label="Front Uploaded" timestamp={dlFrontUrl ? (dlSubmittedAt ?? new Date().toISOString()) : null} done={!!dlFrontUrl} isLast={false}
+                icon={<svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.41a2.25 2.25 0 013.182 0l2.909 2.91m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" /></svg>} />
+              <TimelineStep label="Back Uploaded" timestamp={dlBackUrl ? (dlSubmittedAt ?? new Date().toISOString()) : null} done={!!dlBackUrl} isLast={false}
+                icon={<svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.41a2.25 2.25 0 013.182 0l2.909 2.91m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" /></svg>} />
+              <TimelineStep label="Submitted" timestamp={dlFrontUrl && dlBackUrl ? dlSubmittedAt : null} done={!!dlFrontUrl && !!dlBackUrl} isLast={true}
+                icon={<svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" /></svg>} />
+            </div>
             <div className="mt-4 flex flex-wrap gap-2">
               {!dlFrontUrl && (
                 <label className={`${buttonStyles.secondary} cursor-pointer`}>
-                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
-                  </svg>
-                  {dlUploading ? "Uploading..." : "Upload Front"}
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    disabled={dlUploading}
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file) handleDlUpload("front", file);
-                    }}
-                  />
+                  <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" /></svg>
+                  {dlUploading ? "..." : "Upload Front"}
+                  <input type="file" accept="image/*" className="hidden" disabled={dlUploading} onChange={(e) => { const f = e.target.files?.[0]; if (f) handleDlUpload("front", f); }} />
                 </label>
               )}
               {!dlBackUrl && (
                 <label className={`${buttonStyles.secondary} cursor-pointer`}>
-                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
-                  </svg>
-                  {dlUploading ? "Uploading..." : "Upload Back"}
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    disabled={dlUploading}
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file) handleDlUpload("back", file);
-                    }}
-                  />
+                  <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" /></svg>
+                  {dlUploading ? "..." : "Upload Back"}
+                  <input type="file" accept="image/*" className="hidden" disabled={dlUploading} onChange={(e) => { const f = e.target.files?.[0]; if (f) handleDlUpload("back", f); }} />
                 </label>
               )}
             </div>
           </div>
 
-          {/* Preview images */}
-          <div className="grid grid-cols-2 gap-2">
+          {/* Right: Photos */}
+          <div className="space-y-2">
             {dlFrontUrl && (
               <div>
-                <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">Front</p>
-                <button
-                  type="button"
-                  onClick={() => setDlPreview(dlFrontUrl)}
-                  className="block w-full overflow-hidden rounded-lg border border-border hover:border-primary/40 transition-colors"
-                >
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">Front</p>
+                <button type="button" onClick={() => setDlPreview(dlFrontUrl)} className="block w-full overflow-hidden rounded-lg border border-border hover:border-primary/40 transition-colors">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={dlFrontUrl} alt="DL Front" className="w-full h-auto object-contain" />
                 </button>
@@ -858,12 +767,8 @@ export function ApplicantDetail({
             )}
             {dlBackUrl && (
               <div>
-                <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">Back</p>
-                <button
-                  type="button"
-                  onClick={() => setDlPreview(dlBackUrl)}
-                  className="block w-full overflow-hidden rounded-lg border border-border hover:border-primary/40 transition-colors"
-                >
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">Back</p>
+                <button type="button" onClick={() => setDlPreview(dlBackUrl)} className="block w-full overflow-hidden rounded-lg border border-border hover:border-primary/40 transition-colors">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={dlBackUrl} alt="DL Back" className="w-full h-auto object-contain" />
                 </button>
@@ -871,7 +776,7 @@ export function ApplicantDetail({
             )}
             {!dlFrontUrl && !dlBackUrl && (
               <div className="flex items-center justify-center h-full min-h-[100px] rounded-lg border border-dashed border-border">
-                <p className="text-xs text-muted-foreground">No photos uploaded yet</p>
+                <p className="text-xs text-muted-foreground">No photos yet</p>
               </div>
             )}
           </div>

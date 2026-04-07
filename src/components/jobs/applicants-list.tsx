@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { updateApplicationStatus } from "@/lib/actions/jobs";
+import { updateApplicationStatus, deleteApplication } from "@/lib/actions/jobs";
 import { tableStyles } from "@/components/ui/form-styles";
 import type { JobApplication, ApplicationStatus, APPLICATION_STATUSES } from "@/lib/jobs/types";
 
@@ -177,6 +177,24 @@ export function ApplicantsList({ applications: initial }: ApplicantsListProps) {
                         className="text-xs font-medium text-muted-foreground hover:text-foreground"
                       >
                         {isExpanded ? "Hide" : "Details"}
+                      </button>
+                      <button
+                        onClick={() => {
+                          if (!confirm(`Delete ${app.full_name}'s application?`)) return;
+                          if (!confirm("Are you sure? This cannot be undone.")) return;
+                          setApplications((prev) => prev.filter((a) => a.id !== app.id));
+                          startTransition(async () => {
+                            await deleteApplication(app.id);
+                            router.refresh();
+                          });
+                        }}
+                        disabled={isPending}
+                        className="flex h-6 w-6 items-center justify-center rounded-md text-destructive hover:bg-red-50 transition-colors disabled:opacity-50"
+                        title="Delete applicant"
+                      >
+                        <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
                       </button>
                     </div>
                   </td>
