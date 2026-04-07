@@ -34,15 +34,20 @@ export interface JobApplication {
   readonly about_me: string
   readonly resume_url: string | null
   readonly images: readonly string[]
-  readonly status: 'new' | 'reviewed' | 'contacted' | 'hired' | 'rejected'
+  readonly status: 'new' | 'reviewed' | 'contacted' | 'in_process' | 'hired' | 'rejected'
   readonly created_at: string
   readonly job_title?: string
+  readonly nda_token?: string | null
+  readonly nda_sent_at?: string | null
+  readonly nda_signed_at?: string | null
+  readonly nda_pdf_url?: string | null
+  readonly background_check_url?: string | null
 }
 
 export type ApplicationStatus = JobApplication['status']
 
 export const APPLICATION_STATUSES: readonly ApplicationStatus[] = [
-  'new', 'reviewed', 'contacted', 'hired', 'rejected',
+  'new', 'reviewed', 'contacted', 'in_process', 'hired', 'rejected',
 ] as const
 
 export interface ApiResponse<T> {

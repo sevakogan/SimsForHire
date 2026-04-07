@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { updateApplicationStatus } from "@/lib/actions/jobs";
 import { tableStyles } from "@/components/ui/form-styles";
 import type { JobApplication, ApplicationStatus, APPLICATION_STATUSES } from "@/lib/jobs/types";
@@ -14,6 +15,7 @@ const STATUS_STYLES: Record<ApplicationStatus, { bg: string; text: string; label
   new: { bg: "bg-blue-50", text: "text-blue-700", label: "New" },
   reviewed: { bg: "bg-violet-50", text: "text-violet-700", label: "Reviewed" },
   contacted: { bg: "bg-amber-50", text: "text-amber-700", label: "Contacted" },
+  in_process: { bg: "bg-sky-50", text: "text-sky-700", label: "In Process" },
   hired: { bg: "bg-emerald-50", text: "text-emerald-700", label: "Hired" },
   rejected: { bg: "bg-red-50", text: "text-red-700", label: "Rejected" },
 };
@@ -22,6 +24,7 @@ const STATUS_OPTIONS: readonly { value: ApplicationStatus; label: string }[] = [
   { value: "new", label: "New" },
   { value: "reviewed", label: "Reviewed" },
   { value: "contacted", label: "Contacted" },
+  { value: "in_process", label: "In Process" },
   { value: "hired", label: "Hired" },
   { value: "rejected", label: "Rejected" },
 ];
@@ -162,12 +165,20 @@ export function ApplicantsList({ applications: initial }: ApplicantsListProps) {
                   </td>
                   <td className={tableStyles.tdMuted}>{formatDate(app.created_at)}</td>
                   <td className={tableStyles.td}>
-                    <button
-                      onClick={() => setExpandedId(isExpanded ? null : app.id)}
-                      className="text-xs font-medium text-blue-600 hover:text-blue-700"
-                    >
-                      {isExpanded ? "Hide" : "Details"}
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <Link
+                        href={`/jobs/applicants/${app.id}`}
+                        className="inline-flex items-center gap-1 rounded-md bg-primary px-2.5 py-1 text-xs font-medium text-white hover:bg-primary-hover transition-colors"
+                      >
+                        Open
+                      </Link>
+                      <button
+                        onClick={() => setExpandedId(isExpanded ? null : app.id)}
+                        className="text-xs font-medium text-muted-foreground hover:text-foreground"
+                      >
+                        {isExpanded ? "Hide" : "Details"}
+                      </button>
+                    </div>
                   </td>
                 </tr>
               );

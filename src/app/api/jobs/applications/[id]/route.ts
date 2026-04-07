@@ -142,25 +142,47 @@ export async function PATCH(
     }
 
     const body = await request.json();
-    const { status } = body;
+    const { status, background_check_url } = body;
 
-    if (
-      !status ||
-      typeof status !== "string" ||
-      !(APPLICATION_STATUSES as readonly string[]).includes(status)
-    ) {
+    // Build update payload from allowed fields
+    const updatePayload: Record<string, unknown> = {};
+
+    if (status !== undefined) {
+      if (
+        typeof status !== "string" ||
+        !(APPLICATION_STATUSES as readonly string[]).includes(status)
+      ) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: `status must be one of: ${APPLICATION_STATUSES.join(", ")}`,
+          },
+          { status: 400 }
+        );
+      }
+      updatePayload.status = status;
+    }
+
+    if (background_check_url !== undefined) {
+      if (typeof background_check_url !== "string") {
+        return NextResponse.json(
+          { success: false, error: "background_check_url must be a string" },
+          { status: 400 }
+        );
+      }
+      updatePayload.background_check_url = background_check_url;
+    }
+
+    if (Object.keys(updatePayload).length === 0) {
       return NextResponse.json(
-        {
-          success: false,
-          error: `status must be one of: ${APPLICATION_STATUSES.join(", ")}`,
-        },
+        { success: false, error: "No valid fields to update" },
         { status: 400 }
       );
     }
 
     const { data: application, error } = await supabase
       .from("job_applications")
-      .update({ status })
+      .update(updatePayload)
       .eq("id", id)
       .select()
       .single();
