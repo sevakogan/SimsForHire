@@ -12,6 +12,7 @@ interface ApplicationRow {
   id: string;
   full_name: string;
   nda_signed_at: string | null;
+  require_dl: boolean | null;
   job_id: string;
 }
 
@@ -30,7 +31,7 @@ export default async function NdaPage({ params }: Props) {
 
   const { data: application, error } = await supabase
     .from("job_applications")
-    .select("id, full_name, nda_signed_at, job_id")
+    .select("id, full_name, nda_signed_at, require_dl, job_id")
     .eq("nda_token", token)
     .single();
 
@@ -102,6 +103,7 @@ export default async function NdaPage({ params }: Props) {
       applicantName={app.full_name}
       jobTitle={jobTitle}
       token={token}
+      requireDl={app.require_dl ?? true}
     />
   );
 }

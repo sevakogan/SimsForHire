@@ -18,6 +18,7 @@ interface NdaSigningPageProps {
   readonly applicantName: string;
   readonly jobTitle: string;
   readonly token: string;
+  readonly requireDl?: boolean;
 }
 
 /* ────────────────────────────────────────────────
@@ -303,6 +304,7 @@ export function NdaSigningPage({
   applicantName,
   jobTitle,
   token,
+  requireDl = true,
 }: NdaSigningPageProps) {
   const [signature, setSignature] = useState<string | null>(null);
   const [signerName, setSignerName] = useState(applicantName);
@@ -480,11 +482,11 @@ export function NdaSigningPage({
     else { setDlBack(file); setDlBackPreview(url); }
   }
 
-  /* ─── Success state: NDA signed → DL upload ─── */
+  /* ─── Success state: NDA signed → DL upload (if required) ─── */
   if (signed) {
     // Final done state
-    if (dlDone || dlStep === false) {
-      if (dlDone) {
+    if (dlDone || (!requireDl && dlStep === false)) {
+      if (dlDone || !requireDl) {
         return (
           <div className={`rounded-2xl border shadow-sm p-8 text-center ${theme.card}`}>
             <div className={`mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full ${theme.successBg}`}>

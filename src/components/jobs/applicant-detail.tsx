@@ -55,6 +55,7 @@ interface NdaFormData {
   readonly lastName: string;
   readonly email: string;
   readonly phone: string;
+  readonly requireDl?: boolean;
 }
 
 function splitFullName(fullName: string): { firstName: string; lastName: string } {
@@ -141,6 +142,7 @@ function NdaConfirmModal({
     lastName,
     email: application.email,
     phone: application.phone ?? "",
+    requireDl: true,
   });
 
   function handleFieldChange(field: keyof NdaFormData, value: string) {
@@ -227,6 +229,20 @@ function NdaConfirmModal({
             />
           </div>
 
+          {/* DL Requirement checkbox */}
+          <label className="flex items-center gap-2.5 rounded-lg border border-border bg-muted/30 px-3 py-2.5 cursor-pointer hover:bg-muted/50 transition-colors">
+            <input
+              type="checkbox"
+              checked={form.requireDl ?? true}
+              onChange={(e) => setForm((prev) => ({ ...prev, requireDl: e.target.checked }))}
+              className="h-4 w-4 rounded border-border text-primary focus:ring-primary/20"
+            />
+            <div>
+              <p className="text-sm font-medium text-foreground">Request Driver&apos;s License</p>
+              <p className="text-xs text-muted-foreground">Applicant will be asked to upload front &amp; back of their ID after signing</p>
+            </div>
+          </label>
+
           <div className="flex items-center justify-end gap-3 pt-2">
             <button
               type="button"
@@ -269,6 +285,12 @@ export function ApplicantDetail({
   const [ndaSignedAt, setNdaSignedAt] = useState<string | null>(
     application.nda_signed_at ?? null
   );
+  const [ndaEmailOpenedAt, setNdaEmailOpenedAt] = useState<string | null>(
+    application.nda_email_opened_at ?? null
+  );
+  const [ndaEmailOpenCount, setNdaEmailOpenCount] = useState<number>(
+    application.nda_email_open_count ?? 0
+  );
   const [ndaPdfUrl, setNdaPdfUrl] = useState<string | null>(null);
   const [dlFrontUrl, setDlFrontUrl] = useState<string | null>(
     application.dl_front_url ?? null
@@ -298,6 +320,12 @@ export function ApplicantDetail({
       if (!res.ok) return;
       const result = await res.json();
       const data = result.data ?? result;
+      if (data.nda_email_opened_at && !ndaEmailOpenedAt) {
+        setNdaEmailOpenedAt(data.nda_email_opened_at);
+      }
+      if (data.nda_email_open_count > ndaEmailOpenCount) {
+        setNdaEmailOpenCount(data.nda_email_open_count);
+      }
       if (data.nda_opened_at && !ndaOpenedAt) {
         setNdaOpenedAt(data.nda_opened_at);
       }
@@ -308,7 +336,7 @@ export function ApplicantDetail({
     } catch {
       // silent
     }
-  }, [ndaSentAt, ndaSignedAt, ndaOpenedAt, application.id, router]);
+  }, [ndaSentAt, ndaSignedAt, ndaOpenedAt, ndaEmailOpenedAt, ndaEmailOpenCount, application.id, router]);
 
   useEffect(() => {
     if (!ndaSentAt || ndaSignedAt) return;
@@ -641,7 +669,20 @@ export function ApplicantDetail({
             }
           />
 
-          {/* Step 2: NDA Opened */}
+          {/* Step 2: Email Opened */}
+          <TimelineStep
+            label={`Email Opened${ndaEmailOpenCount > 1 ? ` (${ndaEmailOpenCount}x)` : ""}`}
+            timestamp={ndaEmailOpenedAt}
+            done={!!ndaEmailOpenedAt}
+            isLast={false}
+            icon={
+              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 9v.906a2.25 2.25 0 0 1-1.183 1.981l-6.478 3.488M2.25 9v.906a2.25 2.25 0 0 0 1.183 1.981l6.478 3.488m8.839 2.51-4.66-2.51m0 0-1.023-.55a2.25 2.25 0 0 0-2.134 0l-1.022.55m0 0-4.661 2.51m16.5 1.615a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V8.844a2.25 2.25 0 0 1 1.183-1.981l7.5-4.039a2.25 2.25 0 0 1 2.134 0l7.5 4.039a2.25 2.25 0 0 1 1.183 1.98V19.5Z" />
+              </svg>
+            }
+          />
+
+          {/* Step 3: NDA Opened */}
           <TimelineStep
             label="NDA Opened"
             timestamp={ndaOpenedAt}

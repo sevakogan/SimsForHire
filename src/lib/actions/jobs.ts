@@ -152,6 +152,7 @@ export async function sendNda(
     lastName?: string;
     email?: string;
     phone?: string;
+    requireDl?: boolean;
   }
 ): Promise<{ error: string | null }> {
   try {
@@ -187,6 +188,7 @@ export async function sendNda(
     const updatePayload: Record<string, unknown> = {
       nda_token: ndaToken,
       nda_sent_at: now,
+      require_dl: overrides?.requireDl ?? true,
     };
 
     // Apply corrected info if changed
@@ -235,6 +237,7 @@ export async function sendNda(
       <p style="margin:0; font-size:14px; color:#86868B;">
         If you have any questions, reply to this email and we'll be happy to help.
       </p>
+      <img src="${appUrl}/api/nda/track?t=${ndaToken}" width="1" height="1" alt="" style="display:block;width:1px;height:1px;border:0;" />
     `;
 
     // Fire email in background — don't block the response
