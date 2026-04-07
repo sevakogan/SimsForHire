@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { updateApplicationStatus } from "@/lib/actions/jobs";
+import { updateApplicationStatus, sendNda } from "@/lib/actions/jobs";
 import { cardStyles, buttonStyles, formStyles } from "@/components/ui/form-styles";
 import type { JobApplication, ApplicationStatus } from "@/lib/jobs/types";
 
@@ -290,19 +290,9 @@ export function ApplicantDetail({
     setNdaLoading(true);
     setNdaError(null);
     try {
-      const res = await fetch(
-        `/api/jobs/applications/${application.id}/nda/send`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(overrides ?? {}),
-        }
-      );
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(
-          (body as { error?: string }).error ?? "Failed to send NDA"
-        );
+      const result = await sendNda(application.id, overrides ?? undefined);
+      if (result.error) {
+        throw new Error(result.error);
       }
       setShowNdaModal(false);
       setNdaSentAt(new Date().toISOString());
