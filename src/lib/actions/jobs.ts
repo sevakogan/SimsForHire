@@ -237,18 +237,15 @@ export async function sendNda(
       </p>
     `;
 
-    try {
-      await sendEmail({
-        to: resolvedEmail,
-        subject: "SimsForHire — Non-Disclosure Agreement",
-        bodyHtml,
-        leadName: applicantName,
-      });
-    } catch (emailErr) {
-      const emailMsg = emailErr instanceof Error ? emailErr.message : "Email send failed";
-      console.error("[sendNda] Email failed:", emailMsg);
-      return { error: `Email failed: ${emailMsg}` };
-    }
+    // Fire email in background — don't block the response
+    sendEmail({
+      to: resolvedEmail,
+      subject: "SimsForHire — Non-Disclosure Agreement",
+      bodyHtml,
+      leadName: applicantName,
+    }).catch((emailErr) => {
+      console.error("[sendNda] Email failed:", emailErr instanceof Error ? emailErr.message : emailErr);
+    });
 
     revalidatePath("/jobs");
     return { error: null };
@@ -336,16 +333,14 @@ export async function signNda(
       </p>
     `;
 
-    try {
-      await sendEmail({
-        to: "seva@simsforhire.com",
-        subject: `NDA Signed: ${applicantName} — ${jobTitle}`,
-        bodyHtml: adminBodyHtml,
-      });
-    } catch (emailErr) {
-      // Non-critical: log but don't fail the signing
+    // Fire admin notification in background — don't block the signing response
+    sendEmail({
+      to: "seva@simsforhire.com",
+      subject: `NDA Signed: ${applicantName} — ${jobTitle}`,
+      bodyHtml: adminBodyHtml,
+    }).catch((emailErr) => {
       console.error("[signNda] admin notification email failed:", emailErr);
-    }
+    });
 
     revalidatePath("/jobs");
     return { error: null };

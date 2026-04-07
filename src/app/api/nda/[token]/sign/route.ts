@@ -73,12 +73,12 @@ export async function POST(
       );
     }
 
-    // Upload the signed PDF to storage
+    // Upload the signed PDF to storage (private bucket)
     const pdfBuffer = Buffer.from(body.pdfBase64, "base64");
-    const pdfPath = `ndas/${application.id}/signed-nda.pdf`;
+    const pdfPath = `applications/${application.id}/nda/signed-nda.pdf`;
 
     const { error: uploadError } = await supabase.storage
-      .from("job-files")
+      .from("application-files")
       .upload(pdfPath, pdfBuffer, {
         contentType: "application/pdf",
         upsert: true,
@@ -92,19 +92,15 @@ export async function POST(
       );
     }
 
-    // Get the public URL for the PDF
-    const { data: urlData } = supabase.storage
-      .from("job-files")
-      .getPublicUrl(pdfPath);
-
     const now = new Date().toISOString();
 
-    // Update the application record
+    // Update the application record with storage path (not public URL — it's a private bucket)
     const { error: updateError } = await supabase
       .from("job_applications")
       .update({
         nda_signed_at: now,
-        nda_pdf_url: urlData.publicUrl,
+        nda_signature_data: body.signatureDataUrl,
+        nda_pdf_url: pdfPath,
       })
       .eq("id", application.id);
 
