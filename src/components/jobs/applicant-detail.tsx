@@ -58,6 +58,32 @@ interface NdaFormData {
   readonly requireDl?: boolean;
 }
 
+function getSocialUrl(platform: string, handle: string): string {
+  const h = handle.replace(/^@/, "").trim();
+  const p = platform.toLowerCase();
+  if (p === "tiktok") return `https://tiktok.com/@${h}`;
+  if (p === "youtube") return `https://youtube.com/@${h}`;
+  if (p === "twitter" || p === "x") return `https://x.com/${h}`;
+  if (p === "facebook" || p === "fb") return `https://facebook.com/${h}`;
+  if (p === "linkedin") return `https://linkedin.com/in/${h}`;
+  if (p === "snapchat") return `https://snapchat.com/add/${h}`;
+  if (p === "threads") return `https://threads.net/@${h}`;
+  if (handle.startsWith("http")) return handle;
+  return `https://google.com/search?q=${encodeURIComponent(`${platform} ${handle}`)}`;
+}
+
+function getSocialColors(platform: string): string {
+  const p = platform.toLowerCase();
+  if (p === "tiktok") return "bg-black";
+  if (p === "youtube") return "bg-red-600";
+  if (p === "twitter" || p === "x") return "bg-black";
+  if (p === "facebook" || p === "fb") return "bg-[#1877F2]";
+  if (p === "linkedin") return "bg-[#0A66C2]";
+  if (p === "snapchat") return "bg-[#FFFC00] text-black";
+  if (p === "threads") return "bg-black";
+  return "bg-gray-600";
+}
+
 function splitFullName(fullName: string): { firstName: string; lastName: string } {
   const parts = fullName.trim().split(/\s+/);
   if (parts.length <= 1) {
@@ -576,6 +602,91 @@ export function ApplicantDetail({
               </div>
             </div>
           )}
+        </div>
+      </div>
+
+      {/* Online Presence */}
+      <div className={cardStyles.base}>
+        <p className="mb-4 text-[10px] sm:text-xs font-bold uppercase tracking-wider text-gray-400">
+          Online Presence
+        </p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {/* Instagram */}
+          {application.instagram && (
+            <a
+              href={`https://instagram.com/${application.instagram.replace(/^@/, "")}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-3 rounded-xl border border-border px-4 py-3 hover:bg-muted/50 transition-colors group"
+            >
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-purple-500 via-pink-500 to-orange-400">
+                <svg className="h-4.5 w-4.5 text-white" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" /></svg>
+              </div>
+              <div className="min-w-0">
+                <p className="text-xs font-semibold text-foreground group-hover:text-primary transition-colors">Instagram</p>
+                <p className="text-[11px] text-muted-foreground truncate">@{application.instagram.replace(/^@/, "")}</p>
+              </div>
+              <svg className="h-4 w-4 ml-auto shrink-0 text-muted-foreground/40 group-hover:text-primary transition-colors" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" /></svg>
+            </a>
+          )}
+
+          {/* TikTok / other socials */}
+          {application.socials.map((s, i) => {
+            const url = getSocialUrl(s.platform, s.handle);
+            const colors = getSocialColors(s.platform);
+            return (
+              <a
+                key={i}
+                href={url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-3 rounded-xl border border-border px-4 py-3 hover:bg-muted/50 transition-colors group"
+              >
+                <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${colors}`}>
+                  <span className="text-xs font-bold text-white">{s.platform.slice(0, 2).toUpperCase()}</span>
+                </div>
+                <div className="min-w-0">
+                  <p className="text-xs font-semibold text-foreground group-hover:text-primary transition-colors">{s.platform}</p>
+                  <p className="text-[11px] text-muted-foreground truncate">{s.handle}</p>
+                </div>
+                <svg className="h-4 w-4 ml-auto shrink-0 text-muted-foreground/40 group-hover:text-primary transition-colors" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" /></svg>
+              </a>
+            );
+          })}
+
+          {/* LinkedIn Search */}
+          <a
+            href={`https://www.linkedin.com/search/results/all/?keywords=${encodeURIComponent(application.full_name)}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-3 rounded-xl border border-border px-4 py-3 hover:bg-muted/50 transition-colors group"
+          >
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#0A66C2]">
+              <span className="text-xs font-bold text-white">in</span>
+            </div>
+            <div className="min-w-0">
+              <p className="text-xs font-semibold text-foreground group-hover:text-primary transition-colors">LinkedIn</p>
+              <p className="text-[11px] text-muted-foreground">Search for {application.full_name.split(" ")[0]}</p>
+            </div>
+            <svg className="h-4 w-4 ml-auto shrink-0 text-muted-foreground/40 group-hover:text-primary transition-colors" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" /></svg>
+          </a>
+
+          {/* Google Search */}
+          <a
+            href={`https://www.google.com/search?q=${encodeURIComponent(`"${application.full_name}" ${application.instagram ? application.instagram.replace(/^@/, "") : ""}`)}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-3 rounded-xl border border-border px-4 py-3 hover:bg-muted/50 transition-colors group"
+          >
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white border border-gray-200">
+              <span className="text-xs font-bold text-[#4285F4]">G</span>
+            </div>
+            <div className="min-w-0">
+              <p className="text-xs font-semibold text-foreground group-hover:text-primary transition-colors">Google</p>
+              <p className="text-[11px] text-muted-foreground">Search for {application.full_name.split(" ")[0]}</p>
+            </div>
+            <svg className="h-4 w-4 ml-auto shrink-0 text-muted-foreground/40 group-hover:text-primary transition-colors" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" /></svg>
+          </a>
         </div>
       </div>
 
