@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { generateText } from "ai";
+import { getBlogContext } from "@/lib/actions/blog";
 
 // Auth: OIDC via `vercel env pull` (VERCEL_OIDC_TOKEN) — no API key needed.
 // First use: enable AI Gateway at vercel.com/{team}/simsforhire-admin/settings → AI Gateway,
@@ -19,17 +20,17 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "topic is required" }, { status: 400 });
   }
 
+  // Load dynamic business context (editable from admin blog page)
+  const blogContext = await getBlogContext();
+
   const prompt = `You are a premium content writer for SimsForHire, Miami's premier racing simulator rental company. Write a compelling, beautifully formatted blog post.
 
 Topic: ${topic}
 ${title ? `Suggested title: ${title}` : ""}
 
-SimsForHire context:
+${blogContext ? `BUSINESS CONTEXT (use this as the source of truth — it overrides any other info you have about the company):\n${blogContext}\n` : `SimsForHire context:
 - We rent full-motion racing simulators to corporate events, private parties, brand activations, and car dealerships in Miami & South Florida
-- Fleet: up to 8 rigs (6 full-motion Sigma Integrale, 2 non-motion), Simucube 2 direct drive steering, triple 39" displays
-- 3,400+ racers served at events like Art Basel Miami, Hard Rock Miami International Autodrome
-- Monthly leasing from $2,700/mo for dealerships and venues
-- Phone: (754) 228-5654 | Website: simsforhire.com
+- Phone: (754) 228-5654 | Website: simsforhire.com`}
 
 CRITICAL HTML FORMATTING RULES for body_html:
 - Use <h2> for main section headings (3-5 sections per article)

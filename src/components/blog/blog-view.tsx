@@ -5,11 +5,13 @@ import {
   createBlogPost,
   updateBlogPost,
   deleteBlogPost,
+  saveBlogContext,
   type BlogPost,
 } from "@/lib/actions/blog";
 
 interface Props {
   initialPosts: BlogPost[];
+  initialContext: string;
 }
 
 type Mode = "list" | "create" | "edit";
@@ -161,9 +163,13 @@ function formatDate(iso: string) {
   });
 }
 
-export function BlogView({ initialPosts }: Props) {
+export function BlogView({ initialPosts, initialContext }: Props) {
   const [posts, setPosts] = useState<BlogPost[]>(initialPosts);
   const [mode, setMode] = useState<Mode>("list");
+  const [blogContext, setBlogContext] = useState(initialContext);
+  const [contextOpen, setContextOpen] = useState(false);
+  const [contextSaving, setContextSaving] = useState(false);
+  const [contextSaved, setContextSaved] = useState(false);
   const [editing, setEditing] = useState<BlogPost | null>(null);
   const [previewing, setPreviewing] = useState<{
     title: string; excerpt: string; body_html: string; category: string; published_at: string;
@@ -341,6 +347,62 @@ export function BlogView({ initialPosts }: Props) {
         {previewing && (
           <BlogPreviewModal post={previewing} onClose={() => setPreviewing(null)} />
         )}
+        {/* Blog Context / Memory */}
+        <div className="rounded-xl border border-border bg-white shadow-sm mb-6 overflow-hidden">
+          <button
+            onClick={() => setContextOpen(!contextOpen)}
+            className="w-full flex items-center justify-between px-5 py-3 hover:bg-muted/30 transition-colors"
+          >
+            <div className="flex items-center gap-2">
+              <svg className="h-4 w-4 text-amber-500" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 18v-5.25m0 0a6.01 6.01 0 0 0 1.5-.189m-1.5.189a6.01 6.01 0 0 1-1.5-.189m3.75 7.478a12.06 12.06 0 0 1-4.5 0m3.75 2.383a14.406 14.406 0 0 1-3 0M14.25 18v-.192c0-.983.658-1.823 1.508-2.316a7.5 7.5 0 1 0-7.517 0c.85.493 1.509 1.333 1.509 2.316V18" />
+              </svg>
+              <span className="text-xs font-semibold text-foreground">Blog Memory</span>
+              <span className="text-[10px] text-muted-foreground">— business context for AI-generated posts</span>
+            </div>
+            <svg className={`h-4 w-4 text-muted-foreground transition-transform ${contextOpen ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+            </svg>
+          </button>
+          {contextOpen && (
+            <div className="px-5 pb-5 border-t border-border">
+              <p className="text-[11px] text-muted-foreground mt-3 mb-3">
+                Everything you write here will be used as the source of truth when generating blog posts. Update your fleet size, pricing, capabilities, events served, etc. — AI will reference this instead of hardcoded info.
+              </p>
+              <textarea
+                value={blogContext}
+                onChange={(e) => { setBlogContext(e.target.value); setContextSaved(false); }}
+                rows={8}
+                className="w-full rounded-lg border border-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-foreground/20 resize-y"
+                placeholder={`Example:\n- We have 4 full-motion Sigma Integrale simulators available within 48 hours\n- We can scale to 10 or 20 units for large events\n- Pricing: $X per rig per day, $Y for weekend packages\n- Key events: Art Basel, Hard Rock Autodrome, Brickell City Centre\n- Phone: (754) 228-5654\n- Monthly leasing from $2,700/mo`}
+              />
+              <div className="flex items-center gap-3 mt-3">
+                <button
+                  onClick={async () => {
+                    setContextSaving(true);
+                    try {
+                      await saveBlogContext(blogContext);
+                      setContextSaved(true);
+                      setTimeout(() => setContextSaved(false), 3000);
+                    } catch {
+                      // silent
+                    } finally {
+                      setContextSaving(false);
+                    }
+                  }}
+                  disabled={contextSaving}
+                  className="rounded-lg bg-foreground text-background px-4 py-1.5 text-xs font-medium hover:opacity-80 disabled:opacity-40 transition-opacity"
+                >
+                  {contextSaving ? "Saving..." : contextSaved ? "Saved!" : "Save Context"}
+                </button>
+                {contextSaved && (
+                  <span className="text-xs text-emerald-600 font-medium">Context saved — all future blog posts will use this info</span>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+
         <div className="flex items-center justify-between mb-6">
           <p className="text-sm text-muted-foreground">
             {posts.length} post{posts.length !== 1 ? "s" : ""}

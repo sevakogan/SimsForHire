@@ -107,6 +107,33 @@ export async function deleteBlogPost(id: string): Promise<void> {
   if (error) throw new Error(error.message);
 }
 
+// ─── Blog Context (memory) ───
+
+export async function getBlogContext(): Promise<string> {
+  try {
+    const supabase = getAdminSupabase();
+    const { data } = await supabase
+      .from("app_config")
+      .select("value")
+      .eq("key", "blog_context")
+      .single();
+    return (data?.value as string) ?? "";
+  } catch {
+    return "";
+  }
+}
+
+export async function saveBlogContext(content: string): Promise<void> {
+  const supabase = getAdminSupabase();
+  const { error: upsertError } = await supabase
+    .from("app_config")
+    .upsert(
+      { key: "blog_context", value: content, updated_at: new Date().toISOString() },
+      { onConflict: "key" }
+    );
+  if (upsertError) throw new Error(upsertError.message);
+}
+
 // Admin-only: fetch ALL posts including drafts
 export async function getAllBlogPosts(): Promise<BlogPost[]> {
   try {
