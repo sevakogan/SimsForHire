@@ -57,6 +57,7 @@ function BlogPreviewModal({
   .body li{margin-bottom:.5rem}
   .body strong{color:white}
   .body a{color:#E10600;text-decoration:none}
+  .body hr{border:none;border-top:1px solid rgba(255,255,255,.08);margin:2rem 0}
   .body blockquote{border-left:3px solid #E10600;padding-left:1rem;margin:0 0 1.25rem;color:rgba(255,255,255,.5)}
   .cta{margin-top:64px;padding-top:40px;border-top:1px solid rgba(255,255,255,.08);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:20px}
   .cta-text p{font-size:10px;text-transform:uppercase;letter-spacing:.5em;color:#E10600;margin-bottom:8px}

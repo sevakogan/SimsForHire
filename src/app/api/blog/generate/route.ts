@@ -19,26 +19,51 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "topic is required" }, { status: 400 });
   }
 
-  const prompt = `You are a content writer for SimsForHire, Miami's premier racing simulator rental company. Write a compelling blog post for our website.
+  const prompt = `You are a premium content writer for SimsForHire, Miami's premier racing simulator rental company. Write a compelling, beautifully formatted blog post.
 
 Topic: ${topic}
 ${title ? `Suggested title: ${title}` : ""}
 
 SimsForHire context:
-- We rent full-motion racing simulators to corporate events, private parties, brand activations, and car dealerships in Miami
-- We have up to 8 rigs (6 full-motion Sigma Integrale, 2 non-motion), Simucube 2 direct drive, triple 39" displays
-- We've served 3,400+ racers at events like Art Basel Miami, Hard Rock Miami International Autodrome
-- Monthly leasing starting at $2,700/mo for dealerships and venues
-- Phone: (754) 228-5654
+- We rent full-motion racing simulators to corporate events, private parties, brand activations, and car dealerships in Miami & South Florida
+- Fleet: up to 8 rigs (6 full-motion Sigma Integrale, 2 non-motion), Simucube 2 direct drive steering, triple 39" displays
+- 3,400+ racers served at events like Art Basel Miami, Hard Rock Miami International Autodrome
+- Monthly leasing from $2,700/mo for dealerships and venues
+- Phone: (754) 228-5654 | Website: simsforhire.com
 
-Return ONLY a JSON object with these exact fields (no markdown, no code blocks, just raw JSON):
+CRITICAL HTML FORMATTING RULES for body_html:
+- Use <h2> for main section headings (3-5 sections per article)
+- Use <h3> for sub-headings when needed
+- Every paragraph in <p> tags with substantive content (3-5 sentences each)
+- Use <strong> for key phrases, stats, and emphasis within paragraphs
+- Use <ul><li> for lists (features, benefits, etc.) — at least one list per article
+- Use <blockquote> for standout quotes or callout statements
+- Use <hr> between major sections for visual separation
+- Add an engaging intro paragraph before the first <h2>
+- End with a clear CTA paragraph mentioning our phone number
+- 600-1000 words, well-structured, scannable
+- Tone: authoritative yet approachable, premium but not stuffy — think motorsport meets luxury events
+
+EXAMPLE STRUCTURE:
+<p>Engaging intro hook paragraph...</p>
+<h2>First Section Heading</h2>
+<p>Content paragraph with <strong>key points bolded</strong>...</p>
+<p>Another paragraph...</p>
+<ul><li>Benefit one</li><li>Benefit two</li></ul>
+<hr>
+<h2>Second Section Heading</h2>
+<p>More content...</p>
+<blockquote>A standout statement or stat</blockquote>
+...etc
+
+Return ONLY a JSON object (no markdown, no code fences, just raw JSON):
 {
-  "title": "The blog post title (compelling, SEO-friendly)",
-  "slug": "url-friendly-slug",
-  "excerpt": "2-3 sentence summary for listing page (max 200 chars)",
-  "body_html": "Full article as HTML using <h2>, <p>, <ul>, <li>, <strong> tags. 400-700 words. No <html>, <head>, or <body> tags. Make it engaging and useful.",
-  "meta_title": "SEO title (50-60 chars)",
-  "meta_description": "SEO description (120-160 chars)"
+  "title": "Compelling SEO-friendly title (50-70 chars)",
+  "slug": "url-friendly-slug-max-80-chars",
+  "excerpt": "2-3 sentence summary for listing cards (max 200 chars)",
+  "body_html": "Full article as clean HTML per the formatting rules above",
+  "meta_title": "SEO page title (50-60 chars) | SimsForHire",
+  "meta_description": "SEO description with keyword + value prop (120-160 chars)"
 }`;
 
   try {
