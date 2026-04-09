@@ -14,6 +14,13 @@ export interface BlogPost {
   meta_title: string | null;
   meta_description: string | null;
   is_published: boolean;
+  featured_image_url: string | null;
+  og_image_url: string | null;
+  canonical_url: string | null;
+  focus_keyword: string | null;
+  tags: string[] | null;
+  author: string | null;
+  reading_time_min: number | null;
 }
 
 export async function getBlogPosts(): Promise<BlogPost[]> {
@@ -58,6 +65,13 @@ export async function createBlogPost(post: {
   meta_title?: string;
   meta_description?: string;
   is_published?: boolean;
+  focus_keyword?: string;
+  tags?: string[];
+  author?: string;
+  featured_image_url?: string;
+  og_image_url?: string;
+  canonical_url?: string;
+  reading_time_min?: number;
 }): Promise<BlogPost> {
   const supabase = getAdminSupabase();
   const { data, error } = await supabase

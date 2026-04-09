@@ -178,7 +178,15 @@ export function BlogView({ initialPosts }: Props) {
   const [category, setCategory] = useState("");
   const [metaTitle, setMetaTitle] = useState("");
   const [metaDesc, setMetaDesc] = useState("");
+  const [focusKeyword, setFocusKeyword] = useState("");
+  const [tags, setTags] = useState("");
+  const [author, setAuthor] = useState("SimsForHire");
+  const [featuredImageUrl, setFeaturedImageUrl] = useState("");
+  const [ogImageUrl, setOgImageUrl] = useState("");
+  const [canonicalUrl, setCanonicalUrl] = useState("");
+  const [readingTime, setReadingTime] = useState(0);
   const [isPublished, setIsPublished] = useState(false);
+  const [imagePrompts, setImagePrompts] = useState<string[]>([]);
 
   // AI generation state
   const [aiTopic, setAiTopic] = useState("");
@@ -189,6 +197,9 @@ export function BlogView({ initialPosts }: Props) {
     setEditing(null);
     setTitle(""); setSlug(""); setExcerpt(""); setBodyHtml("");
     setCategory(""); setMetaTitle(""); setMetaDesc(""); setIsPublished(false);
+    setFocusKeyword(""); setTags(""); setAuthor("SimsForHire");
+    setFeaturedImageUrl(""); setOgImageUrl(""); setCanonicalUrl("");
+    setReadingTime(0); setImagePrompts([]);
     setAiTopic(""); setAiError("");
     setMode("create");
   }
@@ -202,7 +213,15 @@ export function BlogView({ initialPosts }: Props) {
     setCategory(post.category ?? "");
     setMetaTitle(post.meta_title ?? "");
     setMetaDesc(post.meta_description ?? "");
+    setFocusKeyword(post.focus_keyword ?? "");
+    setTags(post.tags?.join(", ") ?? "");
+    setAuthor(post.author ?? "SimsForHire");
+    setFeaturedImageUrl(post.featured_image_url ?? "");
+    setOgImageUrl(post.og_image_url ?? "");
+    setCanonicalUrl(post.canonical_url ?? "");
+    setReadingTime(post.reading_time_min ?? 0);
     setIsPublished(post.is_published);
+    setImagePrompts([]);
     setAiTopic(""); setAiError("");
     setMode("edit");
   }
@@ -222,12 +241,19 @@ export function BlogView({ initialPosts }: Props) {
         throw new Error(err.error || "Generation failed");
       }
       const data = await res.json();
-      if (data.title && !title) setTitle(data.title);
-      if (data.slug && !slug) setSlug(data.slug);
+      // Fill ALL fields from AI — always overwrite except title if user typed one
+      if (data.title) setTitle((prev) => prev || data.title);
+      if (data.slug) setSlug(data.slug);
+      if (data.category) setCategory(data.category);
       if (data.excerpt) setExcerpt(data.excerpt);
       if (data.body_html) setBodyHtml(data.body_html);
       if (data.meta_title) setMetaTitle(data.meta_title);
       if (data.meta_description) setMetaDesc(data.meta_description);
+      if (data.focus_keyword) setFocusKeyword(data.focus_keyword);
+      if (data.tags) setTags(Array.isArray(data.tags) ? data.tags.join(", ") : data.tags);
+      if (data.author) setAuthor(data.author);
+      if (data.reading_time_min) setReadingTime(data.reading_time_min);
+      if (data.image_prompts) setImagePrompts(data.image_prompts);
     } catch (err) {
       setAiError(err instanceof Error ? err.message : "Generation failed");
     } finally {
@@ -248,6 +274,13 @@ export function BlogView({ initialPosts }: Props) {
             meta_title: metaTitle || undefined,
             meta_description: metaDesc || undefined,
             is_published: isPublished,
+            focus_keyword: focusKeyword || undefined,
+            tags: tags ? tags.split(",").map((t) => t.trim()).filter(Boolean) : undefined,
+            author: author || undefined,
+            featured_image_url: featuredImageUrl || undefined,
+            og_image_url: ogImageUrl || undefined,
+            canonical_url: canonicalUrl || undefined,
+            reading_time_min: readingTime || undefined,
           });
           setPosts((prev) => [post, ...prev]);
         } else if (editing) {
@@ -260,11 +293,18 @@ export function BlogView({ initialPosts }: Props) {
             meta_title: metaTitle || null,
             meta_description: metaDesc || null,
             is_published: isPublished,
+            focus_keyword: focusKeyword || null,
+            tags: tags ? tags.split(",").map((t) => t.trim()).filter(Boolean) : null,
+            author: author || null,
+            featured_image_url: featuredImageUrl || null,
+            og_image_url: ogImageUrl || null,
+            canonical_url: canonicalUrl || null,
+            reading_time_min: readingTime || null,
           });
           setPosts((prev) =>
             prev.map((p) =>
               p.id === editing.id
-                ? { ...p, slug, title, excerpt, body_html: bodyHtml, category, meta_title: metaTitle, meta_description: metaDesc, is_published: isPublished }
+                ? { ...p, slug, title, excerpt, body_html: bodyHtml, category, meta_title: metaTitle, meta_description: metaDesc, is_published: isPublished, focus_keyword: focusKeyword, tags: tags ? tags.split(",").map((t) => t.trim()).filter(Boolean) : null, author, featured_image_url: featuredImageUrl, og_image_url: ogImageUrl, canonical_url: canonicalUrl, reading_time_min: readingTime }
                 : p
             )
           );
@@ -530,6 +570,104 @@ export function BlogView({ initialPosts }: Props) {
               placeholder="SEO description (optional)"
             />
           </div>
+        </div>
+
+        {/* SEO Fields */}
+        <div className="pt-2 border-t border-border space-y-4">
+          <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">SEO & Discovery</p>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-medium text-muted-foreground mb-1.5">Focus Keyword</label>
+              <input
+                value={focusKeyword}
+                onChange={(e) => setFocusKeyword(e.target.value)}
+                className="w-full rounded-lg border border-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-foreground/20"
+                placeholder="e.g. racing simulator rental miami"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-muted-foreground mb-1.5">Tags (comma-separated)</label>
+              <input
+                value={tags}
+                onChange={(e) => setTags(e.target.value)}
+                className="w-full rounded-lg border border-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-foreground/20"
+                placeholder="sim racing, events, miami"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-muted-foreground mb-1.5">Author</label>
+              <input
+                value={author}
+                onChange={(e) => setAuthor(e.target.value)}
+                className="w-full rounded-lg border border-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-foreground/20"
+                placeholder="SimsForHire"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-muted-foreground mb-1.5">Reading Time (min)</label>
+              <input
+                type="number"
+                value={readingTime || ""}
+                onChange={(e) => setReadingTime(parseInt(e.target.value) || 0)}
+                className="w-full rounded-lg border border-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-foreground/20"
+                placeholder="4"
+              />
+            </div>
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-muted-foreground mb-1.5">Canonical URL</label>
+            <input
+              value={canonicalUrl}
+              onChange={(e) => setCanonicalUrl(e.target.value)}
+              className="w-full rounded-lg border border-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-foreground/20"
+              placeholder="https://simsforhire.com/blog/your-post (auto-generated if empty)"
+            />
+          </div>
+        </div>
+
+        {/* Images */}
+        <div className="pt-2 border-t border-border space-y-4">
+          <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Images</p>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-medium text-muted-foreground mb-1.5">Featured Image URL</label>
+              <input
+                value={featuredImageUrl}
+                onChange={(e) => setFeaturedImageUrl(e.target.value)}
+                className="w-full rounded-lg border border-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-foreground/20"
+                placeholder="https://..."
+              />
+              {featuredImageUrl && (
+                <div className="mt-2 rounded-lg overflow-hidden border border-border">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={featuredImageUrl} alt="Featured" className="w-full h-32 object-cover" />
+                </div>
+              )}
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-muted-foreground mb-1.5">OG Image URL</label>
+              <input
+                value={ogImageUrl}
+                onChange={(e) => setOgImageUrl(e.target.value)}
+                className="w-full rounded-lg border border-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-foreground/20"
+                placeholder="https://... (1200x630 recommended)"
+              />
+            </div>
+          </div>
+
+          {/* AI Image Prompts */}
+          {imagePrompts.length > 0 && (
+            <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 space-y-3">
+              <p className="text-xs font-bold text-amber-800">AI Image Prompts</p>
+              <p className="text-[11px] text-amber-600">Use these prompts with an image generator (Nano Banana, Midjourney, DALL-E) to create images for this post:</p>
+              {imagePrompts.map((prompt, i) => (
+                <div key={i} className="flex gap-2">
+                  <span className="text-[10px] font-bold text-amber-500 shrink-0 mt-0.5">{i + 1}.</span>
+                  <p className="text-xs text-amber-700 leading-relaxed">{prompt}</p>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         <div className="flex items-center gap-3 pt-2 border-t border-border">

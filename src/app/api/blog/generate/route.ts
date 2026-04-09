@@ -56,15 +56,27 @@ EXAMPLE STRUCTURE:
 <blockquote>A standout statement or stat</blockquote>
 ...etc
 
-Return ONLY a JSON object (no markdown, no code fences, just raw JSON):
+Return ONLY a JSON object (no markdown, no code fences, just raw JSON) with ALL of these fields:
 {
   "title": "Compelling SEO-friendly title (50-70 chars)",
   "slug": "url-friendly-slug-max-80-chars",
+  "category": "One of: Events, Simulators, Tips, Dealerships, News, Corporate, Technology",
   "excerpt": "2-3 sentence summary for listing cards (max 200 chars)",
   "body_html": "Full article as clean HTML per the formatting rules above",
-  "meta_title": "SEO page title (50-60 chars) | SimsForHire",
-  "meta_description": "SEO description with keyword + value prop (120-160 chars)"
-}`;
+  "meta_title": "SEO page title with primary keyword (50-60 chars) | SimsForHire",
+  "meta_description": "SEO description with keyword + value prop + CTA (120-160 chars)",
+  "focus_keyword": "Primary SEO keyword phrase (2-4 words, e.g. 'racing simulator rental miami')",
+  "tags": ["tag1", "tag2", "tag3", "tag4"],
+  "author": "SimsForHire",
+  "reading_time_min": 4,
+  "image_prompts": [
+    "Detailed image generation prompt for hero/featured image — describe a photorealistic scene related to the blog topic featuring racing simulators, events, or Miami settings. Be specific about lighting, composition, and mood.",
+    "Second image prompt for mid-article visual — different angle or scene",
+    "Third image prompt — detail shot or close-up related to the topic"
+  ]
+}
+
+IMPORTANT: Every single field must be filled. Do not return null or empty values. The image_prompts should describe photorealistic scenes that a text-to-image AI can generate — be vivid and specific.`;
 
   try {
     // Plain "provider/model" string routes through Vercel AI Gateway automatically.
