@@ -8,6 +8,7 @@ export type AcceptanceStatus = "pending" | "accepted" | "rejected";
 // Leads (from Astro marketing frontend)
 export type LeadSource = "rent" | "lease" | "popup";
 export type LeadStatus = "new" | "replied" | "in_progress" | "booked" | "lost";
+export type LeadPriority = "hot" | "warm" | "cold";
 
 export interface Lead {
   id: string;
@@ -36,6 +37,17 @@ export interface Lead {
   landing_page: string | null;
   archived_at: string | null;
   created_at: string;
+  // Scoring (populated at ingest time from simsforhire.com)
+  lead_score: number | null;
+  priority: LeadPriority | null;
+  estimated_value_cents: number | null;
+  lead_channel: string | null;
+  reference: string | null;
+  device_type: string | null;
+  page_count: number | null;
+  returning: boolean | null;
+  referrer: string | null;
+  time_to_lead: number | null;
 }
 
 // Email Campaigns

@@ -43,6 +43,33 @@ function getDetails(lead: Lead): string {
   return lead.event_type ?? lead.business_name ?? lead.interest ?? lead.message ?? "—";
 }
 
+const PRIORITY_STYLES: Record<"hot" | "warm" | "cold", { emoji: string; bg: string; fg: string }> = {
+  hot: { emoji: "🔥", bg: "rgba(225,6,0,0.1)", fg: "#E10600" },
+  warm: { emoji: "🟡", bg: "rgba(255,159,10,0.1)", fg: "#FF9F0A" },
+  cold: { emoji: "⚪️", bg: "rgba(142,142,147,0.1)", fg: "#8E8E93" },
+};
+
+function PriorityBadge({ priority, score }: { priority: Lead["priority"]; score: number | null }) {
+  if (!priority) return <span className="text-[11px] text-muted-foreground">—</span>;
+  const s = PRIORITY_STYLES[priority];
+  return (
+    <span
+      className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[11px] font-medium whitespace-nowrap"
+      style={{ color: s.fg, backgroundColor: s.bg }}
+      title={score != null ? `Score: ${score}/100` : undefined}
+    >
+      <span>{s.emoji}</span>
+      <span className="uppercase">{priority}</span>
+      {score != null && <span className="opacity-70">· {score}</span>}
+    </span>
+  );
+}
+
+function formatMoney(cents: number | null): string {
+  if (cents == null) return "—";
+  return `$${(cents / 100).toLocaleString("en-US", { maximumFractionDigits: 0 })}`;
+}
+
 function getCampaignLabel(c: LeadCampaign): string {
   const name = (c.campaign?.name ?? "Campaign")
     .replace("& Nurture", "")
@@ -243,7 +270,7 @@ export function LeadsView({ leads, campaignStatuses }: LeadsViewProps) {
           <table className="w-full border-collapse text-sm">
             <thead>
               <tr className="border-b border-border">
-                {["Status", "Name", "Contact", "Source", "Details", "Date", "Campaign", ""].map((h) => (
+                {["Priority", "Status", "Name", "Contact", "Source", "Value", "Details", "Date", "Campaign", ""].map((h) => (
                   <th
                     key={h}
                     className="px-3 py-3 text-left text-[10px] font-medium uppercase tracking-[0.5px] text-muted-foreground"
@@ -256,6 +283,9 @@ export function LeadsView({ leads, campaignStatuses }: LeadsViewProps) {
             <tbody>
               {filtered.map((lead) => (
                 <tr key={lead.id} className="border-b border-border last:border-0 hover:bg-black/[0.015]">
+                  <td className="px-3 py-2.5">
+                    <PriorityBadge priority={lead.priority} score={lead.lead_score} />
+                  </td>
                   <td className="px-3 py-2.5">
                     <LeadStatusSelect leadId={lead.id} currentStatus={lead.status} />
                   </td>
@@ -274,8 +304,11 @@ export function LeadsView({ leads, campaignStatuses }: LeadsViewProps) {
                   </td>
                   <td className="px-3 py-2.5">
                     <span className="text-[10px] uppercase tracking-[0.5px] text-muted-foreground">
-                      {lead.source}
+                      {lead.lead_channel || lead.source}
                     </span>
+                  </td>
+                  <td className="px-3 py-2.5 text-[12px] font-medium text-foreground tabular-nums whitespace-nowrap">
+                    {formatMoney(lead.estimated_value_cents)}
                   </td>
                   <td className="max-w-[150px] truncate px-3 py-2.5 text-[12px] text-muted-foreground">
                     {getDetails(lead)}
@@ -293,7 +326,7 @@ export function LeadsView({ leads, campaignStatuses }: LeadsViewProps) {
               ))}
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={8} className="px-4 py-16 text-center text-sm text-muted-foreground">
+                  <td colSpan={10} className="px-4 py-16 text-center text-sm text-muted-foreground">
                     No leads found
                   </td>
                 </tr>
@@ -307,9 +340,19 @@ export function LeadsView({ leads, campaignStatuses }: LeadsViewProps) {
           {filtered.map((lead) => (
             <div key={lead.id} className="rounded-[14px] border border-border bg-white p-4 space-y-3">
               <div className="flex items-start justify-between gap-2">
-                <div>
-                  <div className="font-medium text-sm text-foreground">{lead.name || "—"}</div>
-                  <div className="text-[11px] uppercase tracking-[0.5px] text-muted-foreground mt-0.5">{lead.source}</div>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <PriorityBadge priority={lead.priority} score={lead.lead_score} />
+                    <div className="font-medium text-sm text-foreground">{lead.name || "—"}</div>
+                  </div>
+                  <div className="text-[11px] uppercase tracking-[0.5px] text-muted-foreground mt-0.5">
+                    {lead.lead_channel || lead.source}
+                  </div>
+                  {lead.estimated_value_cents != null && (
+                    <div className="text-[13px] font-medium text-foreground mt-0.5 tabular-nums">
+                      {formatMoney(lead.estimated_value_cents)} est.
+                    </div>
+                  )}
                 </div>
                 <LeadStatusSelect leadId={lead.id} currentStatus={lead.status} />
               </div>
