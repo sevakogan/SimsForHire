@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { getAdminSupabase } from "@/lib/supabase-admin";
+import { sendCAPIEvent } from "@/lib/meta-capi";
 import type { Lead, LeadStatus, LeadCampaign } from "@/types";
 
 export async function getLeads(): Promise<Lead[]> {
@@ -67,12 +68,59 @@ export async function updateLeadStatus(id: string, status: LeadStatus): Promise<
     await handleLostLeadCampaign(id);
   }
 
-  // If marked booked → stop current campaign
+  // If marked booked → stop campaign + fire Meta Purchase event
   if (status === "booked") {
     await stopLeadCampaigns(id);
+    await fireMetaPurchaseEvent(id).catch((err) =>
+      console.error("[Meta Purchase] Failed:", err),
+    );
   }
 
   revalidatePath("/leads");
+}
+
+/**
+ * Sends a Purchase CAPI event to Meta when a lead converts to a booking.
+ * This is the signal Meta's optimization algorithm actually cares about —
+ * "this person paid us" vs "this person filled out a form".
+ *
+ * Uses `estimated_value_cents` from the lead row as the monetary value.
+ * Sales can edit that column directly in Supabase if the actual deal differs.
+ */
+async function fireMetaPurchaseEvent(leadId: string): Promise<void> {
+  const supabase = getAdminSupabase();
+  const { data: lead, error } = await supabase
+    .from("leads")
+    .select("email, phone, name, estimated_value_cents, source, event_type")
+    .eq("id", leadId)
+    .single();
+
+  if (error || !lead) {
+    console.error("[Meta Purchase] Could not load lead:", error?.message);
+    return;
+  }
+
+  const nameParts = (lead.name ?? "").trim().split(/\s+/);
+  const firstName = nameParts[0] || undefined;
+  const lastName = nameParts.length > 1 ? nameParts.slice(1).join(" ") : undefined;
+
+  await sendCAPIEvent({
+    eventName: "Purchase",
+    eventSourceUrl: "https://simsforhire.com",
+    eventId: `booking-${leadId}`, // deterministic — prevents double-count if called twice
+    userData: {
+      email: lead.email,
+      phone: lead.phone ?? undefined,
+      firstName,
+      lastName,
+    },
+    customData: {
+      content_category: lead.event_type ?? lead.source,
+      content_name: "Lead Booked",
+    },
+    value: lead.estimated_value_cents != null ? lead.estimated_value_cents / 100 : undefined,
+    currency: "USD",
+  });
 }
 
 export async function archiveLead(id: string): Promise<void> {
