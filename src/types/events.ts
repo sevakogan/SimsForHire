@@ -1,11 +1,22 @@
+export type EventType = "race" | "waiver";
+
 export interface LiveEvent {
   id: string;
   slug: string;
   name: string;
   theme: string | null;
   status: "active" | "archived";
+  event_type: EventType;
   created_at: string;
   updated_at: string;
+}
+
+export interface EventWaiverVersion {
+  id: string;
+  event_id: string;
+  version: number;
+  body: string;
+  created_at: string;
 }
 
 export interface EventConfig {
@@ -41,6 +52,11 @@ export interface Racer {
   sms_sent: boolean;
   sms_status: string | null;
   created_at: string;
+  // Waiver audit (populated only when this row was created via a waiver signature)
+  waiver_version: number | null;
+  waiver_accepted_at: string | null;
+  waiver_accepted_ip: string | null;
+  waiver_accepted_user_agent: string | null;
 }
 
 export type EventRole = "admin" | "employee";
