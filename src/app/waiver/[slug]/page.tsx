@@ -38,12 +38,12 @@ export default async function PublicWaiverPage({
         {/* Small logo header */}
         <header className="mb-5 flex flex-col items-center text-center">
           <Image
-            src="/sims-logo-white.png"
+            src="/sims-logo-white-long.png"
             alt="Sims For Hire"
-            width={96}
-            height={96}
+            width={400}
+            height={80}
             priority
-            className="h-16 w-16 object-contain"
+            className="h-10 w-auto object-contain"
           />
           <h1 className="mt-3 text-xl font-black tracking-tight">{event.name}</h1>
           <p className="mt-1 text-[12px] text-white/60">
