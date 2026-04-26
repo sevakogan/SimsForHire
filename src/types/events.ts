@@ -57,6 +57,8 @@ export interface Racer {
   waiver_accepted_at: string | null;
   waiver_accepted_ip: string | null;
   waiver_accepted_user_agent: string | null;
+  signature_data_url: string | null;
+  marketing_opt_in: boolean;
 }
 
 export type EventRole = "admin" | "employee";

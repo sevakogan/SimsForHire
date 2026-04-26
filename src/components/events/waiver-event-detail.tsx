@@ -203,9 +203,11 @@ export function WaiverEventDetail({
               <thead>
                 <tr className="border-b border-border text-left text-muted-foreground text-[11px] uppercase tracking-wide">
                   <th className="py-2 pr-3 font-semibold">Name</th>
-                  <th className="py-2 pr-3 font-semibold">Phone</th>
                   <th className="py-2 pr-3 font-semibold">Email</th>
-                  <th className="py-2 pr-3 font-semibold">Version</th>
+                  <th className="py-2 pr-3 font-semibold">Phone</th>
+                  <th className="py-2 pr-3 font-semibold">Signature</th>
+                  <th className="py-2 pr-3 font-semibold">Mkt</th>
+                  <th className="py-2 pr-3 font-semibold">Ver</th>
                   <th className="py-2 pr-3 font-semibold">Signed</th>
                   <th className="py-2 pr-3 font-semibold">IP</th>
                 </tr>
@@ -214,8 +216,27 @@ export function WaiverEventDetail({
                 {signers.map((s) => (
                   <tr key={s.id} className="border-b border-border/50 last:border-0">
                     <td className="py-2 pr-3 font-medium text-foreground">{s.name}</td>
-                    <td className="py-2 pr-3 text-muted-foreground">{s.phone}</td>
                     <td className="py-2 pr-3 text-muted-foreground">{s.email}</td>
+                    <td className="py-2 pr-3 text-muted-foreground">{s.phone || "—"}</td>
+                    <td className="py-2 pr-3">
+                      {s.signature_data_url ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={s.signature_data_url}
+                          alt="signature"
+                          className="h-8 w-20 object-contain bg-white rounded border border-border"
+                        />
+                      ) : (
+                        <span className="text-muted-foreground">—</span>
+                      )}
+                    </td>
+                    <td className="py-2 pr-3">
+                      {s.marketing_opt_in ? (
+                        <span className="text-green-600">✓</span>
+                      ) : (
+                        <span className="text-muted-foreground">—</span>
+                      )}
+                    </td>
                     <td className="py-2 pr-3 text-muted-foreground">v{s.waiver_version}</td>
                     <td className="py-2 pr-3 text-muted-foreground">
                       {s.waiver_accepted_at

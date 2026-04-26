@@ -32,6 +32,7 @@ export default async function PublicWaiverPage({
 
         <WaiverSignForm
           eventSlug={event.slug}
+          eventName={event.name}
           waiverBody={activeWaiver.body}
           waiverVersion={activeWaiver.version}
         />
