@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import Image from "next/image";
 import { getEvent } from "@/lib/actions/events";
 import { getActiveWaiver } from "@/lib/actions/waiver-events";
 import { WaiverSignForm } from "./sign-form";
@@ -21,12 +22,32 @@ export default async function PublicWaiverPage({
   if (!activeWaiver) notFound();
 
   return (
-    <main className="min-h-screen bg-[#0a0a12] text-white py-10 px-4">
-      <div className="mx-auto max-w-2xl">
-        <header className="mb-8 text-center">
-          <h1 className="text-3xl font-bold tracking-tight">{event.name}</h1>
-          <p className="mt-2 text-sm text-white/60">
-            Read the waiver carefully and sign below to participate.
+    <main className="min-h-screen bg-[#0a0a12] text-white">
+      {/* Subtle Miami grid backdrop */}
+      <div
+        aria-hidden
+        className="pointer-events-none fixed inset-0 opacity-[0.06]"
+        style={{
+          backgroundImage:
+            "linear-gradient(#FF5BA7 1px, transparent 1px), linear-gradient(90deg, #7BD0F5 1px, transparent 1px)",
+          backgroundSize: "40px 40px",
+        }}
+      />
+
+      <div className="relative mx-auto max-w-md px-4 py-6">
+        {/* Small logo header */}
+        <header className="mb-5 flex flex-col items-center text-center">
+          <Image
+            src="/sims-logo-white.png"
+            alt="Sims For Hire"
+            width={96}
+            height={96}
+            priority
+            className="h-16 w-16 object-contain"
+          />
+          <h1 className="mt-3 text-xl font-black tracking-tight">{event.name}</h1>
+          <p className="mt-1 text-[12px] text-white/60">
+            Read &amp; sign to participate
           </p>
         </header>
 
@@ -37,8 +58,8 @@ export default async function PublicWaiverPage({
           waiverVersion={activeWaiver.version}
         />
 
-        <footer className="mt-10 text-center text-[11px] text-white/40">
-          © {new Date().getFullYear()} Sims For Hire
+        <footer className="mt-8 text-center text-[10px] text-white/40">
+          © {new Date().getFullYear()} Sims For Hire · Miami
         </footer>
       </div>
     </main>

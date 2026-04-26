@@ -114,6 +114,65 @@ export async function listSigners(eventId: string): Promise<Racer[]> {
   return (data ?? []) as Racer[];
 }
 
+export interface SignerWithEvent {
+  id: string;
+  name: string;
+  email: string | null;
+  phone: string | null;
+  marketing_opt_in: boolean;
+  waiver_version: number | null;
+  waiver_accepted_at: string | null;
+  waiver_accepted_ip: string | null;
+  signature_data_url: string | null;
+  event_id: string;
+  event_name: string;
+  event_slug: string;
+}
+
+/** All waiver signers across every event (most recent first). */
+export async function listAllSigners(): Promise<SignerWithEvent[]> {
+  const supabase = getAdminSupabase();
+  // Foreign-table syntax requires a relationship; use two queries + in-memory join.
+  const { data: signers } = await supabase
+    .from("racers")
+    .select(
+      "id,name,email,phone,marketing_opt_in,waiver_version,waiver_accepted_at,waiver_accepted_ip,signature_data_url,event_id"
+    )
+    .not("waiver_version", "is", null)
+    .order("waiver_accepted_at", { ascending: false });
+
+  if (!signers || signers.length === 0) return [];
+
+  const eventIds = Array.from(new Set(signers.map((s) => s.event_id as string)));
+  const { data: events } = await supabase
+    .from("live_events")
+    .select("id,name,slug")
+    .in("id", eventIds);
+
+  const eventMap = new Map<string, { name: string; slug: string }>();
+  for (const e of events ?? []) {
+    eventMap.set(e.id as string, { name: e.name as string, slug: e.slug as string });
+  }
+
+  return signers.map((s) => {
+    const event = eventMap.get(s.event_id as string);
+    return {
+      id: s.id as string,
+      name: s.name as string,
+      email: (s.email as string | null) ?? null,
+      phone: (s.phone as string | null) ?? null,
+      marketing_opt_in: Boolean(s.marketing_opt_in),
+      waiver_version: (s.waiver_version as number | null) ?? null,
+      waiver_accepted_at: (s.waiver_accepted_at as string | null) ?? null,
+      waiver_accepted_ip: (s.waiver_accepted_ip as string | null) ?? null,
+      signature_data_url: (s.signature_data_url as string | null) ?? null,
+      event_id: s.event_id as string,
+      event_name: event?.name ?? "(deleted event)",
+      event_slug: event?.slug ?? "",
+    };
+  });
+}
+
 /* ── Publish new waiver version (append-only) ───────────────── */
 
 export async function publishWaiverVersion(

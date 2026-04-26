@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import QrGenerator from "@/components/qr/QrGenerator";
+import { SignatureModal, type SignatureModalSigner } from "@/components/signers/signature-modal";
 import { publishWaiverVersion } from "@/lib/actions/waiver-events";
 import type {
   EventWithConfig,
@@ -31,6 +32,7 @@ export function WaiverEventDetail({
   const [editing, setEditing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [activeSigner, setActiveSigner] = useState<SignatureModalSigner | null>(null);
 
   function handlePublish() {
     if (!confirm("Publish a new version of the waiver? Existing signatures keep their old version on record.")) return;
@@ -86,8 +88,10 @@ export function WaiverEventDetail({
         </div>
         <QrGenerator
           url={signUrl}
+          logoSrcDark="/sims-logo-black.png"
+          logoSrcLight="/sims-logo-white.png"
           filenamePrefix={`qr-waiver-${event.slug}`}
-          brandDark="#E10600"
+          brandDark="#FF5BA7"
           brandLight="#0a0a12"
         />
       </section>
@@ -150,7 +154,7 @@ export function WaiverEventDetail({
             className="w-full rounded-lg border border-border bg-[#F5F5F7] px-3 py-2 text-[12px] font-mono leading-relaxed focus:outline-none focus:ring-2 focus:ring-[#E10600]/30 focus:border-[#E10600]"
           />
         ) : (
-          <div className="rounded-lg border border-border bg-[#F5F5F7] px-3 py-2 text-[12px] font-mono leading-relaxed whitespace-pre-wrap max-h-[480px] overflow-y-auto">
+          <div className="rounded-lg border border-border bg-[#F5F5F7] px-3 py-2 text-[11px] font-mono leading-snug whitespace-pre-wrap max-h-24 overflow-y-auto text-muted-foreground">
             {activeWaiver?.body ?? "(No waiver versions yet)"}
           </div>
         )}
@@ -214,7 +218,24 @@ export function WaiverEventDetail({
               </thead>
               <tbody>
                 {signers.map((s) => (
-                  <tr key={s.id} className="border-b border-border/50 last:border-0">
+                  <tr
+                    key={s.id}
+                    className="border-b border-border/50 last:border-0 hover:bg-muted/30 cursor-pointer"
+                    onClick={() =>
+                      setActiveSigner({
+                        name: s.name,
+                        email: s.email,
+                        phone: s.phone,
+                        event_name: event.name,
+                        marketing_opt_in: s.marketing_opt_in,
+                        waiver_version: s.waiver_version,
+                        waiver_accepted_at: s.waiver_accepted_at,
+                        waiver_accepted_ip: s.waiver_accepted_ip,
+                        waiver_accepted_user_agent: s.waiver_accepted_user_agent,
+                        signature_data_url: s.signature_data_url,
+                      })
+                    }
+                  >
                     <td className="py-2 pr-3 font-medium text-foreground">{s.name}</td>
                     <td className="py-2 pr-3 text-muted-foreground">{s.email}</td>
                     <td className="py-2 pr-3 text-muted-foreground">{s.phone || "—"}</td>
@@ -253,6 +274,8 @@ export function WaiverEventDetail({
           </div>
         )}
       </section>
+
+      <SignatureModal signer={activeSigner} onClose={() => setActiveSigner(null)} />
     </div>
   );
 }
