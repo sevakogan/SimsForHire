@@ -1,7 +1,14 @@
 import { notFound } from "next/navigation";
+import { headers } from "next/headers";
 import { getEvent, getEventStats } from "@/lib/actions/events";
 import { getAdminSupabase } from "@/lib/supabase-admin";
+import {
+  getActiveWaiver,
+  listSigners,
+  listWaiverVersions,
+} from "@/lib/actions/waiver-events";
 import { EventDetailView } from "@/components/events/event-detail-view";
+import { WaiverEventDetail } from "@/components/events/waiver-event-detail";
 import type { Racer } from "@/types/events";
 
 export const dynamic = "force-dynamic";
@@ -16,6 +23,13 @@ async function getRacers(eventId: string): Promise<Racer[]> {
   return (data ?? []) as Racer[];
 }
 
+async function buildSignUrl(slug: string): Promise<string> {
+  const hdrs = await headers();
+  const host = hdrs.get("host") ?? "localhost:3000";
+  const proto = hdrs.get("x-forwarded-proto") ?? (host.startsWith("localhost") ? "http" : "https");
+  return `${proto}://${host}/waiver/${slug}`;
+}
+
 export default async function EventDetailPage({
   params,
 }: {
@@ -26,6 +40,46 @@ export default async function EventDetailPage({
 
   if (!event) notFound();
 
+  if (event.event_type === "waiver") {
+    const [activeWaiver, versions, signers, signUrl] = await Promise.all([
+      getActiveWaiver(event.id),
+      listWaiverVersions(event.id),
+      listSigners(event.id),
+      buildSignUrl(event.slug),
+    ]);
+
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+              {event.name}
+            </h1>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Waiver event ·{" "}
+              <span
+                className={`inline-flex items-center gap-1 ${
+                  event.status === "active" ? "text-green-600" : "text-muted-foreground"
+                }`}
+              >
+                {event.status === "active" ? "Active" : "Archived"}
+              </span>
+            </p>
+          </div>
+        </div>
+
+        <WaiverEventDetail
+          event={event}
+          activeWaiver={activeWaiver}
+          versions={versions}
+          signers={signers}
+          signUrl={signUrl}
+        />
+      </div>
+    );
+  }
+
+  // Race event (existing flow — unchanged)
   const [racers, stats] = await Promise.all([
     getRacers(event.id),
     getEventStats(event.id),

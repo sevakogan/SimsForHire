@@ -41,14 +41,22 @@ export function EventsView({ events: initial, statsMap }: EventsViewProps) {
       <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border bg-white py-20 gap-5">
         <div className="text-center">
           <p className="text-sm font-medium text-foreground">No events yet</p>
-          <p className="mt-1 text-xs text-muted-foreground">Create your first live karting event</p>
+          <p className="mt-1 text-xs text-muted-foreground">Create your first live karting event or waiver event</p>
         </div>
-        <Link
-          href="/events/new"
-          className="rounded-lg bg-[#E10600] px-4 py-2 text-[13px] font-medium text-white hover:opacity-90 transition-opacity"
-        >
-          + New Event
-        </Link>
+        <div className="flex gap-2">
+          <Link
+            href="/events/new"
+            className="rounded-lg bg-[#E10600] px-4 py-2 text-[13px] font-medium text-white hover:opacity-90 transition-opacity"
+          >
+            + New Event
+          </Link>
+          <Link
+            href="/events/new-waiver"
+            className="rounded-lg border border-border bg-white px-4 py-2 text-[13px] font-medium text-foreground hover:border-foreground/30 transition-colors"
+          >
+            + New Waiver Event
+          </Link>
+        </div>
       </div>
     );
   }
@@ -59,17 +67,29 @@ export function EventsView({ events: initial, statsMap }: EventsViewProps) {
         <span className="text-[11px] font-semibold uppercase tracking-[0.7px] text-muted-foreground">
           {events.length} Event{events.length !== 1 ? "s" : ""}
         </span>
-        <Link
-          href="/events/new"
-          className="rounded-lg bg-[#E10600] px-3 py-1.5 text-[13px] font-medium text-white hover:opacity-90 transition-opacity"
-        >
-          + New Event
-        </Link>
+        <div className="flex gap-2">
+          <Link
+            href="/events/new"
+            className="rounded-lg bg-[#E10600] px-3 py-1.5 text-[13px] font-medium text-white hover:opacity-90 transition-opacity"
+          >
+            + New Event
+          </Link>
+          <Link
+            href="/events/new-waiver"
+            className="rounded-lg border border-border bg-white px-3 py-1.5 text-[13px] font-medium text-foreground hover:border-foreground/30 transition-colors"
+          >
+            + New Waiver Event
+          </Link>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {events.map((event) => {
           const stats = statsMap[event.id] ?? { totalRacers: 0, inQueue: 0, completed: 0 };
+          const isWaiver = event.event_type === "waiver";
+          const liveHref = isWaiver
+            ? `/waiver/${event.slug}`
+            : `https://simsforhire.com/live/${event.slug}`;
           return (
             <div
               key={event.id}
@@ -78,7 +98,14 @@ export function EventsView({ events: initial, statsMap }: EventsViewProps) {
               {/* Header */}
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0 flex-1">
-                  <p className="font-semibold text-foreground truncate">{event.name}</p>
+                  <div className="flex items-center gap-1.5">
+                    <p className="font-semibold text-foreground truncate">{event.name}</p>
+                    {isWaiver && (
+                      <span className="shrink-0 rounded-full bg-blue-50 text-blue-700 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide">
+                        Waiver
+                      </span>
+                    )}
+                  </div>
                   <p className="text-[11px] text-muted-foreground truncate mt-0.5">
                     /{event.slug}
                   </p>
@@ -95,20 +122,26 @@ export function EventsView({ events: initial, statsMap }: EventsViewProps) {
               </div>
 
               {/* Stats */}
-              <div className="flex gap-3 text-[11px] text-muted-foreground">
-                <span>{stats.totalRacers} racers</span>
-                <span>·</span>
-                <span>{stats.inQueue} in queue</span>
-                <span>·</span>
-                <span>{stats.completed} done</span>
-              </div>
+              {isWaiver ? (
+                <div className="flex gap-3 text-[11px] text-muted-foreground">
+                  <span>{stats.totalRacers} signed</span>
+                </div>
+              ) : (
+                <div className="flex gap-3 text-[11px] text-muted-foreground">
+                  <span>{stats.totalRacers} racers</span>
+                  <span>·</span>
+                  <span>{stats.inQueue} in queue</span>
+                  <span>·</span>
+                  <span>{stats.completed} done</span>
+                </div>
+              )}
 
-              {/* Track / date */}
-              {(event.config?.track_name || event.config?.event_date) && (
+              {/* Track / date (race events only) */}
+              {!isWaiver && (event.config?.track_name || event.config?.event_date) && (
                 <p className="text-[11px] text-muted-foreground">
-                  {event.config.track_name}
-                  {event.config.track_name && event.config.event_date && " · "}
-                  {event.config.event_date}
+                  {event.config?.track_name}
+                  {event.config?.track_name && event.config?.event_date && " · "}
+                  {event.config?.event_date}
                 </p>
               )}
 
@@ -121,12 +154,12 @@ export function EventsView({ events: initial, statsMap }: EventsViewProps) {
                   Manage
                 </Link>
                 <a
-                  href={`https://simsforhire.com/live/${event.slug}`}
+                  href={liveHref}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="rounded-lg border border-border px-3 py-1.5 text-[12px] text-muted-foreground hover:text-foreground hover:border-foreground/30 transition-colors"
                 >
-                  Live ↗
+                  {isWaiver ? "Sign ↗" : "Live ↗"}
                 </a>
                 {event.status === "active" && (
                   <button
