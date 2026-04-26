@@ -24,6 +24,11 @@
 **Correct approach:** Before merging a PR with `gh pr merge`, verify all desired commits are on the branch and pushed. Or use `--squash --auto` to defer until checks pass without local checkout.
 **Rule:** Before `gh pr merge`, run `git status` and `git log origin/<branch>..HEAD` to confirm local matches remote.
 
+## 2026-04-26 — Hidden NOT NULL constraints in legacy schema
+**Mistake:** When building createWaiverEvent, assumed legacy `live_events` and `racers` tables would accept `null` for fields not relevant to waivers. Hit two consecutive NOT NULL violations: `racers.phone` and `live_events.theme`. Each one surfaced as a generic "Server Components render error" in production (messages stripped), wasting cycles on log fishing and code audits.
+**Correct approach:** Before reusing a legacy table for a new use case, **probe its NOT NULL columns** by attempting an insert with a minimal payload via PostgREST. The error message lists the offending column. One round-trip per table beats reading SQL files or guessing.
+**Rule:** When extending or reusing existing tables, always probe constraints first via a test insert. Save the helper script — it's two lines of Python + the service role key. For this project, `racers.phone` and `live_events.theme` are now nullable; if you see "23502" not_null_violation, look for OTHER columns on that table that may need the same treatment.
+
 ## Rules
 - Never conclude two apps in the same project are unrelated based solely on code analysis. Ask the user first.
 - When the user says something about their own product architecture, trust them over code analysis.
