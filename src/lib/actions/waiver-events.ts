@@ -212,7 +212,7 @@ export async function recordWaiverSignature(input: {
   const { error } = await supabase.from("racers").insert({
     event_id: event.id,
     name,
-    phone: phone || "",
+    phone: phone || null,
     email,
     queue_pos: null,
     lap_time: null,

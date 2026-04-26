@@ -42,7 +42,7 @@ export interface Racer {
   id: string;
   event_id: string;
   name: string;
-  phone: string;
+  phone: string | null;
   email: string | null;
   queue_pos: number | null;
   lap_time: string | null;
