@@ -9,6 +9,7 @@ import {
 } from "@/lib/actions/waiver-events";
 import { EventDetailView } from "@/components/events/event-detail-view";
 import { WaiverEventDetail } from "@/components/events/waiver-event-detail";
+import { EditableDisplayName } from "@/components/events/editable-display-name";
 import type { Racer } from "@/types/events";
 
 export const dynamic = "force-dynamic";
@@ -48,24 +49,25 @@ export default async function EventDetailPage({
       buildSignUrl(event.slug),
     ]);
 
+    const displayName = event.config?.event_name?.trim() || event.name;
     return (
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-semibold tracking-tight text-foreground">
-              {event.name}
-            </h1>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Waiver event ·{" "}
-              <span
-                className={`inline-flex items-center gap-1 ${
-                  event.status === "active" ? "text-green-600" : "text-muted-foreground"
-                }`}
-              >
-                {event.status === "active" ? "Active" : "Archived"}
-              </span>
-            </p>
-          </div>
+        <div>
+          <EditableDisplayName
+            eventId={event.id}
+            initialName={displayName}
+            slug={event.slug}
+          />
+          <p className="mt-1 text-sm text-muted-foreground">
+            Waiver event ·{" "}
+            <span
+              className={`inline-flex items-center gap-1 ${
+                event.status === "active" ? "text-green-600" : "text-muted-foreground"
+              }`}
+            >
+              {event.status === "active" ? "Active" : "Archived"}
+            </span>
+          </p>
         </div>
 
         <WaiverEventDetail

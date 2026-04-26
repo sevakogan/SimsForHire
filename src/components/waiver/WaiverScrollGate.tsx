@@ -96,7 +96,8 @@ export default function WaiverScrollGate({
         <div
           ref={waiverRef}
           onScroll={handleScroll}
-          className="h-56 overflow-y-auto px-4 py-4 text-[11px] leading-[1.55] text-gray-700 dark:text-white/70 whitespace-pre-wrap"
+          className="h-56 overflow-y-auto overflow-x-hidden overscroll-contain px-4 py-4 text-[11px] leading-[1.55] text-gray-700 dark:text-white/70 whitespace-pre-wrap break-words"
+          style={{ touchAction: "pan-y", wordBreak: "break-word" }}
         >
           {body}
         </div>

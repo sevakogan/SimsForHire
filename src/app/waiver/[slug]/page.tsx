@@ -21,12 +21,24 @@ export default async function PublicWaiverPage({
   const activeWaiver = await getActiveWaiver(event.id);
   if (!activeWaiver) notFound();
 
+  // Display name lives in event_config (editable). Slug = URL = immutable.
+  const displayName = event.config?.event_name?.trim() || event.name;
+
   return (
-    <main className="min-h-screen bg-[#0a0a12] text-white">
-      {/* Subtle Miami grid backdrop */}
+    <main className="min-h-screen overflow-x-hidden text-white relative">
+      {/* Miami gradient base */}
       <div
         aria-hidden
-        className="pointer-events-none fixed inset-0 opacity-[0.06]"
+        className="pointer-events-none fixed inset-0"
+        style={{
+          background:
+            "radial-gradient(ellipse at top left, rgba(255,91,167,0.22), transparent 55%), radial-gradient(ellipse at bottom right, rgba(123,208,245,0.22), transparent 55%), linear-gradient(180deg, #150818 0%, #0a0a18 50%, #08151c 100%)",
+        }}
+      />
+      {/* Subtle Miami grid */}
+      <div
+        aria-hidden
+        className="pointer-events-none fixed inset-0 opacity-[0.05]"
         style={{
           backgroundImage:
             "linear-gradient(#FF5BA7 1px, transparent 1px), linear-gradient(90deg, #7BD0F5 1px, transparent 1px)",
@@ -45,7 +57,9 @@ export default async function PublicWaiverPage({
             priority
             className="h-10 w-auto object-contain"
           />
-          <h1 className="mt-3 text-xl font-black tracking-tight">{event.name}</h1>
+          <h1 className="mt-3 text-xl font-black tracking-tight break-words">
+            {displayName}
+          </h1>
           <p className="mt-1 text-[12px] text-white/60">
             Read &amp; sign to participate
           </p>
@@ -53,7 +67,7 @@ export default async function PublicWaiverPage({
 
         <WaiverSignForm
           eventSlug={event.slug}
-          eventName={event.name}
+          eventName={displayName}
           waiverBody={activeWaiver.body}
           waiverVersion={activeWaiver.version}
         />

@@ -73,6 +73,35 @@ export async function createWaiverEvent(data: {
   return event as LiveEvent;
 }
 
+/** Update the editable display name (event_config.event_name). Slug is immutable. */
+export async function updateWaiverDisplayName(
+  eventId: string,
+  displayName: string
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const trimmed = displayName.trim();
+  if (!trimmed) return { ok: false, error: "Display name cannot be empty" };
+  if (trimmed.length > 200) return { ok: false, error: "Display name too long" };
+
+  const supabase = getAdminSupabase();
+  const { error } = await supabase
+    .from("event_config")
+    .update({ event_name: trimmed, updated_at: new Date().toISOString() })
+    .eq("event_id", eventId);
+
+  if (error) return { ok: false, error: error.message };
+
+  // Get slug for revalidation of the public page
+  const { data: event } = await supabase
+    .from("live_events")
+    .select("slug")
+    .eq("id", eventId)
+    .single();
+  if (event?.slug) revalidatePath(`/waiver/${event.slug}`);
+  revalidatePath(`/events/${event?.slug ?? ""}`);
+  revalidatePath("/events");
+  return { ok: true };
+}
+
 /* ── Read ───────────────────────────────────────────────────── */
 
 export async function getActiveWaiver(
