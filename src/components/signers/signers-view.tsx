@@ -31,18 +31,29 @@ export function SignersView({ signers }: Props) {
   const [activeSigner, setActiveSigner] = useState<SignatureModalSigner | null>(null);
   const [removed, setRemoved] = useState<Set<string>>(new Set());
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [confirmingId, setConfirmingId] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const [, startTransition] = useTransition();
 
-  async function handleDelete(id: string, name: string) {
-    if (!confirm(`Delete ${name}'s signature? This cannot be undone.`)) return;
+  function stageDelete(id: string) {
+    setConfirmingId(id);
+    setDeleteError(null);
+    window.setTimeout(() => {
+      setConfirmingId((cur) => (cur === id ? null : cur));
+    }, 5000);
+  }
+
+  async function commitDelete(id: string) {
     setDeleting(id);
+    setDeleteError(null);
     try {
       const r = await deleteSigner(id);
       if (r.ok) {
         setRemoved((prev) => new Set(prev).add(id));
+        setConfirmingId(null);
         startTransition(() => router.refresh());
       } else {
-        alert(`Failed to delete: ${r.error}`);
+        setDeleteError(`Couldn't delete: ${r.error}`);
       }
     } finally {
       setDeleting(null);
@@ -199,6 +210,12 @@ export function SignersView({ signers }: Props) {
 
   return (
     <div className="space-y-4">
+      {deleteError && (
+        <div className="rounded-lg bg-red-50 border border-red-200 px-3 py-2 text-[12px] text-red-700">
+          {deleteError}
+        </div>
+      )}
+
       {/* Toolbar */}
       <div className="flex flex-wrap items-center gap-3 rounded-xl border border-border bg-white p-3">
         <input
@@ -373,18 +390,43 @@ export function SignersView({ signers }: Props) {
                     : "—"}
                 </td>
                 <td className="px-3 py-2">
-                  <button
-                    type="button"
-                    onClick={() => handleDelete(s.id, s.name)}
-                    disabled={deleting === s.id}
-                    className="rounded-md p-1.5 text-muted-foreground hover:text-red-600 hover:bg-red-50 transition-colors disabled:opacity-30"
-                    title="Delete this lead"
-                    aria-label={`Delete ${s.name}`}
-                  >
-                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
-                  </button>
+                  {confirmingId === s.id ? (
+                    <div className="flex items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={() => commitDelete(s.id)}
+                        disabled={deleting === s.id}
+                        className="rounded-md bg-red-600 px-2 py-1 text-[11px] font-bold text-white hover:bg-red-700 disabled:opacity-50 transition-colors"
+                        aria-label={`Confirm delete ${s.name}`}
+                      >
+                        {deleting === s.id ? "…" : "Delete?"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setConfirmingId(null)}
+                        disabled={deleting === s.id}
+                        className="rounded-md border border-border p-1 text-muted-foreground hover:text-foreground"
+                        aria-label="Cancel delete"
+                        title="Cancel"
+                      >
+                        <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => stageDelete(s.id)}
+                      className="rounded-md p-1.5 text-muted-foreground hover:text-red-600 hover:bg-red-50 transition-colors"
+                      title="Delete this lead"
+                      aria-label={`Delete ${s.name}`}
+                    >
+                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                    </button>
+                  )}
                 </td>
               </tr>
             ))}
