@@ -281,7 +281,13 @@ export function WaiverSignForm({
   return (
     <form
       onSubmit={handleSubmit}
-      className="space-y-5 rounded-2xl border border-white/10 bg-white/[0.03] p-5"
+      className="space-y-5 rounded-2xl border-2 p-5 shadow-2xl"
+      style={{
+        background: "#11091c",
+        borderColor: "rgba(255, 91, 167, 0.45)",
+        boxShadow:
+          "0 0 0 1px rgba(123, 208, 245, 0.15), 0 25px 60px -10px rgba(0,0,0,0.6)",
+      }}
     >
       {error && (
         <div className="rounded-lg bg-red-500/10 border border-red-500/30 px-3 py-2 text-[13px] text-red-300">
@@ -297,14 +303,14 @@ export function WaiverSignForm({
       />
 
       <fieldset className="space-y-3 pt-1">
-        <legend className="text-xs uppercase tracking-wider text-white/75 font-semibold mb-1">
+        <legend className="text-xs uppercase tracking-wider text-white font-bold mb-1">
           Your Information
         </legend>
 
         {/* Full name + email side-by-side */}
         <div className="grid grid-cols-2 gap-2">
           <div className="space-y-1.5">
-            <label className="text-[11px] font-medium text-white/80">
+            <label className="text-[12px] font-semibold text-white/95">
               Full Name <span style={{ color: MIAMI_PINK }}>*</span>
             </label>
             <input
@@ -313,13 +319,13 @@ export function WaiverSignForm({
               onChange={(e) => setName(e.target.value)}
               required
               autoComplete="name"
-              className="w-full rounded-lg border-2 border-black bg-white/[0.06] px-3 py-3 text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:border-transparent"
+              className="w-full rounded-lg border-2 border-black bg-[#0a0510] px-3 py-3 text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:border-transparent"
               style={{ caretColor: MIAMI_PINK, fontSize: "16px" }}
             />
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-[11px] font-medium text-white/80">
+            <label className="text-[12px] font-semibold text-white/95">
               Email <span style={{ color: MIAMI_PINK }}>*</span>
             </label>
             <input
@@ -328,7 +334,7 @@ export function WaiverSignForm({
               onChange={(e) => setEmail(e.target.value)}
               required
               autoComplete="email"
-              className="w-full rounded-lg border-2 border-black bg-white/[0.06] px-3 py-3 text-white placeholder-white/30 focus:outline-none focus:ring-2"
+              className="w-full rounded-lg border-2 border-black bg-[#0a0510] px-3 py-3 text-white placeholder-white/30 focus:outline-none focus:ring-2"
               style={{ caretColor: MIAMI_PINK, fontSize: "16px" }}
             />
           </div>
@@ -339,7 +345,7 @@ export function WaiverSignForm({
 
         {/* Phone — own row, optional */}
         <div className="space-y-1.5 pt-1">
-          <label className="text-[11px] font-medium text-white/80">
+          <label className="text-[12px] font-semibold text-white/95">
             Phone <span className="text-white/40">(optional)</span>
           </label>
           <input
@@ -347,7 +353,7 @@ export function WaiverSignForm({
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
             autoComplete="tel"
-            className="w-full rounded-lg border-2 border-black bg-white/[0.06] px-3 py-3 text-white placeholder-white/30 focus:outline-none focus:ring-2"
+            className="w-full rounded-lg border-2 border-black bg-[#0a0510] px-3 py-3 text-white placeholder-white/30 focus:outline-none focus:ring-2"
             style={{ fontSize: "16px" }}
           />
         </div>
@@ -367,7 +373,7 @@ export function WaiverSignForm({
       </fieldset>
 
       <fieldset>
-        <legend className="text-xs uppercase tracking-wider text-white/75 font-semibold mb-2">
+        <legend className="text-xs uppercase tracking-wider text-white font-bold mb-2">
           Signature <span style={{ color: MIAMI_PINK }}>*</span>
         </legend>
         <SignaturePad onChange={setSignature} />
