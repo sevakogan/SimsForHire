@@ -18,16 +18,13 @@ const NAV_ITEMS = [
   {
     id: "events",
     label: "Events",
-    href: "/events",
     internalOnly: true,
     icon: "M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5",
-  },
-  {
-    id: "qr-codes",
-    label: "Event QR",
-    href: "/qr-codes",
-    internalOnly: true,
-    icon: "M3.75 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 013.75 9.375v-4.5zM3.75 14.625c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5a1.125 1.125 0 01-1.125-1.125v-4.5zM13.5 4.875c0-.621.504-1.125 1.125-1.125h4.5C19.746 3.75 20.25 4.254 20.25 4.875v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 0113.5 9.375v-4.5zM13.5 14.625v1.5M16.5 14.625v.001M16.5 17.625v.001M19.5 14.625v.001M19.5 17.625v.001M13.5 19.875h6.75",
+    // Group: parent label is a section header; children render indented below
+    children: [
+      { id: "events-list", label: "Events", href: "/events" },
+      { id: "events-qr", label: "QR Code", href: "/qr-codes" },
+    ],
   },
   {
     id: "signers",
@@ -197,6 +194,60 @@ export function Sidebar() {
         </p>
 
         {visibleItems.map((item) => {
+          // Group with children: render header (non-clickable) + nested links
+          if ("children" in item && item.children) {
+            const anyChildActive = item.children.some((c) => isActive(c.href));
+            return (
+              <div key={item.id} style={{ marginBottom: 4 }}>
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 10,
+                    padding: "10px 12px",
+                    fontSize: 14,
+                    fontWeight: anyChildActive ? 500 : 400,
+                    color: anyChildActive ? "#1D1D1F" : "#86868B",
+                  }}
+                >
+                  <NavIcon path={item.icon} active={anyChildActive} />
+                  {item.label}
+                </div>
+                <div style={{ marginLeft: 16, marginTop: 2 }}>
+                  {item.children.map((child) => {
+                    const childActive = isActive(child.href);
+                    return (
+                      <Link
+                        key={child.href}
+                        href={child.href}
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 10,
+                          padding: "8px 12px",
+                          borderRadius: 8,
+                          fontSize: 13,
+                          fontWeight: childActive ? 500 : 400,
+                          color: childActive ? "#1D1D1F" : "#86868B",
+                          background: childActive ? "rgba(0,0,0,0.04)" : "transparent",
+                          textDecoration: "none",
+                          marginBottom: 2,
+                          transition: "all 0.15s",
+                          borderLeft: "2px solid",
+                          borderLeftColor: childActive ? "#E10600" : "rgba(0,0,0,0.06)",
+                          paddingLeft: 12,
+                        }}
+                      >
+                        {child.label}
+                      </Link>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          }
+          // Regular item (must have href)
+          if (!item.href) return null;
           const active = isActive(item.href);
           return (
             <Link
