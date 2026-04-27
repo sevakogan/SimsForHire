@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { getAdminSupabase } from "@/lib/supabase-admin";
 import { sendEmail } from "@/lib/email-sender";
+import { createQrRedirect } from "@/lib/actions/qr-redirects";
 import type {
   EventWaiverVersion,
   LiveEvent,
@@ -69,7 +70,20 @@ export async function createWaiverEvent(data: {
     });
   if (waiverError) throw new Error(waiverError.message);
 
+  // Auto-create a dedicated QR redirect for this event. Failure is logged
+  // but not fatal — the event still works without the dynamic QR.
+  try {
+    await createQrRedirect({
+      destinationUrl: `/waiver/${data.slug}`,
+      eventId: event.id as string,
+      label: data.name,
+    });
+  } catch (err) {
+    console.error("[waiver-event] failed to create dedicated QR:", err);
+  }
+
   revalidatePath("/events");
+  revalidatePath("/qr-codes");
   return event as LiveEvent;
 }
 

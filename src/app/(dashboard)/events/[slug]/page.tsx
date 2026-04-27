@@ -7,6 +7,11 @@ import {
   listSigners,
   listWaiverVersions,
 } from "@/lib/actions/waiver-events";
+import {
+  buildTokenUrl,
+  getPrimaryQrForEvent,
+  getUniversalQr,
+} from "@/lib/actions/qr-redirects";
 import { EventDetailView } from "@/components/events/event-detail-view";
 import { WaiverEventDetail } from "@/components/events/waiver-event-detail";
 import { EditableDisplayName } from "@/components/events/editable-display-name";
@@ -42,12 +47,17 @@ export default async function EventDetailPage({
   if (!event) notFound();
 
   if (event.event_type === "waiver") {
-    const [activeWaiver, versions, signers, signUrl] = await Promise.all([
-      getActiveWaiver(event.id),
-      listWaiverVersions(event.id),
-      listSigners(event.id),
-      buildSignUrl(event.slug),
-    ]);
+    const [activeWaiver, versions, signers, signUrl, primaryQr, universalQr] =
+      await Promise.all([
+        getActiveWaiver(event.id),
+        listWaiverVersions(event.id),
+        listSigners(event.id),
+        buildSignUrl(event.slug),
+        getPrimaryQrForEvent(event.id),
+        getUniversalQr(),
+      ]);
+    const primaryQrUrl = primaryQr ? await buildTokenUrl(primaryQr.token) : null;
+    const universalQrUrl = await buildTokenUrl(universalQr.token);
 
     const displayName = event.config?.event_name?.trim() || event.name;
     return (
@@ -76,6 +86,10 @@ export default async function EventDetailPage({
           versions={versions}
           signers={signers}
           signUrl={signUrl}
+          primaryQr={primaryQr}
+          primaryQrUrl={primaryQrUrl}
+          universalQr={universalQr}
+          universalQrUrl={universalQrUrl}
         />
       </div>
     );

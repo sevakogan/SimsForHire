@@ -104,8 +104,10 @@ export function EventsView({ events: initial, statsMap }: EventsViewProps) {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {events.map((event) => {
+      {(() => {
+        const waiverEvents = events.filter((e) => e.event_type === "waiver");
+        const raceEvents = events.filter((e) => e.event_type !== "waiver");
+        const renderCard = (event: typeof events[number]) => {
           const stats = statsMap[event.id] ?? { totalRacers: 0, inQueue: 0, completed: 0 };
           const isWaiver = event.event_type === "waiver";
           const liveHref = isWaiver
@@ -116,6 +118,7 @@ export function EventsView({ events: initial, statsMap }: EventsViewProps) {
               key={event.id}
               className="rounded-xl border border-border bg-white p-4 space-y-3"
             >
+              {/* */}
               {/* Header */}
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0 flex-1">
@@ -225,8 +228,33 @@ export function EventsView({ events: initial, statsMap }: EventsViewProps) {
               </div>
             </div>
           );
-        })}
-      </div>
+        };
+
+        return (
+          <div className="space-y-8">
+            {waiverEvents.length > 0 && (
+              <section>
+                <h2 className="mb-3 text-[11px] font-bold uppercase tracking-[0.15em] text-muted-foreground">
+                  Waiver Only · {waiverEvents.length}
+                </h2>
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  {waiverEvents.map(renderCard)}
+                </div>
+              </section>
+            )}
+            {raceEvents.length > 0 && (
+              <section>
+                <h2 className="mb-3 text-[11px] font-bold uppercase tracking-[0.15em] text-muted-foreground">
+                  Event + Race Board · {raceEvents.length}
+                </h2>
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  {raceEvents.map(renderCard)}
+                </div>
+              </section>
+            )}
+          </div>
+        );
+      })()}
     </div>
   );
 }

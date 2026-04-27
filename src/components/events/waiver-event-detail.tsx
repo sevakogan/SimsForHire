@@ -6,6 +6,12 @@ import * as XLSX from "xlsx";
 import QrGenerator from "@/components/qr/QrGenerator";
 import { SignatureModal, type SignatureModalSigner } from "@/components/signers/signature-modal";
 import { deleteSigner, publishWaiverVersion } from "@/lib/actions/waiver-events";
+import {
+  pointUniversalAtEvent,
+  updateQrRedirect,
+  type QrRedirect,
+  type QrRedirectWithEvent,
+} from "@/lib/actions/qr-redirects";
 import type {
   EventWithConfig,
   EventWaiverVersion,
@@ -31,7 +37,15 @@ interface Props {
   activeWaiver: EventWaiverVersion | null;
   versions: EventWaiverVersion[];
   signers: Racer[];
+  /** Direct, non-redirected URL to the public sign page (used as default QR destination). */
   signUrl: string;
+  /** The dedicated QR redirect for this event, or null if none yet exists. */
+  primaryQr: QrRedirect | null;
+  /** Absolute URL the dedicated QR encodes (https://.../qr/<token>). */
+  primaryQrUrl: string | null;
+  /** The universal General QR. */
+  universalQr: QrRedirectWithEvent;
+  universalQrUrl: string;
 }
 
 export function WaiverEventDetail({
@@ -40,6 +54,10 @@ export function WaiverEventDetail({
   versions,
   signers,
   signUrl,
+  primaryQr,
+  primaryQrUrl,
+  universalQr,
+  universalQrUrl,
 }: Props) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -191,33 +209,15 @@ export function WaiverEventDetail({
         </div>
       </div>
 
-      {/* QR + Sign URL */}
-      <section className="rounded-xl border border-border bg-white p-6">
-        <div className="flex items-start justify-between gap-4 mb-5">
-          <div>
-            <h2 className="text-lg font-semibold text-foreground">QR Code</h2>
-            <p className="text-[12px] text-muted-foreground mt-0.5">
-              Print and place at your event entrance. Scanning opens the waiver-sign page.
-            </p>
-          </div>
-          <a
-            href={signUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="shrink-0 rounded-lg border border-border px-3 py-1.5 text-[12px] text-muted-foreground hover:text-foreground hover:border-foreground/30 transition-colors"
-          >
-            Open ↗
-          </a>
-        </div>
-        <QrGenerator
-          url={signUrl}
-          logoSrcDark="/sims-logo-black.png"
-          logoSrcLight="/sims-logo-white.png"
-          filenamePrefix={`qr-waiver-${event.slug}`}
-          brandDark="#FF5BA7"
-          brandLight="#0a0a12"
-        />
-      </section>
+      {/* QR section */}
+      <QrSection
+        event={event}
+        signUrl={signUrl}
+        primaryQr={primaryQr}
+        primaryQrUrl={primaryQrUrl}
+        universalQr={universalQr}
+        universalQrUrl={universalQrUrl}
+      />
 
       {/* Waiver editor */}
       <section className="rounded-xl border border-border bg-white p-6">
@@ -506,5 +506,217 @@ export function WaiverEventDetail({
 
       <SignatureModal signer={activeSigner} onClose={() => setActiveSigner(null)} />
     </div>
+  );
+}
+
+/* ── QR sub-section ─────────────────────────────────────────── */
+
+function QrSection({
+  event,
+  signUrl,
+  primaryQr,
+  primaryQrUrl,
+  universalQr,
+  universalQrUrl,
+}: {
+  event: EventWithConfig;
+  signUrl: string;
+  primaryQr: QrRedirect | null;
+  primaryQrUrl: string | null;
+  universalQr: QrRedirectWithEvent;
+  universalQrUrl: string;
+}) {
+  const router = useRouter();
+  const [pending, startQrTransition] = useTransition();
+  const [editingDest, setEditingDest] = useState(false);
+  const [destDraft, setDestDraft] = useState(
+    primaryQr?.destination_url ?? `/waiver/${event.slug}`
+  );
+  const [confirmingPoint, setConfirmingPoint] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const universalPointsHere =
+    universalQr.event_id === event.id ||
+    universalQr.destination_url === `/waiver/${event.slug}`;
+
+  function saveDest() {
+    if (!primaryQr) return;
+    setError(null);
+    startQrTransition(async () => {
+      const r = await updateQrRedirect(primaryQr.token, {
+        destinationUrl: destDraft,
+      });
+      if (r.ok) {
+        setEditingDest(false);
+        router.refresh();
+      } else {
+        setError(r.error);
+      }
+    });
+  }
+
+  function pointGeneralHere() {
+    setError(null);
+    setConfirmingPoint(false);
+    startQrTransition(async () => {
+      const r = await pointUniversalAtEvent(event.id);
+      if (!r.ok) setError(r.error);
+      else router.refresh();
+    });
+  }
+
+  return (
+    <section className="rounded-xl border border-border bg-white p-6 space-y-6">
+      {error && (
+        <div className="rounded-lg bg-red-50 border border-red-200 px-3 py-2 text-[12px] text-red-700">
+          {error}
+        </div>
+      )}
+
+      {/* General QR control */}
+      <div className="rounded-lg border-2 border-dashed border-[#FF5BA7]/40 bg-[#FF5BA7]/[0.04] p-4">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-[10px] uppercase tracking-wider font-bold text-[#FF5BA7]">
+              General QR (universal)
+            </p>
+            <p className="mt-1 text-[13px] font-semibold text-foreground">
+              Currently points to:{" "}
+              <span className="font-mono text-[12px] text-muted-foreground">
+                {universalQr.destination_url}
+              </span>
+            </p>
+            <p className="mt-1 text-[11px] text-muted-foreground">
+              Token <span className="font-mono">{universalQr.token}</span> · {universalQr.scan_count} scans
+            </p>
+          </div>
+          {universalPointsHere ? (
+            <span className="shrink-0 rounded-full bg-green-50 text-green-700 border border-green-200 px-3 py-1 text-[11px] font-bold uppercase tracking-wider">
+              ✓ Pointed Here
+            </span>
+          ) : confirmingPoint ? (
+            <div className="flex gap-1">
+              <button
+                onClick={pointGeneralHere}
+                disabled={pending}
+                className="rounded-md bg-[#FF5BA7] px-3 py-1.5 text-[11px] font-bold text-white hover:opacity-90 disabled:opacity-50"
+              >
+                {pending ? "…" : "Confirm"}
+              </button>
+              <button
+                onClick={() => setConfirmingPoint(false)}
+                disabled={pending}
+                className="rounded-md border border-border px-2 py-1.5 text-[11px] text-muted-foreground hover:text-foreground"
+              >
+                ✕
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={() => setConfirmingPoint(true)}
+              className="shrink-0 rounded-lg bg-[#FF5BA7] px-3 py-1.5 text-[12px] font-bold text-white hover:opacity-90 transition-opacity"
+              title="Re-point the General QR to this event"
+            >
+              Point General QR Here
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Per-event dedicated QR */}
+      <div>
+        <div className="flex items-start justify-between gap-3 mb-4">
+          <div>
+            <h2 className="text-lg font-semibold text-foreground">
+              Event QR{primaryQr ? "" : " (not yet created)"}
+            </h2>
+            <p className="text-[12px] text-muted-foreground mt-0.5">
+              {primaryQr
+                ? "Dedicated to this event. The QR pattern stays the same — only the destination is editable."
+                : "Will be auto-created on first save."}
+            </p>
+          </div>
+          {primaryQrUrl && (
+            <a
+              href={primaryQrUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="shrink-0 rounded-lg border border-border px-3 py-1.5 text-[12px] text-muted-foreground hover:text-foreground hover:border-foreground/30 transition-colors"
+            >
+              Test ↗
+            </a>
+          )}
+        </div>
+
+        {primaryQr && (
+          <div className="rounded-lg border border-border bg-muted/30 p-3 mb-5 space-y-2">
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-[10px] uppercase tracking-wider font-bold text-muted-foreground">
+                Destination URL
+              </span>
+              <span className="text-[11px] text-muted-foreground">
+                {primaryQr.scan_count} scans · token{" "}
+                <span className="font-mono">{primaryQr.token}</span>
+              </span>
+            </div>
+            {editingDest ? (
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  value={destDraft}
+                  onChange={(e) => setDestDraft(e.target.value)}
+                  autoFocus
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") saveDest();
+                    if (e.key === "Escape") {
+                      setDestDraft(primaryQr.destination_url);
+                      setEditingDest(false);
+                    }
+                  }}
+                  className="flex-1 rounded-md border border-border bg-white px-2 py-1.5 text-[13px] font-mono focus:outline-none focus:ring-2 focus:ring-[#FF5BA7]/40 focus:border-[#FF5BA7]"
+                />
+                <button
+                  onClick={saveDest}
+                  disabled={pending}
+                  className="rounded-md bg-[#FF5BA7] px-3 py-1.5 text-[12px] font-bold text-white hover:opacity-90 disabled:opacity-50"
+                >
+                  {pending ? "…" : "Save"}
+                </button>
+                <button
+                  onClick={() => {
+                    setDestDraft(primaryQr.destination_url);
+                    setEditingDest(false);
+                  }}
+                  disabled={pending}
+                  className="rounded-md border border-border px-2 py-1.5 text-[12px] text-muted-foreground hover:text-foreground"
+                >
+                  Cancel
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center justify-between gap-2">
+                <code className="flex-1 truncate text-[13px] text-foreground font-mono">
+                  {primaryQr.destination_url}
+                </code>
+                <button
+                  onClick={() => setEditingDest(true)}
+                  className="shrink-0 rounded-md border border-border bg-white px-2 py-1 text-[11px] text-muted-foreground hover:text-foreground"
+                >
+                  ✎ Edit
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
+        <QrGenerator
+          url={primaryQrUrl ?? signUrl}
+          logoSrcDark="/sims-logo-black.png"
+          logoSrcLight="/sims-logo-white.png"
+          filenamePrefix={`qr-waiver-${event.slug}`}
+          brandDark="#FF5BA7"
+          brandLight="#0a0a12"
+        />
+      </div>
+    </section>
   );
 }
