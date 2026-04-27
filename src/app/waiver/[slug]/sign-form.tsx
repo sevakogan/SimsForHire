@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import Image from "next/image";
 import WaiverScrollGate from "@/components/waiver/WaiverScrollGate";
 import { SignaturePad } from "@/components/waiver/SignaturePad";
@@ -56,6 +56,15 @@ export function WaiverSignForm({
     name: string;
     signedAt: string;
   } | null>(null);
+
+  // When the success view replaces the form, the user is usually scrolled
+  // near the bottom (signature pad + submit). Snap to top so the
+  // SHOW-TO-ATTENDANT card is fully visible immediately.
+  useEffect(() => {
+    if (!success) return;
+    if (typeof window === "undefined") return;
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, [success]);
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();

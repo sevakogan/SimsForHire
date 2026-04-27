@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import * as XLSX from "xlsx";
 import QrGenerator from "@/components/qr/QrGenerator";
 import { SignatureModal, type SignatureModalSigner } from "@/components/signers/signature-modal";
-import { publishWaiverVersion } from "@/lib/actions/waiver-events";
+import { deleteSigner, publishWaiverVersion } from "@/lib/actions/waiver-events";
 import type {
   EventWithConfig,
   EventWaiverVersion,
@@ -63,10 +63,31 @@ export function WaiverEventDetail({
     return <span>{sortDir === "asc" ? "↑" : "↓"}</span>;
   }
 
+  // Optimistic local copy so a successful delete vanishes immediately.
+  const [removed, setRemoved] = useState<Set<string>>(new Set());
+  const [deleting, setDeleting] = useState<string | null>(null);
+
+  async function handleDelete(id: string, name: string) {
+    if (!confirm(`Delete ${name}'s signature? This cannot be undone.`)) return;
+    setDeleting(id);
+    try {
+      const r = await deleteSigner(id);
+      if (r.ok) {
+        setRemoved((prev) => new Set(prev).add(id));
+        router.refresh();
+      } else {
+        alert(`Failed to delete: ${r.error}`);
+      }
+    } finally {
+      setDeleting(null);
+    }
+  }
+
   const sortedSigners = useMemo(() => {
+    const visible = signers.filter((s) => !removed.has(s.id));
     const dir = sortDir === "asc" ? 1 : -1;
     const collator = new Intl.Collator("en", { sensitivity: "base" });
-    return [...signers].sort((a, b) => {
+    return [...visible].sort((a, b) => {
       switch (sortKey) {
         case "event_date":
         case "signed": {
@@ -82,7 +103,7 @@ export function WaiverEventDetail({
           return collator.compare(a.phone ?? "", b.phone ?? "") * dir;
       }
     });
-  }, [signers, sortKey, sortDir]);
+  }, [signers, sortKey, sortDir, removed]);
 
   function handleDownloadXlsx() {
     if (sortedSigners.length === 0) return;
@@ -348,6 +369,7 @@ export function WaiverEventDetail({
                     </button>
                   </th>
                   <th className="py-2 pr-3 font-semibold">IP</th>
+                  <th className="py-2 pr-3 font-semibold w-8"></th>
                 </tr>
               </thead>
               <tbody>
@@ -403,6 +425,23 @@ export function WaiverEventDetail({
                     </td>
                     <td className="py-2 pr-3 text-muted-foreground font-mono text-[11px]">
                       {s.waiver_accepted_ip ?? "—"}
+                    </td>
+                    <td className="py-2 pr-3">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDelete(s.id, s.name);
+                        }}
+                        disabled={deleting === s.id}
+                        className="rounded-md p-1.5 text-muted-foreground hover:text-red-600 hover:bg-red-50 transition-colors disabled:opacity-30"
+                        title="Delete this lead"
+                        aria-label={`Delete ${s.name}`}
+                      >
+                        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      </button>
                     </td>
                   </tr>
                 ))}

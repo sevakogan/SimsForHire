@@ -1,9 +1,10 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import * as XLSX from "xlsx";
 import { SignatureModal, type SignatureModalSigner } from "@/components/signers/signature-modal";
-import type { SignerWithEvent } from "@/lib/actions/waiver-events";
+import { deleteSigner, type SignerWithEvent } from "@/lib/actions/waiver-events";
 
 interface Props {
   signers: SignerWithEvent[];
@@ -24,9 +25,29 @@ function formatEventDate(iso: string | null): string {
 }
 
 export function SignersView({ signers }: Props) {
+  const router = useRouter();
   const [query, setQuery] = useState("");
   const [eventFilter, setEventFilter] = useState<string>("");
   const [activeSigner, setActiveSigner] = useState<SignatureModalSigner | null>(null);
+  const [removed, setRemoved] = useState<Set<string>>(new Set());
+  const [deleting, setDeleting] = useState<string | null>(null);
+  const [, startTransition] = useTransition();
+
+  async function handleDelete(id: string, name: string) {
+    if (!confirm(`Delete ${name}'s signature? This cannot be undone.`)) return;
+    setDeleting(id);
+    try {
+      const r = await deleteSigner(id);
+      if (r.ok) {
+        setRemoved((prev) => new Set(prev).add(id));
+        startTransition(() => router.refresh());
+      } else {
+        alert(`Failed to delete: ${r.error}`);
+      }
+    } finally {
+      setDeleting(null);
+    }
+  }
   // Default: most recent signature first.
   const [sortKey, setSortKey] = useState<SortKey>("signed");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
@@ -58,6 +79,7 @@ export function SignersView({ signers }: Props) {
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     const matches = signers.filter((s) => {
+      if (removed.has(s.id)) return false;
       if (eventFilter && s.event_slug !== eventFilter) return false;
       if (!q) return true;
       return (
@@ -86,7 +108,7 @@ export function SignersView({ signers }: Props) {
           return collator.compare(a.phone ?? "", b.phone ?? "") * dir;
       }
     });
-  }, [signers, query, eventFilter, sortKey, sortDir]);
+  }, [signers, query, eventFilter, sortKey, sortDir, removed]);
 
   function handleDownloadXlsx() {
     if (filtered.length === 0) return;
@@ -275,6 +297,7 @@ export function SignersView({ signers }: Props) {
                   Signed {sortIndicator("signed")}
                 </button>
               </th>
+              <th className="px-3 py-2 font-semibold w-8"></th>
             </tr>
           </thead>
           <tbody>
@@ -348,6 +371,20 @@ export function SignersView({ signers }: Props) {
                   {s.waiver_accepted_at
                     ? new Date(s.waiver_accepted_at).toLocaleString()
                     : "—"}
+                </td>
+                <td className="px-3 py-2">
+                  <button
+                    type="button"
+                    onClick={() => handleDelete(s.id, s.name)}
+                    disabled={deleting === s.id}
+                    className="rounded-md p-1.5 text-muted-foreground hover:text-red-600 hover:bg-red-50 transition-colors disabled:opacity-30"
+                    title="Delete this lead"
+                    aria-label={`Delete ${s.name}`}
+                  >
+                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                  </button>
                 </td>
               </tr>
             ))}

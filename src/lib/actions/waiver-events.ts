@@ -102,6 +102,38 @@ export async function updateWaiverDisplayName(
   return { ok: true };
 }
 
+/** Delete a single waiver-signer row. Returns the slug of the affected event so
+ *  callers can revalidate or update local state. */
+export async function deleteSigner(
+  signerId: string
+): Promise<{ ok: true; eventSlug: string | null } | { ok: false; error: string }> {
+  const supabase = getAdminSupabase();
+
+  // Look up event slug for revalidation BEFORE deleting (cascade-safe order).
+  const { data: signer } = await supabase
+    .from("racers")
+    .select("event_id")
+    .eq("id", signerId)
+    .single();
+
+  let eventSlug: string | null = null;
+  if (signer?.event_id) {
+    const { data: event } = await supabase
+      .from("live_events")
+      .select("slug")
+      .eq("id", signer.event_id as string)
+      .single();
+    eventSlug = (event?.slug as string | null) ?? null;
+  }
+
+  const { error } = await supabase.from("racers").delete().eq("id", signerId);
+  if (error) return { ok: false, error: error.message };
+
+  if (eventSlug) revalidatePath(`/events/${eventSlug}`);
+  revalidatePath("/signers");
+  return { ok: true, eventSlug };
+}
+
 /* ── Read ───────────────────────────────────────────────────── */
 
 export async function getActiveWaiver(
