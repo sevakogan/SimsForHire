@@ -1,10 +1,31 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import Image from "next/image";
 import WaiverScrollGate from "@/components/waiver/WaiverScrollGate";
 import { SignaturePad } from "@/components/waiver/SignaturePad";
 import { recordWaiverSignature } from "@/lib/actions/waiver-events";
 import { pickF1Quote } from "@/lib/f1-quotes";
+
+/** Instagram brand gradient logo (no extra font deps). */
+function InstagramIcon({ className = "h-5 w-5" }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <radialGradient id="ig-bg" cx="0.3" cy="1" r="1">
+          <stop offset="0%" stopColor="#FED576" />
+          <stop offset="25%" stopColor="#F47133" />
+          <stop offset="50%" stopColor="#BC3081" />
+          <stop offset="75%" stopColor="#4C63D2" />
+          <stop offset="100%" stopColor="#5851DB" />
+        </radialGradient>
+      </defs>
+      <rect x="2" y="2" width="20" height="20" rx="5" fill="url(#ig-bg)" />
+      <circle cx="12" cy="12" r="4.2" fill="none" stroke="white" strokeWidth="1.6" />
+      <circle cx="17.5" cy="6.5" r="1.1" fill="white" />
+    </svg>
+  );
+}
 
 interface Props {
   eventSlug: string;
@@ -76,7 +97,7 @@ export function WaiverSignForm({
     const firstName = success.name.split(" ")[0];
 
     return (
-      <div className="space-y-5">
+      <div className="space-y-5 overflow-x-hidden" style={{ touchAction: "pan-y" }}>
         {/* SHOW TO ATTENDANT — visible from 5-7ft away */}
         <div
           className="rounded-3xl border-4 p-6 text-center shadow-2xl"
@@ -103,7 +124,7 @@ export function WaiverSignForm({
             {success.name}
           </h2>
 
-          <p className="mt-4 text-xl font-bold text-white/90">{eventName}</p>
+          <p className="mt-4 text-xl font-bold text-white/90 break-words">{eventName}</p>
           <p className="mt-1 text-base text-white/70">Waiver signed ✓</p>
           <p className="mt-1 text-sm text-white/50">{success.signedAt}</p>
 
@@ -113,6 +134,20 @@ export function WaiverSignForm({
           >
             <span className="h-2 w-2 rounded-full bg-[#0a0a12]" />
             Verified · v{waiverVersion}
+          </div>
+
+          {/* Screenshot prompt */}
+          <div
+            className="mt-5 rounded-2xl px-4 py-3 text-center font-extrabold"
+            style={{
+              background: "rgba(0,0,0,0.45)",
+              border: `2px dashed ${MIAMI_BLUE}`,
+            }}
+          >
+            <p className="text-base leading-tight flex items-center justify-center gap-2 flex-wrap">
+              <span className="text-2xl">📸</span>
+              <span>Screenshot This — Show Attendant</span>
+            </p>
           </div>
         </div>
 
@@ -150,10 +185,15 @@ export function WaiverSignForm({
             style={{ borderColor: MIAMI_BLUE, background: "rgba(123,208,245,0.08)" }}
           >
             <div
-              className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl text-3xl"
-              style={{ background: MIAMI_BLUE, color: "#0a0a12" }}
+              className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl overflow-hidden bg-black p-1.5"
             >
-              🏠
+              <Image
+                src="/sims-logo-white.png"
+                alt="Sims For Hire"
+                width={56}
+                height={56}
+                className="h-full w-full object-contain"
+              />
             </div>
             <div className="text-left flex-1 min-w-0">
               <p className="text-[10px] uppercase tracking-wider font-extrabold" style={{ color: MIAMI_BLUE }}>
@@ -173,10 +213,15 @@ export function WaiverSignForm({
             style={{ borderColor: MIAMI_PINK, background: "rgba(255,91,167,0.08)" }}
           >
             <div
-              className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl text-3xl"
-              style={{ background: MIAMI_PINK, color: "#0a0a12" }}
+              className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl overflow-hidden bg-black p-1.5"
             >
-              🏎️
+              <Image
+                src="/shift-confirmation.png"
+                alt="Shift Arcade Miami"
+                width={56}
+                height={56}
+                className="h-full w-full object-contain"
+              />
             </div>
             <div className="text-left flex-1 min-w-0">
               <p className="text-[10px] uppercase tracking-wider font-extrabold" style={{ color: MIAMI_PINK }}>
@@ -191,10 +236,8 @@ export function WaiverSignForm({
 
         {/* Instagram */}
         <div className="rounded-2xl bg-white/[0.03] border border-white/10 p-4">
-          <div className="flex items-center justify-center gap-2 mb-3 text-white/60">
-            <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z" />
-            </svg>
+          <div className="flex items-center justify-center gap-2 mb-3 text-white/70">
+            <InstagramIcon className="h-5 w-5" />
             <span className="text-[11px] uppercase tracking-wider font-bold">Follow Us</span>
           </div>
           <div className="grid grid-cols-2 gap-2">
@@ -202,17 +245,19 @@ export function WaiverSignForm({
               href="https://instagram.com/simsforhire"
               target="_blank"
               rel="noopener noreferrer"
-              className="rounded-xl bg-white/5 border border-white/10 px-3 py-2.5 text-center text-[13px] font-bold hover:bg-white/10 transition-colors"
+              className="flex items-center justify-center gap-2 rounded-xl bg-white/5 border border-white/10 px-2 py-2.5 text-[13px] font-bold hover:bg-white/10 transition-colors min-w-0"
             >
-              @simsforhire
+              <InstagramIcon className="h-4 w-4 shrink-0" />
+              <span className="truncate">@simsforhire</span>
             </a>
             <a
               href="https://instagram.com/shiftarcade"
               target="_blank"
               rel="noopener noreferrer"
-              className="rounded-xl bg-white/5 border border-white/10 px-3 py-2.5 text-center text-[13px] font-bold hover:bg-white/10 transition-colors"
+              className="flex items-center justify-center gap-2 rounded-xl bg-white/5 border border-white/10 px-2 py-2.5 text-[13px] font-bold hover:bg-white/10 transition-colors min-w-0"
             >
-              @shiftarcade
+              <InstagramIcon className="h-4 w-4 shrink-0" />
+              <span className="truncate">@shiftarcade</span>
             </a>
           </div>
         </div>
