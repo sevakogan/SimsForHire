@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import * as XLSX from "xlsx";
 import QrGenerator from "@/components/qr/QrGenerator";
 import { SignatureModal, type SignatureModalSigner } from "@/components/signers/signature-modal";
 import { publishWaiverVersion } from "@/lib/actions/waiver-events";
@@ -10,6 +11,20 @@ import type {
   EventWaiverVersion,
   Racer,
 } from "@/types/events";
+
+type LeadSortKey = "event_date" | "name" | "email" | "phone" | "signed";
+type LeadSortDir = "asc" | "desc";
+
+function formatEventDate(iso: string | null): string {
+  if (!iso) return "—";
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return "—";
+  return d.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
 
 interface Props {
   event: EventWithConfig;
@@ -33,6 +48,73 @@ export function WaiverEventDetail({
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [activeSigner, setActiveSigner] = useState<SignatureModalSigner | null>(null);
+  const [sortKey, setSortKey] = useState<LeadSortKey>("signed");
+  const [sortDir, setSortDir] = useState<LeadSortDir>("desc");
+
+  function toggleSort(key: LeadSortKey) {
+    if (sortKey === key) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    else {
+      setSortKey(key);
+      setSortDir(key === "signed" ? "desc" : "asc");
+    }
+  }
+  function indicator(key: LeadSortKey) {
+    if (sortKey !== key) return <span className="opacity-30">↕</span>;
+    return <span>{sortDir === "asc" ? "↑" : "↓"}</span>;
+  }
+
+  const sortedSigners = useMemo(() => {
+    const dir = sortDir === "asc" ? 1 : -1;
+    const collator = new Intl.Collator("en", { sensitivity: "base" });
+    return [...signers].sort((a, b) => {
+      switch (sortKey) {
+        case "event_date":
+        case "signed": {
+          const av = a.waiver_accepted_at ? Date.parse(a.waiver_accepted_at) : 0;
+          const bv = b.waiver_accepted_at ? Date.parse(b.waiver_accepted_at) : 0;
+          return (av - bv) * dir;
+        }
+        case "name":
+          return collator.compare(a.name, b.name) * dir;
+        case "email":
+          return collator.compare(a.email ?? "", b.email ?? "") * dir;
+        case "phone":
+          return collator.compare(a.phone ?? "", b.phone ?? "") * dir;
+      }
+    });
+  }, [signers, sortKey, sortDir]);
+
+  function handleDownloadXlsx() {
+    if (sortedSigners.length === 0) return;
+    const rows = sortedSigners.map((s) => ({
+      "Event Date": formatEventDate(s.waiver_accepted_at),
+      Name: s.name,
+      Email: s.email ?? "",
+      Phone: s.phone ?? "",
+      Event: event.name,
+      "Marketing Opt-In": s.marketing_opt_in ? "Yes" : "No",
+      "Waiver Version": s.waiver_version ?? "",
+      "Signed At": s.waiver_accepted_at
+        ? new Date(s.waiver_accepted_at).toISOString()
+        : "",
+      IP: s.waiver_accepted_ip ?? "",
+    }));
+    const sheet = XLSX.utils.json_to_sheet(rows);
+    const cols = Object.keys(rows[0]);
+    sheet["!cols"] = cols.map((c) => ({
+      wch: Math.min(
+        50,
+        Math.max(
+          c.length,
+          ...rows.map((r) => String(r[c as keyof typeof r] ?? "").length)
+        ) + 2
+      ),
+    }));
+    const book = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(book, sheet, "Leads");
+    const stamp = new Date().toISOString().slice(0, 10);
+    XLSX.writeFile(book, `leads-${event.slug}-${stamp}.xlsx`);
+  }
 
   function handlePublish() {
     if (!confirm("Publish a new version of the waiver? Existing signatures keep their old version on record.")) return;
@@ -56,7 +138,7 @@ export function WaiverEventDetail({
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
         <div className="rounded-xl border border-border bg-white p-4">
           <p className="text-2xl font-bold text-foreground">{signers.length}</p>
-          <p className="mt-0.5 text-xs text-muted-foreground">Signatures</p>
+          <p className="mt-0.5 text-xs text-muted-foreground">Leads</p>
         </div>
         <div className="rounded-xl border border-border bg-white p-4">
           <p className="text-2xl font-bold text-foreground">v{activeWaiver?.version ?? "—"}</p>
@@ -186,18 +268,29 @@ export function WaiverEventDetail({
         )}
       </section>
 
-      {/* Signers list */}
+      {/* Leads list */}
       <section className="rounded-xl border border-border bg-white p-6">
-        <div className="mb-4">
-          <h2 className="text-lg font-semibold text-foreground">Signatures</h2>
-          <p className="text-[12px] text-muted-foreground mt-0.5">
-            Every row includes IP, user-agent, and the exact waiver version accepted — full legal audit trail.
-          </p>
+        <div className="mb-4 flex items-start justify-between gap-3">
+          <div>
+            <h2 className="text-lg font-semibold text-foreground">Leads</h2>
+            <p className="text-[12px] text-muted-foreground mt-0.5">
+              Every row includes IP, user-agent, and the exact waiver version accepted — full legal audit trail.
+            </p>
+          </div>
+          {sortedSigners.length > 0 && (
+            <button
+              onClick={handleDownloadXlsx}
+              className="shrink-0 rounded-lg bg-[#1D7A3A] px-3 py-1.5 text-[12px] font-semibold text-white hover:opacity-90 transition-opacity"
+              title="Download all leads as Excel (.xlsx)"
+            >
+              ↓ Excel ({sortedSigners.length})
+            </button>
+          )}
         </div>
 
-        {signers.length === 0 ? (
+        {sortedSigners.length === 0 ? (
           <div className="rounded-lg border border-dashed border-border py-12 text-center text-[13px] text-muted-foreground">
-            No signatures yet. Share the QR code or this URL:
+            No leads yet. Share the QR code or this URL:
             <br />
             <code className="text-[11px]">{signUrl}</code>
           </div>
@@ -206,18 +299,59 @@ export function WaiverEventDetail({
             <table className="w-full text-[12px]">
               <thead>
                 <tr className="border-b border-border text-left text-muted-foreground text-[11px] uppercase tracking-wide">
-                  <th className="py-2 pr-3 font-semibold">Name</th>
-                  <th className="py-2 pr-3 font-semibold">Email</th>
-                  <th className="py-2 pr-3 font-semibold">Phone</th>
+                  <th className="py-2 pr-3 font-semibold">
+                    <button
+                      type="button"
+                      onClick={() => toggleSort("event_date")}
+                      className="inline-flex items-center gap-1 uppercase hover:text-foreground"
+                    >
+                      Event Date {indicator("event_date")}
+                    </button>
+                  </th>
+                  <th className="py-2 pr-3 font-semibold">
+                    <button
+                      type="button"
+                      onClick={() => toggleSort("name")}
+                      className="inline-flex items-center gap-1 uppercase hover:text-foreground"
+                    >
+                      Name {indicator("name")}
+                    </button>
+                  </th>
+                  <th className="py-2 pr-3 font-semibold">
+                    <button
+                      type="button"
+                      onClick={() => toggleSort("email")}
+                      className="inline-flex items-center gap-1 uppercase hover:text-foreground"
+                    >
+                      Email {indicator("email")}
+                    </button>
+                  </th>
+                  <th className="py-2 pr-3 font-semibold">
+                    <button
+                      type="button"
+                      onClick={() => toggleSort("phone")}
+                      className="inline-flex items-center gap-1 uppercase hover:text-foreground"
+                    >
+                      Phone {indicator("phone")}
+                    </button>
+                  </th>
                   <th className="py-2 pr-3 font-semibold">Signature</th>
                   <th className="py-2 pr-3 font-semibold">Mkt</th>
                   <th className="py-2 pr-3 font-semibold">Ver</th>
-                  <th className="py-2 pr-3 font-semibold">Signed</th>
+                  <th className="py-2 pr-3 font-semibold">
+                    <button
+                      type="button"
+                      onClick={() => toggleSort("signed")}
+                      className="inline-flex items-center gap-1 uppercase hover:text-foreground"
+                    >
+                      Signed {indicator("signed")}
+                    </button>
+                  </th>
                   <th className="py-2 pr-3 font-semibold">IP</th>
                 </tr>
               </thead>
               <tbody>
-                {signers.map((s) => (
+                {sortedSigners.map((s) => (
                   <tr
                     key={s.id}
                     className="border-b border-border/50 last:border-0 hover:bg-muted/30 cursor-pointer"
@@ -236,6 +370,9 @@ export function WaiverEventDetail({
                       })
                     }
                   >
+                    <td className="py-2 pr-3 whitespace-nowrap font-semibold text-foreground">
+                      {formatEventDate(s.waiver_accepted_at)}
+                    </td>
                     <td className="py-2 pr-3 font-medium text-foreground">{s.name}</td>
                     <td className="py-2 pr-3 text-muted-foreground">{s.email}</td>
                     <td className="py-2 pr-3 text-muted-foreground">{s.phone || "—"}</td>

@@ -9,10 +9,41 @@ interface Props {
   signers: SignerWithEvent[];
 }
 
+type SortKey = "event_date" | "name" | "email" | "phone" | "signed";
+type SortDir = "asc" | "desc";
+
+function formatEventDate(iso: string | null): string {
+  if (!iso) return "—";
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return "—";
+  return d.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
 export function SignersView({ signers }: Props) {
   const [query, setQuery] = useState("");
   const [eventFilter, setEventFilter] = useState<string>("");
   const [activeSigner, setActiveSigner] = useState<SignatureModalSigner | null>(null);
+  // Default: most recent signature first.
+  const [sortKey, setSortKey] = useState<SortKey>("signed");
+  const [sortDir, setSortDir] = useState<SortDir>("desc");
+
+  function toggleSort(key: SortKey) {
+    if (sortKey === key) {
+      setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    } else {
+      setSortKey(key);
+      setSortDir(key === "signed" ? "desc" : "asc");
+    }
+  }
+
+  function sortIndicator(key: SortKey) {
+    if (sortKey !== key) return <span className="opacity-30">↕</span>;
+    return <span>{sortDir === "asc" ? "↑" : "↓"}</span>;
+  }
 
   const eventOptions = useMemo(() => {
     const map = new Map<string, string>();
@@ -26,7 +57,7 @@ export function SignersView({ signers }: Props) {
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return signers.filter((s) => {
+    const matches = signers.filter((s) => {
       if (eventFilter && s.event_slug !== eventFilter) return false;
       if (!q) return true;
       return (
@@ -36,11 +67,31 @@ export function SignersView({ signers }: Props) {
         s.event_name.toLowerCase().includes(q)
       );
     });
-  }, [signers, query, eventFilter]);
+
+    const dir = sortDir === "asc" ? 1 : -1;
+    const collator = new Intl.Collator("en", { sensitivity: "base" });
+    return [...matches].sort((a, b) => {
+      switch (sortKey) {
+        case "event_date":
+        case "signed": {
+          const av = a.waiver_accepted_at ? Date.parse(a.waiver_accepted_at) : 0;
+          const bv = b.waiver_accepted_at ? Date.parse(b.waiver_accepted_at) : 0;
+          return (av - bv) * dir;
+        }
+        case "name":
+          return collator.compare(a.name, b.name) * dir;
+        case "email":
+          return collator.compare(a.email ?? "", b.email ?? "") * dir;
+        case "phone":
+          return collator.compare(a.phone ?? "", b.phone ?? "") * dir;
+      }
+    });
+  }, [signers, query, eventFilter, sortKey, sortDir]);
 
   function handleDownloadXlsx() {
     if (filtered.length === 0) return;
     const rows = filtered.map((s) => ({
+      "Event Date": formatEventDate(s.waiver_accepted_at),
       Name: s.name,
       Email: s.email ?? "",
       Phone: s.phone ?? "",
@@ -77,9 +128,20 @@ export function SignersView({ signers }: Props) {
 
   function handleDownloadCsv() {
     if (filtered.length === 0) return;
-    const header = ["Name", "Email", "Phone", "Event", "Marketing", "Version", "Signed At", "IP"];
+    const header = [
+      "Event Date",
+      "Name",
+      "Email",
+      "Phone",
+      "Event",
+      "Marketing",
+      "Version",
+      "Signed At",
+      "IP",
+    ];
     const csvRows = filtered.map((s) =>
       [
+        formatEventDate(s.waiver_accepted_at),
         s.name,
         s.email ?? "",
         s.phone ?? "",
@@ -165,18 +227,62 @@ export function SignersView({ signers }: Props) {
         <table className="w-full text-[13px]">
           <thead>
             <tr className="border-b border-border bg-muted/40 text-left text-muted-foreground text-[11px] uppercase tracking-wide">
-              <th className="px-3 py-2 font-semibold">Name</th>
-              <th className="px-3 py-2 font-semibold">Email</th>
-              <th className="px-3 py-2 font-semibold">Phone</th>
+              <th className="px-3 py-2 font-semibold">
+                <button
+                  type="button"
+                  onClick={() => toggleSort("event_date")}
+                  className="inline-flex items-center gap-1 uppercase hover:text-foreground"
+                >
+                  Event Date {sortIndicator("event_date")}
+                </button>
+              </th>
+              <th className="px-3 py-2 font-semibold">
+                <button
+                  type="button"
+                  onClick={() => toggleSort("name")}
+                  className="inline-flex items-center gap-1 uppercase hover:text-foreground"
+                >
+                  Name {sortIndicator("name")}
+                </button>
+              </th>
+              <th className="px-3 py-2 font-semibold">
+                <button
+                  type="button"
+                  onClick={() => toggleSort("email")}
+                  className="inline-flex items-center gap-1 uppercase hover:text-foreground"
+                >
+                  Email {sortIndicator("email")}
+                </button>
+              </th>
+              <th className="px-3 py-2 font-semibold">
+                <button
+                  type="button"
+                  onClick={() => toggleSort("phone")}
+                  className="inline-flex items-center gap-1 uppercase hover:text-foreground"
+                >
+                  Phone {sortIndicator("phone")}
+                </button>
+              </th>
               <th className="px-3 py-2 font-semibold">Event</th>
               <th className="px-3 py-2 font-semibold">Sig</th>
               <th className="px-3 py-2 font-semibold">Mkt</th>
-              <th className="px-3 py-2 font-semibold">Signed</th>
+              <th className="px-3 py-2 font-semibold">
+                <button
+                  type="button"
+                  onClick={() => toggleSort("signed")}
+                  className="inline-flex items-center gap-1 uppercase hover:text-foreground"
+                >
+                  Signed {sortIndicator("signed")}
+                </button>
+              </th>
             </tr>
           </thead>
           <tbody>
             {filtered.map((s) => (
               <tr key={s.id} className="border-b border-border/50 last:border-0 hover:bg-muted/20">
+                <td className="px-3 py-2 whitespace-nowrap font-semibold text-foreground">
+                  {formatEventDate(s.waiver_accepted_at)}
+                </td>
                 <td className="px-3 py-2 font-medium text-foreground">{s.name}</td>
                 <td className="px-3 py-2 text-muted-foreground">
                   {s.email ? (

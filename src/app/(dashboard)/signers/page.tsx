@@ -9,10 +9,10 @@ export default async function SignersPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight text-foreground">
-          Waiver Signers
+          Leads
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Every signature collected across all waiver events. {signers.length} total.
+          Every waiver signature collected across all events. {signers.length} total.
         </p>
       </div>
       <SignersView signers={signers} />
