@@ -26,23 +26,29 @@ export default async function PublicWaiverPage({
 
   return (
     <main className="min-h-screen overflow-x-hidden text-white relative">
-      {/* Miami gradient base */}
+      {/* Vibrant Miami F1 fan-fest gradient — pink → purple → baby blue */}
       <div
         aria-hidden
         className="pointer-events-none fixed inset-0"
         style={{
           background:
-            "radial-gradient(ellipse at top left, rgba(255,91,167,0.22), transparent 55%), radial-gradient(ellipse at bottom right, rgba(123,208,245,0.22), transparent 55%), linear-gradient(180deg, #150818 0%, #0a0a18 50%, #08151c 100%)",
+            "linear-gradient(110deg, #FF1F8E 0%, #D14CC8 30%, #9C70E0 55%, #6FA8F0 78%, #4FCBFF 100%)",
         }}
       />
-      {/* Subtle Miami grid */}
+      {/* Soft white film so dark text/cards stay legible */}
       <div
         aria-hidden
-        className="pointer-events-none fixed inset-0 opacity-[0.05]"
+        className="pointer-events-none fixed inset-0"
+        style={{ background: "rgba(8, 6, 18, 0.35)" }}
+      />
+      {/* Subtle grid texture */}
+      <div
+        aria-hidden
+        className="pointer-events-none fixed inset-0 opacity-[0.07] mix-blend-overlay"
         style={{
           backgroundImage:
-            "linear-gradient(#FF5BA7 1px, transparent 1px), linear-gradient(90deg, #7BD0F5 1px, transparent 1px)",
-          backgroundSize: "40px 40px",
+            "linear-gradient(rgba(255,255,255,0.4) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.4) 1px, transparent 1px)",
+          backgroundSize: "44px 44px",
         }}
       />
 

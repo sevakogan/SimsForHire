@@ -260,8 +260,8 @@ export function WaiverSignForm({
               onChange={(e) => setName(e.target.value)}
               required
               autoComplete="name"
-              className="w-full rounded-lg border border-white/15 bg-white/[0.04] px-3 py-3 text-base text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:border-transparent"
-              style={{ caretColor: MIAMI_PINK }}
+              className="w-full rounded-lg border border-white/15 bg-white/[0.04] px-3 py-3 text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:border-transparent"
+              style={{ caretColor: MIAMI_PINK, fontSize: "16px" }}
             />
           </div>
 
@@ -275,8 +275,8 @@ export function WaiverSignForm({
               onChange={(e) => setEmail(e.target.value)}
               required
               autoComplete="email"
-              className="w-full rounded-lg border border-white/15 bg-white/[0.04] px-3 py-3 text-base text-white placeholder-white/30 focus:outline-none focus:ring-2"
-              style={{ caretColor: MIAMI_PINK }}
+              className="w-full rounded-lg border border-white/15 bg-white/[0.04] px-3 py-3 text-white placeholder-white/30 focus:outline-none focus:ring-2"
+              style={{ caretColor: MIAMI_PINK, fontSize: "16px" }}
             />
           </div>
         </div>
@@ -294,7 +294,8 @@ export function WaiverSignForm({
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
             autoComplete="tel"
-            className="w-full rounded-lg border border-white/15 bg-white/[0.04] px-3 py-3 text-base text-white placeholder-white/30 focus:outline-none focus:ring-2"
+            className="w-full rounded-lg border border-white/15 bg-white/[0.04] px-3 py-3 text-white placeholder-white/30 focus:outline-none focus:ring-2"
+            style={{ fontSize: "16px" }}
           />
         </div>
 
