@@ -3,10 +3,14 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
 // Explicit viewport export prevents iOS Safari from auto-zooming on input
-// focus. initial-scale=1 + 16px inputs together = no zoom.
+// focus. initial-scale=1 + 16px inputs + maximumScale=1 = no zoom at all.
+// The waiver-sign flow is a kiosk-style experience; pinch-zoom is acceptable
+// to disable. Other dashboard pages don't expose forms to anonymous users.
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
   viewportFit: "cover",
 };
 

@@ -320,6 +320,9 @@ export async function recordWaiverSignature(input: {
   // Send a copy to the signer (Florida E-SIGN: signer must be able to retain).
   // Wrapped in try/catch — email failure should NOT block the signature being recorded.
   try {
+    console.log(
+      `[waiver-email] sending copy to ${email} (event=${input.eventSlug}, v${input.waiverVersion}, resend=${process.env.RESEND_API_KEY ? "configured" : "MISSING"})`
+    );
     await sendSignedWaiverCopy({
       to: email,
       signerName: name,
@@ -332,8 +335,12 @@ export async function recordWaiverSignature(input: {
       userAgent,
       signedAt,
     });
+    console.log(`[waiver-email] OK -> ${email}`);
   } catch (err) {
-    console.error("Failed to email waiver copy:", err);
+    console.error(
+      `[waiver-email] FAILED to ${email} (event=${input.eventSlug}):`,
+      err instanceof Error ? `${err.message}\n${err.stack}` : err
+    );
   }
 
   revalidatePath(`/events/${input.eventSlug}`);
