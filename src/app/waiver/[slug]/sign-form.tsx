@@ -114,7 +114,7 @@ export function WaiverSignForm({
           </div>
 
           <p
-            className="text-[13px] font-extrabold uppercase tracking-[0.3em] mb-2"
+            className="text-base font-extrabold uppercase tracking-[0.3em] mb-3"
             style={{ color: MIAMI_BLUE }}
           >
             Show This to Attendant
@@ -124,12 +124,11 @@ export function WaiverSignForm({
             {success.name}
           </h2>
 
-          <p className="mt-4 text-xl font-bold text-white/90 break-words">{eventName}</p>
-          <p className="mt-1 text-base text-white/70">Waiver signed ✓</p>
-          <p className="mt-1 text-sm text-white/50">{success.signedAt}</p>
+          <p className="mt-4 text-lg font-semibold text-white/85">Waiver signed ✓</p>
+          <p className="mt-1 text-base text-white/60">{success.signedAt}</p>
 
           <div
-            className="mt-5 inline-flex items-center gap-2 rounded-full px-4 py-2 text-[12px] uppercase tracking-wider font-extrabold"
+            className="mt-5 inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm uppercase tracking-wider font-extrabold"
             style={{ background: MIAMI_BLUE, color: "#0a0a12" }}
           >
             <span className="h-2 w-2 rounded-full bg-[#0a0a12]" />
@@ -138,13 +137,13 @@ export function WaiverSignForm({
 
           {/* Screenshot prompt */}
           <div
-            className="mt-5 rounded-2xl px-4 py-3 text-center font-extrabold"
+            className="mt-5 rounded-2xl px-4 py-3.5 text-center font-extrabold"
             style={{
               background: "rgba(0,0,0,0.45)",
               border: `2px dashed ${MIAMI_BLUE}`,
             }}
           >
-            <p className="text-base leading-tight flex items-center justify-center gap-2 flex-wrap">
+            <p className="text-lg leading-tight flex items-center justify-center gap-2 flex-wrap">
               <span className="text-2xl">📸</span>
               <span>Screenshot This — Show Attendant</span>
             </p>
