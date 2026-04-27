@@ -198,7 +198,7 @@ export function Sidebar() {
           if ("children" in item && item.children) {
             const anyChildActive = item.children.some((c) => isActive(c.href));
             return (
-              <div key={item.id} style={{ marginBottom: 4 }}>
+              <div key={item.id} style={{ marginBottom: 2 }}>
                 <div
                   style={{
                     display: "flex",
@@ -213,36 +213,30 @@ export function Sidebar() {
                   <NavIcon path={item.icon} active={anyChildActive} />
                   {item.label}
                 </div>
-                <div style={{ marginLeft: 16, marginTop: 2 }}>
-                  {item.children.map((child) => {
-                    const childActive = isActive(child.href);
-                    return (
-                      <Link
-                        key={child.href}
-                        href={child.href}
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 10,
-                          padding: "8px 12px",
-                          borderRadius: 8,
-                          fontSize: 13,
-                          fontWeight: childActive ? 500 : 400,
-                          color: childActive ? "#1D1D1F" : "#86868B",
-                          background: childActive ? "rgba(0,0,0,0.04)" : "transparent",
-                          textDecoration: "none",
-                          marginBottom: 2,
-                          transition: "all 0.15s",
-                          borderLeft: "2px solid",
-                          borderLeftColor: childActive ? "#E10600" : "rgba(0,0,0,0.06)",
-                          paddingLeft: 12,
-                        }}
-                      >
-                        {child.label}
-                      </Link>
-                    );
-                  })}
-                </div>
+                {item.children.map((child) => {
+                  const childActive = isActive(child.href);
+                  return (
+                    <Link
+                      key={child.href}
+                      href={child.href}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        padding: "7px 12px 7px 40px",
+                        borderRadius: 10,
+                        fontSize: 13,
+                        fontWeight: childActive ? 500 : 400,
+                        color: childActive ? "#1D1D1F" : "#86868B",
+                        background: childActive ? "rgba(0,0,0,0.04)" : "transparent",
+                        textDecoration: "none",
+                        marginBottom: 2,
+                        transition: "background 0.15s, color 0.15s",
+                      }}
+                    >
+                      {child.label}
+                    </Link>
+                  );
+                })}
               </div>
             );
           }
