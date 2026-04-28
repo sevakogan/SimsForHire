@@ -48,7 +48,7 @@ export function SignaturePad({
     ctx.scale(dpr, dpr);
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 2.5;
     ctx.strokeStyle = strokeColor;
 
     if (hasInkRef.current) {
@@ -91,10 +91,11 @@ export function SignaturePad({
     const last = lastPointRef.current;
     if (!ctx || !last) return;
     const p = getPoint(e);
-    const mid = { x: (last.x + p.x) / 2, y: (last.y + p.y) / 2 };
+    // Continuous line segment from last point to current point. Round
+    // line caps + joins fill any sub-pixel gaps so the stroke reads smooth.
     ctx.beginPath();
     ctx.moveTo(last.x, last.y);
-    ctx.quadraticCurveTo(last.x, last.y, mid.x, mid.y);
+    ctx.lineTo(p.x, p.y);
     ctx.stroke();
     lastPointRef.current = p;
     if (!hasInkRef.current) {

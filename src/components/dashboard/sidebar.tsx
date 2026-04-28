@@ -18,9 +18,20 @@ const NAV_ITEMS = [
   {
     id: "events",
     label: "Events",
-    href: "/events",
     internalOnly: true,
     icon: "M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5",
+    // Group: parent label is a section header; children render indented below
+    children: [
+      { id: "events-list", label: "Events", href: "/events" },
+      { id: "events-qr", label: "QR Code", href: "/qr-codes" },
+    ],
+  },
+  {
+    id: "signers",
+    label: "Leads",
+    href: "/signers",
+    internalOnly: true,
+    icon: "M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10",
   },
   {
     id: "leads",
@@ -183,6 +194,54 @@ export function Sidebar() {
         </p>
 
         {visibleItems.map((item) => {
+          // Group with children: render header (non-clickable) + nested links
+          if ("children" in item && item.children) {
+            const anyChildActive = item.children.some((c) => isActive(c.href));
+            return (
+              <div key={item.id} style={{ marginBottom: 2 }}>
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 10,
+                    padding: "10px 12px",
+                    fontSize: 14,
+                    fontWeight: anyChildActive ? 500 : 400,
+                    color: anyChildActive ? "#1D1D1F" : "#86868B",
+                  }}
+                >
+                  <NavIcon path={item.icon} active={anyChildActive} />
+                  {item.label}
+                </div>
+                {item.children.map((child) => {
+                  const childActive = isActive(child.href);
+                  return (
+                    <Link
+                      key={child.href}
+                      href={child.href}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        padding: "7px 12px 7px 40px",
+                        borderRadius: 10,
+                        fontSize: 13,
+                        fontWeight: childActive ? 500 : 400,
+                        color: childActive ? "#1D1D1F" : "#86868B",
+                        background: childActive ? "rgba(0,0,0,0.04)" : "transparent",
+                        textDecoration: "none",
+                        marginBottom: 2,
+                        transition: "background 0.15s, color 0.15s",
+                      }}
+                    >
+                      {child.label}
+                    </Link>
+                  );
+                })}
+              </div>
+            );
+          }
+          // Regular item (must have href)
+          if (!item.href) return null;
           const active = isActive(item.href);
           return (
             <Link

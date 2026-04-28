@@ -88,15 +88,16 @@ export default function WaiverScrollGate({
 
   return (
     <section>
-      <p className="text-xs tracking-wider uppercase text-gray-600 dark:text-white/75 mb-2 font-semibold">
+      <p className="text-xs tracking-wider uppercase text-gray-600 dark:text-white mb-2 font-bold">
         {heading}
       </p>
 
-      <div className="relative bg-gray-50 dark:bg-white/[0.04] border border-gray-200 dark:border-white/15 rounded-xl overflow-hidden">
+      <div className="relative bg-gray-50 dark:bg-black/50 border border-gray-200 dark:border-white/20 rounded-xl overflow-hidden">
         <div
           ref={waiverRef}
           onScroll={handleScroll}
-          className="h-56 overflow-y-auto px-4 py-4 text-[11px] leading-[1.55] text-gray-700 dark:text-white/70 whitespace-pre-wrap"
+          className="h-56 overflow-y-auto overflow-x-hidden overscroll-contain px-4 py-4 text-[11px] leading-[1.55] text-gray-700 dark:text-white/85 whitespace-pre-wrap break-words"
+          style={{ touchAction: "pan-y", wordBreak: "break-word" }}
         >
           {body}
         </div>

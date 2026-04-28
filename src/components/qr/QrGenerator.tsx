@@ -41,6 +41,10 @@ type Props = {
   readonly url: string;
   /** Optional path to a logo to overlay in the center (e.g. "/logo.png"). Omit to render plain QR codes. */
   readonly logoSrc?: string;
+  /** Optional dark-on-transparent logo used when the QR background is light. Defaults to logoSrc. */
+  readonly logoSrcDark?: string;
+  /** Optional light-on-transparent logo used when the QR background is dark. Defaults to logoSrc. */
+  readonly logoSrcLight?: string;
   /** Used as the prefix for the downloaded PNG filename. */
   readonly filenamePrefix?: string;
   /** Brand foreground color for the "Rounded — Brand" variant. */
@@ -49,9 +53,31 @@ type Props = {
   readonly brandLight?: string;
 };
 
+/** Heuristic: pick the right logo asset for a given QR background colour. */
+function pickLogoForVariant(
+  variant: Variant,
+  logoSrc?: string,
+  logoSrcDark?: string,
+  logoSrcLight?: string
+): string | undefined {
+  // If a single fallback was passed and no per-tone variants, use it.
+  if (!logoSrcDark && !logoSrcLight) return logoSrc;
+  // For transparent backgrounds we look at the dark (foreground) colour to
+  // decide which logo will be visible. White ink on a transparent canvas → use
+  // the white logo so it matches the QR ink.
+  const isLightForeground = variant.dark === "#ffffff";
+  const isDarkBackground =
+    variant.light === "#000000" ||
+    (variant.light.startsWith("#") && variant.light.length === 9 && variant.light.endsWith("00") && isLightForeground);
+  // Rule of thumb: dark ink → black logo, light ink → white logo.
+  return isLightForeground || isDarkBackground ? (logoSrcLight ?? logoSrc) : (logoSrcDark ?? logoSrc);
+}
+
 export default function QrGenerator({
   url,
   logoSrc,
+  logoSrcDark,
+  logoSrcLight,
   filenamePrefix = "qr",
   brandDark = "#d92626",
   brandLight = "#0a0a12",
@@ -67,9 +93,15 @@ export default function QrGenerator({
   return (
     <div>
       <p className="mb-4 text-xs text-gray-500 font-mono break-all">{url}</p>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
         {variants.map((v) => (
-          <QrCard key={v.key} variant={v} url={url} logoSrc={logoSrc} filenamePrefix={filenamePrefix} />
+          <QrCard
+            key={v.key}
+            variant={v}
+            url={url}
+            logoSrc={pickLogoForVariant(v, logoSrc, logoSrcDark, logoSrcLight)}
+            filenamePrefix={filenamePrefix}
+          />
         ))}
       </div>
     </div>
@@ -130,12 +162,12 @@ function QrCard({
   }
 
   return (
-    <div className="bg-gray-50 dark:bg-white/[0.02] border border-gray-200 dark:border-white/10 rounded-xl p-5">
+    <div className="bg-gray-50 dark:bg-white/[0.02] border border-gray-200 dark:border-white/10 rounded-lg p-2.5">
       <div
-        className="aspect-square rounded-lg overflow-hidden mb-4 flex items-center justify-center"
+        className="aspect-square rounded overflow-hidden mb-2 flex items-center justify-center"
         style={{
           background: variant.key.includes("transparent")
-            ? "repeating-conic-gradient(#1a1a2e 0% 25%, #0a0a12 0% 50%) 50% / 20px 20px"
+            ? "repeating-conic-gradient(#1a1a2e 0% 25%, #0a0a12 0% 50%) 50% / 12px 12px"
             : "transparent",
         }}
       >
@@ -143,18 +175,20 @@ function QrCard({
           // eslint-disable-next-line @next/next/no-img-element
           <img src={previewUrl} alt={variant.label} className="w-full h-full" />
         ) : (
-          <div className="text-gray-400 text-xs">Generating…</div>
+          <div className="text-gray-400 text-[10px]">…</div>
         )}
       </div>
       <canvas ref={canvasRef} width={SIZE} height={SIZE} className="hidden" />
-      <p className="text-sm font-semibold text-gray-900 dark:text-white mb-1">{variant.label}</p>
-      <p className="text-[10px] text-gray-500 mb-3">2048 × 2048 PNG</p>
+      <p className="text-[10px] font-semibold text-gray-900 dark:text-white mb-1.5 truncate" title={variant.label}>
+        {variant.label}
+      </p>
       <button
         onClick={handleDownload}
         disabled={!previewUrl}
-        className="w-full py-2.5 bg-gray-100 hover:bg-gray-200 dark:bg-white/[0.04] dark:hover:bg-white/[0.08] border border-gray-200 dark:border-white/15 rounded-full text-xs font-semibold tracking-wider uppercase disabled:opacity-50"
+        className="w-full py-1.5 bg-gray-100 hover:bg-gray-200 dark:bg-white/[0.04] dark:hover:bg-white/[0.08] border border-gray-200 dark:border-white/15 rounded-md text-[10px] font-semibold tracking-wide uppercase disabled:opacity-50"
+        title="Download 2048×2048 PNG"
       >
-        Download
+        ↓ PNG
       </button>
     </div>
   );

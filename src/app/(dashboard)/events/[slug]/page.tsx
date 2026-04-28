@@ -7,8 +7,14 @@ import {
   listSigners,
   listWaiverVersions,
 } from "@/lib/actions/waiver-events";
+import {
+  buildTokenUrl,
+  getPrimaryQrForEvent,
+  getUniversalQr,
+} from "@/lib/actions/qr-redirects";
 import { EventDetailView } from "@/components/events/event-detail-view";
 import { WaiverEventDetail } from "@/components/events/waiver-event-detail";
+import { EditableDisplayName } from "@/components/events/editable-display-name";
 import type { Racer } from "@/types/events";
 
 export const dynamic = "force-dynamic";
@@ -41,31 +47,37 @@ export default async function EventDetailPage({
   if (!event) notFound();
 
   if (event.event_type === "waiver") {
-    const [activeWaiver, versions, signers, signUrl] = await Promise.all([
-      getActiveWaiver(event.id),
-      listWaiverVersions(event.id),
-      listSigners(event.id),
-      buildSignUrl(event.slug),
-    ]);
+    const [activeWaiver, versions, signers, signUrl, primaryQr, universalQr] =
+      await Promise.all([
+        getActiveWaiver(event.id),
+        listWaiverVersions(event.id),
+        listSigners(event.id),
+        buildSignUrl(event.slug),
+        getPrimaryQrForEvent(event.id),
+        getUniversalQr(),
+      ]);
+    const primaryQrUrl = primaryQr ? await buildTokenUrl(primaryQr.token) : null;
+    const universalQrUrl = await buildTokenUrl(universalQr.token);
 
+    const displayName = event.config?.event_name?.trim() || event.name;
     return (
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-semibold tracking-tight text-foreground">
-              {event.name}
-            </h1>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Waiver event ·{" "}
-              <span
-                className={`inline-flex items-center gap-1 ${
-                  event.status === "active" ? "text-green-600" : "text-muted-foreground"
-                }`}
-              >
-                {event.status === "active" ? "Active" : "Archived"}
-              </span>
-            </p>
-          </div>
+        <div>
+          <EditableDisplayName
+            eventId={event.id}
+            initialName={displayName}
+            slug={event.slug}
+          />
+          <p className="mt-1 text-sm text-muted-foreground">
+            Waiver event ·{" "}
+            <span
+              className={`inline-flex items-center gap-1 ${
+                event.status === "active" ? "text-green-600" : "text-muted-foreground"
+              }`}
+            >
+              {event.status === "active" ? "Active" : "Archived"}
+            </span>
+          </p>
         </div>
 
         <WaiverEventDetail
@@ -74,6 +86,10 @@ export default async function EventDetailPage({
           versions={versions}
           signers={signers}
           signUrl={signUrl}
+          primaryQr={primaryQr}
+          primaryQrUrl={primaryQrUrl}
+          universalQr={universalQr}
+          universalQrUrl={universalQrUrl}
         />
       </div>
     );
