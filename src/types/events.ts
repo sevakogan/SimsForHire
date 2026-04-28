@@ -59,6 +59,10 @@ export interface Racer {
   waiver_accepted_user_agent: string | null;
   signature_data_url: string | null;
   marketing_opt_in: boolean;
+  // Email engagement (populated by /api/live-events/track/email-open tracking pixel)
+  email_opened_at: string | null;
+  email_open_count: number | null;
+  email_open_user_agent: string | null;
 }
 
 export type EventRole = "admin" | "employee";

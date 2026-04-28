@@ -202,6 +202,8 @@ export interface SignerWithEvent {
   event_id: string;
   event_name: string;
   event_slug: string;
+  email_opened_at: string | null;
+  email_open_count: number | null;
 }
 
 /** All waiver signers across every event (most recent first). */
@@ -211,7 +213,7 @@ export async function listAllSigners(): Promise<SignerWithEvent[]> {
   const { data: signers } = await supabase
     .from("racers")
     .select(
-      "id,name,email,phone,marketing_opt_in,waiver_version,waiver_accepted_at,waiver_accepted_ip,signature_data_url,event_id"
+      "id,name,email,phone,marketing_opt_in,waiver_version,waiver_accepted_at,waiver_accepted_ip,signature_data_url,event_id,email_opened_at,email_open_count"
     )
     .not("waiver_version", "is", null)
     .order("waiver_accepted_at", { ascending: false });
@@ -244,6 +246,8 @@ export async function listAllSigners(): Promise<SignerWithEvent[]> {
       event_id: s.event_id as string,
       event_name: event?.name ?? "(deleted event)",
       event_slug: event?.slug ?? "",
+      email_opened_at: (s.email_opened_at as string | null) ?? null,
+      email_open_count: (s.email_open_count as number | null) ?? null,
     };
   });
 }

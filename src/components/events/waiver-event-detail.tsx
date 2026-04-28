@@ -389,6 +389,7 @@ export function WaiverEventDetail({
                   </th>
                   <th className="py-2 pr-3 font-semibold">Signature</th>
                   <th className="py-2 pr-3 font-semibold">Mkt</th>
+                  <th className="py-2 pr-3 font-semibold" title="Confirmation email open status">Email</th>
                   <th className="py-2 pr-3 font-semibold">Ver</th>
                   <th className="py-2 pr-3 font-semibold">
                     <button
@@ -446,6 +447,20 @@ export function WaiverEventDetail({
                         <span className="text-green-600">✓</span>
                       ) : (
                         <span className="text-muted-foreground">—</span>
+                      )}
+                    </td>
+                    <td className="py-2 pr-3 whitespace-nowrap">
+                      {!s.email ? (
+                        <span className="text-muted-foreground" title="No email captured — confirmation email not sent">—</span>
+                      ) : s.email_opened_at ? (
+                        <span
+                          className="text-green-600"
+                          title={`Opened ${new Date(s.email_opened_at).toLocaleString()}${(s.email_open_count ?? 0) > 1 ? ` · ${s.email_open_count} times` : ""}`}
+                        >
+                          ✓ Opened{(s.email_open_count ?? 0) > 1 ? ` (${s.email_open_count})` : ""}
+                        </span>
+                      ) : (
+                        <span className="text-amber-600" title="Confirmation email sent — not yet opened">○ Sent</span>
                       )}
                     </td>
                     <td className="py-2 pr-3 text-muted-foreground">v{s.waiver_version}</td>
