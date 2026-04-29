@@ -57,6 +57,8 @@ export interface Racer {
   waiver_accepted_at: string | null;
   waiver_accepted_ip: string | null;
   waiver_accepted_user_agent: string | null;
+  /** ISP / carrier name resolved from the IP at signing time (e.g. "Verizon", "Comcast"). Null if lookup failed or skipped. */
+  waiver_accepted_isp: string | null;
   signature_data_url: string | null;
   marketing_opt_in: boolean;
   // Email delivery queue (null = not yet sent; set when Resend accepts the send)

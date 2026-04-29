@@ -12,6 +12,7 @@ export interface SignatureModalSigner {
   waiver_accepted_at: string | null;
   waiver_accepted_ip: string | null;
   waiver_accepted_user_agent?: string | null;
+  waiver_accepted_isp?: string | null;
   signature_data_url: string | null;
   // Email delivery + engagement
   email_sent_at?: string | null;
@@ -222,6 +223,10 @@ export function SignatureModal({ signer, onClose }: Props) {
               <div>
                 <dt className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">IP Address</dt>
                 <dd className="mt-0.5 font-mono text-[12px] text-foreground">{signer.waiver_accepted_ip ?? "—"}</dd>
+              </div>
+              <div>
+                <dt className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">Carrier / ISP</dt>
+                <dd className="mt-0.5 text-foreground">{signer.waiver_accepted_isp ?? "—"}</dd>
               </div>
               <div>
                 <dt className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">Signed On</dt>

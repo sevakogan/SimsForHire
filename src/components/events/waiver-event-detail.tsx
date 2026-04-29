@@ -149,6 +149,7 @@ export function WaiverEventDetail({
         ? new Date(s.waiver_accepted_at).toISOString()
         : "",
       IP: s.waiver_accepted_ip ?? "",
+      "Carrier / ISP": s.waiver_accepted_isp ?? "",
     }));
     const sheet = XLSX.utils.json_to_sheet(rows);
     const cols = Object.keys(rows[0]);
@@ -400,7 +401,7 @@ export function WaiverEventDetail({
                       Signed {indicator("signed")}
                     </button>
                   </th>
-                  <th className="py-2 pr-3 font-semibold">IP</th>
+                  <th className="py-2 pr-3 font-semibold" title="Hover IP/Carrier cell to see IP">Carrier</th>
                   <th className="py-2 pr-3 font-semibold w-8"></th>
                 </tr>
               </thead>
@@ -420,6 +421,7 @@ export function WaiverEventDetail({
                         waiver_accepted_at: s.waiver_accepted_at,
                         waiver_accepted_ip: s.waiver_accepted_ip,
                         waiver_accepted_user_agent: s.waiver_accepted_user_agent,
+                        waiver_accepted_isp: s.waiver_accepted_isp,
                         signature_data_url: s.signature_data_url,
                         email_sent_at: s.email_sent_at,
                         email_opened_at: s.email_opened_at,
@@ -475,8 +477,10 @@ export function WaiverEventDetail({
                         ? new Date(s.waiver_accepted_at).toLocaleString()
                         : "—"}
                     </td>
-                    <td className="py-2 pr-3 text-muted-foreground font-mono text-[11px]">
-                      {s.waiver_accepted_ip ?? "—"}
+                    <td className="py-2 pr-3 text-muted-foreground text-[12px]" title={s.waiver_accepted_ip ?? ""}>
+                      {s.waiver_accepted_isp ?? (
+                        <span className="font-mono text-[11px]">{s.waiver_accepted_ip ?? "—"}</span>
+                      )}
                     </td>
                     <td className="py-2 pr-3" onClick={(e) => e.stopPropagation()}>
                       {confirmingId === s.id ? (

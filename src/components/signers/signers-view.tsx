@@ -136,6 +136,7 @@ export function SignersView({ signers }: Props) {
         ? new Date(s.waiver_accepted_at).toISOString()
         : "",
       IP: s.waiver_accepted_ip ?? "",
+      "Carrier / ISP": s.waiver_accepted_isp ?? "",
     }));
     const sheet = XLSX.utils.json_to_sheet(rows);
     // Auto-fit columns by max content length
@@ -171,6 +172,7 @@ export function SignersView({ signers }: Props) {
       "Version",
       "Signed At",
       "IP",
+      "Carrier / ISP",
     ];
     const csvRows = filtered.map((s) =>
       [
@@ -183,6 +185,7 @@ export function SignersView({ signers }: Props) {
         s.waiver_version ?? "",
         s.waiver_accepted_at ?? "",
         s.waiver_accepted_ip ?? "",
+        s.waiver_accepted_isp ?? "",
       ]
         .map((v) => `"${String(v).replace(/"/g, '""')}"`)
         .join(",")
@@ -303,6 +306,7 @@ export function SignersView({ signers }: Props) {
                 </button>
               </th>
               <th className="px-3 py-2 font-semibold">Event</th>
+              <th className="px-3 py-2 font-semibold">Carrier</th>
               <th className="px-3 py-2 font-semibold">Sig</th>
               <th className="px-3 py-2 font-semibold">Mkt</th>
               <th className="px-3 py-2 font-semibold">Email</th>
@@ -347,6 +351,9 @@ export function SignersView({ signers }: Props) {
                     s.event_name
                   )}
                 </td>
+                <td className="px-3 py-2 text-muted-foreground whitespace-nowrap" title={s.waiver_accepted_ip ?? ""}>
+                  {s.waiver_accepted_isp ?? "—"}
+                </td>
                 <td className="px-3 py-2">
                   {s.signature_data_url ? (
                     <button
@@ -362,6 +369,7 @@ export function SignersView({ signers }: Props) {
                           waiver_accepted_at: s.waiver_accepted_at,
                           waiver_accepted_ip: s.waiver_accepted_ip,
                           waiver_accepted_user_agent: s.waiver_accepted_user_agent,
+                          waiver_accepted_isp: s.waiver_accepted_isp,
                           signature_data_url: s.signature_data_url,
                           email_sent_at: s.email_sent_at,
                           email_opened_at: s.email_opened_at,

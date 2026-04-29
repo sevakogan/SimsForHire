@@ -7,6 +7,7 @@ import { getAdminSupabase } from "@/lib/supabase-admin";
 import { buildWaiverEmail } from "@/lib/email-template";
 import { generateWaiverPdf } from "@/lib/waiver-pdf";
 import { sendCAPIEvent } from "@/lib/meta-capi";
+import { lookupIsp } from "@/lib/ip-enrich";
 import { createQrRedirect } from "@/lib/actions/qr-redirects";
 import type {
   EventWaiverVersion,
@@ -202,6 +203,7 @@ export interface SignerWithEvent {
   waiver_accepted_at: string | null;
   waiver_accepted_ip: string | null;
   waiver_accepted_user_agent: string | null;
+  waiver_accepted_isp: string | null;
   signature_data_url: string | null;
   event_id: string;
   event_name: string;
@@ -219,7 +221,7 @@ export async function listAllSigners(): Promise<SignerWithEvent[]> {
   const { data: signers } = await supabase
     .from("racers")
     .select(
-      "id,name,email,phone,marketing_opt_in,waiver_version,waiver_accepted_at,waiver_accepted_ip,waiver_accepted_user_agent,signature_data_url,event_id,email_sent_at,email_opened_at,email_open_count,email_open_user_agent"
+      "id,name,email,phone,marketing_opt_in,waiver_version,waiver_accepted_at,waiver_accepted_ip,waiver_accepted_user_agent,waiver_accepted_isp,signature_data_url,event_id,email_sent_at,email_opened_at,email_open_count,email_open_user_agent"
     )
     .not("waiver_version", "is", null)
     .order("waiver_accepted_at", { ascending: false });
@@ -249,6 +251,7 @@ export async function listAllSigners(): Promise<SignerWithEvent[]> {
       waiver_accepted_at: (s.waiver_accepted_at as string | null) ?? null,
       waiver_accepted_ip: (s.waiver_accepted_ip as string | null) ?? null,
       waiver_accepted_user_agent: (s.waiver_accepted_user_agent as string | null) ?? null,
+      waiver_accepted_isp: (s.waiver_accepted_isp as string | null) ?? null,
       signature_data_url: (s.signature_data_url as string | null) ?? null,
       event_id: s.event_id as string,
       event_name: event?.name ?? "(deleted event)",
@@ -365,6 +368,11 @@ export async function recordWaiverSignature(input: {
   const userAgent = hdrs.get("user-agent") ?? "";
   const signedAt = new Date();
 
+  // ISP lookup is fire-and-forget-style: we await it but it has its own
+  // 2s timeout and never throws. Worst case: column is null and the row
+  // is still recorded normally.
+  const isp = await lookupIsp(ip);
+
   const { data: inserted, error } = await supabase
     .from("racers")
     .insert({
@@ -381,6 +389,7 @@ export async function recordWaiverSignature(input: {
       waiver_accepted_at: signedAt.toISOString(),
       waiver_accepted_ip: ip,
       waiver_accepted_user_agent: userAgent,
+      waiver_accepted_isp: isp,
       signature_data_url: signature,
       marketing_opt_in: input.marketingOptIn,
     })
