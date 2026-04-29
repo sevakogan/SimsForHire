@@ -423,31 +423,40 @@ async function sendSignedWaiverCopy(input: {
       .replace(/'/g, "&#39;");
 
   const bodyHtml = `
-    <div style="max-width:600px;margin:0 auto;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:#222;">
-      <h1 style="font-size:22px;margin:0 0 6px;">Your Signed Waiver</h1>
-      <p style="margin:0 0 18px;color:#666;font-size:14px;">${escapeHtml(input.eventName)}</p>
+    <p style="margin:0 0 4px 0; font-size:18px; font-weight:700; color:#FFFFFF; letter-spacing:-0.3px;">Your Signed Waiver</p>
+    <p style="margin:0 0 24px 0; font-size:13px; color:#8A8A8A; letter-spacing:1px; text-transform:uppercase;">${escapeHtml(input.eventName)}</p>
 
-      <table style="width:100%;border-collapse:collapse;margin-bottom:24px;font-size:13px;">
-        <tr><td style="padding:6px 0;color:#888;">Signer</td><td style="padding:6px 0;text-align:right;font-weight:600;">${escapeHtml(input.signerName)}</td></tr>
-        <tr><td style="padding:6px 0;color:#888;">Signed at</td><td style="padding:6px 0;text-align:right;">${input.signedAt.toUTCString()}</td></tr>
-        <tr><td style="padding:6px 0;color:#888;">Waiver version</td><td style="padding:6px 0;text-align:right;">v${input.waiverVersion}</td></tr>
-        <tr><td style="padding:6px 0;color:#888;">IP address</td><td style="padding:6px 0;text-align:right;font-family:monospace;font-size:12px;">${escapeHtml(input.ip)}</td></tr>
-        <tr><td style="padding:6px 0;color:#888;">Device</td><td style="padding:6px 0;text-align:right;font-size:11px;color:#666;">${escapeHtml(input.userAgent.slice(0, 100))}</td></tr>
-      </table>
+    <table style="width:100%; border-collapse:collapse; margin-bottom:24px; font-size:13px;">
+      <tr style="border-bottom:1px solid #2A2A2A;">
+        <td style="padding:8px 0; color:#8A8A8A;">Signer</td>
+        <td style="padding:8px 0; text-align:right; font-weight:600; color:#FFFFFF;">${escapeHtml(input.signerName)}</td>
+      </tr>
+      <tr style="border-bottom:1px solid #2A2A2A;">
+        <td style="padding:8px 0; color:#8A8A8A;">Signed at</td>
+        <td style="padding:8px 0; text-align:right; color:#E5E5E5;">${input.signedAt.toLocaleString("en-US", { timeZone: "America/New_York" })} ET</td>
+      </tr>
+      <tr style="border-bottom:1px solid #2A2A2A;">
+        <td style="padding:8px 0; color:#8A8A8A;">Waiver version</td>
+        <td style="padding:8px 0; text-align:right; color:#E5E5E5;">v${input.waiverVersion}</td>
+      </tr>
+      <tr style="border-bottom:1px solid #2A2A2A;">
+        <td style="padding:8px 0; color:#8A8A8A;">IP address</td>
+        <td style="padding:8px 0; text-align:right; font-family:monospace; font-size:12px; color:#8A8A8A;">${escapeHtml(input.ip)}</td>
+      </tr>
+      <tr>
+        <td style="padding:8px 0; color:#8A8A8A;">Device</td>
+        <td style="padding:8px 0; text-align:right; font-size:11px; color:#555555;">${escapeHtml(input.userAgent.slice(0, 100))}</td>
+      </tr>
+    </table>
 
-      <div style="margin-bottom:24px;">
-        <p style="margin:0 0 6px;font-size:11px;text-transform:uppercase;letter-spacing:0.1em;color:#888;font-weight:600;">Your Signature</p>
-        <img src="${input.signatureDataUrl}" alt="Signature" style="display:block;max-width:300px;border:1px solid #eee;border-radius:6px;background:#fff;" />
-      </div>
+    <div style="margin-bottom:24px;">
+      <p style="margin:0 0 8px 0; font-size:10px; text-transform:uppercase; letter-spacing:2px; color:#8A8A8A; font-weight:600;">Your Signature</p>
+      <img src="${input.signatureDataUrl}" alt="Signature" style="display:block; max-width:280px; border:1px solid #2A2A2A; border-radius:8px; background:#1A1A1A;" />
+    </div>
 
-      <div style="margin-bottom:24px;">
-        <p style="margin:0 0 6px;font-size:11px;text-transform:uppercase;letter-spacing:0.1em;color:#888;font-weight:600;">Waiver Text Accepted (v${input.waiverVersion})</p>
-        <div style="background:#f7f7f8;border:1px solid #eee;border-radius:8px;padding:16px;font-size:11px;line-height:1.55;white-space:pre-wrap;font-family:Menlo,Consolas,monospace;color:#333;">${escapeHtml(input.waiverBody)}</div>
-      </div>
-
-      <p style="font-size:11px;color:#999;margin-top:24px;">
-        Retain this email as your record of agreement. This is your legal copy under the Florida E-SIGN Act.
-      </p>
+    <div>
+      <p style="margin:0 0 8px 0; font-size:10px; text-transform:uppercase; letter-spacing:2px; color:#8A8A8A; font-weight:600;">Waiver Text (v${input.waiverVersion})</p>
+      <div style="background:#0F0F0F; border:1px solid #2A2A2A; border-radius:8px; padding:16px; font-size:11px; line-height:1.6; white-space:pre-wrap; font-family:Menlo,Consolas,monospace; color:#8A8A8A;">${escapeHtml(input.waiverBody)}</div>
     </div>
   `;
 
