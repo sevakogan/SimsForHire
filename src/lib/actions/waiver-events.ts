@@ -2,8 +2,10 @@
 
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
+import { Resend } from "resend";
 import { getAdminSupabase } from "@/lib/supabase-admin";
-import { sendEmail } from "@/lib/email-sender";
+import { buildWaiverEmail } from "@/lib/email-template";
+import { generateWaiverPdf } from "@/lib/waiver-pdf";
 import { createQrRedirect } from "@/lib/actions/qr-redirects";
 import type {
   EventWaiverVersion,
@@ -333,6 +335,13 @@ export async function recordWaiverSignature(input: {
     return { ok: false, error: "Event not found" };
   }
 
+  const { data: config } = await supabase
+    .from("event_config")
+    .select("dealer_name")
+    .eq("event_id", event.id)
+    .single();
+  const dealerName = (config?.dealer_name as string | null) ?? "Sims For Hire";
+
   // Snapshot the exact waiver text the signer accepted (for the email copy)
   const { data: waiverRow } = await supabase
     .from("event_waiver_versions")
@@ -376,8 +385,9 @@ export async function recordWaiverSignature(input: {
     await sendSignedWaiverCopy({
       to: email,
       signerName: name,
-      eventName: event.name,
+      eventName: event.name as string,
       eventSlug: input.eventSlug,
+      dealerName,
       waiverVersion: input.waiverVersion,
       waiverBody: waiverRow?.body ?? "",
       signatureDataUrl: signature,
@@ -404,6 +414,7 @@ async function sendSignedWaiverCopy(input: {
   signerName: string;
   eventName: string;
   eventSlug: string;
+  dealerName: string;
   waiverVersion: number;
   waiverBody: string;
   signatureDataUrl: string;
@@ -411,60 +422,41 @@ async function sendSignedWaiverCopy(input: {
   userAgent: string;
   signedAt: Date;
 }): Promise<void> {
-  // Skip silently if Resend isn't configured (dev / preview envs)
   if (!process.env.RESEND_API_KEY) return;
 
-  const escapeHtml = (s: string) =>
-    s
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;")
-      .replace(/'/g, "&#39;");
+  const [html, pdfBuffer] = await Promise.all([
+    Promise.resolve(buildWaiverEmail(input.signerName, input.eventName, input.dealerName)),
+    generateWaiverPdf({
+      name: input.signerName,
+      email: input.to,
+      signedAt: input.signedAt,
+      signedIp: input.ip,
+      signedUserAgent: input.userAgent,
+      waiverVersion: input.waiverVersion,
+      waiverText: input.waiverBody,
+      signatureDataUrl: input.signatureDataUrl,
+      dealerName: input.dealerName,
+      eventName: input.eventName,
+      eventSlug: input.eventSlug,
+    }),
+  ]);
 
-  const bodyHtml = `
-    <p style="margin:0 0 4px 0; font-size:18px; font-weight:700; color:#FFFFFF; letter-spacing:-0.3px;">Your Signed Waiver</p>
-    <p style="margin:0 0 24px 0; font-size:13px; color:#8A8A8A; letter-spacing:1px; text-transform:uppercase;">${escapeHtml(input.eventName)}</p>
+  const resend = new Resend(process.env.RESEND_API_KEY);
+  const from = process.env.RESEND_FROM_EMAIL ?? "SimsForHire <hello@simsforhire.com>";
 
-    <table style="width:100%; border-collapse:collapse; margin-bottom:24px; font-size:13px;">
-      <tr style="border-bottom:1px solid #2A2A2A;">
-        <td style="padding:8px 0; color:#8A8A8A;">Signer</td>
-        <td style="padding:8px 0; text-align:right; font-weight:600; color:#FFFFFF;">${escapeHtml(input.signerName)}</td>
-      </tr>
-      <tr style="border-bottom:1px solid #2A2A2A;">
-        <td style="padding:8px 0; color:#8A8A8A;">Signed at</td>
-        <td style="padding:8px 0; text-align:right; color:#E5E5E5;">${input.signedAt.toLocaleString("en-US", { timeZone: "America/New_York" })} ET</td>
-      </tr>
-      <tr style="border-bottom:1px solid #2A2A2A;">
-        <td style="padding:8px 0; color:#8A8A8A;">Waiver version</td>
-        <td style="padding:8px 0; text-align:right; color:#E5E5E5;">v${input.waiverVersion}</td>
-      </tr>
-      <tr style="border-bottom:1px solid #2A2A2A;">
-        <td style="padding:8px 0; color:#8A8A8A;">IP address</td>
-        <td style="padding:8px 0; text-align:right; font-family:monospace; font-size:12px; color:#8A8A8A;">${escapeHtml(input.ip)}</td>
-      </tr>
-      <tr>
-        <td style="padding:8px 0; color:#8A8A8A;">Device</td>
-        <td style="padding:8px 0; text-align:right; font-size:11px; color:#555555;">${escapeHtml(input.userAgent.slice(0, 100))}</td>
-      </tr>
-    </table>
-
-    <div style="margin-bottom:24px;">
-      <p style="margin:0 0 8px 0; font-size:10px; text-transform:uppercase; letter-spacing:2px; color:#8A8A8A; font-weight:600;">Your Signature</p>
-      <img src="${input.signatureDataUrl}" alt="Signature" style="display:block; max-width:280px; border:1px solid #2A2A2A; border-radius:8px; background:#1A1A1A;" />
-    </div>
-
-    <div>
-      <p style="margin:0 0 8px 0; font-size:10px; text-transform:uppercase; letter-spacing:2px; color:#8A8A8A; font-weight:600;">Waiver Text (v${input.waiverVersion})</p>
-      <div style="background:#0F0F0F; border:1px solid #2A2A2A; border-radius:8px; padding:16px; font-size:11px; line-height:1.6; white-space:pre-wrap; font-family:Menlo,Consolas,monospace; color:#8A8A8A;">${escapeHtml(input.waiverBody)}</div>
-    </div>
-  `;
-
-  await sendEmail({
+  const { error } = await resend.emails.send({
+    from,
     to: input.to,
+    cc: ["seva@simsforhire.com"],
     subject: `Your signed waiver — ${input.eventName}`,
-    bodyHtml,
-    leadName: input.signerName,
-    skipCc: false,
+    html,
+    attachments: [
+      {
+        filename: `Waiver-${input.eventSlug}.pdf`,
+        content: pdfBuffer.toString("base64"),
+      },
+    ],
   });
+
+  if (error) throw new Error(`Resend error: ${error.message}`);
 }
