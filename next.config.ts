@@ -8,6 +8,7 @@ const versionData = JSON.parse(
 );
 
 const nextConfig: NextConfig = {
+  serverExternalPackages: ["pdfkit"],
   images: {
     remotePatterns: [
       { protocol: "https", hostname: "lh3.googleusercontent.com" },
