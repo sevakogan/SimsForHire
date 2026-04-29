@@ -28,6 +28,7 @@ export function SignersView({ signers }: Props) {
   const router = useRouter();
   const [query, setQuery] = useState("");
   const [eventFilter, setEventFilter] = useState<string>("");
+  const [carrierFilter, setCarrierFilter] = useState<string>("");
   const [activeSigner, setActiveSigner] = useState<SignatureModalSigner | null>(null);
   const [removed, setRemoved] = useState<Set<string>>(new Set());
   const [deleting, setDeleting] = useState<string | null>(null);
@@ -87,11 +88,40 @@ export function SignersView({ signers }: Props) {
       .sort((a, b) => a.name.localeCompare(b.name));
   }, [signers]);
 
+  /** Carrier breakdown: counts respect the active event filter so the
+   *  numbers always reflect the rows currently visible. Sorted desc by count. */
+  const carrierBreakdown = useMemo(() => {
+    const scope = signers.filter(
+      (s) => !removed.has(s.id) && (!eventFilter || s.event_slug === eventFilter)
+    );
+    const counts = new Map<string, number>();
+    let unknown = 0;
+    for (const s of scope) {
+      const isp = s.waiver_accepted_isp?.trim();
+      if (!isp) {
+        unknown += 1;
+        continue;
+      }
+      counts.set(isp, (counts.get(isp) ?? 0) + 1);
+    }
+    const items = Array.from(counts.entries())
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
+    return { items, unknown, total: scope.length };
+  }, [signers, removed, eventFilter]);
+
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     const matches = signers.filter((s) => {
       if (removed.has(s.id)) return false;
       if (eventFilter && s.event_slug !== eventFilter) return false;
+      if (carrierFilter) {
+        if (carrierFilter === "__unknown__") {
+          if (s.waiver_accepted_isp) return false;
+        } else if (s.waiver_accepted_isp !== carrierFilter) {
+          return false;
+        }
+      }
       if (!q) return true;
       return (
         s.name.toLowerCase().includes(q) ||
@@ -119,7 +149,7 @@ export function SignersView({ signers }: Props) {
           return collator.compare(a.phone ?? "", b.phone ?? "") * dir;
       }
     });
-  }, [signers, query, eventFilter, sortKey, sortDir, removed]);
+  }, [signers, query, eventFilter, carrierFilter, sortKey, sortDir, removed]);
 
   function handleDownloadXlsx() {
     if (filtered.length === 0) return;
@@ -217,6 +247,15 @@ export function SignersView({ signers }: Props) {
         <div className="rounded-lg bg-red-50 border border-red-200 px-3 py-2 text-[12px] text-red-700">
           {deleteError}
         </div>
+      )}
+
+      {/* Carrier breakdown chips */}
+      {carrierBreakdown.total > 0 && (
+        <CarrierChips
+          breakdown={carrierBreakdown}
+          active={carrierFilter}
+          onPick={(c) => setCarrierFilter((cur) => (cur === c ? "" : c))}
+        />
       )}
 
       {/* Toolbar */}
@@ -474,6 +513,98 @@ export function SignersView({ signers }: Props) {
       </div>
 
       <SignatureModal signer={activeSigner} onClose={() => setActiveSigner(null)} />
+    </div>
+  );
+}
+
+/* ── Carrier breakdown chips ─────────────────────────────────────────── */
+
+interface CarrierBreakdown {
+  items: ReadonlyArray<{ name: string; count: number }>;
+  unknown: number;
+  total: number;
+}
+
+const VISIBLE_CARRIERS = 5;
+
+/**
+ * Compact horizontal row of carrier chips.
+ *
+ * Shows the top `VISIBLE_CARRIERS` carriers individually, then collapses the
+ * tail into a single "+ N more" chip. Each chip is a toggleable filter:
+ * clicking sets the carrier filter; clicking again clears it.
+ */
+function CarrierChips({
+  breakdown,
+  active,
+  onPick,
+}: {
+  breakdown: CarrierBreakdown;
+  active: string;
+  onPick: (carrier: string) => void;
+}) {
+  const top = breakdown.items.slice(0, VISIBLE_CARRIERS);
+  const restCount = breakdown.items.slice(VISIBLE_CARRIERS).reduce((n, i) => n + i.count, 0);
+  const restCarriers = breakdown.items.length - top.length;
+
+  return (
+    <div className="rounded-xl border border-border bg-white p-3">
+      <div className="flex items-center gap-2 mb-2">
+        <span className="text-[10px] font-semibold uppercase tracking-[0.7px] text-muted-foreground">
+          Carriers
+        </span>
+        <span className="text-[11px] text-muted-foreground tabular-nums">
+          {breakdown.items.length} unique · {breakdown.total} signers
+        </span>
+        {active && (
+          <button
+            onClick={() => onPick(active)}
+            className="ml-auto text-[11px] text-muted-foreground hover:text-foreground underline-offset-2 hover:underline"
+          >
+            Clear filter
+          </button>
+        )}
+      </div>
+      <div className="flex flex-wrap gap-1.5">
+        {top.map((c) => {
+          const isActive = active === c.name;
+          return (
+            <button
+              key={c.name}
+              onClick={() => onPick(c.name)}
+              className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[12px] transition-colors ${
+                isActive
+                  ? "bg-foreground text-white"
+                  : "bg-muted/40 text-foreground hover:bg-muted"
+              }`}
+              title={`Filter to ${c.name}`}
+            >
+              <span className="font-medium truncate max-w-[180px]">{c.name}</span>
+              <span className="tabular-nums opacity-70">{c.count}</span>
+            </button>
+          );
+        })}
+        {restCarriers > 0 && (
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-muted/40 px-2.5 py-1 text-[12px] text-muted-foreground">
+            <span>+ {restCarriers} more</span>
+            <span className="tabular-nums opacity-70">{restCount}</span>
+          </span>
+        )}
+        {breakdown.unknown > 0 && (
+          <button
+            onClick={() => onPick("__unknown__")}
+            className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[12px] transition-colors border border-dashed ${
+              active === "__unknown__"
+                ? "bg-foreground text-white border-foreground"
+                : "bg-transparent border-border text-muted-foreground hover:text-foreground"
+            }`}
+            title="Signers without an ISP lookup result"
+          >
+            <span>Unknown</span>
+            <span className="tabular-nums opacity-70">{breakdown.unknown}</span>
+          </button>
+        )}
+      </div>
     </div>
   );
 }
