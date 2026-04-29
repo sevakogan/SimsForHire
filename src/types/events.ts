@@ -59,6 +59,8 @@ export interface Racer {
   waiver_accepted_user_agent: string | null;
   signature_data_url: string | null;
   marketing_opt_in: boolean;
+  // Email delivery queue (null = not yet sent; set when Resend accepts the send)
+  email_sent_at: string | null;
   // Email engagement (populated by /api/live-events/track/email-open tracking pixel)
   email_opened_at: string | null;
   email_open_count: number | null;

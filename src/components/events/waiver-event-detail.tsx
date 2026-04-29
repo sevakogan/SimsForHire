@@ -451,7 +451,7 @@ export function WaiverEventDetail({
                     </td>
                     <td className="py-2 pr-3 whitespace-nowrap">
                       {!s.email ? (
-                        <span className="text-muted-foreground" title="No email captured — confirmation email not sent">—</span>
+                        <span className="text-muted-foreground" title="No email captured">—</span>
                       ) : s.email_opened_at ? (
                         <span
                           className="text-green-600"
@@ -459,8 +459,10 @@ export function WaiverEventDetail({
                         >
                           ✓ Opened{(s.email_open_count ?? 0) > 1 ? ` (${s.email_open_count})` : ""}
                         </span>
+                      ) : s.email_sent_at ? (
+                        <span className="text-amber-600" title={`Sent ${new Date(s.email_sent_at).toLocaleString()} — not yet opened`}>○ Sent</span>
                       ) : (
-                        <span className="text-amber-600" title="Confirmation email sent — not yet opened">○ Sent</span>
+                        <span className="text-blue-500" title="Queued — will be sent by daily drainer">⏳ Queued</span>
                       )}
                     </td>
                     <td className="py-2 pr-3 text-muted-foreground">v{s.waiver_version}</td>

@@ -305,6 +305,7 @@ export function SignersView({ signers }: Props) {
               <th className="px-3 py-2 font-semibold">Event</th>
               <th className="px-3 py-2 font-semibold">Sig</th>
               <th className="px-3 py-2 font-semibold">Mkt</th>
+              <th className="px-3 py-2 font-semibold">Email</th>
               <th className="px-3 py-2 font-semibold">
                 <button
                   type="button"
@@ -382,6 +383,26 @@ export function SignersView({ signers }: Props) {
                     <span className="text-green-600">✓</span>
                   ) : (
                     <span className="text-muted-foreground">—</span>
+                  )}
+                </td>
+                <td className="px-3 py-2 whitespace-nowrap text-[12px]">
+                  {!s.email ? (
+                    <span className="text-muted-foreground">—</span>
+                  ) : s.email_opened_at ? (
+                    <span
+                      className="text-green-600"
+                      title={`Opened ${new Date(s.email_opened_at).toLocaleString()}${(s.email_open_count ?? 0) > 1 ? ` · ${s.email_open_count}×` : ""}`}
+                    >
+                      ✓ Opened{(s.email_open_count ?? 0) > 1 ? ` (${s.email_open_count})` : ""}
+                    </span>
+                  ) : s.email_sent_at ? (
+                    <span className="text-amber-600" title={`Sent ${new Date(s.email_sent_at).toLocaleString()} — not yet opened`}>
+                      ○ Sent
+                    </span>
+                  ) : (
+                    <span className="text-blue-500" title="Queued — will be sent by daily drainer">
+                      ⏳ Queued
+                    </span>
                   )}
                 </td>
                 <td className="px-3 py-2 text-muted-foreground">

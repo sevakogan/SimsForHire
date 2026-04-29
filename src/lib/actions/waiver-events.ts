@@ -204,6 +204,7 @@ export interface SignerWithEvent {
   event_id: string;
   event_name: string;
   event_slug: string;
+  email_sent_at: string | null;
   email_opened_at: string | null;
   email_open_count: number | null;
 }
@@ -215,7 +216,7 @@ export async function listAllSigners(): Promise<SignerWithEvent[]> {
   const { data: signers } = await supabase
     .from("racers")
     .select(
-      "id,name,email,phone,marketing_opt_in,waiver_version,waiver_accepted_at,waiver_accepted_ip,signature_data_url,event_id,email_opened_at,email_open_count"
+      "id,name,email,phone,marketing_opt_in,waiver_version,waiver_accepted_at,waiver_accepted_ip,signature_data_url,event_id,email_sent_at,email_opened_at,email_open_count"
     )
     .not("waiver_version", "is", null)
     .order("waiver_accepted_at", { ascending: false });
@@ -248,6 +249,7 @@ export async function listAllSigners(): Promise<SignerWithEvent[]> {
       event_id: s.event_id as string,
       event_name: event?.name ?? "(deleted event)",
       event_slug: event?.slug ?? "",
+      email_sent_at: (s.email_sent_at as string | null) ?? null,
       email_opened_at: (s.email_opened_at as string | null) ?? null,
       email_open_count: (s.email_open_count as number | null) ?? null,
     };
@@ -356,28 +358,33 @@ export async function recordWaiverSignature(input: {
   const userAgent = hdrs.get("user-agent") ?? "";
   const signedAt = new Date();
 
-  const { error } = await supabase.from("racers").insert({
-    event_id: event.id,
-    name,
-    phone: phone || null,
-    email,
-    queue_pos: null,
-    lap_time: null,
-    lap_time_ms: null,
-    sms_sent: false,
-    sms_status: null,
-    waiver_version: input.waiverVersion,
-    waiver_accepted_at: signedAt.toISOString(),
-    waiver_accepted_ip: ip,
-    waiver_accepted_user_agent: userAgent,
-    signature_data_url: signature,
-    marketing_opt_in: input.marketingOptIn,
-  });
+  const { data: inserted, error } = await supabase
+    .from("racers")
+    .insert({
+      event_id: event.id,
+      name,
+      phone: phone || null,
+      email,
+      queue_pos: null,
+      lap_time: null,
+      lap_time_ms: null,
+      sms_sent: false,
+      sms_status: null,
+      waiver_version: input.waiverVersion,
+      waiver_accepted_at: signedAt.toISOString(),
+      waiver_accepted_ip: ip,
+      waiver_accepted_user_agent: userAgent,
+      signature_data_url: signature,
+      marketing_opt_in: input.marketingOptIn,
+    })
+    .select("id")
+    .single();
 
   if (error) return { ok: false, error: error.message };
 
   // Send a copy to the signer (Florida E-SIGN: signer must be able to retain).
-  // Wrapped in try/catch — email failure should NOT block the signature being recorded.
+  // On success, stamp email_sent_at. On failure, leave it null — the daily
+  // drain-waiver-emails cron will retry until it goes through.
   try {
     console.log(
       `[waiver-email] sending copy to ${email} (event=${input.eventSlug}, v${input.waiverVersion}, resend=${process.env.RESEND_API_KEY ? "configured" : "MISSING"})`
@@ -396,9 +403,13 @@ export async function recordWaiverSignature(input: {
       signedAt,
     });
     console.log(`[waiver-email] OK -> ${email}`);
+    await supabase
+      .from("racers")
+      .update({ email_sent_at: new Date().toISOString() })
+      .eq("id", inserted.id);
   } catch (err) {
     console.error(
-      `[waiver-email] FAILED to ${email} (event=${input.eventSlug}):`,
+      `[waiver-email] FAILED to ${email} (event=${input.eventSlug}) — queued for retry:`,
       err instanceof Error ? `${err.message}\n${err.stack}` : err
     );
   }
@@ -447,7 +458,6 @@ async function sendSignedWaiverCopy(input: {
   const { error } = await resend.emails.send({
     from,
     to: input.to,
-    cc: ["seva@simsforhire.com"],
     subject: `Your signed waiver — ${input.eventName}`,
     html,
     attachments: [
