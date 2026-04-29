@@ -1,11 +1,28 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import Image from "next/image";
 import WaiverScrollGate from "@/components/waiver/WaiverScrollGate";
 import { SignaturePad } from "@/components/waiver/SignaturePad";
 import { recordWaiverSignature } from "@/lib/actions/waiver-events";
 import { pickF1Quote } from "@/lib/f1-quotes";
+
+declare global {
+  interface Window {
+    fbq?: (...args: unknown[]) => void;
+    gtag?: (...args: unknown[]) => void;
+  }
+}
+
+function trackLead() {
+  window.fbq?.("track", "Lead");
+  window.gtag?.("event", "generate_lead", { event_category: "waiver" });
+}
+
+function trackCompleteRegistration(eventId: string) {
+  window.fbq?.("track", "CompleteRegistration", {}, { eventID: eventId });
+  window.gtag?.("event", "sign_up", { method: "waiver", event_id: eventId });
+}
 
 /** Instagram brand gradient logo (no extra font deps). */
 function InstagramIcon({ className = "h-5 w-5" }: { className?: string }) {
@@ -57,6 +74,13 @@ export function WaiverSignForm({
     signedAt: string;
   } | null>(null);
 
+  // Stable event ID generated once per form session — shared between the
+  // client fbq call and the server CAPI call so Meta deduplicates correctly.
+  const eventIdRef = useRef(crypto.randomUUID());
+
+  // Fire Lead on page load (waiver view = high-intent lead signal).
+  useEffect(() => { trackLead(); }, []);
+
   // When the success view replaces the form, the user is usually scrolled
   // near the bottom (signature pad + submit). Snap to top so the
   // SHOW-TO-ATTENDANT card is fully visible immediately.
@@ -92,8 +116,10 @@ export function WaiverSignForm({
         waiverVersion,
         marketingOptIn,
         signatureDataUrl: signature,
+        eventId: eventIdRef.current,
       });
       if (result.ok) {
+        trackCompleteRegistration(eventIdRef.current);
         setSuccess({ name: name.trim(), signedAt: new Date().toLocaleString() });
       } else {
         setError(result.error);

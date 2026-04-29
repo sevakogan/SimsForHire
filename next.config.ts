@@ -19,6 +19,8 @@ const nextConfig: NextConfig = {
   env: {
     NEXT_PUBLIC_APP_VERSION: versionData.version,
     NEXT_PUBLIC_BUILD_NUMBER: String(versionData.build ?? 0),
+    NEXT_PUBLIC_META_PIXEL_ID: process.env.META_PIXEL_ID ?? "",
+    NEXT_PUBLIC_GA4_ID: process.env.GA4_MEASUREMENT_ID ?? "",
   },
 };
 

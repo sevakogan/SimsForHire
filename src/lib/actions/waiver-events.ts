@@ -6,6 +6,7 @@ import { Resend } from "resend";
 import { getAdminSupabase } from "@/lib/supabase-admin";
 import { buildWaiverEmail } from "@/lib/email-template";
 import { generateWaiverPdf } from "@/lib/waiver-pdf";
+import { sendCAPIEvent } from "@/lib/meta-capi";
 import { createQrRedirect } from "@/lib/actions/qr-redirects";
 import type {
   EventWaiverVersion,
@@ -305,6 +306,8 @@ export async function recordWaiverSignature(input: {
   waiverVersion: number;
   marketingOptIn: boolean;
   signatureDataUrl: string;
+  /** Matched with the client-side fbq eventID for Meta deduplication. */
+  eventId?: string;
 }): Promise<{ ok: true } | { ok: false; error: string }> {
   const name = input.name.trim();
   const phone = input.phone.trim();
@@ -381,6 +384,31 @@ export async function recordWaiverSignature(input: {
     .single();
 
   if (error) return { ok: false, error: error.message };
+
+  // Fire CAPI conversion events — wrapped so a failure never blocks the response.
+  const eventSourceUrl = `https://simsforhire.com/waiver/${input.eventSlug}`;
+  const nameParts = name.trim().split(" ");
+  const capiUserData = {
+    email,
+    phone: phone || undefined,
+    firstName: nameParts[0],
+    lastName: nameParts.length > 1 ? nameParts.slice(1).join(" ") : undefined,
+  };
+  Promise.all([
+    sendCAPIEvent({
+      eventName: "Lead",
+      eventSourceUrl,
+      userData: capiUserData,
+      eventId: input.eventId ? `lead-${input.eventId}` : undefined,
+    }),
+    sendCAPIEvent({
+      eventName: "CompleteRegistration",
+      eventSourceUrl,
+      userData: capiUserData,
+      eventId: input.eventId,
+      customData: { content_name: `${input.eventSlug} waiver` },
+    }),
+  ]).catch((err) => console.error("[waiver-capi] unexpected error:", err));
 
   // Send a copy to the signer (Florida E-SIGN: signer must be able to retain).
   // On success, stamp email_sent_at. On failure, leave it null — the daily
