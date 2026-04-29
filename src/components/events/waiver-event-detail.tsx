@@ -421,6 +421,10 @@ export function WaiverEventDetail({
                         waiver_accepted_ip: s.waiver_accepted_ip,
                         waiver_accepted_user_agent: s.waiver_accepted_user_agent,
                         signature_data_url: s.signature_data_url,
+                        email_sent_at: s.email_sent_at,
+                        email_opened_at: s.email_opened_at,
+                        email_open_count: s.email_open_count,
+                        email_open_user_agent: s.email_open_user_agent,
                       })
                     }
                   >

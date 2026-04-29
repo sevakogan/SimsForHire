@@ -361,7 +361,12 @@ export function SignersView({ signers }: Props) {
                           waiver_version: s.waiver_version,
                           waiver_accepted_at: s.waiver_accepted_at,
                           waiver_accepted_ip: s.waiver_accepted_ip,
+                          waiver_accepted_user_agent: s.waiver_accepted_user_agent,
                           signature_data_url: s.signature_data_url,
+                          email_sent_at: s.email_sent_at,
+                          email_opened_at: s.email_opened_at,
+                          email_open_count: s.email_open_count,
+                          email_open_user_agent: s.email_open_user_agent,
                         })
                       }
                       className="rounded border border-border bg-white p-0.5 hover:border-foreground/40 transition-colors"
