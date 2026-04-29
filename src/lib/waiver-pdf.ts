@@ -297,10 +297,10 @@ function drawPage2Audit(doc: PDFKit.PDFDocument, input: WaiverPdfInput) {
       138,
     )
 
-  // Waiver body
+  // Waiver body — pdfkit auto-paginates when text overflows the page
   let y = 168
   if (input.waiverText) {
-    const body = stripHtml(input.waiverText).slice(0, 3500) // safety cap
+    const body = stripHtml(input.waiverText)
     doc.font('Helvetica').fontSize(9.5).fillColor(BLACK)
     doc.text(body, margin, y, {
       width: W - margin * 2,
@@ -308,6 +308,13 @@ function drawPage2Audit(doc: PDFKit.PDFDocument, input: WaiverPdfInput) {
       paragraphGap: 8,
     })
     y = doc.y + 18
+  }
+
+  // If the signature panel (130px) + buffer won't fit on the current page, start a fresh one
+  const pageBottom = doc.page.height - doc.page.margins.bottom
+  if (y + 160 > pageBottom) {
+    doc.addPage()
+    y = doc.page.margins.top
   }
 
   // ─── Signature panel ───
