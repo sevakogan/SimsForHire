@@ -412,6 +412,7 @@ export function WaiverEventDetail({
                     className="border-b border-border/50 last:border-0 hover:bg-muted/30 cursor-pointer"
                     onClick={() =>
                       setActiveSigner({
+                        id: s.id,
                         name: s.name,
                         email: s.email,
                         phone: s.phone,
@@ -427,6 +428,7 @@ export function WaiverEventDetail({
                         email_opened_at: s.email_opened_at,
                         email_open_count: s.email_open_count,
                         email_open_user_agent: s.email_open_user_agent,
+                        campaign_added_at: s.campaign_added_at,
                       })
                     }
                   >

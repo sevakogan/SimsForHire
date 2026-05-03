@@ -29,6 +29,7 @@ export function SignersView({ signers }: Props) {
   const [query, setQuery] = useState("");
   const [eventFilter, setEventFilter] = useState<string>("");
   const [carrierFilter, setCarrierFilter] = useState<string>("");
+  const [campaignFilter, setCampaignFilter] = useState<"all" | "not_added" | "added">("all");
   const [activeSigner, setActiveSigner] = useState<SignatureModalSigner | null>(null);
   const [removed, setRemoved] = useState<Set<string>>(new Set());
   const [deleting, setDeleting] = useState<string | null>(null);
@@ -122,6 +123,8 @@ export function SignersView({ signers }: Props) {
           return false;
         }
       }
+      if (campaignFilter === "not_added" && s.campaign_added_at) return false;
+      if (campaignFilter === "added" && !s.campaign_added_at) return false;
       if (!q) return true;
       return (
         s.name.toLowerCase().includes(q) ||
@@ -149,7 +152,7 @@ export function SignersView({ signers }: Props) {
           return collator.compare(a.phone ?? "", b.phone ?? "") * dir;
       }
     });
-  }, [signers, query, eventFilter, carrierFilter, sortKey, sortDir, removed]);
+  }, [signers, query, eventFilter, carrierFilter, campaignFilter, sortKey, sortDir, removed]);
 
   function handleDownloadXlsx() {
     if (filtered.length === 0) return;
@@ -279,6 +282,15 @@ export function SignersView({ signers }: Props) {
             </option>
           ))}
         </select>
+        <select
+          value={campaignFilter}
+          onChange={(e) => setCampaignFilter(e.target.value as "all" | "not_added" | "added")}
+          className="rounded-lg border border-border bg-[#F5F5F7] px-3 py-2 text-[13px] focus:outline-none focus:ring-2 focus:ring-[#E10600]/30 focus:border-[#E10600]"
+        >
+          <option value="all">All — campaign</option>
+          <option value="not_added">Not in campaign</option>
+          <option value="added">In campaign ✓</option>
+        </select>
         <span className="text-[12px] text-muted-foreground">
           Showing {filtered.length}
         </span>
@@ -399,6 +411,7 @@ export function SignersView({ signers }: Props) {
                       type="button"
                       onClick={() =>
                         setActiveSigner({
+                          id: s.id,
                           name: s.name,
                           email: s.email,
                           phone: s.phone,
@@ -414,6 +427,7 @@ export function SignersView({ signers }: Props) {
                           email_opened_at: s.email_opened_at,
                           email_open_count: s.email_open_count,
                           email_open_user_agent: s.email_open_user_agent,
+                          campaign_added_at: s.campaign_added_at,
                         })
                       }
                       className="rounded border border-border bg-white p-0.5 hover:border-foreground/40 transition-colors"

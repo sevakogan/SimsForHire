@@ -152,6 +152,21 @@ export async function deleteSigner(
   return { ok: true, eventSlug };
 }
 
+/** Mark/unmark a signer as added to an ad campaign. Pass null to clear. */
+export async function setCampaignAdded(
+  signerId: string,
+  added: boolean
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const supabase = getAdminSupabase();
+  const { error } = await supabase
+    .from("racers")
+    .update({ campaign_added_at: added ? new Date().toISOString() : null })
+    .eq("id", signerId);
+  if (error) return { ok: false, error: error.message };
+  revalidatePath("/signers");
+  return { ok: true };
+}
+
 /* ── Read ───────────────────────────────────────────────────── */
 
 export async function getActiveWaiver(
@@ -212,6 +227,7 @@ export interface SignerWithEvent {
   email_opened_at: string | null;
   email_open_count: number | null;
   email_open_user_agent: string | null;
+  campaign_added_at: string | null;
 }
 
 /** All waiver signers across every event (most recent first). */
@@ -221,7 +237,7 @@ export async function listAllSigners(): Promise<SignerWithEvent[]> {
   const { data: signers } = await supabase
     .from("racers")
     .select(
-      "id,name,email,phone,marketing_opt_in,waiver_version,waiver_accepted_at,waiver_accepted_ip,waiver_accepted_user_agent,waiver_accepted_isp,signature_data_url,event_id,email_sent_at,email_opened_at,email_open_count,email_open_user_agent"
+      "id,name,email,phone,marketing_opt_in,waiver_version,waiver_accepted_at,waiver_accepted_ip,waiver_accepted_user_agent,waiver_accepted_isp,signature_data_url,event_id,email_sent_at,email_opened_at,email_open_count,email_open_user_agent,campaign_added_at"
     )
     .not("waiver_version", "is", null)
     .order("waiver_accepted_at", { ascending: false });
@@ -260,6 +276,7 @@ export async function listAllSigners(): Promise<SignerWithEvent[]> {
       email_opened_at: (s.email_opened_at as string | null) ?? null,
       email_open_count: (s.email_open_count as number | null) ?? null,
       email_open_user_agent: (s.email_open_user_agent as string | null) ?? null,
+      campaign_added_at: (s.campaign_added_at as string | null) ?? null,
     };
   });
 }

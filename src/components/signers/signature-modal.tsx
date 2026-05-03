@@ -1,8 +1,10 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState, useTransition } from "react";
+import { setCampaignAdded } from "@/lib/actions/waiver-events";
 
 export interface SignatureModalSigner {
+  id: string;
   name: string;
   email: string | null;
   phone: string | null;
@@ -19,6 +21,8 @@ export interface SignatureModalSigner {
   email_opened_at?: string | null;
   email_open_count?: number | null;
   email_open_user_agent?: string | null;
+  // Campaign tracking
+  campaign_added_at?: string | null;
 }
 
 interface Props {
@@ -59,6 +63,14 @@ function fmt(iso: string | null | undefined): string {
 }
 
 export function SignatureModal({ signer, onClose }: Props) {
+  const [campaignAddedAt, setCampaignAddedAt] = useState<string | null>(null);
+  const [isPending, startTransition] = useTransition();
+
+  // Sync local campaign state when signer changes
+  useEffect(() => {
+    setCampaignAddedAt(signer?.campaign_added_at ?? null);
+  }, [signer?.id, signer?.campaign_added_at]);
+
   useEffect(() => {
     if (!signer) return;
     function onKey(e: KeyboardEvent) {
@@ -69,6 +81,15 @@ export function SignatureModal({ signer, onClose }: Props) {
   }, [signer, onClose]);
 
   if (!signer) return null;
+
+  function toggleCampaign() {
+    if (!signer) return;
+    const next = !campaignAddedAt;
+    setCampaignAddedAt(next ? new Date().toISOString() : null);
+    startTransition(async () => {
+      await setCampaignAdded(signer.id, next);
+    });
+  }
 
   const hasEmail = Boolean(signer.email);
   const isSent = Boolean(signer.email_sent_at);
@@ -233,6 +254,32 @@ export function SignatureModal({ signer, onClose }: Props) {
                 <dd className="mt-0.5 text-foreground">{parseUA(signer.waiver_accepted_user_agent)}</dd>
               </div>
             </dl>
+
+            {/* Campaign status */}
+            <div className={`flex items-center justify-between rounded-xl border px-4 py-3 ${campaignAddedAt ? "border-purple-200 bg-purple-50" : "border-border bg-[#F5F5F7]"}`}>
+              <div>
+                <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">Ad Campaign</p>
+                {campaignAddedAt ? (
+                  <p className="mt-0.5 text-[12px] font-medium text-purple-700">
+                    Added {fmt(campaignAddedAt)}
+                  </p>
+                ) : (
+                  <p className="mt-0.5 text-[12px] text-muted-foreground">Not yet added to a campaign</p>
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={toggleCampaign}
+                disabled={isPending}
+                className={`rounded-lg px-3 py-1.5 text-[12px] font-semibold transition-colors disabled:opacity-50 ${
+                  campaignAddedAt
+                    ? "border border-purple-300 bg-white text-purple-700 hover:bg-purple-50"
+                    : "bg-purple-600 text-white hover:bg-purple-700"
+                }`}
+              >
+                {isPending ? "…" : campaignAddedAt ? "Undo" : "Mark added"}
+              </button>
+            </div>
 
             {/* Signature image */}
             <div>

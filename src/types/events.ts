@@ -67,6 +67,8 @@ export interface Racer {
   email_opened_at: string | null;
   email_open_count: number | null;
   email_open_user_agent: string | null;
+  // Campaign tracking (null = never added; timestamp = when pushed to ad audience)
+  campaign_added_at: string | null;
 }
 
 export type EventRole = "admin" | "employee";
