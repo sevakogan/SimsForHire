@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import * as XLSX from "xlsx";
 import { SignatureModal, type SignatureModalSigner } from "@/components/signers/signature-modal";
 import { deleteSigner, type SignerWithEvent } from "@/lib/actions/waiver-events";
+import { locationFromPhone } from "@/lib/area-codes";
 
 interface Props {
   signers: SignerWithEvent[];
@@ -356,6 +357,7 @@ export function SignersView({ signers }: Props) {
                   Phone {sortIndicator("phone")}
                 </button>
               </th>
+              <th className="px-3 py-2 font-semibold">Location</th>
               <th className="px-3 py-2 font-semibold">Event</th>
               <th className="px-3 py-2 font-semibold">Carrier</th>
               <th className="px-3 py-2 font-semibold">Sig</th>
@@ -390,6 +392,9 @@ export function SignersView({ signers }: Props) {
                   )}
                 </td>
                 <td className="px-3 py-2 text-muted-foreground">{s.phone || "—"}</td>
+                <td className="px-3 py-2 text-muted-foreground whitespace-nowrap text-[12px]">
+                  {locationFromPhone(s.phone) ?? <span className="opacity-40">—</span>}
+                </td>
                 <td className="px-3 py-2 text-foreground">
                   {s.event_slug ? (
                     <a

@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useTransition } from "react";
 import { setCampaignAdded } from "@/lib/actions/waiver-events";
+import { locationFromPhone } from "@/lib/area-codes";
 
 export interface SignatureModalSigner {
   id: string;
@@ -252,6 +253,10 @@ export function SignatureModal({ signer, onClose }: Props) {
               <div>
                 <dt className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">Signed On</dt>
                 <dd className="mt-0.5 text-foreground">{parseUA(signer.waiver_accepted_user_agent)}</dd>
+              </div>
+              <div>
+                <dt className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">Location</dt>
+                <dd className="mt-0.5 text-foreground">{locationFromPhone(signer.phone) ?? "—"}</dd>
               </div>
             </dl>
 
